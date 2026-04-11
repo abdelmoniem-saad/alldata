@@ -1,0 +1,8 @@
+title: Hypothesis Testing
+slug: hypothesis-testing
+domain: statistical-inference
+difficulty: intermediate
+summary: Making decisions about populations based on sample evidence.
+prerequisites: [sampling-distributions]
+has_intuition_layer: true
+has_formal_layer: true

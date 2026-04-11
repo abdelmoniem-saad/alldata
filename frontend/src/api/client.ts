@@ -1,0 +1,156 @@
+/** API client for the AllData backend. */
+
+const BASE = '/api'
+
+async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const token = localStorage.getItem('token')
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  }
+
+  const res = await fetch(`${BASE}${path}`, { ...options, headers })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(body.detail || `HTTP ${res.status}`)
+  }
+  return res.json()
+}
+
+// Types
+export interface GraphNode {
+  id: string
+  slug: string
+  title: string
+  domain: string | null
+  difficulty: string | null
+  depth: number
+  status: string
+  has_content: boolean
+}
+
+export interface GraphEdge {
+  source_id: string
+  target_id: string
+  edge_type: string
+  weight: number
+  description: string | null
+}
+
+export interface GraphResponse {
+  nodes: GraphNode[]
+  edges: GraphEdge[]
+}
+
+export interface ContentBlock {
+  id: string
+  block_type: string
+  content: string
+  sort_order: number
+  layer: string
+  expected_output: string | null
+  is_editable: boolean
+  simulation_config: string | null
+  hint: string | null
+  solution: string | null
+}
+
+export interface Misconception {
+  id: string
+  title: string
+  wrong_belief: string
+  correction: string
+  why_common: string | null
+}
+
+export interface TopicDetail {
+  id: string
+  slug: string
+  title: string
+  summary: string | null
+  difficulty: string | null
+  domain: string | null
+  status: string
+  depth: number
+  has_intuition_layer: boolean
+  has_formal_layer: boolean
+  parent_id: string | null
+  content_blocks: ContentBlock[]
+  misconceptions: Misconception[]
+}
+
+export interface LearningPathStep {
+  order: number
+  topic: GraphNode
+  why_needed: string | null
+}
+
+export interface LearningPathResponse {
+  from_topic: string
+  to_topic: string
+  steps: LearningPathStep[]
+  total_topics: number
+}
+
+export interface ExecutionResult {
+  stdout: string
+  stderr: string
+  exit_code: number
+  execution_time_ms: number
+  images: string[]
+  truncated: boolean
+}
+
+// API functions
+export const api = {
+  // Graph
+  getGraph: (status?: string) =>
+    request<GraphResponse>(`/graph${status ? `?status=${status}` : ''}`),
+
+  getSubgraph: (root: string, depth = 2) =>
+    request<GraphResponse>(`/graph/subgraph?root=${root}&depth=${depth}`),
+
+  getLearningPath: (from: string, to: string) =>
+    request<LearningPathResponse>(`/graph/path?from=${from}&to=${to}`),
+
+  getPrerequisites: (slug: string) =>
+    request<GraphNode[]>(`/graph/prerequisites/${slug}`),
+
+  getLeadsTo: (slug: string) =>
+    request<GraphNode[]>(`/graph/leads-to/${slug}`),
+
+  // Topics
+  getTopic: (slug: string, layer?: string) =>
+    request<TopicDetail>(`/topics/${slug}${layer ? `?layer=${layer}` : ''}`),
+
+  getTopics: (params?: { domain?: string; search?: string }) => {
+    const searchParams = new URLSearchParams()
+    if (params?.domain) searchParams.set('domain', params.domain)
+    if (params?.search) searchParams.set('search', params.search)
+    const qs = searchParams.toString()
+    return request<TopicDetail[]>(`/topics${qs ? `?${qs}` : ''}`)
+  },
+
+  searchTopics: (q: string) =>
+    request<GraphNode[]>(`/topics/search?q=${q}`),
+
+  // Code execution
+  executeCode: (code: string, language = 'python') =>
+    request<ExecutionResult>('/execute', {
+      method: 'POST',
+      body: JSON.stringify({ code, language }),
+    }),
+
+  // Auth
+  login: (email: string, password: string) =>
+    request<{ access_token: string; user: any }>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    }),
+
+  register: (email: string, display_name: string, password: string) =>
+    request<{ access_token: string; user: any }>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ email, display_name, password }),
+    }),
+}

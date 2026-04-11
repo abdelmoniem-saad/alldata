@@ -1,0 +1,314 @@
+# AllData Knowledge Graph — Seed Schema
+# This defines the skeleton of the statistics & data science knowledge graph.
+# Topics are organized into domains, and edges define prerequisite relationships.
+
+domains:
+  - slug: probability-foundations
+    title: Probability Foundations
+    description: Core probability concepts that underpin all of statistics
+
+  - slug: distributions
+    title: Distributions
+    description: Probability distributions — the building blocks of statistical models
+
+  - slug: statistical-inference
+    title: Statistical Inference
+    description: Drawing conclusions from data — estimation, testing, and uncertainty
+
+  - slug: regression-modeling
+    title: Regression & Modeling
+    description: Modeling relationships between variables
+
+  - slug: data-science-practice
+    title: Data Science Practice
+    description: Applied skills for working with real data
+
+topics:
+  # ── Probability Foundations ──────────────────────────────────
+  - slug: sample-spaces
+    title: Sample Spaces and Events
+    domain: probability-foundations
+    difficulty: intro
+    summary: The foundation of probability — defining what can happen and what we're interested in.
+
+  - slug: basic-probability
+    title: Basic Probability Rules
+    domain: probability-foundations
+    difficulty: intro
+    summary: Addition rule, complement rule, and the axioms of probability.
+    prerequisites: [sample-spaces]
+
+  - slug: conditional-probability
+    title: Conditional Probability
+    domain: probability-foundations
+    difficulty: intro
+    summary: How the probability of an event changes when we know something else happened.
+    prerequisites: [basic-probability]
+
+  - slug: independence
+    title: Independence
+    domain: probability-foundations
+    difficulty: intro
+    summary: When knowing one event tells you nothing about another.
+    prerequisites: [conditional-probability]
+
+  - slug: bayes-theorem
+    title: "Bayes' Theorem"
+    domain: probability-foundations
+    difficulty: intro
+    summary: Reversing conditional probabilities — the foundation of Bayesian thinking.
+    prerequisites: [conditional-probability]
+
+  - slug: random-variables
+    title: Random Variables
+    domain: probability-foundations
+    difficulty: intro
+    summary: Mapping outcomes to numbers — the bridge between probability and statistics.
+    prerequisites: [basic-probability]
+
+  - slug: expectation
+    title: Expected Value
+    domain: probability-foundations
+    difficulty: intro
+    summary: The long-run average — what you'd expect on average over many repetitions.
+    prerequisites: [random-variables]
+
+  - slug: variance
+    title: Variance and Standard Deviation
+    domain: probability-foundations
+    difficulty: intro
+    summary: Measuring spread — how far values typically deviate from the mean.
+    prerequisites: [expectation]
+
+  - slug: law-of-large-numbers
+    title: Law of Large Numbers
+    domain: probability-foundations
+    difficulty: intermediate
+    summary: Why sample averages converge to the true mean as sample size grows.
+    prerequisites: [expectation, variance]
+
+  - slug: central-limit-theorem
+    title: Central Limit Theorem
+    domain: probability-foundations
+    difficulty: intermediate
+    summary: Why the normal distribution appears everywhere — the most important theorem in statistics.
+    prerequisites: [variance, normal-distribution]
+
+  # ── Distributions ────────────────────────────────────────────
+  - slug: bernoulli-distribution
+    title: Bernoulli Distribution
+    domain: distributions
+    difficulty: intro
+    summary: The simplest distribution — a single yes/no trial.
+    prerequisites: [random-variables]
+
+  - slug: binomial-distribution
+    title: Binomial Distribution
+    domain: distributions
+    difficulty: intro
+    summary: Counting successes in a fixed number of independent trials.
+    prerequisites: [bernoulli-distribution]
+
+  - slug: poisson-distribution
+    title: Poisson Distribution
+    domain: distributions
+    difficulty: intro
+    summary: Modeling rare events — how many times something happens in a fixed interval.
+    prerequisites: [expectation]
+
+  - slug: normal-distribution
+    title: Normal (Gaussian) Distribution
+    domain: distributions
+    difficulty: intro
+    summary: The bell curve — the most important continuous distribution in statistics.
+    prerequisites: [expectation, variance]
+
+  - slug: exponential-distribution
+    title: Exponential Distribution
+    domain: distributions
+    difficulty: intermediate
+    summary: Modeling waiting times between events.
+    prerequisites: [poisson-distribution]
+
+  - slug: t-distribution
+    title: Student's t-Distribution
+    domain: distributions
+    difficulty: intermediate
+    summary: Like the normal but with heavier tails — essential when sample sizes are small.
+    prerequisites: [normal-distribution, variance]
+
+  - slug: chi-squared-distribution
+    title: Chi-Squared Distribution
+    domain: distributions
+    difficulty: intermediate
+    summary: The distribution of squared standard normals — used in goodness-of-fit tests.
+    prerequisites: [normal-distribution]
+
+  - slug: f-distribution
+    title: F-Distribution
+    domain: distributions
+    difficulty: intermediate
+    summary: The ratio of two chi-squared variables — used in ANOVA and regression testing.
+    prerequisites: [chi-squared-distribution]
+
+  # ── Statistical Inference ────────────────────────────────────
+  - slug: point-estimation
+    title: Point Estimation
+    domain: statistical-inference
+    difficulty: intro
+    summary: Using a single number to estimate a population parameter.
+    prerequisites: [random-variables, expectation]
+
+  - slug: sampling-distributions
+    title: Sampling Distributions
+    domain: statistical-inference
+    difficulty: intermediate
+    summary: The distribution of a statistic across all possible samples.
+    prerequisites: [point-estimation, central-limit-theorem]
+
+  - slug: confidence-intervals
+    title: Confidence Intervals
+    domain: statistical-inference
+    difficulty: intermediate
+    summary: Quantifying uncertainty — a range of plausible values for a parameter.
+    prerequisites: [sampling-distributions, normal-distribution]
+
+  - slug: hypothesis-testing
+    title: Hypothesis Testing
+    domain: statistical-inference
+    difficulty: intermediate
+    summary: Making decisions about populations based on sample evidence.
+    prerequisites: [sampling-distributions]
+
+  - slug: p-values
+    title: P-Values
+    domain: statistical-inference
+    difficulty: intermediate
+    summary: The probability of seeing data this extreme if the null hypothesis were true.
+    prerequisites: [hypothesis-testing]
+
+  - slug: statistical-power
+    title: Statistical Power
+    domain: statistical-inference
+    difficulty: intermediate
+    summary: The probability of detecting a real effect — and how sample size affects it.
+    prerequisites: [hypothesis-testing, p-values]
+
+  - slug: t-tests
+    title: T-Tests
+    domain: statistical-inference
+    difficulty: intermediate
+    summary: Comparing means when you have small samples or unknown population variance.
+    prerequisites: [hypothesis-testing, t-distribution]
+
+  - slug: likelihood
+    title: Likelihood
+    domain: statistical-inference
+    difficulty: intermediate
+    summary: How likely is the data given the parameters? The reverse of probability.
+    prerequisites: [conditional-probability, random-variables]
+
+  - slug: maximum-likelihood-estimation
+    title: Maximum Likelihood Estimation
+    domain: statistical-inference
+    difficulty: advanced
+    summary: Finding parameters that make the observed data most probable.
+    prerequisites: [likelihood]
+
+  - slug: bayesian-inference
+    title: Bayesian Inference
+    domain: statistical-inference
+    difficulty: advanced
+    summary: Updating beliefs with data — priors, posteriors, and the Bayesian framework.
+    prerequisites: [bayes-theorem, likelihood]
+
+  # ── Regression & Modeling ────────────────────────────────────
+  - slug: correlation
+    title: Correlation
+    domain: regression-modeling
+    difficulty: intro
+    summary: Measuring the linear relationship between two variables.
+    prerequisites: [variance]
+
+  - slug: simple-linear-regression
+    title: Simple Linear Regression
+    domain: regression-modeling
+    difficulty: intermediate
+    summary: Fitting a line to predict one variable from another.
+    prerequisites: [correlation, point-estimation]
+
+  - slug: multiple-regression
+    title: Multiple Linear Regression
+    domain: regression-modeling
+    difficulty: intermediate
+    summary: Predicting an outcome from multiple predictors simultaneously.
+    prerequisites: [simple-linear-regression]
+
+  - slug: model-diagnostics
+    title: Model Diagnostics
+    domain: regression-modeling
+    difficulty: intermediate
+    summary: Checking whether your regression assumptions hold.
+    prerequisites: [simple-linear-regression, normal-distribution]
+
+  - slug: logistic-regression
+    title: Logistic Regression
+    domain: regression-modeling
+    difficulty: intermediate
+    summary: Predicting binary outcomes — yes/no, pass/fail, click/no-click.
+    prerequisites: [multiple-regression, maximum-likelihood-estimation]
+
+  - slug: regularization
+    title: Regularization (Ridge & Lasso)
+    domain: regression-modeling
+    difficulty: advanced
+    summary: Preventing overfitting by penalizing model complexity.
+    prerequisites: [multiple-regression]
+
+  # ── Data Science Practice ────────────────────────────────────
+  - slug: exploratory-data-analysis
+    title: Exploratory Data Analysis (EDA)
+    domain: data-science-practice
+    difficulty: intro
+    summary: Looking at your data before modeling — summaries, plots, and patterns.
+    prerequisites: [expectation, variance]
+
+  - slug: data-wrangling
+    title: Data Wrangling
+    domain: data-science-practice
+    difficulty: intro
+    summary: Cleaning, reshaping, and preparing messy real-world data.
+    prerequisites: [random-variables]
+
+  - slug: ab-testing
+    title: A/B Testing
+    domain: data-science-practice
+    difficulty: intermediate
+    summary: Designing and analyzing randomized experiments in practice.
+    prerequisites: [hypothesis-testing, p-values, confidence-intervals]
+    cross_domain_links:
+      - domain: medicine
+        description: Diagnostic testing and clinical trials
+      - domain: business
+        description: Conversion optimization and product experiments
+
+  - slug: cross-validation
+    title: Cross-Validation
+    domain: data-science-practice
+    difficulty: intermediate
+    summary: Estimating how well your model will perform on unseen data.
+    prerequisites: [simple-linear-regression]
+
+  - slug: bias-variance-tradeoff
+    title: Bias-Variance Tradeoff
+    domain: data-science-practice
+    difficulty: intermediate
+    summary: The fundamental tension in modeling — simplicity vs. flexibility.
+    prerequisites: [variance, cross-validation]
+
+  - slug: missing-data
+    title: Missing Data
+    domain: data-science-practice
+    difficulty: intermediate
+    summary: Handling incomplete datasets — when values are absent and why it matters.
+    prerequisites: [exploratory-data-analysis, point-estimation]

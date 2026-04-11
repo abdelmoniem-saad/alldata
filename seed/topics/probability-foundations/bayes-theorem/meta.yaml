@@ -1,0 +1,8 @@
+title: "Bayes' Theorem"
+slug: bayes-theorem
+domain: probability-foundations
+difficulty: intro
+summary: Reversing conditional probabilities — the foundation of Bayesian thinking.
+prerequisites: [conditional-probability]
+has_intuition_layer: true
+has_formal_layer: true

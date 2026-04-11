@@ -1,0 +1,8 @@
+title: Random Variables
+slug: random-variables
+domain: probability-foundations
+difficulty: intro
+summary: Mapping outcomes to numbers — the bridge between probability and statistics.
+prerequisites: [basic-probability]
+has_intuition_layer: true
+has_formal_layer: true

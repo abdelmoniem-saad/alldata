@@ -1,0 +1,8 @@
+title: Normal (Gaussian) Distribution
+slug: normal-distribution
+domain: distributions
+difficulty: intro
+summary: The bell curve — the most important continuous distribution in statistics.
+prerequisites: [expectation, variance]
+has_intuition_layer: true
+has_formal_layer: true
