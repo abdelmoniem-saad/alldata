@@ -11,6 +11,12 @@ const navItems = [
 export default function Layout() {
   const location = useLocation()
   const isGraphPage = location.pathname === '/explore'
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  // Close mobile menu on navigation
+  useEffect(() => {
+    setMobileMenuOpen(false)
+  }, [location.pathname])
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -18,7 +24,7 @@ export default function Layout() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 20px',
+        padding: '0 16px',
         height: 52,
         borderBottom: '1px solid var(--color-border-subtle)',
         background: isGraphPage ? 'rgba(10, 11, 18, 0.85)' : 'rgba(10, 11, 18, 0.95)',
@@ -58,8 +64,8 @@ export default function Layout() {
             AllData
           </Link>
 
-          {/* Nav */}
-          <nav style={{ display: 'flex', gap: 2 }}>
+          {/* Desktop Nav */}
+          <nav className="desktop-only" style={{ display: 'flex', gap: 2 }}>
             {navItems.map(item => {
               const isActive = location.pathname === item.path
               return (
@@ -83,10 +89,68 @@ export default function Layout() {
           </nav>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <CommandSearch />
+
+          {/* Mobile hamburger */}
+          <button
+            className="mobile-only"
+            onClick={() => setMobileMenuOpen(v => !v)}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 36, height: 36, borderRadius: 8,
+              border: '1px solid var(--color-border)',
+              background: mobileMenuOpen ? 'var(--color-surface)' : 'transparent',
+              color: 'var(--color-text)',
+              cursor: 'pointer',
+            }}
+            aria-label="Menu"
+          >
+            {mobileMenuOpen ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 6L6 18M6 6l12 12"/>
+              </svg>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 12h18M3 6h18M3 18h18"/>
+              </svg>
+            )}
+          </button>
         </div>
       </header>
+
+      {/* Mobile menu dropdown */}
+      {mobileMenuOpen && (
+        <div className="mobile-only animate-fade-in" style={{
+          position: 'sticky', top: 52, zIndex: 99,
+          background: 'var(--color-bg-secondary)',
+          borderBottom: '1px solid var(--color-border)',
+          padding: '8px 16px',
+          display: 'flex', flexDirection: 'column', gap: 2,
+        }}>
+          {navItems.map(item => {
+            const isActive = location.pathname === item.path
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: 8,
+                  fontSize: 15,
+                  fontWeight: isActive ? 600 : 500,
+                  color: isActive ? 'var(--color-text)' : 'var(--color-text-secondary)',
+                  background: isActive ? 'var(--color-accent-subtle)' : 'transparent',
+                  transition: 'all var(--transition-fast)',
+                }}
+              >
+                {item.label}
+              </Link>
+            )
+          })}
+        </div>
+      )}
+
       <main style={{ flex: 1, overflow: 'auto' }}>
         <Outlet />
       </main>
@@ -160,9 +224,10 @@ function CommandSearch() {
 
   return (
     <>
-      {/* Trigger button */}
+      {/* Trigger button — full on desktop, icon-only on mobile */}
       <button
         onClick={() => setOpen(true)}
+        className="desktop-only"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -193,6 +258,23 @@ function CommandSearch() {
           Ctrl K
         </kbd>
       </button>
+      <button
+        onClick={() => setOpen(true)}
+        className="mobile-only"
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          width: 36, height: 36, borderRadius: 8,
+          border: '1px solid var(--color-border)',
+          background: 'var(--color-surface)',
+          color: 'var(--color-text-muted)',
+          cursor: 'pointer',
+        }}
+        aria-label="Search"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+      </button>
 
       {/* Overlay */}
       {open && (
@@ -205,6 +287,7 @@ function CommandSearch() {
             backdropFilter: 'blur(4px)',
             zIndex: 999,
             display: 'flex',
+            alignItems: 'flex-start',
             justifyContent: 'center',
             paddingTop: 120,
           }}
@@ -213,7 +296,8 @@ function CommandSearch() {
             onClick={e => e.stopPropagation()}
             className="animate-fade-in-up"
             style={{
-              width: 520,
+              width: '90%',
+              maxWidth: 520,
               maxHeight: 440,
               background: 'var(--color-bg-secondary)',
               border: '1px solid var(--color-border)',

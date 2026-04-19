@@ -296,3 +296,69 @@ pre {
   animation: shimmer 1.5s infinite;
   border-radius: var(--radius);
 }
+
+/* ─── Path Form ─── */
+.path-form-inputs {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 16px;
+}
+
+/* ─── Mobile Responsive ─── */
+
+/* Hide on mobile */
+@media (max-width: 768px) {
+  .desktop-only { display: none !important; }
+}
+/* Hide on desktop */
+@media (min-width: 769px) {
+  .mobile-only { display: none !important; }
+}
+
+@media (max-width: 768px) {
+  .prose h1 { font-size: 22px; }
+  .prose h2 { font-size: 18px; }
+  .prose h3 { font-size: 15px; }
+  .prose p, .prose li { font-size: 14px; }
+
+  pre { font-size: 12px; padding: 12px; }
+
+  .topic-container {
+    padding: 20px 14px 60px !important;
+  }
+  .topic-container h1 {
+    font-size: 26px !important;
+  }
+
+  .path-form-inputs {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  .path-form-arrow {
+    align-self: center;
+  }
+  .path-form-arrow .path-arrow-icon {
+    transform: rotate(90deg);
+  }
+  .popular-paths-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .hero-title {
+    font-size: 34px !important;
+    letter-spacing: -1px !important;
+  }
+  .domain-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .features-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .domain-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

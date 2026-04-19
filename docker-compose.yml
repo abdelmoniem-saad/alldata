@@ -36,7 +36,7 @@ services:
       DATABASE_URL: postgresql+asyncpg://alldata:alldata_dev@db:5432/alldata
       REDIS_URL: redis://redis:6379/0
       SECRET_KEY: dev-secret-key-change-in-production
-      CORS_ORIGINS: '["http://localhost:5173"]'
+      CORS_ORIGINS: '["http://localhost:5173","http://localhost:3000"]'
     depends_on:
       db:
         condition: service_healthy
@@ -46,6 +46,15 @@ services:
       - ./backend:/app/backend
       - /var/run/docker.sock:/var/run/docker.sock
     command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
 
   sandbox-python:
     build:

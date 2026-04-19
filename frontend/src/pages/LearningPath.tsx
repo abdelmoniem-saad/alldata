@@ -279,7 +279,7 @@ export default function LearningPath() {
   }, [])
 
   return (
-    <div className="animate-fade-in-up" style={{ maxWidth: 700, margin: '0 auto', padding: '48px 24px 80px' }}>
+    <div className="animate-fade-in-up" style={{ maxWidth: 700, margin: '0 auto', padding: '48px 16px 80px' }}>
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: 40 }}>
         <h1 style={{ fontSize: 32, fontWeight: 900, letterSpacing: '-0.5px', marginBottom: 8 }}>
@@ -297,7 +297,7 @@ export default function LearningPath() {
         border: '1px solid var(--color-border)',
         marginBottom: 24,
       }}>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', marginBottom: 16 }}>
+        <div className="path-form-inputs">
           <TopicSearchInput
             value={from}
             onChange={(slug) => setFrom(slug)}
@@ -307,13 +307,13 @@ export default function LearningPath() {
           />
 
           {/* Arrow */}
-          <div style={{
+          <div className="path-form-arrow" style={{
             width: 40, height: 40, display: 'flex',
             alignItems: 'center', justifyContent: 'center',
             color: 'var(--color-accent)',
             flexShrink: 0,
           }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg className="path-arrow-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
           </div>
@@ -347,7 +347,7 @@ export default function LearningPath() {
           }}>
             Popular Paths
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          <div className="popular-paths-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             {POPULAR_PATHS.map(p => (
               <button
                 key={p.label}

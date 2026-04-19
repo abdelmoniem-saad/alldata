@@ -47,7 +47,7 @@ export default function Home() {
           KNOWLEDGE GRAPH FOR STATISTICS
         </div>
 
-        <h1 style={{
+        <h1 className="hero-title" style={{
           fontSize: 56,
           fontWeight: 900,
           lineHeight: 1.05,
@@ -140,7 +140,7 @@ export default function Home() {
       </section>
 
       {/* Domain Cards */}
-      <section className="stagger" style={{
+      <section className="stagger domain-grid" style={{
         position: 'relative',
         zIndex: 1,
         display: 'grid',
@@ -300,7 +300,7 @@ export default function Home() {
           Not a textbook. Not a course platform. A living knowledge graph.
         </p>
 
-        <div className="stagger" style={{
+        <div className="stagger features-grid" style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(3, 1fr)',
           gap: 16,

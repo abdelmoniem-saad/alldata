@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { api, TopicDetail, GraphNode } from '../api/client'
 import ContentRenderer from '../components/topic/ContentRenderer'
+import SlideView from '../components/topic/SlideView'
 import { useProgressStore } from '../stores/progressStore'
 
 const DOMAIN_COLORS: Record<string, string> = {
@@ -14,11 +15,11 @@ const DOMAIN_COLORS: Record<string, string> = {
 
 export default function TopicView() {
   const { slug } = useParams<{ slug: string }>()
-  const navigate = useNavigate()
   const [topic, setTopic] = useState<TopicDetail | null>(null)
   const [prerequisites, setPrerequisites] = useState<GraphNode[]>([])
   const [leadsTo, setLeadsTo] = useState<GraphNode[]>([])
   const [activeLayer, setActiveLayer] = useState<'intuition' | 'formal' | 'both'>('intuition')
+  const [viewMode, setViewMode] = useState<'slides' | 'scroll'>('slides')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [readProgress, setReadProgress] = useState(0)
@@ -117,7 +118,7 @@ export default function TopicView() {
         }} />
       </div>
 
-      <div className="animate-fade-in-up" style={{ maxWidth: 800, margin: '0 auto', padding: '36px 24px 80px' }}>
+      <div className="animate-fade-in-up topic-container" style={{ maxWidth: 800, margin: '0 auto', padding: '36px 24px 80px' }}>
         {/* Breadcrumb */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: 8,
@@ -173,36 +174,85 @@ export default function TopicView() {
           )}
         </div>
 
-        {/* Layer toggle */}
-        {topic.has_formal_layer && (
-          <div style={{
-            display: 'inline-flex', gap: 3, marginBottom: 32, padding: 3,
-            borderRadius: 10,
-            background: 'var(--color-surface)',
-            border: '1px solid var(--color-border-subtle)',
-          }}>
-            {(['intuition', 'formal', 'both'] as const).map(layer => (
-              <button
-                key={layer}
-                onClick={() => setActiveLayer(layer)}
-                style={{
-                  padding: '7px 16px',
-                  borderRadius: 8,
-                  border: 'none',
-                  background: activeLayer === layer ? 'var(--color-accent)' : 'transparent',
-                  color: activeLayer === layer ? 'white' : 'var(--color-text-muted)',
-                  fontSize: 13,
-                  fontWeight: activeLayer === layer ? 600 : 500,
-                  cursor: 'pointer',
-                  transition: 'all var(--transition-smooth)',
-                  textTransform: 'capitalize',
-                }}
-              >
-                {layer === 'both' ? 'All' : layer}
-              </button>
-            ))}
-          </div>
-        )}
+        {/* Controls row: Layer toggle + View mode toggle */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12, marginBottom: 32, flexWrap: 'wrap',
+        }}>
+          {/* Layer toggle */}
+          {topic.has_formal_layer && (
+            <div style={{
+              display: 'inline-flex', gap: 3, padding: 3,
+              borderRadius: 10,
+              background: 'var(--color-surface)',
+              border: '1px solid var(--color-border-subtle)',
+            }}>
+              {(['intuition', 'formal', 'both'] as const).map(layer => (
+                <button
+                  key={layer}
+                  onClick={() => setActiveLayer(layer)}
+                  style={{
+                    padding: '7px 16px',
+                    borderRadius: 8,
+                    border: 'none',
+                    background: activeLayer === layer ? 'var(--color-accent)' : 'transparent',
+                    color: activeLayer === layer ? 'white' : 'var(--color-text-muted)',
+                    fontSize: 13,
+                    fontWeight: activeLayer === layer ? 600 : 500,
+                    cursor: 'pointer',
+                    transition: 'all var(--transition-smooth)',
+                    textTransform: 'capitalize',
+                  }}
+                >
+                  {layer === 'both' ? 'All' : layer}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* View mode toggle */}
+          {topic.content_blocks.length > 0 && (
+            <div style={{
+              display: 'inline-flex', gap: 3, padding: 3,
+              borderRadius: 10,
+              background: 'var(--color-surface)',
+              border: '1px solid var(--color-border-subtle)',
+              marginLeft: topic.has_formal_layer ? 'auto' : 0,
+            }}>
+              {([
+                { key: 'slides' as const, icon: (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
+                  </svg>
+                ), label: 'Slides' },
+                { key: 'scroll' as const, icon: (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>
+                  </svg>
+                ), label: 'Scroll' },
+              ]).map(mode => (
+                <button
+                  key={mode.key}
+                  onClick={() => setViewMode(mode.key)}
+                  style={{
+                    padding: '7px 14px',
+                    borderRadius: 8,
+                    border: 'none',
+                    background: viewMode === mode.key ? domainColor : 'transparent',
+                    color: viewMode === mode.key ? 'white' : 'var(--color-text-muted)',
+                    fontSize: 12,
+                    fontWeight: viewMode === mode.key ? 600 : 500,
+                    cursor: 'pointer',
+                    transition: 'all var(--transition-smooth)',
+                    display: 'flex', alignItems: 'center', gap: 5,
+                  }}
+                >
+                  {mode.icon}
+                  {mode.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Prerequisites */}
         {prerequisites.length > 0 && (
@@ -264,11 +314,21 @@ export default function TopicView() {
 
         {/* Content */}
         {topic.content_blocks.length > 0 ? (
-          <ContentRenderer
-            blocks={topic.content_blocks}
-            misconceptions={topic.misconceptions}
-            activeLayer={activeLayer}
-          />
+          viewMode === 'slides' ? (
+            <SlideView
+              blocks={topic.content_blocks}
+              misconceptions={topic.misconceptions}
+              activeLayer={activeLayer}
+              topicTitle={topic.title}
+              domainColor={domainColor}
+            />
+          ) : (
+            <ContentRenderer
+              blocks={topic.content_blocks}
+              misconceptions={topic.misconceptions}
+              activeLayer={activeLayer}
+            />
+          )
         ) : (
           /* Empty topic — Coming Soon state */
           <div style={{
