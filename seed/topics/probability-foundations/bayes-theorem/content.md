@@ -66,7 +66,7 @@ print(f"This is WAY lower than the 95% test accuracy!")
 # Visualize
 fig, ax = plt.subplots(figsize=(8, 4))
 ax.barh(['True Positive\n(sick & positive)', 'False Positive\n(healthy & positive)'],
-        [true_positives, false_positives], color=['#e74c3c', '#3498db'])
+        [true_positives, false_positives], color=['#14b8a6', '#71717a'])
 ax.set_xlabel('Number of people')
 ax.set_title('Among all positive tests, most are FALSE positives')
 plt.tight_layout()

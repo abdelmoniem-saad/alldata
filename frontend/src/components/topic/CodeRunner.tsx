@@ -17,6 +17,7 @@ export default function CodeRunner({
   const [running, setRunning] = useState(false)
   const [showOutput, setShowOutput] = useState(!!expectedOutput)
   const [runCount, setRunCount] = useState(0)
+  const [isFocused, setIsFocused] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   // Auto-resize textarea
@@ -30,8 +31,9 @@ export default function CodeRunner({
   const run = async () => {
     setRunning(true)
     setResult(null)
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark'
     try {
-      const res = await api.executeCode(code, language)
+      const res = await api.executeCode(code, language, currentTheme)
       setResult(res)
       setShowOutput(true)
       setRunCount(c => c + 1)
@@ -56,15 +58,16 @@ export default function CodeRunner({
     setShowOutput(!!expectedOutput)
   }
 
-  const accentColor = isSimulation ? '#00d4ff' : 'var(--color-accent)'
+  const accentColor = isSimulation ? 'var(--color-accent)' : 'var(--color-accent)'
 
   return (
     <div style={{
       borderRadius: 'var(--radius-lg)',
-      border: `1px solid ${isSimulation ? 'rgba(0, 212, 255, 0.2)' : 'var(--color-border)'}`,
+      border: `1px solid ${isFocused ? 'var(--color-accent)' : isSimulation ? 'var(--color-accent-glow)' : 'var(--color-border)'}`,
+      boxShadow: isFocused ? '0 0 20px var(--color-accent-glow)' : 'none',
       overflow: 'hidden',
       background: 'var(--color-bg-secondary)',
-      transition: 'border-color var(--transition-smooth)',
+      transition: 'all var(--transition-smooth)',
     }}>
       {/* Header bar */}
       <div style={{
@@ -88,7 +91,7 @@ export default function CodeRunner({
             fontWeight: 700,
             textTransform: 'uppercase',
             letterSpacing: '1px',
-            color: isSimulation ? '#00d4ff' : 'var(--color-text-muted)',
+            color: isSimulation ? 'var(--color-accent)' : 'var(--color-text-muted)',
             marginLeft: 4,
           }}>
             {isSimulation ? 'SIMULATION' : language.toUpperCase()}
@@ -121,9 +124,9 @@ export default function CodeRunner({
               fontSize: 11,
               padding: '3px 12px',
               ...(isSimulation ? {
-                background: 'rgba(0, 212, 255, 0.15)',
-                borderColor: 'rgba(0, 212, 255, 0.3)',
-                color: '#00d4ff',
+                background: 'var(--color-accent-subtle)',
+                borderColor: 'var(--color-accent-glow)',
+                color: 'var(--color-accent)',
               } : {}),
               ...(running ? {
                 background: 'var(--color-surface)',
@@ -186,6 +189,8 @@ export default function CodeRunner({
             ref={textareaRef}
             value={code}
             onChange={e => setCode(e.target.value)}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
             onKeyDown={e => {
               // Ctrl/Cmd + Enter to run
               if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
@@ -261,7 +266,7 @@ export default function CodeRunner({
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{
                   fontSize: 10,
-                  color: result.exit_code === 0 ? '#22c55e' : '#ef4444',
+                  color: result.exit_code === 0 ? 'var(--color-intro)' : 'var(--color-advanced)',
                   fontWeight: 600,
                 }}>
                   {result.exit_code === 0 ? 'Success' : `Exit ${result.exit_code}`}
@@ -313,7 +318,7 @@ export default function CodeRunner({
                 borderRadius: 'var(--radius)',
                 border: '1px solid rgba(239, 68, 68, 0.12)',
                 fontSize: 12, lineHeight: 1.6,
-                color: '#ef4444',
+                color: 'var(--color-advanced)',
                 whiteSpace: 'pre-wrap',
               }}>
                 {result.stderr}

@@ -5,14 +5,6 @@ import ContentRenderer from '../components/topic/ContentRenderer'
 import SlideView from '../components/topic/SlideView'
 import { useProgressStore } from '../stores/progressStore'
 
-const DOMAIN_COLORS: Record<string, string> = {
-  'probability-foundations': '#ff8a3d',
-  'distributions': '#00d4ff',
-  'statistical-inference': '#a78bfa',
-  'regression-modeling': '#34d399',
-  'data-science-practice': '#fb7185',
-}
-
 export default function TopicView() {
   const { slug } = useParams<{ slug: string }>()
   const [topic, setTopic] = useState<TopicDetail | null>(null)
@@ -95,7 +87,7 @@ export default function TopicView() {
     )
   }
 
-  const domainColor = DOMAIN_COLORS[topic.domain || ''] || '#7c5cfc'
+  const domainColor = `var(--color-${topic.domain?.split('-')[0] || 'probability'})`
 
   return (
     <>
@@ -112,9 +104,9 @@ export default function TopicView() {
         <div style={{
           height: '100%',
           width: `${readProgress * 100}%`,
-          background: `linear-gradient(90deg, ${domainColor}, var(--color-accent))`,
+          background: 'var(--color-accent)',
           transition: 'width 0.1s linear',
-          boxShadow: `0 0 10px ${domainColor}40`,
+          boxShadow: '0 0 10px var(--color-accent-glow)',
         }} />
       </div>
 
@@ -159,8 +151,10 @@ export default function TopicView() {
             )}
           </div>
           <h1 style={{
-            fontSize: 36, fontWeight: 900,
-            letterSpacing: '-1px', marginBottom: 10, lineHeight: 1.15,
+            fontSize: 42, fontWeight: 700,
+            letterSpacing: '-1.5px', marginBottom: 16, lineHeight: 1.1,
+            fontFamily: 'var(--font-serif)',
+            color: 'var(--color-text)',
           }}>
             {topic.title}
           </h1>
@@ -275,7 +269,7 @@ export default function TopicView() {
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {prerequisites.map(p => {
-                const pColor = DOMAIN_COLORS[p.domain || ''] || '#7c5cfc'
+                const pColor = `var(--color-${p.domain?.split('-')[0] || 'probability'})`
                 return (
                   <Link
                     key={p.id}
@@ -377,8 +371,8 @@ export default function TopicView() {
                   padding: '12px 28px',
                   borderRadius: 12,
                   fontSize: 14,
-                  color: '#22c55e',
-                  border: '1px solid rgba(34, 197, 94, 0.3)',
+                  color: 'var(--color-intro)',
+                  border: '1px solid var(--color-intro)',
                   background: 'rgba(34, 197, 94, 0.08)',
                 }}
               >
@@ -392,8 +386,8 @@ export default function TopicView() {
                 padding: '14px 28px',
                 borderRadius: 12,
                 background: 'rgba(34, 197, 94, 0.1)',
-                border: '1px solid rgba(34, 197, 94, 0.3)',
-                color: '#22c55e',
+                border: '1px solid var(--color-intro)',
+                color: 'var(--color-intro)',
                 fontSize: 15,
                 fontWeight: 600,
                 display: 'inline-flex',
@@ -434,8 +428,8 @@ export default function TopicView() {
             marginTop: 56,
             padding: 24,
             borderRadius: 'var(--radius-lg)',
-            border: '1px solid rgba(124, 92, 252, 0.15)',
-            background: 'linear-gradient(145deg, rgba(124, 92, 252, 0.04), transparent)',
+            border: '1px solid var(--color-accent-glow)',
+            background: 'linear-gradient(145deg, var(--color-accent-subtle), transparent)',
           }}>
             <div style={{
               fontSize: 11, fontWeight: 700,
@@ -451,7 +445,7 @@ export default function TopicView() {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 8 }}>
               {leadsTo.map(t => {
-                const tColor = DOMAIN_COLORS[t.domain || ''] || '#7c5cfc'
+                const tColor = `var(--color-${t.domain?.split('-')[0] || 'probability'})`
                 return (
                   <Link
                     key={t.id}

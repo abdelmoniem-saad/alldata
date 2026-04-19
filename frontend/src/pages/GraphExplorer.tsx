@@ -6,11 +6,11 @@ import { useGraphStore } from '../stores/graphStore'
 import { api, GraphNode } from '../api/client'
 
 const DOMAIN_COLORS: Record<string, string> = {
-  'probability-foundations': '#ff8a3d',
-  'distributions': '#00d4ff',
-  'statistical-inference': '#a78bfa',
-  'regression-modeling': '#34d399',
-  'data-science-practice': '#fb7185',
+  'probability-foundations': '#71717a',
+  'distributions': '#a1a1aa',
+  'statistical-inference': '#d4d4d8',
+  'regression-modeling': '#52525b',
+  'data-science-practice': '#3f3f46',
 }
 
 export default function GraphExplorer() {
@@ -148,26 +148,29 @@ export default function GraphExplorer() {
           >
             All
           </button>
-          {Object.entries(DOMAIN_COLORS).map(([domain, color]) => (
-            <button
-              key={domain}
-              className={`btn btn-sm ${activeDomain === domain ? '' : 'btn-ghost'}`}
-              onClick={() => setActiveDomain(activeDomain === domain ? null : domain)}
-              style={{
-                fontSize: 11,
-                borderColor: activeDomain === domain ? color : undefined,
-                background: activeDomain === domain ? `${color}20` : undefined,
-                color: activeDomain === domain ? color : undefined,
-              }}
-            >
-              <span style={{
-                width: 6, height: 6, borderRadius: '50%',
-                background: color, display: 'inline-block',
-                boxShadow: `0 0 6px ${color}50`,
-              }} />
-              {domain.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()).replace('Foundations', '').trim()}
-            </button>
-          ))}
+          {Object.entries(DOMAIN_COLORS).map(([domain, color]) => {
+            const domainVar = `var(--color-${domain.split('-')[0]})`
+            return (
+              <button
+                key={domain}
+                className={`btn btn-sm ${activeDomain === domain ? '' : 'btn-ghost'}`}
+                onClick={() => setActiveDomain(activeDomain === domain ? null : domain)}
+                style={{
+                  fontSize: 11,
+                  borderColor: activeDomain === domain ? domainVar : undefined,
+                  background: activeDomain === domain ? `var(--color-accent-subtle)` : undefined,
+                  color: activeDomain === domain ? 'var(--color-text)' : undefined,
+                }}
+              >
+                <span style={{
+                  width: 6, height: 6, borderRadius: '50%',
+                  background: domainVar, display: 'inline-block',
+                  boxShadow: `0 0 6px rgba(255,255,255,0.1)`,
+                }} />
+                {domain.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()).replace('Foundations', '').trim()}
+              </button>
+            )
+          })}
         </div>
 
         {/* Stats bar */}
@@ -187,7 +190,7 @@ export default function GraphExplorer() {
           {activeDomain && (
             <>
               <span style={{ color: 'var(--color-border)' }}>|</span>
-              <span style={{ color: DOMAIN_COLORS[activeDomain] }}>
+              <span style={{ color: 'var(--color-text)' }}>
                 {activeDomain.replace(/-/g, ' ')}
               </span>
             </>

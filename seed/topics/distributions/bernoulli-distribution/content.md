@@ -42,7 +42,7 @@ fig, axes = plt.subplots(1, 5, figsize=(12, 3), sharey=True)
 for ax, p in zip(axes, probabilities):
     trials = np.random.binomial(1, p, n_trials)
     counts = [np.sum(trials == 0), np.sum(trials == 1)]
-    ax.bar([0, 1], [c/n_trials for c in counts], color=['#ef4444', '#22c55e'],
+    ax.bar([0, 1], [c/n_trials for c in counts], color=['#71717a', '#14b8a6'],
            width=0.5, edgecolor='white')
     ax.set_title(f'p = {p}', fontsize=11, fontweight='bold')
     ax.set_xticks([0, 1])

@@ -51,7 +51,7 @@ fig, axes = plt.subplots(2, 2, figsize=(10, 8))
 for ax, (x, y, title) in zip(axes.flat, datasets):
     x, y = np.array(x), np.array(y)
     r = np.corrcoef(x, y)[0, 1]
-    ax.scatter(x, y, color='#7c5cfc', s=60, edgecolors='white', zorder=3)
+    ax.scatter(x, y, color='#14b8a6', s=60, edgecolors='white', zorder=3)
     
     # Regression line
     m, b = np.polyfit(x, y, 1)

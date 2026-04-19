@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { api, GraphNode } from '../api/client'
+import { useThemeStore } from '../stores/themeStore'
 
 const navItems = [
   { path: '/', label: 'Home' },
@@ -12,6 +13,7 @@ export default function Layout() {
   const location = useLocation()
   const isGraphPage = location.pathname === '/explore'
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const { theme, toggleTheme } = useThemeStore()
 
   // Close mobile menu on navigation
   useEffect(() => {
@@ -27,13 +29,14 @@ export default function Layout() {
         padding: '0 16px',
         height: 52,
         borderBottom: '1px solid var(--color-border-subtle)',
-        background: isGraphPage ? 'rgba(10, 11, 18, 0.85)' : 'rgba(10, 11, 18, 0.95)',
+        background: isGraphPage ? 'var(--glass-bg)' : 'var(--glass-bg-opaque)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
         position: 'sticky',
         top: 0,
         zIndex: 100,
         flexShrink: 0,
+        transition: 'background var(--transition-smooth)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
           {/* Logo */}
@@ -49,7 +52,7 @@ export default function Layout() {
             <span style={{
               width: 24, height: 24,
               borderRadius: 7,
-              background: 'linear-gradient(135deg, #7c5cfc, #00d4ff)',
+              background: 'var(--color-accent)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -90,6 +93,34 @@ export default function Layout() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {/* Theme Toggle */}
+          <button
+            onClick={toggleTheme}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 36, height: 36, borderRadius: 8,
+              border: '1px solid var(--color-border)',
+              background: 'transparent',
+              color: 'var(--color-text)',
+              cursor: 'pointer',
+              transition: 'all var(--transition-fast)',
+            }}
+            aria-label="Toggle Theme"
+            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          >
+            {theme === 'dark' ? (
+              /* Sun Icon */
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+              </svg>
+            ) : (
+              /* Moon Icon */
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+              </svg>
+            )}
+          </button>
+
           <CommandSearch />
 
           {/* Mobile hamburger */}
@@ -283,13 +314,14 @@ function CommandSearch() {
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0,0,0,0.6)',
+            background: 'var(--color-overlay)',
             backdropFilter: 'blur(4px)',
             zIndex: 999,
             display: 'flex',
             alignItems: 'flex-start',
             justifyContent: 'center',
             paddingTop: 120,
+            transition: 'background var(--transition-smooth)',
           }}
         >
           <div
@@ -303,7 +335,8 @@ function CommandSearch() {
               border: '1px solid var(--color-border)',
               borderRadius: 'var(--radius-lg)',
               overflow: 'hidden',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.5), 0 0 40px var(--color-accent-glow)',
+              boxShadow: 'var(--shadow-lg), 0 0 40px var(--color-accent-glow)',
+              transition: 'background var(--transition-smooth), border-color var(--transition-smooth), box-shadow var(--transition-smooth)',
             }}
           >
             {/* Search input */}
@@ -352,13 +385,7 @@ function CommandSearch() {
                 </div>
               )}
               {results.map((r, i) => {
-                const COLORS: Record<string, string> = {
-                  'probability-foundations': '#ff8a3d',
-                  'distributions': '#00d4ff',
-                  'statistical-inference': '#a78bfa',
-                  'regression-modeling': '#34d399',
-                  'data-science-practice': '#fb7185',
-                }
+                const domainColor = `var(--color-${r.domain?.split('-')[0] || 'probability'})`
                 return (
                   <button
                     key={r.id}
@@ -382,8 +409,8 @@ function CommandSearch() {
                   >
                     <span style={{
                       width: 8, height: 8, borderRadius: '50%',
-                      background: COLORS[r.domain || ''] || '#7c5cfc',
-                      boxShadow: `0 0 6px ${COLORS[r.domain || ''] || '#7c5cfc'}40`,
+                      background: domainColor,
+                      boxShadow: '0 0 6px var(--glass-border)',
                       flexShrink: 0,
                     }} />
                     <span style={{ fontWeight: 500 }}>{r.title}</span>

@@ -24,6 +24,7 @@ async def execute_code(data: ExecutionRequest):
         code=data.code,
         language=data.language,
         timeout=data.timeout,
+        theme=data.theme,
     )
 
     return ExecutionResponse(**result)

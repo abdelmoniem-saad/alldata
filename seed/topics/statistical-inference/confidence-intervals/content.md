@@ -61,7 +61,7 @@ for i in range(n_intervals):
     ax.plot([ci_low, ci_high], [i, i], color=color, linewidth=1.5, alpha=0.7)
     ax.plot(x_bar, i, 'o', color=color, markersize=3)
 
-ax.axvline(true_mean, color='#7c5cfc', linewidth=2, linestyle='--', label=f'True μ = {true_mean}')
+ax.axvline(true_mean, color='#14b8a6', linewidth=2, linestyle='--', label=f'True μ = {true_mean}')
 ax.set_xlabel('Value', fontsize=12)
 ax.set_ylabel('Experiment number', fontsize=12)
 ax.set_title(f'100 Confidence Intervals (95%): {contains_count} contain the true mean', fontsize=13)

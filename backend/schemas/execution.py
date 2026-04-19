@@ -5,6 +5,7 @@ class ExecutionRequest(BaseModel):
     code: str
     language: str = "python"  # "python" or "r"
     timeout: int | None = None  # Override default timeout
+    theme: str = "dark"  # "dark" or "light"
 
 
 class ExecutionResponse(BaseModel):

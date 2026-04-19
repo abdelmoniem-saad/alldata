@@ -40,15 +40,15 @@ avg_30 = np.array([np.random.randint(1, 7, 30).mean() for _ in range(10000)])
 
 fig, axes = plt.subplots(1, 3, figsize=(14, 4))
 
-axes[0].hist(single_die, bins=6, density=True, color='#e74c3c', edgecolor='white')
+axes[0].hist(single_die, bins=6, density=True, color='#71717a', edgecolor='white')
 axes[0].set_title('1 die: Uniform')
 axes[0].set_xlabel('Value')
 
-axes[1].hist(avg_2, bins=30, density=True, color='#f39c12', edgecolor='white')
+axes[1].hist(avg_2, bins=30, density=True, color='#a1a1aa', edgecolor='white')
 axes[1].set_title('Average of 2 dice')
 axes[1].set_xlabel('Average')
 
-axes[2].hist(avg_30, bins=40, density=True, color='#2ecc71', edgecolor='white')
+axes[2].hist(avg_30, bins=40, density=True, color='#14b8a6', edgecolor='white')
 axes[2].set_title('Average of 30 dice: Normal!')
 axes[2].set_xlabel('Average')
 

@@ -78,10 +78,10 @@ print(f"These are {'≈ equal' if abs(p_red1 - p_red2_given_red1) < 0.01 else 'd
 
 # Visualize
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
-ax1.bar(['P(H₂)', 'P(H₂|H₁)'], [np.mean(coin2), p_h2_given_h1], color=['#7c5cfc', '#7c5cfc'])
+ax1.bar(['P(H₂)', 'P(H₂|H₁)'], [np.mean(coin2), p_h2_given_h1], color=['#14b8a6', '#14b8a6'])
 ax1.set_title('Independent: Two Coins')
 ax1.set_ylim(0, 0.7)
-ax2.bar(['P(R₂)', 'P(R₂|R₁)'], [0.5, p_red2_given_red1], color=['#ff8a3d', '#ff8a3d'])
+ax2.bar(['P(R₂)', 'P(R₂|R₁)'], [0.5, p_red2_given_red1], color=['#71717a', '#71717a'])
 ax2.set_title('Dependent: Drawing w/o Replacement')
 ax2.set_ylim(0, 0.7)
 plt.tight_layout()

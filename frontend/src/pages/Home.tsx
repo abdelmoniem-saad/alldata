@@ -2,13 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import * as d3 from 'd3'
 import { useProgressStore } from '../stores/progressStore'
+import { useThemeStore } from '../stores/themeStore'
 
 const domains = [
-  { slug: 'probability-foundations', title: 'Probability', color: '#ff8a3d', topics: 10, desc: 'Events, Bayes, Random Variables' },
-  { slug: 'distributions', title: 'Distributions', color: '#00d4ff', topics: 8, desc: 'Normal, Binomial, Poisson' },
-  { slug: 'statistical-inference', title: 'Inference', color: '#a78bfa', topics: 12, desc: 'Hypothesis Tests, Confidence' },
-  { slug: 'regression-modeling', title: 'Regression', color: '#34d399', topics: 6, desc: 'Linear, Logistic, Regularization' },
-  { slug: 'data-science-practice', title: 'Practice', color: '#fb7185', topics: 6, desc: 'EDA, A/B Tests, Cross-Validation' },
+  { slug: 'probability-foundations', title: 'Probability', color: '#71717a', topics: 10, desc: 'Events, Bayes, Random Variables' },
+  { slug: 'distributions', title: 'Distributions', color: '#a1a1aa', topics: 8, desc: 'Normal, Binomial, Poisson' },
+  { slug: 'statistical-inference', title: 'Inference', color: '#d4d4d8', topics: 12, desc: 'Hypothesis Tests, Confidence' },
+  { slug: 'regression-modeling', title: 'Regression', color: '#52525b', topics: 6, desc: 'Linear, Logistic, Regularization' },
+  { slug: 'data-science-practice', title: 'Practice', color: '#3f3f46', topics: 6, desc: 'EDA, A/B Tests, Cross-Validation' },
 ]
 
 const TOTAL_CONTENT_TOPICS = 20  // Topics with actual content
@@ -17,11 +18,28 @@ export default function Home() {
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
   const { completedSlugs } = useProgressStore()
+  const { theme } = useThemeStore()
+
+  const isLight = theme === 'light'
+
+  const getThemeColor = (color: string) => {
+    if (!isLight) return color
+    const map: Record<string, string> = {
+      '#71717a': '#52525b',
+      '#a1a1aa': '#71717a',
+      '#d4d4d8': '#3f3f46',
+      '#52525b': '#27272a',
+      '#3f3f46': '#18181b',
+    }
+    return map[color] || color
+  }
+
+  const themeAccent = isLight ? '#0d9488' : '#14b8a6'
 
   return (
     <div style={{ position: 'relative', minHeight: '100%', overflow: 'hidden' }}>
       {/* Animated background graph */}
-      <BackgroundGraph />
+      <BackgroundGraph isLight={isLight} />
 
       {/* Hero Section */}
       <section className="animate-fade-in-up" style={{
@@ -37,7 +55,7 @@ export default function Home() {
           padding: '4px 14px',
           borderRadius: 100,
           background: 'var(--color-accent-subtle)',
-          border: '1px solid rgba(124, 92, 252, 0.2)',
+          border: '1px solid var(--color-accent-glow)',
           fontSize: 12,
           fontWeight: 600,
           color: 'var(--color-accent)',
@@ -47,20 +65,10 @@ export default function Home() {
           KNOWLEDGE GRAPH FOR STATISTICS
         </div>
 
-        <h1 className="hero-title" style={{
-          fontSize: 56,
-          fontWeight: 900,
-          lineHeight: 1.05,
-          marginBottom: 20,
-          letterSpacing: '-2px',
-          background: 'linear-gradient(135deg, #e8eaf4 0%, #9ea3c0 50%, #e8eaf4 100%)',
-          backgroundClip: 'text',
-          WebkitBackgroundClip: 'text',
-          color: 'transparent',
-        }}>
+        <h1 className="hero-title">
           Statistics is a{' '}
           <span style={{
-            background: 'linear-gradient(135deg, #7c5cfc, #00d4ff)',
+            background: 'var(--color-accent)',
             backgroundClip: 'text',
             WebkitBackgroundClip: 'text',
             color: 'transparent',
@@ -150,61 +158,64 @@ export default function Home() {
         margin: '0 auto 80px',
         padding: '0 24px',
       }}>
-        {domains.map(d => (
-          <Link
-            key={d.slug}
-            to={`/explore?domain=${d.slug}`}
-            className="animate-fade-in-up"
-            style={{
-              padding: 20,
-              borderRadius: 'var(--radius-lg)',
-              border: `1px solid ${d.color}20`,
-              background: `linear-gradient(145deg, ${d.color}08, transparent)`,
-              textAlign: 'center',
-              transition: 'all var(--transition-smooth)',
-              cursor: 'pointer',
-            }}
-            onMouseEnter={e => {
-              const el = e.currentTarget as HTMLElement
-              el.style.transform = 'translateY(-4px)'
-              el.style.borderColor = `${d.color}40`
-              el.style.boxShadow = `0 8px 32px ${d.color}15`
-            }}
-            onMouseLeave={e => {
-              const el = e.currentTarget as HTMLElement
-              el.style.transform = 'translateY(0)'
-              el.style.borderColor = `${d.color}20`
-              el.style.boxShadow = 'none'
-            }}
-          >
-            <div style={{
-              width: 40, height: 40,
-              borderRadius: 12,
-              background: `${d.color}15`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              margin: '0 auto 10px',
-            }}>
+        {domains.map(d => {
+          const dColor = getThemeColor(d.color)
+          return (
+            <Link
+              key={d.slug}
+              to={`/explore?domain=${d.slug}`}
+              className="animate-fade-in-up"
+              style={{
+                padding: 20,
+                borderRadius: 'var(--radius-lg)',
+                border: `1px solid ${dColor}20`,
+                background: `linear-gradient(145deg, ${dColor}08, transparent)`,
+                textAlign: 'center',
+                transition: 'all var(--transition-smooth)',
+                cursor: 'pointer',
+              }}
+              onMouseEnter={e => {
+                const el = e.currentTarget as HTMLElement
+                el.style.transform = 'translateY(-4px)'
+                el.style.borderColor = `${dColor}40`
+                el.style.boxShadow = `0 8px 32px ${dColor}15`
+              }}
+              onMouseLeave={e => {
+                const el = e.currentTarget as HTMLElement
+                el.style.transform = 'translateY(0)'
+                el.style.borderColor = `${dColor}20`
+                el.style.boxShadow = 'none'
+              }}
+            >
               <div style={{
-                width: 12, height: 12,
-                borderRadius: '50%',
-                background: d.color,
-                boxShadow: `0 0 12px ${d.color}60`,
-              }} />
-            </div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: d.color, marginBottom: 4 }}>{d.title}</div>
-            <div style={{ fontSize: 11, color: 'var(--color-text-muted)', lineHeight: 1.4 }}>{d.desc}</div>
-            <div style={{
-              marginTop: 8,
-              fontSize: 10,
-              fontWeight: 600,
-              color: 'var(--color-text-muted)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-            }}>
-              {d.topics} topics
-            </div>
-          </Link>
-        ))}
+                width: 40, height: 40,
+                borderRadius: 12,
+                background: `${dColor}15`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                margin: '0 auto 10px',
+              }}>
+                <div style={{
+                  width: 12, height: 12,
+                  borderRadius: '50%',
+                  background: dColor,
+                  boxShadow: `0 0 12px ${dColor}60`,
+                }} />
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: dColor, marginBottom: 4 }}>{d.title}</div>
+              <div style={{ fontSize: 11, color: 'var(--color-text-muted)', lineHeight: 1.4 }}>{d.desc}</div>
+              <div style={{
+                marginTop: 8,
+                fontSize: 10,
+                fontWeight: 600,
+                color: 'var(--color-text-muted)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+              }}>
+                {d.topics} topics
+              </div>
+            </Link>
+          )
+        })}
       </section>
 
       {/* Progress Section — only shown if user has started learning */}
@@ -219,8 +230,8 @@ export default function Home() {
           <div style={{
             padding: 24,
             borderRadius: 'var(--radius-lg)',
-            border: '1px solid rgba(34, 197, 94, 0.2)',
-            background: 'linear-gradient(145deg, rgba(34, 197, 94, 0.06), transparent)',
+            border: '1px solid var(--color-accent-glow)',
+            background: 'linear-gradient(145deg, var(--color-accent-subtle), transparent)',
           }}>
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16,
@@ -229,7 +240,7 @@ export default function Home() {
                 Your Progress
               </h3>
               <span style={{
-                fontSize: 13, fontWeight: 600, color: '#22c55e',
+                fontSize: 13, fontWeight: 600, color: 'var(--color-accent)',
               }}>
                 {completedSlugs.length} / {TOTAL_CONTENT_TOPICS} topics
               </span>
@@ -245,8 +256,9 @@ export default function Home() {
                 width: `${Math.min((completedSlugs.length / TOTAL_CONTENT_TOPICS) * 100, 100)}%`,
                 height: '100%',
                 borderRadius: 100,
-                background: 'linear-gradient(90deg, #22c55e, #34d399)',
+                background: 'var(--color-accent)',
                 transition: 'width 0.5s ease',
+                boxShadow: '0 0 10px var(--color-accent-glow)',
               }} />
             </div>
 
@@ -259,11 +271,11 @@ export default function Home() {
                   style={{
                     padding: '3px 10px',
                     borderRadius: 100,
-                    background: 'rgba(34, 197, 94, 0.1)',
-                    border: '1px solid rgba(34, 197, 94, 0.2)',
+                    background: 'var(--color-accent-subtle)',
+                    border: '1px solid var(--color-accent-glow)',
                     fontSize: 11,
                     fontWeight: 600,
-                    color: '#22c55e',
+                    color: 'var(--color-accent)',
                   }}
                 >
                   {slug.replace(/-/g, ' ')}
@@ -306,32 +318,32 @@ export default function Home() {
           gap: 16,
         }}>
           <FeatureCard
-            color="#ff8a3d"
+            color="#71717a"
             title="Drag the Map"
             description="Grab any concept and drag it. Watch the graph respond — connected ideas follow, springs stretch and settle. This is your curriculum, and you can shape it."
           />
           <FeatureCard
-            color="#00d4ff"
+            color="#a1a1aa"
             title="Simulate First"
             description="See the Central Limit Theorem form a bell curve in real-time before you see the formula. Experience first, formalize later. Every concept that can be simulated, is."
           />
           <FeatureCard
-            color="#a78bfa"
+            color="#d4d4d8"
             title="Why Do I Need This?"
             description="Every prerequisite edge carries a reason. Not just 'you need this first' but 'Bayes is literally a rearrangement of conditional probability.' No more mystery."
           />
           <FeatureCard
-            color="#34d399"
+            color="#52525b"
             title="Dual Layers"
             description="Toggle between intuition (analogies, visuals) and formal (proofs, measure theory). Same topic, two depths. First-year student and grad student see different content."
           />
           <FeatureCard
-            color="#fb7185"
+            color="#3f3f46"
             title="Misconception Alerts"
             description="'P-values are the probability the null is true' has its own node. Common misconceptions are searchable, linked, and appear as warnings. No textbook does this."
           />
           <FeatureCard
-            color="#eab308"
+            color="var(--color-accent)"
             title="Proof by Doing"
             description="Not quizzes — micro-challenges. Modify a simulation, see what breaks. Edit code, run it, verify your understanding through building, not multiple choice."
           />
@@ -351,7 +363,7 @@ export default function Home() {
           padding: 40,
           borderRadius: 'var(--radius-xl)',
           border: '1px solid var(--color-border)',
-          background: 'linear-gradient(145deg, rgba(124, 92, 252, 0.06), transparent)',
+          background: 'linear-gradient(145deg, var(--color-accent-subtle), transparent)',
         }}>
           <h3 style={{ fontSize: 24, fontWeight: 800, marginBottom: 8 }}>
             Start anywhere
@@ -414,7 +426,7 @@ function FeatureCard({ color, title, description }: {
 }
 
 /** Animated background — floating nodes with soft connections */
-function BackgroundGraph() {
+function BackgroundGraph({ isLight }: { isLight: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -439,7 +451,9 @@ function BackgroundGraph() {
     const H = 800
 
     // Floating particles
-    const colors = ['#ff8a3d', '#00d4ff', '#a78bfa', '#34d399', '#fb7185', '#7c5cfc']
+    const colors = isLight
+      ? ['#52525b', '#71717a', '#3f3f46', '#27272a', '#18181b', '#0d9488']
+      : ['#71717a', '#a1a1aa', '#d4d4d8', '#52525b', '#3f3f46', '#14b8a6']
     const particles = Array.from({ length: 40 }, () => ({
       x: Math.random() * W(),
       y: Math.random() * H,
@@ -467,9 +481,11 @@ function BackgroundGraph() {
           const dy = particles[i].y - particles[j].y
           const dist = Math.sqrt(dx * dx + dy * dy)
           if (dist < 200) {
-            const alpha = (1 - dist / 200) * 0.06
+            const alpha = (1 - dist / 200) * (isLight ? 0.1 : 0.06)
             ctx.beginPath()
-            ctx.strokeStyle = `rgba(124, 92, 252, ${alpha})`
+            ctx.strokeStyle = isLight 
+              ? `rgba(13, 148, 136, ${alpha})`
+              : `rgba(20, 184, 166, ${alpha})`
             ctx.lineWidth = 0.5
             ctx.moveTo(particles[i].x, particles[i].y)
             ctx.lineTo(particles[j].x, particles[j].y)
@@ -506,7 +522,7 @@ function BackgroundGraph() {
       cancelAnimationFrame(animId)
       window.removeEventListener('resize', resize)
     }
-  }, [])
+  }, [isLight])
 
   return (
     <canvas

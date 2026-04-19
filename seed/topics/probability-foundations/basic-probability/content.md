@@ -54,7 +54,7 @@ n_rolls_range = range(1, 25)
 p_values = [1 - (5/6)**n for n in n_rolls_range]
 
 plt.figure(figsize=(8, 4))
-plt.plot(n_rolls_range, p_values, 'o-', color='#7c5cfc', linewidth=2)
+plt.plot(n_rolls_range, p_values, 'o-', color='#14b8a6', linewidth=2)
 plt.axhline(y=0.5, color='gray', linestyle='--', alpha=0.5, label='50%')
 plt.xlabel('Number of rolls')
 plt.ylabel('P(at least one 6)')

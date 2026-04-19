@@ -2,14 +2,18 @@ import { useEffect, useRef, useCallback } from 'react'
 import * as d3 from 'd3'
 import { GraphNode, GraphEdge } from '../../api/client'
 import { useProgressStore } from '../../stores/progressStore'
+import { useThemeStore } from '../../stores/themeStore'
 
-// Domain color mapping with vivid neon tones
-const DOMAIN_COLORS: Record<string, string> = {
-  'probability-foundations': '#ff8a3d',
-  'distributions': '#00d4ff',
-  'statistical-inference': '#a78bfa',
-  'regression-modeling': '#34d399',
-  'data-science-practice': '#fb7185',
+// Domain color mapping — Scholarly Grayscale
+const getDomainColor = (domain: string, isLight: boolean) => {
+  const domainMap: Record<string, string> = {
+    'probability-foundations': isLight ? '#52525b' : '#71717a',
+    'distributions': isLight ? '#71717a' : '#a1a1aa',
+    'statistical-inference': isLight ? '#3f3f46' : '#d4d4d8',
+    'regression-modeling': isLight ? '#27272a' : '#52525b',
+    'data-science-practice': isLight ? '#18181b' : '#3f3f46',
+  }
+  return domainMap[domain] || (isLight ? '#18181b' : '#52525b')
 }
 
 interface Props {
@@ -47,9 +51,15 @@ export default function ForceGraph({
   const animFrameRef = useRef<number>(0)
   const mouseRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
 
-  const getNodeColor = useCallback((node: GraphNode) => {
-    return DOMAIN_COLORS[node.domain || ''] || '#7c5cfc'
-  }, [])
+  const { theme } = useThemeStore()
+  const isLight = theme === 'light'
+
+  const getNodeColor = useCallback((node: GraphNode, glow = 0) => {
+    if (glow > 0.1 || highlightedNode === node.slug) {
+      return isLight ? '#0d9488' : '#14b8a6' // Teal "Energy"
+    }
+    return getDomainColor(node.domain || '', isLight)
+  }, [highlightedNode, isLight])
 
   const getNodeRadius = useCallback((node: GraphNode) => {
     if (node.depth === 0) return 28
@@ -77,10 +87,15 @@ export default function ForceGraph({
     const t = transformRef.current
     ctx.clearRect(0, 0, width, height)
 
-    // Background gradient
+    // Background — Scholarly Gradient
     const bgGrad = ctx.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, width * 0.7)
-    bgGrad.addColorStop(0, '#12141f')
-    bgGrad.addColorStop(1, '#0a0b12')
+    if (isLight) {
+      bgGrad.addColorStop(0, '#ffffff')
+      bgGrad.addColorStop(1, '#fdfdfd')
+    } else {
+      bgGrad.addColorStop(0, '#0a0a0a')
+      bgGrad.addColorStop(1, '#050505')
+    }
     ctx.fillStyle = bgGrad
     ctx.fillRect(0, 0, width, height)
 
@@ -95,7 +110,7 @@ export default function ForceGraph({
     const endX = startX + width / t.k + gridSize * 2
     const endY = startY + height / t.k + gridSize * 2
 
-    ctx.strokeStyle = 'rgba(255,255,255,0.015)'
+    ctx.strokeStyle = isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.015)'
     ctx.lineWidth = 1
     ctx.beginPath()
     for (let x = startX; x < endX; x += gridSize) {
@@ -130,10 +145,10 @@ export default function ForceGraph({
       const targetHot = target.glow > 0.1 || highlightedNode === target.data.slug
       const edgeHot = sourceHot || targetHot
 
-      const baseAlpha = link.data.edge_type === 'prerequisite' ? 0.18 : 0.08
+      const baseAlpha = link.data.edge_type === 'prerequisite' ? (isLight ? 0.25 : 0.18) : (isLight ? 0.12 : 0.08)
       const alpha = edgeHot ? 0.5 : baseAlpha
 
-      const color = getNodeColor(source.data)
+      const color = getNodeColor(source.data, source.glow)
 
       // Edge glow layer
       if (edgeHot && link.data.edge_type === 'prerequisite') {
@@ -149,7 +164,7 @@ export default function ForceGraph({
       ctx.beginPath()
       ctx.strokeStyle = edgeHot
         ? color + Math.round(alpha * 255).toString(16).padStart(2, '0')
-        : `rgba(100, 110, 160, ${alpha})`
+        : isLight ? `rgba(100, 110, 160, ${alpha * 0.8})` : `rgba(100, 110, 160, ${alpha})`
       ctx.lineWidth = edgeHot ? 1.8 : 0.8
 
       if (link.data.edge_type === 'related') {
@@ -176,7 +191,7 @@ export default function ForceGraph({
         ctx.setLineDash([])
         ctx.fillStyle = edgeHot
           ? color + '90'
-          : 'rgba(100, 110, 160, 0.3)'
+          : isLight ? 'rgba(100, 110, 160, 0.4)' : 'rgba(100, 110, 160, 0.3)'
         ctx.moveTo(tipX, tipY)
         ctx.lineTo(
           tipX - arrowSize * Math.cos(angle - Math.PI / 7),
@@ -195,9 +210,9 @@ export default function ForceGraph({
     for (const node of nodesRef.current) {
       if (node.x == null || node.y == null) continue
       const r = getNodeRadius(node.data)
-      const color = getNodeColor(node.data)
       const isHighlighted = highlightedNode === node.data.slug
       const glowIntensity = Math.max(node.glow, isHighlighted ? 1 : 0)
+      const color = getNodeColor(node.data, glowIntensity)
       const isDragging = draggedRef.current === node
 
       // Outer glow (multiple layers for smooth bloom)
@@ -254,25 +269,29 @@ export default function ForceGraph({
       // Label with shadow for readability
       const fontSize = node.data.depth === 0 ? 13 : 11
       const fontWeight = glowIntensity > 0.1 ? '600' : '500'
-      ctx.font = `${fontWeight} ${fontSize}px Inter, -apple-system, sans-serif`
+      ctx.font = `${fontWeight} ${fontSize}px var(--font-sans)`
       ctx.textAlign = 'center'
       ctx.textBaseline = 'top'
 
       // Text shadow
-      ctx.fillStyle = 'rgba(0,0,0,0.6)'
-      ctx.fillText(node.data.title, node.x + 0.5, node.y + r + 6.5, 130)
+      if (!isLight) {
+        ctx.fillStyle = 'rgba(0,0,0,0.6)'
+        ctx.fillText(node.data.title, node.x + 0.5, node.y + r + 6.5, 130)
+      }
 
       // Text
       const textAlpha = (0.6 + glowIntensity * 0.4) * (hasContent ? 1 : 0.5)
-      ctx.fillStyle = `rgba(226, 228, 240, ${textAlpha})`
+      ctx.fillStyle = isLight 
+        ? `rgba(9, 9, 11, ${textAlpha})` 
+        : `rgba(226, 228, 240, ${textAlpha})`
       ctx.fillText(node.data.title, node.x, node.y + r + 6, 130)
 
       // Difficulty indicator dot
       if (node.data.difficulty && node.data.depth > 0) {
         const diffColors: Record<string, string> = {
-          intro: '#22c55e',
-          intermediate: '#eab308',
-          advanced: '#ef4444',
+          intro: isLight ? '#15803d' : '#22c55e',
+          intermediate: isLight ? '#a16207' : '#f59e0b',
+          advanced: isLight ? '#b91c1c' : '#ef4444',
         }
         const dotColor = diffColors[node.data.difficulty] || '#666'
         ctx.beginPath()
@@ -285,10 +304,10 @@ export default function ForceGraph({
       if (completedSlugs.includes(node.data.slug)) {
         const cx = node.x - r * 0.7
         const cy = node.y - r * 0.7
-        // Green circle background
+        // Teal circle background (Energy color)
         ctx.beginPath()
         ctx.arc(cx, cy, 5, 0, Math.PI * 2)
-        ctx.fillStyle = '#22c55e'
+        ctx.fillStyle = isLight ? '#0d9488' : '#14b8a6'
         ctx.fill()
         // White checkmark
         ctx.beginPath()
@@ -309,7 +328,7 @@ export default function ForceGraph({
     if (needsExtraFrame || simRef.current?.alpha() > 0.001) {
       animFrameRef.current = requestAnimationFrame(render)
     }
-  }, [width, height, getNodeColor, getNodeRadius, highlightedNode, completedSlugs])
+  }, [width, height, getNodeColor, getNodeRadius, highlightedNode, completedSlugs, isLight])
 
   // Kick the render loop
   const scheduleRender = useCallback(() => {
@@ -554,7 +573,7 @@ export default function ForceGraph({
         display: 'block',
         width,
         height,
-        background: '#0a0b12',
+        background: isLight ? '#ffffff' : '#050505',
       }}
     />
   )

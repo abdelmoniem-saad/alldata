@@ -2,14 +2,6 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { api, LearningPathResponse, GraphNode } from '../api/client'
 
-const DOMAIN_COLORS: Record<string, string> = {
-  'probability-foundations': '#ff8a3d',
-  'distributions': '#00d4ff',
-  'statistical-inference': '#a78bfa',
-  'regression-modeling': '#34d399',
-  'data-science-practice': '#fb7185',
-}
-
 const DOMAIN_LABELS: Record<string, string> = {
   'probability-foundations': 'Probability',
   'distributions': 'Distributions',
@@ -178,31 +170,31 @@ function TopicSearchInput({ value, onChange, topics, placeholder, label }: Topic
             maxHeight: 280, overflowY: 'auto',
           }}
         >
-          {filtered.map((topic, i) => {
-            const color = DOMAIN_COLORS[topic.domain || ''] || '#7c5cfc'
-            const domainLabel = DOMAIN_LABELS[topic.domain || ''] || topic.domain
-            const isFocused = i === focusedIndex
-            const isSelected = topic.slug === value
+              {filtered.map((topic, i) => {
+                const domainVar = `var(--color-${topic.domain?.split('-')[0] || 'probability'})`
+                const domainLabel = DOMAIN_LABELS[topic.domain || ''] || topic.domain
+                const isFocused = i === focusedIndex
+                const isSelected = topic.slug === value
 
-            return (
-              <div
-                key={topic.slug}
-                onClick={() => selectTopic(topic)}
-                style={{
-                  padding: '10px 14px',
-                  cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  background: isFocused ? 'rgba(124, 92, 252, 0.08)' : isSelected ? 'rgba(124, 92, 252, 0.04)' : 'transparent',
-                  borderBottom: i < filtered.length - 1 ? '1px solid var(--color-border-subtle)' : 'none',
-                  transition: 'background 0.15s',
-                }}
-                onMouseEnter={() => setFocusedIndex(i)}
-              >
-                <span style={{
-                  width: 8, height: 8, borderRadius: '50%',
-                  background: color, flexShrink: 0,
-                  boxShadow: `0 0 6px ${color}40`,
-                }} />
+                return (
+                  <div
+                    key={topic.slug}
+                    onClick={() => selectTopic(topic)}
+                    style={{
+                      padding: '10px 14px',
+                      cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      background: isFocused ? 'var(--color-accent-subtle)' : isSelected ? 'var(--color-accent-subtle)' : 'transparent',
+                      borderBottom: i < filtered.length - 1 ? '1px solid var(--color-border-subtle)' : 'none',
+                      transition: 'background 0.15s',
+                    }}
+                    onMouseEnter={() => setFocusedIndex(i)}
+                  >
+                    <span style={{
+                      width: 8, height: 8, borderRadius: '50%',
+                      background: domainVar, flexShrink: 0,
+                      boxShadow: `0 0 6px rgba(255,255,255,0.05)`,
+                    }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{
                     fontSize: 13, fontWeight: 600,
@@ -224,7 +216,7 @@ function TopicSearchInput({ value, onChange, topics, placeholder, label }: Topic
                   </div>
                 </div>
                 {isSelected && (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7c5cfc" strokeWidth="2.5">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2.5">
                     <path d="M20 6L9 17l-5-5"/>
                   </svg>
                 )}
@@ -282,7 +274,7 @@ export default function LearningPath() {
     <div className="animate-fade-in-up" style={{ maxWidth: 700, margin: '0 auto', padding: '48px 16px 80px' }}>
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: 40 }}>
-        <h1 style={{ fontSize: 32, fontWeight: 900, letterSpacing: '-0.5px', marginBottom: 8 }}>
+        <h1 style={{ fontSize: 36, fontWeight: 700, letterSpacing: '-1.5px', marginBottom: 12, fontFamily: 'var(--font-serif)' }}>
           Find Your Path
         </h1>
         <p style={{ color: 'var(--color-text-secondary)', fontSize: 15 }}>
@@ -390,7 +382,7 @@ export default function LearningPath() {
           <div style={{
             padding: 16, borderRadius: 'var(--radius)',
             background: 'var(--color-accent-subtle)',
-            border: '1px solid rgba(124, 92, 252, 0.15)',
+            border: '1px solid var(--color-accent-glow)',
             marginBottom: 32, textAlign: 'center',
           }}>
             <span style={{ fontSize: 14, color: 'var(--color-text-secondary)' }}>
@@ -415,9 +407,7 @@ export default function LearningPath() {
               top: 32,
               bottom: 32,
               width: 2,
-              background: `linear-gradient(to bottom, var(--color-accent), ${
-                DOMAIN_COLORS[path.steps[path.steps.length - 1]?.topic.domain || ''] || '#34d399'
-              })`,
+              background: 'linear-gradient(to bottom, var(--color-accent), var(--color-bg-secondary))',
               opacity: 0.3,
               borderRadius: 1,
             }} />
@@ -425,7 +415,7 @@ export default function LearningPath() {
             {path.steps.map((step, i) => {
               const isFirst = i === 0
               const isLast = i === path.steps.length - 1
-              const color = DOMAIN_COLORS[step.topic.domain || ''] || '#7c5cfc'
+              const domainVar = `var(--color-${step.topic.domain?.split('-')[0] || 'probability'})`
 
               return (
                 <div
@@ -444,14 +434,14 @@ export default function LearningPath() {
                     width: 44, height: 44,
                     borderRadius: 14,
                     background: isFirst || isLast
-                      ? `linear-gradient(135deg, ${color}30, ${color}10)`
+                      ? `linear-gradient(135deg, var(--color-accent-subtle), transparent)`
                       : 'var(--color-surface)',
-                    border: `2px solid ${isFirst || isLast ? color : 'var(--color-border)'}`,
+                    border: `2px solid ${isFirst || isLast ? 'var(--color-accent)' : 'var(--color-border)'}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: 14, fontWeight: 800,
-                    color: isFirst || isLast ? color : 'var(--color-text-muted)',
+                    color: isFirst || isLast ? 'var(--color-accent)' : 'var(--color-text-muted)',
                     flexShrink: 0, zIndex: 1,
-                    boxShadow: isFirst || isLast ? `0 0 16px ${color}25` : 'none',
+                    boxShadow: isFirst || isLast ? `0 0 16px var(--color-accent-glow)` : 'none',
                   }}>
                     {i + 1}
                   </div>
@@ -470,7 +460,7 @@ export default function LearningPath() {
                     }}
                     onMouseEnter={e => {
                       const el = e.currentTarget
-                      el.style.borderColor = `${color}40`
+                      el.style.borderColor = `var(--color-accent-glow)`
                       el.style.transform = 'translateX(4px)'
                     }}
                     onMouseLeave={e => {
@@ -481,7 +471,7 @@ export default function LearningPath() {
                   >
                     <span style={{
                       width: 8, height: 8, borderRadius: '50%',
-                      background: color, boxShadow: `0 0 8px ${color}40`,
+                      background: domainVar, boxShadow: `0 0 8px rgba(255,255,255,0.05)`,
                       flexShrink: 0,
                     }} />
                     <div style={{ flex: 1 }}>

@@ -42,7 +42,7 @@ fig, axes = plt.subplots(1, 3, figsize=(12, 4), sharey=True)
 
 for ax, n in zip(axes, sample_sizes):
     estimates = [np.random.normal(true_mean, true_std, n).mean() for _ in range(n_experiments)]
-    ax.hist(estimates, bins=50, color='#a78bfa', alpha=0.7, density=True, edgecolor='white')
+    ax.hist(estimates, bins=50, color='#d4d4d8', alpha=0.7, density=True, edgecolor='white')
     ax.axvline(true_mean, color='#ef4444', linestyle='--', linewidth=2, label=f'True μ={true_mean}')
     ax.axvline(np.mean(estimates), color='#22c55e', linestyle=':', linewidth=2,
                label=f'Mean of estimates={np.mean(estimates):.1f}')

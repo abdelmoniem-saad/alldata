@@ -76,7 +76,8 @@ export default function SlideView({ blocks, misconceptions, activeLayer, domainC
         <div style={{
           height: '100%',
           width: `${((current + 1) / total) * 100}%`,
-          background: `linear-gradient(90deg, ${domainColor}, var(--color-accent))`,
+          background: 'var(--color-accent)',
+          boxShadow: '0 0 10px var(--color-accent-glow)',
           transition: 'width 0.3s ease',
         }} />
       </div>
@@ -91,8 +92,8 @@ export default function SlideView({ blocks, misconceptions, activeLayer, domainC
         background: 'var(--color-surface)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <SlideTypeIcon type={slide.type} color={domainColor} />
-          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          <SlideTypeIcon type={slide.type} color="var(--color-accent)" />
+          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: 'var(--font-mono)' }}>
             {slide.type === 'content' ? 'Concept' : slide.type === 'code' ? 'Code' : slide.type === 'quiz' ? 'Challenge' : 'Misconceptions'}
           </span>
         </div>
@@ -145,9 +146,9 @@ export default function SlideView({ blocks, misconceptions, activeLayer, domainC
                 border: 'none',
                 cursor: 'pointer',
                 background: i === current
-                  ? domainColor
+                  ? 'var(--color-accent)'
                   : i < current
-                    ? `${domainColor}60`
+                    ? 'var(--color-text-muted)'
                     : 'var(--color-border)',
                 transition: 'all 0.2s ease',
               }}
@@ -163,9 +164,9 @@ export default function SlideView({ blocks, misconceptions, activeLayer, domainC
           style={{
             opacity: canNext ? 1 : 0.3,
             fontSize: 13, gap: 6,
-            background: canNext ? domainColor : undefined,
+            background: canNext ? 'var(--color-accent)' : undefined,
             color: canNext ? 'white' : undefined,
-            border: canNext ? 'none' : undefined,
+            border: 'none',
           }}
         >
           Next
@@ -212,7 +213,7 @@ function SlideTypeIcon({ type, color }: { type: string; color: string }) {
   )
   if (type === 'misconceptions') return (
     <div style={style}>
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2.5">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--color-intermediate)" strokeWidth="2.5">
         <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><path d="M12 9v4M12 17h.01"/>
       </svg>
     </div>
@@ -232,7 +233,7 @@ function SlideContent({ slide }: { slide: Slide }) {
       <div>
         <h3 style={{
           fontSize: 18, fontWeight: 700, marginBottom: 20,
-          color: '#f59e0b',
+          color: 'var(--color-intermediate)',
         }}>
           Common Misconceptions
         </h3>
@@ -324,10 +325,10 @@ function SlideQuiz({ block }: { block: ContentBlock }) {
       {showHint && !showSolution && block.hint && (
         <div style={{
           marginTop: 12, padding: 12, borderRadius: 'var(--radius)',
-          background: 'rgba(234, 179, 8, 0.08)', border: '1px solid rgba(234, 179, 8, 0.2)',
+          background: 'var(--color-warning-bg)', border: '1px solid var(--color-warning-border)',
           fontSize: 13,
         }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: '#eab308', marginBottom: 6, textTransform: 'uppercase' }}>Hint</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-intermediate)', marginBottom: 6, textTransform: 'uppercase' }}>Hint</div>
           <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{block.hint}</ReactMarkdown>
         </div>
       )}
@@ -335,10 +336,10 @@ function SlideQuiz({ block }: { block: ContentBlock }) {
       {showSolution && block.solution && (
         <div className="animate-fade-in" style={{
           marginTop: 12, padding: 14, borderRadius: 'var(--radius)',
-          background: 'rgba(34, 197, 94, 0.08)', border: '1px solid rgba(34, 197, 94, 0.2)',
+          background: 'var(--color-success-bg)', border: '1px solid var(--color-success-border)',
           fontSize: 13, lineHeight: 1.7,
         }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: '#22c55e', marginBottom: 8, textTransform: 'uppercase' }}>Solution</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-intro)', marginBottom: 8, textTransform: 'uppercase' }}>Solution</div>
           <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{block.solution}</ReactMarkdown>
         </div>
       )}
@@ -349,19 +350,25 @@ function SlideQuiz({ block }: { block: ContentBlock }) {
 function SlideMisconception({ misconception }: { misconception: Misconception }) {
   return (
     <div style={{
-      padding: 16, borderRadius: 'var(--radius-lg)',
-      border: '1px solid rgba(245, 158, 11, 0.25)',
-      background: 'rgba(245, 158, 11, 0.05)',
-      marginBottom: 12,
+      padding: 16, borderRadius: 'var(--radius)',
+      border: '1px solid var(--color-border)',
+      background: 'var(--color-bg)',
+      marginBottom: 16,
+      position: 'relative',
+      overflow: 'hidden'
     }}>
-      <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>
+      <div style={{ 
+        position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, 
+        background: 'var(--color-intermediate)'
+      }} />
+      <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 14, color: 'var(--color-text)', fontFamily: 'var(--font-serif)' }}>
         "{misconception.title}"
       </div>
       <div style={{ fontSize: 13, lineHeight: 1.7 }}>
-        <p style={{ color: '#ef4444', marginBottom: 8 }}>
+        <p style={{ color: 'var(--color-advanced)', marginBottom: 8 }}>
           <strong>Wrong:</strong> {misconception.wrong_belief}
         </p>
-        <p style={{ color: '#22c55e', marginBottom: 8 }}>
+        <p style={{ color: 'var(--color-intro)', marginBottom: 8 }}>
           <strong>Correct:</strong> {misconception.correction}
         </p>
         {misconception.why_common && (

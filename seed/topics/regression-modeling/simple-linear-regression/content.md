@@ -49,7 +49,7 @@ residuals = Y - Y_pred
 fig, axes = plt.subplots(1, 3, figsize=(14, 4))
 
 # 1. Data + regression line
-axes[0].scatter(X, Y, color='#7c5cfc', alpha=0.7, edgecolors='white', s=40)
+axes[0].scatter(X, Y, color='#14b8a6', alpha=0.7, edgecolors='white', s=40)
 x_line = np.linspace(15, 85, 100)
 axes[0].plot(x_line, intercept + slope * x_line, 'r-', linewidth=2,
              label=f'ŷ = {intercept:.1f} + {slope:.2f}x')
@@ -60,7 +60,7 @@ axes[0].legend()
 axes[0].grid(alpha=0.2)
 
 # 2. Residuals
-axes[1].scatter(Y_pred, residuals, color='#ff8a3d', alpha=0.7, edgecolors='white', s=40)
+axes[1].scatter(Y_pred, residuals, color='#71717a', alpha=0.7, edgecolors='white', s=40)
 axes[1].axhline(0, color='red', linestyle='--')
 axes[1].set_xlabel('Predicted Y')
 axes[1].set_ylabel('Residual')

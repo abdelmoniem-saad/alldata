@@ -1,14 +1,6 @@
 import { Link } from 'react-router-dom'
 import { GraphNode } from '../../api/client'
 
-const DOMAIN_COLORS: Record<string, string> = {
-  'probability-foundations': '#ff8a3d',
-  'distributions': '#00d4ff',
-  'statistical-inference': '#a78bfa',
-  'regression-modeling': '#34d399',
-  'data-science-practice': '#fb7185',
-}
-
 interface Props {
   node: GraphNode | null
   prerequisites?: GraphNode[]
@@ -44,7 +36,7 @@ export default function GraphSidebar({ node, prerequisites = [], leadsTo = [] }:
     )
   }
 
-  const domainColor = DOMAIN_COLORS[node.domain || ''] || '#7c5cfc'
+  const domainVar = `var(--color-${node.domain?.split('-')[0] || 'probability'})`
 
   return (
     <div className="animate-fade-in" style={{ padding: 20 }}>
@@ -56,14 +48,14 @@ export default function GraphSidebar({ node, prerequisites = [], leadsTo = [] }:
             <span style={{
               display: 'flex', alignItems: 'center', gap: 5,
               fontSize: 11, fontWeight: 600,
-              color: domainColor,
+              color: 'var(--color-text)',
               textTransform: 'uppercase',
               letterSpacing: '0.5px',
             }}>
               <span style={{
                 width: 6, height: 6, borderRadius: '50%',
-                background: domainColor,
-                boxShadow: `0 0 8px ${domainColor}50`,
+                background: domainVar,
+                boxShadow: `0 0 8px rgba(255,255,255,0.1)`,
               }} />
               {node.domain.replace(/-/g, ' ')}
             </span>
@@ -75,7 +67,7 @@ export default function GraphSidebar({ node, prerequisites = [], leadsTo = [] }:
           )}
         </div>
 
-        <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 8, letterSpacing: '-0.3px', lineHeight: 1.2 }}>
+        <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 12, letterSpacing: '-0.5px', lineHeight: 1.1, fontFamily: 'var(--font-serif)' }}>
           {node.title}
         </h2>
 
@@ -97,9 +89,14 @@ export default function GraphSidebar({ node, prerequisites = [], leadsTo = [] }:
             width: '100%',
             justifyContent: 'center',
             borderRadius: 10,
-            padding: '10px 0',
+            padding: '12px 0',
             fontSize: 14,
-            fontWeight: 600,
+            fontWeight: 700,
+            background: 'var(--color-accent)',
+            border: 'none',
+            fontFamily: 'var(--font-mono)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px'
           }}
         >
           Open Topic
@@ -111,7 +108,7 @@ export default function GraphSidebar({ node, prerequisites = [], leadsTo = [] }:
         <Section
           title="Prerequisites"
           subtitle="You should know these first"
-          color="#eab308"
+          color="var(--color-intermediate)"
           count={prerequisites.length}
         >
           {prerequisites.map(p => (
@@ -197,7 +194,7 @@ function Section({ title, subtitle, color, count, children }: {
 }
 
 function TopicChip({ node }: { node: GraphNode }) {
-  const color = DOMAIN_COLORS[node.domain || ''] || '#7c5cfc'
+  const domainVar = `var(--color-${node.domain?.split('-')[0] || 'probability'})`
   return (
     <Link
       to={`/topic/${node.slug}`}
@@ -215,7 +212,7 @@ function TopicChip({ node }: { node: GraphNode }) {
       }}
       onMouseEnter={e => {
         const el = e.currentTarget as HTMLElement
-        el.style.borderColor = `${color}40`
+        el.style.borderColor = `var(--color-accent-glow)`
         el.style.background = 'var(--color-surface-hover)'
       }}
       onMouseLeave={e => {
@@ -226,20 +223,20 @@ function TopicChip({ node }: { node: GraphNode }) {
     >
       <span style={{
         width: 7, height: 7, borderRadius: '50%',
-        background: color,
-        boxShadow: `0 0 6px ${color}40`,
+        background: domainVar,
+        boxShadow: `0 0 6px rgba(255,255,255,0.05)`,
         flexShrink: 0,
       }} />
       <span style={{ flex: 1, fontWeight: 500 }}>{node.title}</span>
       {node.difficulty && (
-        <span style={{
-          fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
-          color: node.difficulty === 'intro' ? '#22c55e' : node.difficulty === 'advanced' ? '#ef4444' : '#eab308',
-          letterSpacing: '0.3px',
-        }}>
-          {node.difficulty}
-        </span>
-      )}
+            <span style={{
+              fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
+              color: `var(--color-${node.difficulty})`,
+              letterSpacing: '0.3px',
+            }}>
+              {node.difficulty}
+            </span>
+          )}
     </Link>
   )
 }

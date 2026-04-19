@@ -40,13 +40,13 @@ population = np.random.exponential(pop_mean, 1000000)
 fig, axes = plt.subplots(2, 3, figsize=(12, 7))
 
 # Top row: the population + sampling distributions
-axes[0, 0].hist(population[:10000], bins=50, color='#ff8a3d', alpha=0.7, density=True)
+axes[0, 0].hist(population[:10000], bins=50, color='#71717a', alpha=0.7, density=True)
 axes[0, 0].set_title('Population (Exponential)', fontweight='bold')
 axes[0, 0].axvline(pop_mean, color='red', linestyle='--')
 
 for idx, n in enumerate([5, 30]):
     means = [np.random.exponential(pop_mean, n).mean() for _ in range(n_samples)]
-    axes[0, idx+1].hist(means, bins=50, color='#a78bfa', alpha=0.7, density=True)
+    axes[0, idx+1].hist(means, bins=50, color='#d4d4d8', alpha=0.7, density=True)
     
     # Overlay theoretical normal
     x = np.linspace(min(means), max(means), 200)
@@ -58,13 +58,13 @@ for idx, n in enumerate([5, 30]):
 
 # Bottom row: uniform population (very different from normal!)
 pop = np.random.uniform(0, 10, 1000000)
-axes[1, 0].hist(pop[:10000], bins=50, color='#ff8a3d', alpha=0.7, density=True)
+axes[1, 0].hist(pop[:10000], bins=50, color='#71717a', alpha=0.7, density=True)
 axes[1, 0].set_title('Population (Uniform)', fontweight='bold')
 axes[1, 0].axvline(5, color='red', linestyle='--')
 
 for idx, n in enumerate([5, 30]):
     means = [np.random.uniform(0, 10, n).mean() for _ in range(n_samples)]
-    axes[1, idx+1].hist(means, bins=50, color='#a78bfa', alpha=0.7, density=True)
+    axes[1, idx+1].hist(means, bins=50, color='#d4d4d8', alpha=0.7, density=True)
     axes[1, idx+1].set_title(f'Sample Means (n={n})', fontweight='bold')
     axes[1, idx+1].axvline(5, color='red', linestyle='--')
 

@@ -135,10 +135,10 @@ export const api = {
     request<GraphNode[]>(`/topics/search?q=${q}`),
 
   // Code execution
-  executeCode: (code: string, language = 'python') =>
+  executeCode: (code: string, language = 'python', theme = 'dark') =>
     request<ExecutionResult>('/execute', {
       method: 'POST',
-      body: JSON.stringify({ code, language }),
+      body: JSON.stringify({ code, language, theme }),
     }),
 
   // Auth

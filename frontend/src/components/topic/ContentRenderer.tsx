@@ -30,7 +30,7 @@ export default function ContentRenderer({ blocks, misconceptions, activeLayer }:
             fontSize: 16,
             fontWeight: 700,
             marginBottom: 16,
-            color: '#f59e0b',
+            color: 'var(--color-intermediate)',
             display: 'flex',
             alignItems: 'center',
             gap: 8,
@@ -91,8 +91,8 @@ function QuizBlock({ block }: { block: ContentBlock }) {
     <div style={{
       padding: 20,
       borderRadius: 'var(--radius-lg)',
-      border: `1px solid ${showSolution ? 'rgba(34, 197, 94, 0.3)' : 'rgba(124, 92, 252, 0.3)'}`,
-      background: showSolution ? 'rgba(34, 197, 94, 0.04)' : 'rgba(124, 92, 252, 0.06)',
+      border: `1px solid ${showSolution ? 'var(--color-success-border)' : 'var(--color-accent-glow)'}`,
+      background: showSolution ? 'var(--color-success-bg)' : 'var(--color-accent-subtle)',
       transition: 'all 0.3s ease',
     }}>
       <div style={{
@@ -100,7 +100,7 @@ function QuizBlock({ block }: { block: ContentBlock }) {
         fontWeight: 700,
         textTransform: 'uppercase',
         letterSpacing: '1px',
-        color: showSolution ? '#22c55e' : 'var(--color-accent)',
+        color: showSolution ? 'var(--color-intro)' : 'var(--color-accent)',
         marginBottom: 12,
         display: 'flex',
         alignItems: 'center',
@@ -191,12 +191,12 @@ function QuizBlock({ block }: { block: ContentBlock }) {
           marginTop: 12,
           padding: 12,
           borderRadius: 'var(--radius)',
-          background: 'rgba(234, 179, 8, 0.08)',
-          border: '1px solid rgba(234, 179, 8, 0.2)',
+          background: 'var(--color-warning-bg)',
+          border: '1px solid var(--color-warning-border)',
           fontSize: 13,
           color: 'var(--color-text-secondary)',
         }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: '#eab308', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-intermediate)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             Hint
           </div>
           <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
@@ -211,13 +211,13 @@ function QuizBlock({ block }: { block: ContentBlock }) {
           marginTop: 12,
           padding: 14,
           borderRadius: 'var(--radius)',
-          background: 'rgba(34, 197, 94, 0.08)',
-          border: '1px solid rgba(34, 197, 94, 0.2)',
+          background: 'var(--color-success-bg)',
+          border: '1px solid var(--color-success-border)',
           fontSize: 13,
           lineHeight: 1.7,
           color: 'var(--color-text)',
         }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: '#22c55e', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-intro)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             Solution
           </div>
           <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
@@ -236,8 +236,8 @@ function MisconceptionCard({ misconception }: { misconception: Misconception }) 
     <div style={{
       padding: 16,
       borderRadius: 'var(--radius-lg)',
-      border: '1px solid rgba(245, 158, 11, 0.25)',
-      background: 'rgba(245, 158, 11, 0.05)',
+      border: '1px solid var(--color-intermediate)',
+      background: 'var(--color-accent-subtle)',
       marginBottom: 12,
       cursor: 'pointer',
     }}
@@ -259,10 +259,10 @@ function MisconceptionCard({ misconception }: { misconception: Misconception }) 
 
       {expanded && (
         <div style={{ fontSize: 13, lineHeight: 1.7 }}>
-          <p style={{ color: '#ef4444', marginBottom: 8 }}>
+          <p style={{ color: 'var(--color-advanced)', marginBottom: 8 }}>
             <strong>Wrong:</strong> {misconception.wrong_belief}
           </p>
-          <p style={{ color: '#22c55e', marginBottom: 8 }}>
+          <p style={{ color: 'var(--color-intro)', marginBottom: 8 }}>
             <strong>Correct:</strong> {misconception.correction}
           </p>
           {misconception.why_common && (

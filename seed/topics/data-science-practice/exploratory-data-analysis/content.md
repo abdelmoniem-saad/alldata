@@ -55,7 +55,7 @@ sleep_with_missing[missing_idx] = np.nan
 fig, axes = plt.subplots(2, 3, figsize=(14, 8))
 
 # 1. Histogram of scores
-axes[0,0].hist(score, bins=25, color='#7c5cfc', alpha=0.7, edgecolor='white')
+axes[0,0].hist(score, bins=25, color='#14b8a6', alpha=0.7, edgecolor='white')
 axes[0,0].axvline(np.mean(score), color='red', linestyle='--', label=f'Mean={np.mean(score):.1f}')
 axes[0,0].axvline(np.median(score), color='green', linestyle='--', label=f'Median={np.median(score):.1f}')
 axes[0,0].set_title('Score Distribution', fontweight='bold')
@@ -65,18 +65,18 @@ axes[0,0].legend(fontsize=8)
 axes[0,1].boxplot([hours_studied, sleep_hours, score/10],
                    labels=['Study hrs', 'Sleep hrs', 'Score/10'],
                    patch_artist=True,
-                   boxprops=dict(facecolor='#00d4ff', alpha=0.5))
+                   boxprops=dict(facecolor='#a1a1aa', alpha=0.5))
 axes[0,1].set_title('Variable Distributions', fontweight='bold')
 
 # 3. Study hours (skewed!)
-axes[0,2].hist(hours_studied, bins=25, color='#ff8a3d', alpha=0.7, edgecolor='white')
+axes[0,2].hist(hours_studied, bins=25, color='#71717a', alpha=0.7, edgecolor='white')
 axes[0,2].set_title('Study Hours (right-skewed!)', fontweight='bold')
 skew = stats.skew(hours_studied)
 axes[0,2].text(0.7, 0.85, f'Skewness: {skew:.2f}', transform=axes[0,2].transAxes,
                fontsize=10, bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
 
 # 4. Scatter: study vs score
-axes[1,0].scatter(hours_studied, score, alpha=0.5, color='#7c5cfc', s=20)
+axes[1,0].scatter(hours_studied, score, alpha=0.5, color='#14b8a6', s=20)
 r = np.corrcoef(hours_studied, score)[0,1]
 axes[1,0].set_xlabel('Hours Studied')
 axes[1,0].set_ylabel('Score')
@@ -84,7 +84,7 @@ axes[1,0].set_title(f'Study vs Score (r={r:.2f})', fontweight='bold')
 
 # 5. Scatter: sleep vs score
 valid = ~np.isnan(sleep_with_missing)
-axes[1,1].scatter(sleep_hours[valid], score[valid], alpha=0.5, color='#34d399', s=20)
+axes[1,1].scatter(sleep_hours[valid], score[valid], alpha=0.5, color='#52525b', s=20)
 r2 = np.corrcoef(sleep_hours[valid], score[valid])[0,1]
 axes[1,1].set_xlabel('Sleep Hours')
 axes[1,1].set_ylabel('Score')

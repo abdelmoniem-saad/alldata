@@ -44,8 +44,8 @@ rolls = np.random.choice(values, n_rolls, p=probs)
 running_mean = np.cumsum(rolls) / np.arange(1, n_rolls + 1)
 
 plt.figure(figsize=(8, 4))
-plt.plot(running_mean, color='#7c5cfc', linewidth=1, alpha=0.8)
-plt.axhline(y=theoretical_ev, color='#ef4444', linestyle='--', linewidth=2,
+plt.plot(running_mean, color='#14b8a6', linewidth=1, alpha=0.8)
+plt.axhline(y=theoretical_ev, color='#71717a', linestyle='--', linewidth=2,
             label=f'E[X] = {theoretical_ev:.2f}')
 plt.xlabel('Number of rolls')
 plt.ylabel('Running average')

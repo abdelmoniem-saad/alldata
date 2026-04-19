@@ -25,6 +25,7 @@ async def execute_code(
     code: str,
     language: str = "python",
     timeout: int | None = None,
+    theme: str = "dark",
 ) -> dict:
     """Execute code in an isolated Docker container.
 
@@ -33,7 +34,7 @@ async def execute_code(
     timeout = timeout or settings.sandbox_timeout_seconds
 
     if language == "python":
-        return await _execute_python(code, timeout)
+        return await _execute_python(code, timeout, theme)
     elif language == "r":
         return await _execute_r(code, timeout)
     else:
@@ -47,10 +48,10 @@ async def execute_code(
         }
 
 
-async def _execute_python(code: str, timeout: int) -> dict:
+async def _execute_python(code: str, timeout: int, theme: str = "dark") -> dict:
     """Execute Python code in a sandboxed Docker container."""
     # Wrap the code to capture matplotlib plots
-    wrapped_code = _wrap_python_code(code)
+    wrapped_code = _wrap_python_code(code, theme=theme)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         # Write the code to a file
@@ -98,7 +99,7 @@ async def _execute_python(code: str, timeout: int) -> dict:
 
         except (FileNotFoundError, NotImplementedError, OSError):
             # Docker not available or asyncio subprocess not supported (Windows)
-            return await _execute_local_python(code, timeout)
+            return await _execute_local_python(code, timeout, theme)
 
         elapsed_ms = int((time.monotonic() - start_time) * 1000)
 
@@ -126,7 +127,7 @@ async def _execute_python(code: str, timeout: int) -> dict:
         }
 
 
-async def _execute_local_python(code: str, timeout: int) -> dict:
+async def _execute_local_python(code: str, timeout: int, theme: str = "dark") -> dict:
     """Fallback: execute Python locally when Docker is not available (dev mode).
 
     Uses subprocess.run in a thread to avoid asyncio subprocess issues on Windows.
@@ -137,7 +138,7 @@ async def _execute_local_python(code: str, timeout: int) -> dict:
         output_dir = Path(tmpdir) / "output"
         output_dir.mkdir()
 
-        wrapped = _wrap_python_code(code, output_dir=str(output_dir))
+        wrapped = _wrap_python_code(code, output_dir=str(output_dir), theme=theme)
         code_path = Path(tmpdir) / "script.py"
         code_path.write_text(wrapped, encoding="utf-8")
 
@@ -204,20 +205,46 @@ async def _execute_r(code: str, timeout: int) -> dict:
     }
 
 
-def _wrap_python_code(code: str, output_dir: str = "/home/sandbox/output") -> str:
+def _wrap_python_code(code: str, output_dir: str = "/home/sandbox/output", theme: str = "dark") -> str:
     """Wrap user code to capture matplotlib plots automatically."""
     # Normalize path separators for the target OS
     safe_dir = output_dir.replace("\\", "/")
+    
+    # Theme parameters
+    is_light = theme == "light"
+    face_color = "#fdfdfd" if is_light else "#050505"
+    text_color = "#09090b" if is_light else "#ffffff"
+    label_color = "#52525b" if is_light else "#a1a1aa"
+    tick_color = "#a1a1aa" if is_light else "#52525b"
+    edge_color = "#e4e4e7" if is_light else "#262626"
+    grid_color = "#f4f4f5" if is_light else "#1a1a1a"
+
     return f"""
 import os
 import sys
 
 _output_dir = r"{safe_dir}"
 
-# Redirect matplotlib to save plots instead of showing them
+# Redirect matplotlib to save plots instead of showing them and apply Laboratory Monolith theme
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+
+# Laboratory Monolith theme for plots
+plt.rcParams.update({{
+    'figure.facecolor': '{face_color}',
+    'axes.facecolor': '{face_color}',
+    'text.color': '{text_color}',
+    'axes.labelcolor': '{label_color}',
+    'xtick.color': '{tick_color}',
+    'ytick.color': '{tick_color}',
+    'axes.edgecolor': '{edge_color}',
+    'grid.color': '{grid_color}',
+    'axes.spines.top': False,
+    'axes.spines.right': False,
+    'font.family': 'sans-serif',
+    'font.sans-serif': ['Inter', 'DejaVu Sans'],
+}})
 
 _plot_counter = 0
 _original_show = plt.show
