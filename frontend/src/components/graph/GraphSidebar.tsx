@@ -85,7 +85,7 @@ export default function GraphSidebar({ node, prerequisites = [], leadsTo = [] }:
 
         <Link
           to={`/topic/${node.slug}`}
-          className="btn btn-primary"
+          className="btn btn-primary glow-ring"
           style={{
             width: '100%',
             justifyContent: 'center',

@@ -56,6 +56,10 @@ export default function SlideView({ blocks, misconceptions, activeLayer, domainC
   if (total === 0) return null
 
   const slide = slides[current]
+  // First content-slide gets the "spark" hero treatment — teal rail, bigger
+  // serif headline, lede paragraph. Non-content first slides skip it so we
+  // don't hang editorial styling on a code block or quiz.
+  const isSpark = current === 0 && slide.type === 'content'
 
   return (
     <div style={{
@@ -94,7 +98,12 @@ export default function SlideView({ blocks, misconceptions, activeLayer, domainC
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <SlideTypeIcon type={slide.type} color="var(--color-accent)" />
           <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: 'var(--font-mono)' }}>
-            {slide.type === 'content' ? 'Concept' : slide.type === 'code' ? 'Code' : slide.type === 'quiz' ? 'Challenge' : 'Misconceptions'}
+            {isSpark
+              ? 'Introduction'
+              : slide.type === 'content' ? 'Concept'
+              : slide.type === 'code' ? 'Code'
+              : slide.type === 'quiz' ? 'Challenge'
+              : 'Misconceptions'}
           </span>
         </div>
         <span style={{ fontSize: 12, color: 'var(--color-text-muted)', fontWeight: 500 }}>
@@ -106,10 +115,18 @@ export default function SlideView({ blocks, misconceptions, activeLayer, domainC
       <div style={{
         flex: 1,
         padding: 'clamp(16px, 4vw, 28px) clamp(14px, 4vw, 32px)',
+        paddingLeft: isSpark ? 'clamp(24px, 5vw, 48px)' : undefined,
+        borderLeft: isSpark ? '2px solid var(--color-accent)' : undefined,
         overflow: 'auto',
         maxHeight: 'calc(100vh - 280px)',
       }}>
-        <SlideContent slide={slide} />
+        {isSpark ? (
+          <div className="prose-hero" style={{ maxWidth: 640, margin: '0 auto' }}>
+            <SlideContent slide={slide} />
+          </div>
+        ) : (
+          <SlideContent slide={slide} />
+        )}
       </div>
 
       {/* Navigation */}

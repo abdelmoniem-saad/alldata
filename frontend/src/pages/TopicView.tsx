@@ -517,7 +517,7 @@ export default function TopicView() {
                 return (difficultyOrder[a.difficulty || ''] ?? 1) - (difficultyOrder[b.difficulty || ''] ?? 1)
               })[0]
             return nextTopic ? (
-              <Link to={`/topic/${nextTopic.slug}`} className="btn btn-primary btn-sm">
+              <Link to={`/topic/${nextTopic.slug}`} className="btn btn-primary btn-sm glow-ring">
                 Next: {nextTopic.title}
               </Link>
             ) : null

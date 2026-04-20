@@ -258,21 +258,30 @@ pre {
 .glow-ring::before {
   content: '';
   position: absolute;
-  inset: -1px;
+  inset: -2px;
   border-radius: inherit;
   background: conic-gradient(
     from 0deg,
-    var(--color-accent) 0%,
-    transparent 25%,
-    transparent 50%,
-    var(--color-accent) 75%,
-    transparent 100%
+    var(--color-accent-hover) 0%,
+    transparent 30%,
+    transparent 60%,
+    var(--color-accent-hover) 100%
   );
   opacity: 0;
   transition: opacity var(--transition-smooth);
   z-index: -1;
+  pointer-events: none;
 }
-.glow-ring:hover::before { opacity: 0.5; }
+.glow-ring:hover::before { opacity: 0.85; }
+
+/* Button variant — release the overflow clip so the halo is visible, and
+   preserve the ripple's rounded corners without needing overflow:hidden. */
+.btn.glow-ring {
+  overflow: visible;
+}
+.btn.glow-ring::after {
+  border-radius: inherit;
+}
 
 /* ─── Prose (content blocks) ─── */
 ::selection { background: var(--color-accent); color: #000; }
@@ -322,16 +331,39 @@ pre {
 }
 .prose blockquote p { color: var(--color-text); margin: 0; }
 
-/* KaTeX Exhibits */
+/* Spark slide — first content slide of a topic. Inherits .prose but with
+   hero-scale typography and a "lede" first paragraph. */
+.prose-hero h1 {
+  font-size: clamp(30px, 4.5vw, 44px);
+  line-height: 1.15;
+  margin: 18px 0 24px;
+  letter-spacing: -0.5px;
+}
+.prose-hero > p:first-of-type {
+  font-size: 17px;
+  line-height: 1.85;
+  color: var(--color-text);
+  font-weight: 400;
+}
+
+/* KaTeX Exhibits — framed artefacts with a teal rail + soft lift */
 .katex-display {
   margin: 24px 0 !important;
-  padding: 20px;
+  padding: 20px 20px 20px 28px;
   background: var(--color-bg-secondary);
   border-radius: var(--radius);
   border: 1px solid var(--color-border-subtle);
+  border-left: 2px solid var(--color-accent);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
   overflow-x: auto;
   overflow-y: hidden;
-  transition: background var(--transition-smooth), border-color var(--transition-smooth);
+  transition: background var(--transition-smooth),
+              border-color var(--transition-smooth),
+              box-shadow var(--transition-smooth);
+}
+
+[data-theme='light'] .katex-display {
+  box-shadow: 0 2px 10px rgba(9, 9, 11, 0.06);
 }
 
 /* ─── Animations ─── */
