@@ -4,14 +4,7 @@ import ForceGraph from '../components/graph/ForceGraph'
 import GraphSidebar from '../components/graph/GraphSidebar'
 import { useGraphStore } from '../stores/graphStore'
 import { api, GraphNode } from '../api/client'
-
-const DOMAIN_COLORS: Record<string, string> = {
-  'probability-foundations': '#71717a',
-  'distributions': '#a1a1aa',
-  'statistical-inference': '#d4d4d8',
-  'regression-modeling': '#52525b',
-  'data-science-practice': '#3f3f46',
-}
+import { DOMAIN_SLUGS, domainVar } from '../lib/domain'
 
 export default function GraphExplorer() {
   const navigate = useNavigate()
@@ -148,8 +141,8 @@ export default function GraphExplorer() {
           >
             All
           </button>
-          {Object.entries(DOMAIN_COLORS).map(([domain, color]) => {
-            const domainVar = `var(--color-${domain.split('-')[0]})`
+          {DOMAIN_SLUGS.map(domain => {
+            const dColor = domainVar(domain)
             return (
               <button
                 key={domain}
@@ -157,14 +150,14 @@ export default function GraphExplorer() {
                 onClick={() => setActiveDomain(activeDomain === domain ? null : domain)}
                 style={{
                   fontSize: 11,
-                  borderColor: activeDomain === domain ? domainVar : undefined,
+                  borderColor: activeDomain === domain ? dColor : undefined,
                   background: activeDomain === domain ? `var(--color-accent-subtle)` : undefined,
                   color: activeDomain === domain ? 'var(--color-text)' : undefined,
                 }}
               >
                 <span style={{
                   width: 6, height: 6, borderRadius: '50%',
-                  background: domainVar, display: 'inline-block',
+                  background: dColor, display: 'inline-block',
                   boxShadow: `0 0 6px rgba(255,255,255,0.1)`,
                 }} />
                 {domain.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()).replace('Foundations', '').trim()}

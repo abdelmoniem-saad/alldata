@@ -4,6 +4,7 @@ import { api, TopicDetail, GraphNode } from '../api/client'
 import ContentRenderer from '../components/topic/ContentRenderer'
 import SlideView from '../components/topic/SlideView'
 import { useProgressStore } from '../stores/progressStore'
+import { domainVar, domainLabel } from '../lib/domain'
 
 export default function TopicView() {
   const { slug } = useParams<{ slug: string }>()
@@ -87,7 +88,7 @@ export default function TopicView() {
     )
   }
 
-  const domainColor = `var(--color-${topic.domain?.split('-')[0] || 'probability'})`
+  const domainColor = domainVar(topic.domain)
 
   return (
     <>
@@ -130,7 +131,7 @@ export default function TopicView() {
           {topic.domain && (
             <>
               <Link to={`/explore?domain=${topic.domain}`} style={{ color: domainColor, fontWeight: 500 }}>
-                {topic.domain.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                {domainLabel(topic.domain)}
               </Link>
               <span style={{ color: 'var(--color-border)' }}>/</span>
             </>
@@ -269,7 +270,7 @@ export default function TopicView() {
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {prerequisites.map(p => {
-                const pColor = `var(--color-${p.domain?.split('-')[0] || 'probability'})`
+                const pColor = domainVar(p.domain)
                 return (
                   <Link
                     key={p.id}
@@ -445,7 +446,7 @@ export default function TopicView() {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 8 }}>
               {leadsTo.map(t => {
-                const tColor = `var(--color-${t.domain?.split('-')[0] || 'probability'})`
+                const tColor = domainVar(t.domain)
                 return (
                   <Link
                     key={t.id}

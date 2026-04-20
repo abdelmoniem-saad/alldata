@@ -1,14 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { api, LearningPathResponse, GraphNode } from '../api/client'
-
-const DOMAIN_LABELS: Record<string, string> = {
-  'probability-foundations': 'Probability',
-  'distributions': 'Distributions',
-  'statistical-inference': 'Inference',
-  'regression-modeling': 'Regression',
-  'data-science-practice': 'Practice',
-}
+import { domainVar, domainLabel } from '../lib/domain'
 
 // Popular destinations
 const POPULAR_PATHS = [
@@ -171,8 +164,8 @@ function TopicSearchInput({ value, onChange, topics, placeholder, label }: Topic
           }}
         >
               {filtered.map((topic, i) => {
-                const domainVar = `var(--color-${topic.domain?.split('-')[0] || 'probability'})`
-                const domainLabel = DOMAIN_LABELS[topic.domain || ''] || topic.domain
+                const topicDomainColor = domainVar(topic.domain)
+                const topicDomainLabel = domainLabel(topic.domain)
                 const isFocused = i === focusedIndex
                 const isSelected = topic.slug === value
 
@@ -192,7 +185,7 @@ function TopicSearchInput({ value, onChange, topics, placeholder, label }: Topic
                   >
                     <span style={{
                       width: 8, height: 8, borderRadius: '50%',
-                      background: domainVar, flexShrink: 0,
+                      background: topicDomainColor, flexShrink: 0,
                       boxShadow: `0 0 6px rgba(255,255,255,0.05)`,
                     }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -207,7 +200,7 @@ function TopicSearchInput({ value, onChange, topics, placeholder, label }: Topic
                     fontSize: 10, color: 'var(--color-text-muted)',
                     marginTop: 1,
                   }}>
-                    {domainLabel}
+                    {topicDomainLabel}
                     {topic.difficulty && (
                       <span style={{ marginLeft: 6, opacity: 0.7 }}>
                         · {topic.difficulty}
@@ -415,7 +408,7 @@ export default function LearningPath() {
             {path.steps.map((step, i) => {
               const isFirst = i === 0
               const isLast = i === path.steps.length - 1
-              const domainVar = `var(--color-${step.topic.domain?.split('-')[0] || 'probability'})`
+              const stepDomainColor = domainVar(step.topic.domain)
 
               return (
                 <div
@@ -471,7 +464,7 @@ export default function LearningPath() {
                   >
                     <span style={{
                       width: 8, height: 8, borderRadius: '50%',
-                      background: domainVar, boxShadow: `0 0 8px rgba(255,255,255,0.05)`,
+                      background: stepDomainColor, boxShadow: `0 0 8px rgba(255,255,255,0.05)`,
                       flexShrink: 0,
                     }} />
                     <div style={{ flex: 1 }}>

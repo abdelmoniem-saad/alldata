@@ -1,16 +1,25 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import * as d3 from 'd3'
 import { useProgressStore } from '../stores/progressStore'
 import { useThemeStore } from '../stores/themeStore'
+import { DOMAIN_SLUGS, DOMAIN_LABEL, DOMAIN_DESC, domainColorHex, cssVarHex } from '../lib/domain'
 
-const domains = [
-  { slug: 'probability-foundations', title: 'Probability', color: '#71717a', topics: 10, desc: 'Events, Bayes, Random Variables' },
-  { slug: 'distributions', title: 'Distributions', color: '#a1a1aa', topics: 8, desc: 'Normal, Binomial, Poisson' },
-  { slug: 'statistical-inference', title: 'Inference', color: '#d4d4d8', topics: 12, desc: 'Hypothesis Tests, Confidence' },
-  { slug: 'regression-modeling', title: 'Regression', color: '#52525b', topics: 6, desc: 'Linear, Logistic, Regularization' },
-  { slug: 'data-science-practice', title: 'Practice', color: '#3f3f46', topics: 6, desc: 'EDA, A/B Tests, Cross-Validation' },
-]
+// Domain metadata lives here; colors are resolved at render time from CSS vars
+// so the theme toggle owns the palette.
+const TOPIC_COUNTS: Record<string, number> = {
+  'probability-foundations': 10,
+  'distributions': 8,
+  'statistical-inference': 12,
+  'regression-modeling': 6,
+  'data-science-practice': 6,
+}
+
+const domains = DOMAIN_SLUGS.map(slug => ({
+  slug,
+  title: DOMAIN_LABEL[slug],
+  desc:  DOMAIN_DESC[slug],
+  topics: TOPIC_COUNTS[slug] ?? 0,
+}))
 
 const TOTAL_CONTENT_TOPICS = 20  // Topics with actual content
 
@@ -22,19 +31,19 @@ export default function Home() {
 
   const isLight = theme === 'light'
 
-  const getThemeColor = (color: string) => {
-    if (!isLight) return color
-    const map: Record<string, string> = {
-      '#71717a': '#52525b',
-      '#a1a1aa': '#71717a',
-      '#d4d4d8': '#3f3f46',
-      '#52525b': '#27272a',
-      '#3f3f46': '#18181b',
-    }
-    return map[color] || color
-  }
+  // Resolve CSS var tokens → hex once per render so we can use alpha composition
+  // (e.g. `${color}20`). Dependency on `theme` means this rebuilds on toggle.
+  const paletteHex = useMemo(() => ({
+    probability:   domainColorHex('probability-foundations'),
+    distributions: domainColorHex('distributions'),
+    inference:     domainColorHex('statistical-inference'),
+    regression:    domainColorHex('regression-modeling'),
+    practice:      domainColorHex('data-science-practice'),
+    accent:        cssVarHex('--color-accent', document.documentElement, '#14b8a6'),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [theme])
 
-  const themeAccent = isLight ? '#0d9488' : '#14b8a6'
+  const domainHex = (slug: string) => domainColorHex(slug)
 
   return (
     <div style={{ position: 'relative', minHeight: '100%', overflow: 'hidden' }}>
@@ -159,7 +168,7 @@ export default function Home() {
         padding: '0 24px',
       }}>
         {domains.map(d => {
-          const dColor = getThemeColor(d.color)
+          const dColor = domainHex(d.slug)
           return (
             <Link
               key={d.slug}
@@ -318,32 +327,32 @@ export default function Home() {
           gap: 16,
         }}>
           <FeatureCard
-            color="#71717a"
+            color={paletteHex.probability}
             title="Drag the Map"
             description="Grab any concept and drag it. Watch the graph respond — connected ideas follow, springs stretch and settle. This is your curriculum, and you can shape it."
           />
           <FeatureCard
-            color="#a1a1aa"
+            color={paletteHex.distributions}
             title="Simulate First"
             description="See the Central Limit Theorem form a bell curve in real-time before you see the formula. Experience first, formalize later. Every concept that can be simulated, is."
           />
           <FeatureCard
-            color="#d4d4d8"
+            color={paletteHex.inference}
             title="Why Do I Need This?"
             description="Every prerequisite edge carries a reason. Not just 'you need this first' but 'Bayes is literally a rearrangement of conditional probability.' No more mystery."
           />
           <FeatureCard
-            color="#52525b"
+            color={paletteHex.regression}
             title="Dual Layers"
             description="Toggle between intuition (analogies, visuals) and formal (proofs, measure theory). Same topic, two depths. First-year student and grad student see different content."
           />
           <FeatureCard
-            color="#3f3f46"
+            color={paletteHex.practice}
             title="Misconception Alerts"
             description="'P-values are the probability the null is true' has its own node. Common misconceptions are searchable, linked, and appear as warnings. No textbook does this."
           />
           <FeatureCard
-            color="var(--color-accent)"
+            color={paletteHex.accent}
             title="Proof by Doing"
             description="Not quizzes — micro-challenges. Modify a simulation, see what breaks. Edit code, run it, verify your understanding through building, not multiple choice."
           />
@@ -425,7 +434,12 @@ function FeatureCard({ color, title, description }: {
   )
 }
 
-/** Animated background — floating nodes with soft connections */
+/**
+ * Animated background — floating nodes with soft connections.
+ * Rule: teal ("the Energy") particles are *always* the brightest and slightly
+ * larger than the zinc (structure) particles. This makes the single-chromatic-voice
+ * hierarchy unmistakable: even in ambient decor, teal reads as the pulse.
+ */
 function BackgroundGraph({ isLight }: { isLight: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -450,18 +464,31 @@ function BackgroundGraph({ isLight }: { isLight: boolean }) {
     const W = () => window.innerWidth
     const H = 800
 
-    // Floating particles
-    const colors = isLight
-      ? ['#52525b', '#71717a', '#3f3f46', '#27272a', '#18181b', '#0d9488']
-      : ['#71717a', '#a1a1aa', '#d4d4d8', '#52525b', '#3f3f46', '#14b8a6']
-    const particles = Array.from({ length: 40 }, () => ({
-      x: Math.random() * W(),
-      y: Math.random() * H,
-      vx: (Math.random() - 0.5) * 0.3,
-      vy: (Math.random() - 0.5) * 0.3,
-      r: 2 + Math.random() * 3,
-      color: colors[Math.floor(Math.random() * colors.length)],
-    }))
+    // Resolve palette from CSS vars so theme toggle owns the colors.
+    const root = document.documentElement
+    const zinc = [
+      cssVarHex('--color-probability',   root, isLight ? '#52525b' : '#71717a'),
+      cssVarHex('--color-distributions', root, isLight ? '#71717a' : '#a1a1aa'),
+      cssVarHex('--color-inference',     root, isLight ? '#3f3f46' : '#d4d4d8'),
+      cssVarHex('--color-regression',    root, isLight ? '#27272a' : '#52525b'),
+      cssVarHex('--color-practice',      root, isLight ? '#18181b' : '#3f3f46'),
+    ]
+    const accent = cssVarHex('--color-accent', root, isLight ? '#0d9488' : '#14b8a6')
+
+    // ~15% of particles are teal; they render with larger radius + higher alpha
+    // so they always read as "the pulse" against the zinc structure.
+    const particles = Array.from({ length: 40 }, () => {
+      const isAccent = Math.random() < 0.15
+      return {
+        x: Math.random() * W(),
+        y: Math.random() * H,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: (Math.random() - 0.5) * 0.3,
+        r: isAccent ? 3 + Math.random() * 2 : 2 + Math.random() * 2,
+        color: isAccent ? accent : zinc[Math.floor(Math.random() * zinc.length)],
+        isAccent,
+      }
+    })
 
     const draw = () => {
       ctx.clearRect(0, 0, W(), H)
@@ -474,7 +501,7 @@ function BackgroundGraph({ isLight }: { isLight: boolean }) {
         if (p.y < 0 || p.y > H) p.vy *= -1
       }
 
-      // Draw connections
+      // Draw connections (teal voice)
       for (let i = 0; i < particles.length; i++) {
         for (let j = i + 1; j < particles.length; j++) {
           const dx = particles[i].x - particles[j].x
@@ -483,9 +510,7 @@ function BackgroundGraph({ isLight }: { isLight: boolean }) {
           if (dist < 200) {
             const alpha = (1 - dist / 200) * (isLight ? 0.1 : 0.06)
             ctx.beginPath()
-            ctx.strokeStyle = isLight 
-              ? `rgba(13, 148, 136, ${alpha})`
-              : `rgba(20, 184, 166, ${alpha})`
+            ctx.strokeStyle = accent + Math.round(alpha * 255).toString(16).padStart(2, '0')
             ctx.lineWidth = 0.5
             ctx.moveTo(particles[i].x, particles[i].y)
             ctx.lineTo(particles[j].x, particles[j].y)
@@ -496,19 +521,20 @@ function BackgroundGraph({ isLight }: { isLight: boolean }) {
 
       // Draw particles
       for (const p of particles) {
-        // Glow
-        const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 4)
-        grad.addColorStop(0, p.color + '15')
+        // Glow — teal particles bloom 2× wider so they dominate the field
+        const glowR = p.isAccent ? p.r * 6 : p.r * 4
+        const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, glowR)
+        grad.addColorStop(0, p.color + (p.isAccent ? '30' : '15'))
         grad.addColorStop(1, p.color + '00')
         ctx.beginPath()
-        ctx.arc(p.x, p.y, p.r * 4, 0, Math.PI * 2)
+        ctx.arc(p.x, p.y, glowR, 0, Math.PI * 2)
         ctx.fillStyle = grad
         ctx.fill()
 
-        // Core
+        // Core — teal at ~70% alpha, zinc at ~25% alpha
         ctx.beginPath()
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
-        ctx.fillStyle = p.color + '40'
+        ctx.fillStyle = p.color + (p.isAccent ? 'b0' : '40')
         ctx.fill()
       }
 

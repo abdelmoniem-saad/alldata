@@ -78,12 +78,18 @@ export default function CodeRunner({
         background: 'var(--color-surface)',
         borderBottom: '1px solid var(--color-border-subtle)',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* Traffic lights */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {/* Instrument indicator — three zinc dots holding the monochrome rule.
+              Teal dot lights only when this block is an interactive simulation. */}
           <div style={{ display: 'flex', gap: 5 }}>
-            <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#ff5f57' }} />
-            <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#febc2e' }} />
-            <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#28c840' }} />
+            <span style={{
+              width: 8, height: 8, borderRadius: '50%',
+              background: isSimulation ? 'var(--color-accent)' : 'var(--color-text-muted)',
+              boxShadow: isSimulation ? '0 0 6px var(--color-accent-glow)' : 'none',
+              transition: 'all var(--transition-smooth)',
+            }} />
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--color-border)' }} />
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--color-border)' }} />
           </div>
 
           <span style={{
@@ -92,7 +98,7 @@ export default function CodeRunner({
             textTransform: 'uppercase',
             letterSpacing: '1px',
             color: isSimulation ? 'var(--color-accent)' : 'var(--color-text-muted)',
-            marginLeft: 4,
+            fontFamily: 'var(--font-mono)',
           }}>
             {isSimulation ? 'SIMULATION' : language.toUpperCase()}
           </span>

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { api, GraphNode } from '../api/client'
 import { useThemeStore } from '../stores/themeStore'
+import { domainVar } from '../lib/domain'
 
 const navItems = [
   { path: '/', label: 'Home' },
@@ -385,7 +386,7 @@ function CommandSearch() {
                 </div>
               )}
               {results.map((r, i) => {
-                const domainColor = `var(--color-${r.domain?.split('-')[0] || 'probability'})`
+                const domainColor = domainVar(r.domain)
                 return (
                   <button
                     key={r.id}

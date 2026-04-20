@@ -1,20 +1,9 @@
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useMemo } from 'react'
 import * as d3 from 'd3'
 import { GraphNode, GraphEdge } from '../../api/client'
 import { useProgressStore } from '../../stores/progressStore'
 import { useThemeStore } from '../../stores/themeStore'
-
-// Domain color mapping — Scholarly Grayscale
-const getDomainColor = (domain: string, isLight: boolean) => {
-  const domainMap: Record<string, string> = {
-    'probability-foundations': isLight ? '#52525b' : '#71717a',
-    'distributions': isLight ? '#71717a' : '#a1a1aa',
-    'statistical-inference': isLight ? '#3f3f46' : '#d4d4d8',
-    'regression-modeling': isLight ? '#27272a' : '#52525b',
-    'data-science-practice': isLight ? '#18181b' : '#3f3f46',
-  }
-  return domainMap[domain] || (isLight ? '#18181b' : '#52525b')
-}
+import { domainColorHex, cssVarHex } from '../../lib/domain'
 
 interface Props {
   nodes: GraphNode[]
@@ -54,12 +43,27 @@ export default function ForceGraph({
   const { theme } = useThemeStore()
   const isLight = theme === 'light'
 
+  // Resolve the palette from CSS vars once per theme change so canvas render
+  // stays in lockstep with the theme without per-frame getComputedStyle calls.
+  const palette = useMemo(() => ({
+    accent: cssVarHex('--color-accent', document.documentElement, isLight ? '#0d9488' : '#14b8a6'),
+    domains: {
+      'probability-foundations': domainColorHex('probability-foundations'),
+      'distributions':           domainColorHex('distributions'),
+      'statistical-inference':   domainColorHex('statistical-inference'),
+      'regression-modeling':     domainColorHex('regression-modeling'),
+      'data-science-practice':   domainColorHex('data-science-practice'),
+    } as Record<string, string>,
+    fallback: isLight ? '#18181b' : '#52525b',
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [theme, isLight])
+
   const getNodeColor = useCallback((node: GraphNode, glow = 0) => {
     if (glow > 0.1 || highlightedNode === node.slug) {
-      return isLight ? '#0d9488' : '#14b8a6' // Teal "Energy"
+      return palette.accent
     }
-    return getDomainColor(node.domain || '', isLight)
-  }, [highlightedNode, isLight])
+    return palette.domains[node.domain || ''] || palette.fallback
+  }, [highlightedNode, palette])
 
   const getNodeRadius = useCallback((node: GraphNode) => {
     if (node.depth === 0) return 28
@@ -104,24 +108,25 @@ export default function ForceGraph({
     ctx.translate(t.x, t.y)
     ctx.scale(t.k, t.k)
 
-    const gridSize = 60
+    // Laboratory dot-grid — instrument reticle rather than graph paper lines.
+    // Dots read as a measurement surface without competing with the edges for
+    // attention. Alpha is bumped from the old near-invisible lines so the
+    // grid is actually perceivable on both themes.
+    const gridSize = 48
     const startX = Math.floor(-t.x / t.k / gridSize) * gridSize - gridSize
     const startY = Math.floor(-t.y / t.k / gridSize) * gridSize - gridSize
     const endX = startX + width / t.k + gridSize * 2
     const endY = startY + height / t.k + gridSize * 2
+    const dotR = Math.max(0.6, 0.9 / t.k) // compensate zoom so dots stay crisp
 
-    ctx.strokeStyle = isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.015)'
-    ctx.lineWidth = 1
-    ctx.beginPath()
+    ctx.fillStyle = isLight ? 'rgba(9,9,11,0.10)' : 'rgba(255,255,255,0.055)'
     for (let x = startX; x < endX; x += gridSize) {
-      ctx.moveTo(x, startY)
-      ctx.lineTo(x, endY)
+      for (let y = startY; y < endY; y += gridSize) {
+        ctx.beginPath()
+        ctx.arc(x, y, dotR, 0, Math.PI * 2)
+        ctx.fill()
+      }
     }
-    for (let y = startY; y < endY; y += gridSize) {
-      ctx.moveTo(startX, y)
-      ctx.lineTo(endX, y)
-    }
-    ctx.stroke()
 
     // Animate glow values for smooth hover transitions
     let needsExtraFrame = false
@@ -286,12 +291,13 @@ export default function ForceGraph({
         : `rgba(226, 228, 240, ${textAlpha})`
       ctx.fillText(node.data.title, node.x, node.y + r + 6, 130)
 
-      // Difficulty indicator dot
+      // Difficulty indicator dot — reads from semantic CSS vars so dark/light
+      // themes stay in sync with the difficulty badges in the rest of the UI.
       if (node.data.difficulty && node.data.depth > 0) {
         const diffColors: Record<string, string> = {
-          intro: isLight ? '#15803d' : '#22c55e',
-          intermediate: isLight ? '#a16207' : '#f59e0b',
-          advanced: isLight ? '#b91c1c' : '#ef4444',
+          intro:        cssVarHex('--color-intro',        document.documentElement, '#22c55e'),
+          intermediate: cssVarHex('--color-intermediate', document.documentElement, '#f59e0b'),
+          advanced:     cssVarHex('--color-advanced',     document.documentElement, '#ef4444'),
         }
         const dotColor = diffColors[node.data.difficulty] || '#666'
         ctx.beginPath()
@@ -304,10 +310,10 @@ export default function ForceGraph({
       if (completedSlugs.includes(node.data.slug)) {
         const cx = node.x - r * 0.7
         const cy = node.y - r * 0.7
-        // Teal circle background (Energy color)
+        // Teal circle background — the single "Energy" voice
         ctx.beginPath()
         ctx.arc(cx, cy, 5, 0, Math.PI * 2)
-        ctx.fillStyle = isLight ? '#0d9488' : '#14b8a6'
+        ctx.fillStyle = palette.accent
         ctx.fill()
         // White checkmark
         ctx.beginPath()

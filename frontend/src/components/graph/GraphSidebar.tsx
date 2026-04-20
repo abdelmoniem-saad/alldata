@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { GraphNode } from '../../api/client'
+import { domainVar } from '../../lib/domain'
 
 interface Props {
   node: GraphNode | null
@@ -36,7 +37,7 @@ export default function GraphSidebar({ node, prerequisites = [], leadsTo = [] }:
     )
   }
 
-  const domainVar = `var(--color-${node.domain?.split('-')[0] || 'probability'})`
+  const domainColor = domainVar(node.domain)
 
   return (
     <div className="animate-fade-in" style={{ padding: 20 }}>
@@ -54,7 +55,7 @@ export default function GraphSidebar({ node, prerequisites = [], leadsTo = [] }:
             }}>
               <span style={{
                 width: 6, height: 6, borderRadius: '50%',
-                background: domainVar,
+                background: domainColor,
                 boxShadow: `0 0 8px rgba(255,255,255,0.1)`,
               }} />
               {node.domain.replace(/-/g, ' ')}
@@ -194,7 +195,7 @@ function Section({ title, subtitle, color, count, children }: {
 }
 
 function TopicChip({ node }: { node: GraphNode }) {
-  const domainVar = `var(--color-${node.domain?.split('-')[0] || 'probability'})`
+  const domainColor = domainVar(node.domain)
   return (
     <Link
       to={`/topic/${node.slug}`}
@@ -223,7 +224,7 @@ function TopicChip({ node }: { node: GraphNode }) {
     >
       <span style={{
         width: 7, height: 7, borderRadius: '50%',
-        background: domainVar,
+        background: domainColor,
         boxShadow: `0 0 6px rgba(255,255,255,0.05)`,
         flexShrink: 0,
       }} />

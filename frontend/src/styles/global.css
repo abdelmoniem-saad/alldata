@@ -126,6 +126,8 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Dissolve between themes instead of hard-flipping. */
+  transition: background var(--transition-smooth), color var(--transition-smooth);
 }
 
 a {
@@ -153,6 +155,7 @@ pre {
   overflow-x: auto;
   font-size: 13px;
   line-height: 1.6;
+  transition: background var(--transition-smooth), border-color var(--transition-smooth);
 }
 
 /* ─── Buttons ─── */
@@ -229,6 +232,7 @@ pre {
   -webkit-backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
+  transition: background var(--transition-smooth), border-color var(--transition-smooth);
 }
 
 /* ─── Tags/Badges ─── */
@@ -241,6 +245,7 @@ pre {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.8px;
+  transition: background var(--transition-smooth), color var(--transition-smooth), border-color var(--transition-smooth);
 }
 .badge-intro { background: rgba(34, 197, 94, 0.12); color: var(--color-intro); border: 1px solid rgba(34, 197, 94, 0.2); }
 .badge-intermediate { background: rgba(234, 179, 8, 0.12); color: var(--color-intermediate); border: 1px solid rgba(234, 179, 8, 0.2); }
@@ -326,6 +331,7 @@ pre {
   border: 1px solid var(--color-border-subtle);
   overflow-x: auto;
   overflow-y: hidden;
+  transition: background var(--transition-smooth), border-color var(--transition-smooth);
 }
 
 /* ─── Animations ─── */
