@@ -13,6 +13,7 @@ const navItems = [
 export default function Layout() {
   const location = useLocation()
   const isGraphPage = location.pathname === '/explore'
+  const isTopicPage = location.pathname.startsWith('/topic/')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { theme, toggleTheme } = useThemeStore()
 
@@ -21,140 +22,153 @@ export default function Layout() {
     setMobileMenuOpen(false)
   }, [location.pathname])
 
+  const headerNode = (
+    <header className="glass" style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: '0 16px',
+      height: 52,
+      borderBottom: '1px solid var(--color-border-subtle)',
+      background: isGraphPage || isTopicPage ? 'var(--glass-bg)' : 'var(--glass-bg-opaque)',
+      backdropFilter: 'blur(20px)',
+      WebkitBackdropFilter: 'blur(20px)',
+      position: isTopicPage ? 'relative' : 'sticky',
+      top: 0,
+      zIndex: 100,
+      flexShrink: 0,
+      transition: 'background var(--transition-smooth)',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
+        {/* Logo */}
+        <Link to="/" style={{
+          fontSize: 18,
+          fontWeight: 800,
+          color: 'var(--color-text)',
+          letterSpacing: '-0.5px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+        }}>
+          <span style={{
+            width: 24, height: 24,
+            borderRadius: 7,
+            background: 'var(--color-accent)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <circle cx="7" cy="3" r="2" fill="white" fillOpacity="0.9"/>
+              <circle cx="3" cy="10" r="2" fill="white" fillOpacity="0.9"/>
+              <circle cx="11" cy="10" r="2" fill="white" fillOpacity="0.9"/>
+              <line x1="7" y1="5" x2="3.5" y2="8.5" stroke="white" strokeOpacity="0.5" strokeWidth="1"/>
+              <line x1="7" y1="5" x2="10.5" y2="8.5" stroke="white" strokeOpacity="0.5" strokeWidth="1"/>
+              <line x1="4.5" y1="10" x2="9.5" y2="10" stroke="white" strokeOpacity="0.3" strokeWidth="1"/>
+            </svg>
+          </span>
+          AllData
+        </Link>
+
+        {/* Desktop Nav */}
+        <nav className="desktop-only" style={{ display: 'flex', gap: 2 }}>
+          {navItems.map(item => {
+            const isActive = location.pathname === item.path
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                style={{
+                  padding: '5px 12px',
+                  borderRadius: 8,
+                  fontSize: 13,
+                  fontWeight: isActive ? 600 : 500,
+                  color: isActive ? 'var(--color-text)' : 'var(--color-text-muted)',
+                  background: isActive ? 'var(--color-accent-subtle)' : 'transparent',
+                  transition: 'all var(--transition-fast)',
+                }}
+              >
+                {item.label}
+              </Link>
+            )
+          })}
+        </nav>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {/* Theme Toggle */}
+        <button
+          onClick={toggleTheme}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: 36, height: 36, borderRadius: 8,
+            border: '1px solid var(--color-border)',
+            background: 'transparent',
+            color: 'var(--color-text)',
+            cursor: 'pointer',
+            transition: 'all var(--transition-fast)',
+          }}
+          aria-label="Toggle Theme"
+          title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+        >
+          {theme === 'dark' ? (
+            /* Sun Icon */
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+          ) : (
+            /* Moon Icon */
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+          )}
+        </button>
+
+        <CommandSearch />
+
+        {/* Mobile hamburger */}
+        <button
+          className="mobile-only"
+          onClick={() => setMobileMenuOpen(v => !v)}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: 36, height: 36, borderRadius: 8,
+            border: '1px solid var(--color-border)',
+            background: mobileMenuOpen ? 'var(--color-surface)' : 'transparent',
+            color: 'var(--color-text)',
+            cursor: 'pointer',
+          }}
+          aria-label="Menu"
+        >
+          {mobileMenuOpen ? (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+          ) : (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 12h18M3 6h18M3 18h18"/>
+            </svg>
+          )}
+        </button>
+      </div>
+    </header>
+  )
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <header className="glass" style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 16px',
-        height: 52,
-        borderBottom: '1px solid var(--color-border-subtle)',
-        background: isGraphPage ? 'var(--glass-bg)' : 'var(--glass-bg-opaque)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-        flexShrink: 0,
-        transition: 'background var(--transition-smooth)',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
-          {/* Logo */}
-          <Link to="/" style={{
-            fontSize: 18,
-            fontWeight: 800,
-            color: 'var(--color-text)',
-            letterSpacing: '-0.5px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-          }}>
-            <span style={{
-              width: 24, height: 24,
-              borderRadius: 7,
-              background: 'var(--color-accent)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <circle cx="7" cy="3" r="2" fill="white" fillOpacity="0.9"/>
-                <circle cx="3" cy="10" r="2" fill="white" fillOpacity="0.9"/>
-                <circle cx="11" cy="10" r="2" fill="white" fillOpacity="0.9"/>
-                <line x1="7" y1="5" x2="3.5" y2="8.5" stroke="white" strokeOpacity="0.5" strokeWidth="1"/>
-                <line x1="7" y1="5" x2="10.5" y2="8.5" stroke="white" strokeOpacity="0.5" strokeWidth="1"/>
-                <line x1="4.5" y1="10" x2="9.5" y2="10" stroke="white" strokeOpacity="0.3" strokeWidth="1"/>
-              </svg>
-            </span>
-            AllData
-          </Link>
-
-          {/* Desktop Nav */}
-          <nav className="desktop-only" style={{ display: 'flex', gap: 2 }}>
-            {navItems.map(item => {
-              const isActive = location.pathname === item.path
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  style={{
-                    padding: '5px 12px',
-                    borderRadius: 8,
-                    fontSize: 13,
-                    fontWeight: isActive ? 600 : 500,
-                    color: isActive ? 'var(--color-text)' : 'var(--color-text-muted)',
-                    background: isActive ? 'var(--color-accent-subtle)' : 'transparent',
-                    transition: 'all var(--transition-fast)',
-                  }}
-                >
-                  {item.label}
-                </Link>
-              )
-            })}
-          </nav>
+      {isTopicPage ? (
+        <div
+          className="navbar-auto-hide"
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100 }}
+        >
+          {headerNode}
         </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* Theme Toggle */}
-          <button
-            onClick={toggleTheme}
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              width: 36, height: 36, borderRadius: 8,
-              border: '1px solid var(--color-border)',
-              background: 'transparent',
-              color: 'var(--color-text)',
-              cursor: 'pointer',
-              transition: 'all var(--transition-fast)',
-            }}
-            aria-label="Toggle Theme"
-            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-          >
-            {theme === 'dark' ? (
-              /* Sun Icon */
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-              </svg>
-            ) : (
-              /* Moon Icon */
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-              </svg>
-            )}
-          </button>
-
-          <CommandSearch />
-
-          {/* Mobile hamburger */}
-          <button
-            className="mobile-only"
-            onClick={() => setMobileMenuOpen(v => !v)}
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              width: 36, height: 36, borderRadius: 8,
-              border: '1px solid var(--color-border)',
-              background: mobileMenuOpen ? 'var(--color-surface)' : 'transparent',
-              color: 'var(--color-text)',
-              cursor: 'pointer',
-            }}
-            aria-label="Menu"
-          >
-            {mobileMenuOpen ? (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M18 6L6 18M6 6l12 12"/>
-              </svg>
-            ) : (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M3 12h18M3 6h18M3 18h18"/>
-              </svg>
-            )}
-          </button>
-        </div>
-      </header>
+      ) : headerNode}
 
       {/* Mobile menu dropdown */}
       {mobileMenuOpen && (
         <div className="mobile-only animate-fade-in" style={{
-          position: 'sticky', top: 52, zIndex: 99,
+          position: isTopicPage ? 'fixed' : 'sticky',
+          top: 52, left: 0, right: 0,
+          zIndex: 99,
           background: 'var(--color-bg-secondary)',
           borderBottom: '1px solid var(--color-border)',
           padding: '8px 16px',
@@ -183,7 +197,7 @@ export default function Layout() {
         </div>
       )}
 
-      <main style={{ flex: 1, overflow: 'auto' }}>
+      <main style={{ flex: 1, overflow: isTopicPage ? 'visible' : 'auto' }}>
         <Outlet />
       </main>
     </div>

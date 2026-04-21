@@ -18,7 +18,10 @@ class Settings(BaseSettings):
 
     # Code execution
     sandbox_image: str = "alldata-sandbox-python:latest"
-    sandbox_timeout_seconds: int = 5
+    sandbox_r_image: str = "alldata-sandbox-r:latest"
+    # 20s default — educational simulations (Monte Carlo, matplotlib) routinely
+    # need more than the old 5s cap. Override via SANDBOX_TIMEOUT_SECONDS env var.
+    sandbox_timeout_seconds: int = 20
     sandbox_memory_limit: str = "256m"
     sandbox_cpu_limit: float = 0.5
     execution_rate_limit_learner: int = 10  # per minute

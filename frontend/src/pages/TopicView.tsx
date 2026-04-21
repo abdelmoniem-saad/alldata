@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { api, TopicDetail, GraphNode } from '../api/client'
 import ContentRenderer from '../components/topic/ContentRenderer'
 import SlideView from '../components/topic/SlideView'
+import ZenChrome from '../components/topic/ZenChrome'
 import { useProgressStore } from '../stores/progressStore'
-import { domainVar, domainLabel } from '../lib/domain'
+import { domainVar } from '../lib/domain'
 
 export default function TopicView() {
   const { slug } = useParams<{ slug: string }>()
@@ -13,22 +14,24 @@ export default function TopicView() {
   const [leadsTo, setLeadsTo] = useState<GraphNode[]>([])
   const [activeLayer, setActiveLayer] = useState<'intuition' | 'formal' | 'both'>('intuition')
   const [viewMode, setViewMode] = useState<'slides' | 'scroll'>('slides')
+  const [slideIdx, setSlideIdx] = useState(0)
+  const [slideTotal, setSlideTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [readProgress, setReadProgress] = useState(0)
   const [justCompleted, setJustCompleted] = useState(false)
   const { markCompleted, unmarkCompleted, isCompleted, markInProgress, completedSlugs } = useProgressStore()
 
-  // Track reading progress
-  useEffect(() => {
-    const handler = () => {
-      const el = document.documentElement
-      const scrollTop = el.scrollTop || document.body.scrollTop
-      const scrollHeight = el.scrollHeight - el.clientHeight
-      if (scrollHeight > 0) setReadProgress(Math.min(scrollTop / scrollHeight, 1))
-    }
-    window.addEventListener('scroll', handler, { passive: true })
-    return () => window.removeEventListener('scroll', handler)
+  const scrollRef = useRef<HTMLDivElement | null>(null)
+
+  // Track reading progress — watches the scroll container rather than window
+  // since the zen surface is a fixed-inset-0 scroll region, not the page body.
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const scrollHeight = el.scrollHeight - el.clientHeight
+    if (scrollHeight > 0) setReadProgress(Math.min(el.scrollTop / scrollHeight, 1))
+    else setReadProgress(0)
   }, [])
 
   useEffect(() => {
@@ -36,6 +39,7 @@ export default function TopicView() {
     setLoading(true)
     setError(null)
     setReadProgress(0)
+    setSlideIdx(0)
 
     Promise.all([
       api.getTopic(slug),
@@ -47,7 +51,6 @@ export default function TopicView() {
         setPrerequisites(prereqs)
         setLeadsTo(leads)
         setJustCompleted(false)
-        window.scrollTo(0, 0)
         // Mark as in-progress if it has content
         if (topicData.content_blocks.length > 0 && slug) {
           markInProgress(slug)
@@ -55,7 +58,28 @@ export default function TopicView() {
       })
       .catch(err => setError(err.message))
       .finally(() => setLoading(false))
-  }, [slug])
+  }, [slug, markInProgress])
+
+  // Reset slide index when the layer toggle shrinks the visible set.
+  useEffect(() => {
+    setSlideIdx(0)
+  }, [activeLayer, slug])
+
+  // Smart "next topic" — prefer has-content, not-completed, lowest difficulty.
+  const nextTopic = useMemo(() => {
+    const completedSet = new Set(completedSlugs)
+    const difficultyOrder: Record<string, number> = { intro: 0, intermediate: 1, advanced: 2 }
+    return [...leadsTo]
+      .sort((a, b) => {
+        const ac = a.has_content ? 0 : 1
+        const bc = b.has_content ? 0 : 1
+        if (ac !== bc) return ac - bc
+        const aComp = completedSet.has(a.slug) ? 1 : 0
+        const bComp = completedSet.has(b.slug) ? 1 : 0
+        if (aComp !== bComp) return aComp - bComp
+        return (difficultyOrder[a.difficulty || ''] ?? 1) - (difficultyOrder[b.difficulty || ''] ?? 1)
+      })[0]
+  }, [leadsTo, completedSlugs])
 
   if (loading) {
     return (
@@ -89,226 +113,24 @@ export default function TopicView() {
   }
 
   const domainColor = domainVar(topic.domain)
+  const hasContent = topic.content_blocks.length > 0
 
   return (
     <>
-      {/* Reading progress bar */}
-      <div style={{
-        position: 'fixed',
-        top: 52,
-        left: 0,
-        right: 0,
-        height: 2,
-        zIndex: 50,
-        background: 'transparent',
-      }}>
-        <div style={{
-          height: '100%',
-          width: `${readProgress * 100}%`,
-          background: 'var(--color-accent)',
-          transition: 'width 0.1s linear',
-          boxShadow: '0 0 10px var(--color-accent-glow)',
-        }} />
-      </div>
-
-      <div className="animate-fade-in-up topic-container" style={{ maxWidth: 800, margin: '0 auto', padding: '36px 24px 80px' }}>
-        {/* Breadcrumb */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          marginBottom: 28, fontSize: 12,
-        }}>
-          <Link to="/explore" style={{
-            color: 'var(--color-text-muted)',
-            display: 'flex', alignItems: 'center', gap: 4,
-          }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/>
-              <path d="M12 8v3M8.5 16.5l-1 .5M15.5 16.5l1 .5"/>
-            </svg>
-            Graph
-          </Link>
-          <span style={{ color: 'var(--color-border)' }}>/</span>
-          {topic.domain && (
-            <>
-              <Link to={`/explore?domain=${topic.domain}`} style={{ color: domainColor, fontWeight: 500 }}>
-                {domainLabel(topic.domain)}
-              </Link>
-              <span style={{ color: 'var(--color-border)' }}>/</span>
-            </>
-          )}
-          <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>{topic.title}</span>
-        </div>
-
-        {/* Header */}
-        <div style={{ marginBottom: 32 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-            <span style={{
-              width: 10, height: 10, borderRadius: '50%',
-              background: domainColor,
-              boxShadow: `0 0 12px ${domainColor}50`,
-            }} />
-            {topic.difficulty && (
-              <span className={`badge badge-${topic.difficulty}`}>{topic.difficulty}</span>
-            )}
-          </div>
-          <h1 style={{
-            fontSize: 42, fontWeight: 700,
-            letterSpacing: '-1.5px', marginBottom: 16, lineHeight: 1.1,
-            fontFamily: 'var(--font-serif)',
-            color: 'var(--color-text)',
-          }}>
-            {topic.title}
-          </h1>
-          {topic.summary && (
-            <p style={{
-              fontSize: 17, color: 'var(--color-text-secondary)',
-              lineHeight: 1.7, maxWidth: 600,
-            }}>
-              {topic.summary}
-            </p>
-          )}
-        </div>
-
-        {/* Controls row: Layer toggle + View mode toggle */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 12, marginBottom: 32, flexWrap: 'wrap',
-        }}>
-          {/* Layer toggle */}
-          {topic.has_formal_layer && (
-            <div style={{
-              display: 'inline-flex', gap: 3, padding: 3,
-              borderRadius: 10,
-              background: 'var(--color-surface)',
-              border: '1px solid var(--color-border-subtle)',
-            }}>
-              {(['intuition', 'formal', 'both'] as const).map(layer => (
-                <button
-                  key={layer}
-                  onClick={() => setActiveLayer(layer)}
-                  style={{
-                    padding: '7px 16px',
-                    borderRadius: 8,
-                    border: 'none',
-                    background: activeLayer === layer ? 'var(--color-accent)' : 'transparent',
-                    color: activeLayer === layer ? 'white' : 'var(--color-text-muted)',
-                    fontSize: 13,
-                    fontWeight: activeLayer === layer ? 600 : 500,
-                    cursor: 'pointer',
-                    transition: 'all var(--transition-smooth)',
-                    textTransform: 'capitalize',
-                  }}
-                >
-                  {layer === 'both' ? 'All' : layer}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* View mode toggle */}
-          {topic.content_blocks.length > 0 && (
-            <div style={{
-              display: 'inline-flex', gap: 3, padding: 3,
-              borderRadius: 10,
-              background: 'var(--color-surface)',
-              border: '1px solid var(--color-border-subtle)',
-              marginLeft: topic.has_formal_layer ? 'auto' : 0,
-            }}>
-              {([
-                { key: 'slides' as const, icon: (
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
-                  </svg>
-                ), label: 'Slides' },
-                { key: 'scroll' as const, icon: (
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>
-                  </svg>
-                ), label: 'Scroll' },
-              ]).map(mode => (
-                <button
-                  key={mode.key}
-                  onClick={() => setViewMode(mode.key)}
-                  style={{
-                    padding: '7px 14px',
-                    borderRadius: 8,
-                    border: 'none',
-                    background: viewMode === mode.key ? domainColor : 'transparent',
-                    color: viewMode === mode.key ? 'white' : 'var(--color-text-muted)',
-                    fontSize: 12,
-                    fontWeight: viewMode === mode.key ? 600 : 500,
-                    cursor: 'pointer',
-                    transition: 'all var(--transition-smooth)',
-                    display: 'flex', alignItems: 'center', gap: 5,
-                  }}
-                >
-                  {mode.icon}
-                  {mode.label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Prerequisites */}
-        {prerequisites.length > 0 && (
-          <div style={{
-            padding: 16,
-            borderRadius: 'var(--radius-lg)',
-            border: '1px solid var(--color-border-subtle)',
-            background: 'var(--color-surface)',
-            marginBottom: 32,
-          }}>
-            <div style={{
-              fontSize: 11, fontWeight: 700, color: 'var(--color-text-muted)',
-              textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 10,
-              display: 'flex', alignItems: 'center', gap: 6,
-            }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M12 19V5M5 12l7-7 7 7"/>
-              </svg>
-              Prerequisites
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {prerequisites.map(p => {
-                const pColor = domainVar(p.domain)
-                return (
-                  <Link
-                    key={p.id}
-                    to={`/topic/${p.slug}`}
-                    style={{
-                      padding: '5px 12px', borderRadius: 100,
-                      background: 'var(--color-bg)',
-                      border: '1px solid var(--color-border-subtle)',
-                      fontSize: 12, fontWeight: 500,
-                      color: 'var(--color-text-secondary)',
-                      display: 'flex', alignItems: 'center', gap: 6,
-                      transition: 'all var(--transition-fast)',
-                    }}
-                    onMouseEnter={e => {
-                      const el = e.currentTarget
-                      el.style.borderColor = `${pColor}40`
-                      el.style.color = 'var(--color-text)'
-                    }}
-                    onMouseLeave={e => {
-                      const el = e.currentTarget
-                      el.style.borderColor = 'var(--color-border-subtle)'
-                      el.style.color = 'var(--color-text-secondary)'
-                    }}
-                  >
-                    <span style={{
-                      width: 5, height: 5, borderRadius: '50%',
-                      background: pColor,
-                    }} />
-                    {p.title}
-                  </Link>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Content */}
-        {topic.content_blocks.length > 0 ? (
+      {/* Zen surface — fills the entire viewport. Behind the auto-hiding
+          navbar (layout renders it at zIndex 100; our surface is below). */}
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="animate-fade-in"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'var(--color-bg)',
+          overflow: viewMode === 'slides' ? 'hidden' : 'auto',
+        }}
+      >
+        {hasContent ? (
           viewMode === 'slides' ? (
             <SlideView
               blocks={topic.content_blocks}
@@ -316,214 +138,125 @@ export default function TopicView() {
               activeLayer={activeLayer}
               topicTitle={topic.title}
               domainColor={domainColor}
+              current={slideIdx}
+              onChange={setSlideIdx}
+              onSlidesCount={setSlideTotal}
             />
           ) : (
-            <ContentRenderer
-              blocks={topic.content_blocks}
-              misconceptions={topic.misconceptions}
-              activeLayer={activeLayer}
-            />
+            <div style={{
+              padding: 'clamp(88px, 12vh, 160px) clamp(32px, 8vw, 180px) clamp(120px, 16vh, 200px)',
+              minHeight: '100vh',
+            }}>
+              {/* In scroll mode, lead with a large serif headline so the
+                  reader knows what topic they're in. In slide mode, each
+                  slide has its own heading so we skip this. */}
+              <div style={{ marginBottom: 48 }}>
+                <h1 style={{
+                  fontSize: 'clamp(32px, 5vw, 56px)',
+                  fontWeight: 700,
+                  fontFamily: 'var(--font-serif)',
+                  letterSpacing: '-1.5px',
+                  lineHeight: 1.05,
+                  color: 'var(--color-text)',
+                  marginBottom: 16,
+                }}>
+                  {topic.title}
+                </h1>
+                {topic.summary && (
+                  <p style={{
+                    fontSize: 18,
+                    color: 'var(--color-text-secondary)',
+                    lineHeight: 1.7,
+                  }}>
+                    {topic.summary}
+                  </p>
+                )}
+              </div>
+
+              <ContentRenderer
+                blocks={topic.content_blocks}
+                misconceptions={topic.misconceptions}
+                activeLayer={activeLayer}
+              />
+            </div>
           )
         ) : (
-          /* Empty topic — Coming Soon state */
+          /* Empty topic — Coming Soon state, centered in the viewport */
           <div style={{
-            padding: 40,
-            borderRadius: 'var(--radius-lg)',
-            border: '1px dashed var(--color-border)',
-            background: 'var(--color-surface)',
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 'clamp(32px, 8vw, 80px)',
             textAlign: 'center',
-            marginBottom: 32,
           }}>
             <div style={{
-              width: 56, height: 56, borderRadius: 16, margin: '0 auto 16px',
+              width: 64, height: 64, borderRadius: 18, marginBottom: 20,
               background: `${domainColor}15`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 24,
             }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={domainColor} strokeWidth="2">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={domainColor} strokeWidth="2">
                 <path d="M12 6v6l4 2"/>
                 <circle cx="12" cy="12" r="10"/>
               </svg>
             </div>
-            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>
-              Content Coming Soon
-            </h3>
-            <p style={{ color: 'var(--color-text-secondary)', fontSize: 14, lineHeight: 1.6, maxWidth: 420, margin: '0 auto 20px' }}>
+            <h1 style={{
+              fontSize: 'clamp(26px, 4vw, 36px)',
+              fontFamily: 'var(--font-serif)',
+              fontWeight: 700,
+              letterSpacing: '-0.8px',
+              marginBottom: 12,
+              color: 'var(--color-text)',
+            }}>
+              {topic.title}
+            </h1>
+            <p style={{ color: 'var(--color-text-secondary)', fontSize: 16, lineHeight: 1.6, maxWidth: 480, marginBottom: 8 }}>
               {topic.summary || 'This topic is part of the knowledge graph but detailed content is still being written.'}
             </p>
+            <p style={{ fontSize: 13, color: 'var(--color-text-muted)', marginTop: 8 }}>
+              Content coming soon.
+            </p>
             {prerequisites.length > 0 && (
-              <p style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>
-                In the meantime, make sure you've covered the prerequisites above.
+              <p style={{ fontSize: 13, color: 'var(--color-text-muted)', marginTop: 24 }}>
+                In the meantime, make sure you've covered the prerequisites in the left panel.
               </p>
             )}
           </div>
         )}
-
-        {/* Mark as Learned */}
-        {topic.content_blocks.length > 0 && slug && (
-          <div style={{
-            marginTop: 40, marginBottom: 8, textAlign: 'center',
-          }}>
-            {isCompleted(slug) && !justCompleted ? (
-              <button
-                className="btn btn-ghost"
-                onClick={() => unmarkCompleted(slug)}
-                style={{
-                  padding: '12px 28px',
-                  borderRadius: 12,
-                  fontSize: 14,
-                  color: 'var(--color-intro)',
-                  border: '1px solid var(--color-intro)',
-                  background: 'rgba(34, 197, 94, 0.08)',
-                }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: 8 }}>
-                  <path d="M20 6L9 17l-5-5"/>
-                </svg>
-                Completed — Click to undo
-              </button>
-            ) : justCompleted ? (
-              <div className="animate-fade-in" style={{
-                padding: '14px 28px',
-                borderRadius: 12,
-                background: 'rgba(34, 197, 94, 0.1)',
-                border: '1px solid var(--color-intro)',
-                color: 'var(--color-intro)',
-                fontSize: 15,
-                fontWeight: 600,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-              }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M20 6L9 17l-5-5"/>
-                </svg>
-                Nice work! Topic completed
-              </div>
-            ) : (
-              <button
-                className="btn btn-primary btn-lg"
-                onClick={() => {
-                  markCompleted(slug)
-                  setJustCompleted(true)
-                }}
-                style={{
-                  padding: '14px 36px',
-                  borderRadius: 12,
-                  fontSize: 15,
-                  fontWeight: 600,
-                }}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: 8 }}>
-                  <path d="M20 6L9 17l-5-5"/>
-                </svg>
-                Mark as Learned
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Leads to — what this unlocks */}
-        {leadsTo.length > 0 && (
-          <div style={{
-            marginTop: 56,
-            padding: 24,
-            borderRadius: 'var(--radius-lg)',
-            border: '1px solid var(--color-accent-glow)',
-            background: 'linear-gradient(145deg, var(--color-accent-subtle), transparent)',
-          }}>
-            <div style={{
-              fontSize: 11, fontWeight: 700,
-              textTransform: 'uppercase', letterSpacing: '0.8px',
-              color: 'var(--color-accent)',
-              marginBottom: 14,
-              display: 'flex', alignItems: 'center', gap: 6,
-            }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M12 5v14M5 12l7 7 7-7"/>
-              </svg>
-              This topic unlocks
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 8 }}>
-              {leadsTo.map(t => {
-                const tColor = domainVar(t.domain)
-                return (
-                  <Link
-                    key={t.id}
-                    to={`/topic/${t.slug}`}
-                    style={{
-                      padding: '10px 14px',
-                      borderRadius: 10,
-                      background: 'var(--color-surface)',
-                      border: '1px solid var(--color-border-subtle)',
-                      display: 'flex', alignItems: 'center', gap: 8,
-                      color: 'var(--color-text)',
-                      fontSize: 13, fontWeight: 500,
-                      transition: 'all var(--transition-smooth)',
-                    }}
-                    onMouseEnter={e => {
-                      const el = e.currentTarget
-                      el.style.transform = 'translateX(4px)'
-                      el.style.borderColor = `${tColor}40`
-                    }}
-                    onMouseLeave={e => {
-                      const el = e.currentTarget
-                      el.style.transform = 'translateX(0)'
-                      el.style.borderColor = 'var(--color-border-subtle)'
-                    }}
-                  >
-                    <span style={{
-                      width: 7, height: 7, borderRadius: '50%',
-                      background: tColor,
-                      boxShadow: `0 0 8px ${tColor}40`,
-                      flexShrink: 0,
-                    }} />
-                    <span style={{ flex: 1 }}>{t.title}</span>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                      stroke="var(--color-text-muted)" strokeWidth="2">
-                      <path d="M9 18l6-6-6-6"/>
-                    </svg>
-                  </Link>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Navigation footer */}
-        <div style={{
-          marginTop: 48, paddingTop: 24,
-          borderTop: '1px solid var(--color-border-subtle)',
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        }}>
-          <Link to="/explore" className="btn btn-ghost" style={{ fontSize: 13 }}>
-            Back to Graph
-          </Link>
-          {(() => {
-            // Smart next: prefer topics with content, then non-completed, then lowest difficulty
-            const completedSet = new Set(completedSlugs)
-            const difficultyOrder: Record<string, number> = { intro: 0, intermediate: 1, advanced: 2 }
-            const nextTopic = [...leadsTo]
-              .sort((a, b) => {
-                // Prefer has_content
-                const ac = a.has_content ? 0 : 1
-                const bc = b.has_content ? 0 : 1
-                if (ac !== bc) return ac - bc
-                // Prefer not completed
-                const aComp = completedSet.has(a.slug) ? 1 : 0
-                const bComp = completedSet.has(b.slug) ? 1 : 0
-                if (aComp !== bComp) return aComp - bComp
-                // Prefer lower difficulty
-                return (difficultyOrder[a.difficulty || ''] ?? 1) - (difficultyOrder[b.difficulty || ''] ?? 1)
-              })[0]
-            return nextTopic ? (
-              <Link to={`/topic/${nextTopic.slug}`} className="btn btn-primary btn-sm glow-ring">
-                Next: {nextTopic.title}
-              </Link>
-            ) : null
-          })()}
-        </div>
       </div>
+
+      {/* Floating chrome — dim at rest, reveals on edge hover */}
+      <ZenChrome
+        readProgress={readProgress}
+        topicTitle={topic.title}
+        topicDomain={topic.domain}
+        topicDifficulty={topic.difficulty}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        hasFormalLayer={!!topic.has_formal_layer}
+        activeLayer={activeLayer}
+        setActiveLayer={setActiveLayer}
+        showSlideNav={viewMode === 'slides' && hasContent}
+        slideIdx={slideIdx}
+        slideTotal={slideTotal}
+        onSlidePrev={() => setSlideIdx(i => Math.max(0, i - 1))}
+        onSlideNext={() => setSlideIdx(i => Math.min(slideTotal - 1, i + 1))}
+        onSlideGoto={setSlideIdx}
+        slug={slug}
+        isCompleted={slug ? isCompleted(slug) : false}
+        justCompleted={justCompleted}
+        onMarkCompleted={() => {
+          if (!slug) return
+          markCompleted(slug)
+          setJustCompleted(true)
+        }}
+        onUnmark={() => slug && unmarkCompleted(slug)}
+        prerequisites={prerequisites}
+        leadsTo={leadsTo}
+        nextTopic={nextTopic}
+      />
     </>
   )
 }

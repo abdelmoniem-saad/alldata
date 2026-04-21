@@ -13,6 +13,7 @@ export default function CodeRunner({
   code: initialCode, language, isEditable, expectedOutput, isSimulation,
 }: Props) {
   const [code, setCode] = useState(initialCode)
+  const [lang, setLang] = useState<'python' | 'r'>(language)
   const [result, setResult] = useState<ExecutionResult | null>(null)
   const [running, setRunning] = useState(false)
   const [showOutput, setShowOutput] = useState(!!expectedOutput)
@@ -33,7 +34,7 @@ export default function CodeRunner({
     setResult(null)
     const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark'
     try {
-      const res = await api.executeCode(code, language, currentTheme)
+      const res = await api.executeCode(code, lang, currentTheme)
       setResult(res)
       setShowOutput(true)
       setRunCount(c => c + 1)
@@ -100,8 +101,40 @@ export default function CodeRunner({
             color: isSimulation ? 'var(--color-accent)' : 'var(--color-text-muted)',
             fontFamily: 'var(--font-mono)',
           }}>
-            {isSimulation ? 'SIMULATION' : language.toUpperCase()}
+            {isSimulation ? 'SIMULATION' : lang.toUpperCase()}
           </span>
+
+          {/* Language switcher — editable blocks only, so users can try R against a Python playground */}
+          {isEditable && (
+            <div style={{ display: 'flex', gap: 2, marginLeft: 2 }}>
+              {(['python', 'r'] as const).map(l => {
+                const active = lang === l
+                return (
+                  <button
+                    key={l}
+                    onClick={() => setLang(l)}
+                    style={{
+                      fontSize: 9,
+                      padding: '2px 7px',
+                      borderRadius: 5,
+                      border: `1px solid ${active ? 'var(--color-accent-glow)' : 'var(--color-border-subtle)'}`,
+                      background: active ? 'var(--color-accent-subtle)' : 'transparent',
+                      color: active ? 'var(--color-accent)' : 'var(--color-text-muted)',
+                      cursor: 'pointer',
+                      fontFamily: 'var(--font-mono)',
+                      fontWeight: 700,
+                      letterSpacing: '0.5px',
+                      textTransform: 'uppercase',
+                      transition: 'all var(--transition-fast)',
+                    }}
+                    title={`Run as ${l === 'python' ? 'Python' : 'R'}`}
+                  >
+                    {l === 'python' ? 'Py' : 'R'}
+                  </button>
+                )
+              })}
+            </div>
+          )}
 
           {isEditable && (
             <span style={{
