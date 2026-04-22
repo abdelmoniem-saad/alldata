@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { api, TopicDetail, GraphNode } from '../api/client'
+import { api, TopicDetail, PrerequisiteEntry } from '../api/client'
 import ContentRenderer from '../components/topic/ContentRenderer'
 import SlideView from '../components/topic/SlideView'
 import ZenChrome from '../components/topic/ZenChrome'
@@ -10,8 +10,11 @@ import { domainVar } from '../lib/domain'
 export default function TopicView() {
   const { slug } = useParams<{ slug: string }>()
   const [topic, setTopic] = useState<TopicDetail | null>(null)
-  const [prerequisites, setPrerequisites] = useState<GraphNode[]>([])
-  const [leadsTo, setLeadsTo] = useState<GraphNode[]>([])
+  // G8: prereq/leads-to endpoints return {node, why} so drawers can render
+  // "because {reason}" / "unlocks {reason}" under each row — same vocabulary
+  // as /explore's sidebar.
+  const [prerequisites, setPrerequisites] = useState<PrerequisiteEntry[]>([])
+  const [leadsTo, setLeadsTo] = useState<PrerequisiteEntry[]>([])
   const [activeLayer, setActiveLayer] = useState<'intuition' | 'formal' | 'both'>('intuition')
   const [viewMode, setViewMode] = useState<'slides' | 'scroll'>('slides')
   const [slideIdx, setSlideIdx] = useState(0)
@@ -66,19 +69,22 @@ export default function TopicView() {
   }, [activeLayer, slug])
 
   // Smart "next topic" — prefer has-content, not-completed, lowest difficulty.
+  // G8: leadsTo entries are now {node, why}; we sort by node fields and then
+  // surface the picked node as the `nextTopic` prop (unchanged shape).
   const nextTopic = useMemo(() => {
     const completedSet = new Set(completedSlugs)
     const difficultyOrder: Record<string, number> = { intro: 0, intermediate: 1, advanced: 2 }
-    return [...leadsTo]
+    const sorted = [...leadsTo]
       .sort((a, b) => {
-        const ac = a.has_content ? 0 : 1
-        const bc = b.has_content ? 0 : 1
+        const ac = a.node.has_content ? 0 : 1
+        const bc = b.node.has_content ? 0 : 1
         if (ac !== bc) return ac - bc
-        const aComp = completedSet.has(a.slug) ? 1 : 0
-        const bComp = completedSet.has(b.slug) ? 1 : 0
+        const aComp = completedSet.has(a.node.slug) ? 1 : 0
+        const bComp = completedSet.has(b.node.slug) ? 1 : 0
         if (aComp !== bComp) return aComp - bComp
-        return (difficultyOrder[a.difficulty || ''] ?? 1) - (difficultyOrder[b.difficulty || ''] ?? 1)
-      })[0]
+        return (difficultyOrder[a.node.difficulty || ''] ?? 1) - (difficultyOrder[b.node.difficulty || ''] ?? 1)
+      })
+    return sorted[0]?.node
   }, [leadsTo, completedSlugs])
 
   if (loading) {

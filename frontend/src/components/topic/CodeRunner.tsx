@@ -17,7 +17,6 @@ export default function CodeRunner({
   const [result, setResult] = useState<ExecutionResult | null>(null)
   const [running, setRunning] = useState(false)
   const [showOutput, setShowOutput] = useState(!!expectedOutput)
-  const [runCount, setRunCount] = useState(0)
   const [isFocused, setIsFocused] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -37,7 +36,6 @@ export default function CodeRunner({
       const res = await api.executeCode(code, lang, currentTheme)
       setResult(res)
       setShowOutput(true)
-      setRunCount(c => c + 1)
     } catch (err: any) {
       setResult({
         stdout: '',

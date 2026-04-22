@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { api, LearningPathResponse, GraphNode } from '../api/client'
-import { domainVar, domainLabel } from '../lib/domain'
+import { domainVar, domainLabel, domainTick } from '../lib/domain'
 
 // Popular destinations
 const POPULAR_PATHS = [
@@ -472,8 +472,23 @@ export default function LearningPath() {
                         {step.topic.title}
                       </div>
                       {step.why_needed && (
-                        <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginTop: 2 }}>
-                          {step.why_needed}
+                        <div style={{
+                          fontSize: 11,
+                          color: 'var(--color-text-muted)',
+                          marginTop: 2,
+                          fontStyle: 'italic',
+                          display: 'flex', alignItems: 'baseline', gap: 6,
+                        }}>
+                          {/* G6: tick-glyph prefix shares vocabulary with the
+                              graph sidebar reasons and ZenChrome drawers. */}
+                          <span
+                            className="domain-tick"
+                            style={{ color: stepDomainColor, fontStyle: 'normal' }}
+                            aria-hidden="true"
+                          >
+                            {domainTick(step.topic.domain)}
+                          </span>
+                          <span>{step.why_needed}</span>
                         </div>
                       )}
                     </div>

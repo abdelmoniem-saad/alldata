@@ -1,10 +1,13 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import ForceGraph from '../components/graph/ForceGraph'
 import GraphSidebar from '../components/graph/GraphSidebar'
 import { useGraphStore } from '../stores/graphStore'
 import { api, GraphNode } from '../api/client'
-import { DOMAIN_SLUGS, domainVar } from '../lib/domain'
+import {
+  DOMAIN_SLUGS, DOMAIN_DASH, DOMAIN_STROKE_WIDTH,
+  domainVar, domainLabel,
+} from '../lib/domain'
 
 export default function GraphExplorer() {
   const navigate = useNavigate()
@@ -52,14 +55,44 @@ export default function GraphExplorer() {
           api.getPrerequisites(node.slug),
           api.getLeadsTo(node.slug),
         ])
-        setPrerequisites(prereqs)
-        setLeadsTo(leads)
+        // G8: endpoints now return PrerequisiteEntry[]. The sidebar here
+        // derives reasons from the already-loaded `edges` array (see
+        // prereqReasons/leadsToReasons memos), so we just unwrap .node for
+        // the flat chip list.
+        setPrerequisites(prereqs.map(p => p.node))
+        setLeadsTo(leads.map(p => p.node))
       } catch {
         setPrerequisites([])
         setLeadsTo([])
       }
     }
   }, [selectNode])
+
+  // G5: reason maps derived from the already-loaded edges. Only direct edges
+  // have a "why" description; transitive prereqs from the API show up in the
+  // chip list without a reason line, which is the right behavior — only the
+  // direct dependency has a documented rationale.
+  const prereqReasons = useMemo(() => {
+    const map: Record<string, string | null> = {}
+    if (!selectedNode) return map
+    for (const e of edges) {
+      if (e.edge_type === 'prerequisite' && e.target_id === selectedNode.id) {
+        map[e.source_id] = e.description
+      }
+    }
+    return map
+  }, [edges, selectedNode])
+
+  const leadsToReasons = useMemo(() => {
+    const map: Record<string, string | null> = {}
+    if (!selectedNode) return map
+    for (const e of edges) {
+      if (e.edge_type === 'prerequisite' && e.source_id === selectedNode.id) {
+        map[e.target_id] = e.description
+      }
+    }
+    return map
+  }, [edges, selectedNode])
 
   const handleNodeDoubleClick = useCallback((node: GraphNode) => {
     if (node.depth > 0) navigate(`/topic/${node.slug}`)
@@ -101,6 +134,7 @@ export default function GraphExplorer() {
           width={dimensions.width}
           height={dimensions.height}
           onNodeClick={handleNodeClick}
+          onNodeDoubleClick={handleNodeDoubleClick}
           highlightedNode={selectedNode?.slug}
         />
 
@@ -120,7 +154,7 @@ export default function GraphExplorer() {
               Grab a node and drag it
             </p>
             <p style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>
-              Scroll to zoom &middot; Click to select &middot; Double-click to open
+              Scroll to zoom &middot; Click to select &middot; Double-click to open &middot; Hover an edge for the reason
             </p>
           </div>
         )}
@@ -165,6 +199,12 @@ export default function GraphExplorer() {
             )
           })}
         </div>
+
+        {/* G10: collapsible stroke-pattern legend. Pairs with the stats bar
+            at the bottom-left. Collapsed by default; state remembered in
+            localStorage so a user who cares about pattern language keeps it
+            open, and a user who doesn't never sees it twice. */}
+        <GraphLegend />
 
         {/* Stats bar */}
         <div className="glass" style={{
@@ -215,8 +255,96 @@ export default function GraphExplorer() {
           node={selectedNode}
           prerequisites={prerequisites}
           leadsTo={leadsTo}
+          prereqReasons={prereqReasons}
+          leadsToReasons={leadsToReasons}
         />
       </div>
+    </div>
+  )
+}
+
+// G10: Stroke-pattern legend. Each row renders a mini SVG sample using the
+// same dash-array + width the ForceGraph ring uses on canvas, so the key
+// reads as the literal vocabulary of what's on screen. Collapsed default —
+// this is for curious users, not a cognitive tax on everyone.
+function GraphLegend() {
+  const [open, setOpen] = useState(() => {
+    try { return localStorage.getItem('graph-legend-open') === '1' } catch { return false }
+  })
+  const toggle = () => setOpen(o => {
+    const next = !o
+    try { localStorage.setItem('graph-legend-open', next ? '1' : '0') } catch {
+      // intentional: localStorage may be unavailable in sandboxed iframes
+    }
+    return next
+  })
+
+  return (
+    <div className="glass" style={{
+      position: 'absolute',
+      bottom: 52,
+      left: 16,
+      padding: open ? '10px 14px 10px' : '6px 12px',
+      fontSize: 11,
+      color: 'var(--color-text-muted)',
+      minWidth: open ? 220 : undefined,
+    }}>
+      <button
+        onClick={toggle}
+        aria-expanded={open}
+        aria-controls="graph-legend-body"
+        style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          background: 'transparent', border: 'none',
+          padding: 0, margin: 0,
+          fontSize: 10,
+          fontFamily: 'var(--font-mono)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.8px',
+          color: 'var(--color-text-muted)',
+          cursor: 'pointer',
+          width: '100%',
+          justifyContent: 'space-between',
+        }}
+      >
+        <span>Legend</span>
+        <span style={{ fontSize: 12, opacity: 0.7 }} aria-hidden="true">{open ? '−' : '+'}</span>
+      </button>
+      {open && (
+        <div id="graph-legend-body" role="list" style={{
+          marginTop: 10,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 8,
+        }}>
+          {DOMAIN_SLUGS.map(slug => {
+            const dash = DOMAIN_DASH[slug]
+            const width = DOMAIN_STROKE_WIDTH[slug]
+            return (
+              <div
+                key={slug}
+                role="listitem"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                }}
+              >
+                <svg width="36" height="10" viewBox="0 0 36 10" aria-hidden="true">
+                  <line
+                    x1={2} y1={5} x2={34} y2={5}
+                    stroke={domainVar(slug)}
+                    strokeWidth={width}
+                    strokeDasharray={dash.length ? dash.join(' ') : undefined}
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <span style={{ color: 'var(--color-text)', fontSize: 11 }}>
+                  {domainLabel(slug)}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

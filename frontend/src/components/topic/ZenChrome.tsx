@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
-import { GraphNode } from '../../api/client'
-import { domainVar, domainLabel } from '../../lib/domain'
+import { GraphNode, PrerequisiteEntry } from '../../api/client'
+import { domainVar, domainLabel, domainTick } from '../../lib/domain'
 
 interface Props {
   // Top strip
@@ -31,11 +31,13 @@ interface Props {
   onMarkCompleted: () => void
   onUnmark: () => void
 
-  // Left drawer — back + prereqs
-  prerequisites: GraphNode[]
-
-  // Right drawer — leads-to + next
-  leadsTo: GraphNode[]
+  // G8: prereq/leads-to rows mirror the {node, why} shape so each chip can
+  // render its own "because {why}" / "unlocks {why}" line — same vocabulary
+  // as /explore's sidebar. Transitive prereqs come through with why=null
+  // and render a chip without a reason line, which is correct (only the
+  // direct edge has a documented rationale).
+  prerequisites: PrerequisiteEntry[]
+  leadsTo: PrerequisiteEntry[]
   nextTopic: GraphNode | undefined
 }
 
@@ -71,7 +73,11 @@ export default function ZenChrome(props: Props) {
       />
 
       {/* Right drawer — leads-to + next */}
-      <RightDrawer leadsTo={props.leadsTo} nextTopic={props.nextTopic} />
+      <RightDrawer
+        leadsTo={props.leadsTo}
+        nextTopic={props.nextTopic}
+        topicDomain={props.topicDomain}
+      />
     </>
   )
 }
@@ -341,12 +347,23 @@ function LeftDrawer({
   topicTitle: string
   topicDomain: string | null
   topicDifficulty: string | null
-  prerequisites: GraphNode[]
+  prerequisites: PrerequisiteEntry[]
 }) {
   const domainColor = domainVar(topicDomain)
   return (
     <aside className="zen-drawer zen-drawer-left" aria-label="Topic context and prerequisites">
       <DrawerPeek direction="left" />
+
+      {/* G8: spine-stripe on the drawer's content-side edge (right edge for
+          left drawer) — pattern carries the topic's domain, framing the
+          lineage rows below as "the topic's prereq chain." */}
+      {topicDomain && (
+        <span
+          className="spine-stripe spine-stripe-right"
+          data-domain={topicDomain}
+          aria-hidden="true"
+        />
+      )}
 
       {/* Back to graph */}
       <Link
@@ -418,44 +435,9 @@ function LeftDrawer({
             Prerequisites
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {prerequisites.map(p => {
-              const pColor = domainVar(p.domain)
-              return (
-                <Link
-                  key={p.id}
-                  to={`/topic/${p.slug}`}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    padding: '8px 10px',
-                    borderRadius: 8,
-                    border: '1px solid var(--color-border-subtle)',
-                    background: 'var(--color-surface)',
-                    fontSize: 12,
-                    color: 'var(--color-text-secondary)',
-                    transition: 'all var(--transition-fast)',
-                  }}
-                  onMouseEnter={e => {
-                    const el = e.currentTarget
-                    el.style.borderColor = `${pColor}40`
-                    el.style.color = 'var(--color-text)'
-                  }}
-                  onMouseLeave={e => {
-                    const el = e.currentTarget
-                    el.style.borderColor = 'var(--color-border-subtle)'
-                    el.style.color = 'var(--color-text-secondary)'
-                  }}
-                >
-                  <span style={{
-                    width: 6, height: 6, borderRadius: '50%',
-                    background: pColor,
-                    flexShrink: 0,
-                  }} />
-                  <span style={{ flex: 1 }}>{p.title}</span>
-                </Link>
-              )
-            })}
+            {prerequisites.map(({ node: p, why }) => (
+              <PrereqChip key={p.id} node={p} reason={why} reasonPrefix="because" />
+            ))}
           </div>
         </div>
       )}
@@ -466,14 +448,26 @@ function LeftDrawer({
 // ─── Right Drawer ───────────────────────────────────────────────────────
 
 function RightDrawer({
-  leadsTo, nextTopic,
+  leadsTo, nextTopic, topicDomain,
 }: {
-  leadsTo: GraphNode[]
+  leadsTo: PrerequisiteEntry[]
   nextTopic: GraphNode | undefined
+  topicDomain: string | null
 }) {
   return (
     <aside className="zen-drawer zen-drawer-right" aria-label="What this topic unlocks">
       <DrawerPeek direction="right" />
+
+      {/* G8: spine-stripe on the drawer's content-side edge (left edge for
+          right drawer). Same pattern as the left drawer — both frames read
+          as the topic's lineage, visually bookending the reading surface. */}
+      {topicDomain && (
+        <span
+          className="spine-stripe"
+          data-domain={topicDomain}
+          aria-hidden="true"
+        />
+      )}
 
       {leadsTo.length > 0 && (
         <div style={{ marginBottom: 28 }}>
@@ -495,50 +489,15 @@ function RightDrawer({
             You'll unlock
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {leadsTo.map(t => {
-              const tColor = domainVar(t.domain)
-              return (
-                <Link
-                  key={t.id}
-                  to={`/topic/${t.slug}`}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    padding: '8px 10px',
-                    borderRadius: 8,
-                    background: 'var(--color-surface)',
-                    border: '1px solid var(--color-border-subtle)',
-                    color: 'var(--color-text)',
-                    fontSize: 12,
-                    fontWeight: 500,
-                    transition: 'all var(--transition-smooth)',
-                  }}
-                  onMouseEnter={e => {
-                    const el = e.currentTarget
-                    el.style.transform = 'translateX(4px)'
-                    el.style.borderColor = `${tColor}40`
-                  }}
-                  onMouseLeave={e => {
-                    const el = e.currentTarget
-                    el.style.transform = 'translateX(0)'
-                    el.style.borderColor = 'var(--color-border-subtle)'
-                  }}
-                >
-                  <span style={{
-                    width: 6, height: 6, borderRadius: '50%',
-                    background: tColor,
-                    boxShadow: `0 0 6px ${tColor}40`,
-                    flexShrink: 0,
-                  }} />
-                  <span style={{ flex: 1 }}>{t.title}</span>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
-                    stroke="var(--color-text-muted)" strokeWidth="2">
-                    <path d="M9 18l6-6-6-6"/>
-                  </svg>
-                </Link>
-              )
-            })}
+            {leadsTo.map(({ node: t, why }) => (
+              <PrereqChip
+                key={t.id}
+                node={t}
+                reason={why}
+                reasonPrefix="unlocks"
+                showChevron
+              />
+            ))}
           </div>
         </div>
       )}
@@ -573,6 +532,79 @@ function RightDrawer({
         </Link>
       )}
     </aside>
+  )
+}
+
+// ─── Prereq / leads-to chip ─────────────────────────────────────────────
+// G8: shared row for both drawers. Tick glyph carries domain in-language
+// with the graph; italic reason line reuses the GraphSidebar's vocabulary
+// so a user walking map → lesson → map never switches visual languages.
+
+function PrereqChip({
+  node, reason, reasonPrefix, showChevron = false,
+}: {
+  node: GraphNode
+  reason?: string | null
+  reasonPrefix: 'because' | 'unlocks'
+  showChevron?: boolean
+}) {
+  const domainColor = domainVar(node.domain)
+  return (
+    <Link
+      to={`/topic/${node.slug}`}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2,
+        padding: '8px 10px',
+        borderRadius: 8,
+        background: 'var(--color-surface)',
+        border: '1px solid var(--color-border-subtle)',
+        color: 'var(--color-text)',
+        fontSize: 12,
+        transition: 'all var(--transition-smooth)',
+      }}
+      onMouseEnter={e => {
+        const el = e.currentTarget
+        el.style.borderColor = `${domainColor}40`
+        el.style.background = 'var(--color-surface-hover)'
+        if (showChevron) el.style.transform = 'translateX(4px)'
+      }}
+      onMouseLeave={e => {
+        const el = e.currentTarget
+        el.style.borderColor = 'var(--color-border-subtle)'
+        el.style.background = 'var(--color-surface)'
+        if (showChevron) el.style.transform = 'translateX(0)'
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span
+          className="domain-tick"
+          style={{ color: domainColor, flexShrink: 0, fontStyle: 'normal', margin: 0 }}
+          aria-hidden="true"
+        >
+          {domainTick(node.domain)}
+        </span>
+        <span style={{ flex: 1, fontWeight: 500 }}>{node.title}</span>
+        {showChevron && (
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+            stroke="var(--color-text-muted)" strokeWidth="2">
+            <path d="M9 18l6-6-6-6"/>
+          </svg>
+        )}
+      </div>
+      {reason && (
+        <div style={{
+          fontSize: 11,
+          fontStyle: 'italic',
+          color: 'var(--color-text-muted)',
+          paddingLeft: 22,
+          lineHeight: 1.4,
+        }}>
+          {reasonPrefix} {reason}
+        </div>
+      )}
+    </Link>
   )
 }
 

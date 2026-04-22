@@ -13,6 +13,7 @@ from backend.schemas.graph import (
     GraphNode,
     GraphResponse,
     LearningPathResponse,
+    PrerequisiteEntry,
 )
 from backend.services import graph_engine
 
@@ -51,15 +52,23 @@ async def get_learning_path(
     return path
 
 
-@router.get("/prerequisites/{slug}", response_model=list[GraphNode])
+@router.get("/prerequisites/{slug}", response_model=list[PrerequisiteEntry])
 async def get_prerequisites(slug: str, db: DB):
-    """Get all transitive prerequisites for a topic in topological order."""
+    """Get all transitive prerequisites for a topic in topological order.
+
+    G8: Each entry is `{ node, why }` — mirroring LearningPathStep so the
+    Zen drawers can show the same "because {reason}" vocabulary as /explore.
+    """
     return await graph_engine.get_prerequisite_chain(db, slug)
 
 
-@router.get("/leads-to/{slug}", response_model=list[GraphNode])
+@router.get("/leads-to/{slug}", response_model=list[PrerequisiteEntry])
 async def get_leads_to(slug: str, db: DB):
-    """Get topics that this topic unlocks (is a prerequisite for)."""
+    """Get topics that this topic unlocks (is a prerequisite for).
+
+    G8: Each entry is `{ node, why }` — same shape as /prerequisites, so the
+    consumer can render "unlocks {reason}" under each downstream topic.
+    """
     return await graph_engine.get_leads_to(db, slug)
 
 

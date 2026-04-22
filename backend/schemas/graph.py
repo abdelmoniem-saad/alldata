@@ -31,6 +31,10 @@ class GraphNode(BaseModel):
     depth: int
     status: str
     has_content: bool = False
+    # G7: surfaces how many common misconceptions the topic documents. The
+    # ForceGraph renders a small "!" marker when > 0 so the
+    # "misconception-aware" identity claim is visible before entering a topic.
+    misconception_count: int = 0
 
 
 class GraphEdge(BaseModel):
@@ -57,3 +61,14 @@ class LearningPathResponse(BaseModel):
     to_topic: str
     steps: list[LearningPathStep]
     total_topics: int
+
+
+# G8: Prerequisite / leads-to endpoints now mirror LearningPathStep's
+# {topic, why_needed} shape so Zen drawers can speak the same visual
+# vocabulary as /explore (tick glyph + italic "because {reason}" line).
+# Direct edges carry a description; transitive prereqs from the CTE
+# surface without one, which is the right behavior — only the direct
+# dependency has a documented rationale.
+class PrerequisiteEntry(BaseModel):
+    node: GraphNode
+    why: str | None

@@ -251,6 +251,63 @@ pre {
 .badge-intermediate { background: rgba(234, 179, 8, 0.12); color: var(--color-intermediate); border: 1px solid rgba(234, 179, 8, 0.2); }
 .badge-advanced { background: rgba(239, 68, 68, 0.12); color: var(--color-advanced); border: 1px solid rgba(239, 68, 68, 0.2); }
 
+/* ─── G1: Domain stroke vocabulary ───
+   Pattern carries domain. Hue stays zinc. The five patterns remain
+   distinguishable in grayscale (Achromatopsia-safe) and at small sizes
+   where the zinc ramp collapses. Keep these in sync with DOMAIN_DASH /
+   DOMAIN_TICK in lib/domain.ts — same vocabulary, different media. */
+.spine-stripe {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  pointer-events: none;
+}
+.spine-stripe[data-domain="probability-foundations"] {
+  background: var(--color-probability);
+}
+.spine-stripe[data-domain="distributions"] {
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--color-distributions) 0, var(--color-distributions) 2px,
+    transparent 2px, transparent 5px
+  );
+}
+.spine-stripe[data-domain="statistical-inference"] {
+  /* Double rule: two 2px stripes, 1px gap */
+  width: 5px;
+  background:
+    linear-gradient(to right,
+      var(--color-inference) 0, var(--color-inference) 2px,
+      transparent 2px, transparent 3px,
+      var(--color-inference) 3px, var(--color-inference) 5px);
+}
+.spine-stripe[data-domain="regression-modeling"] {
+  width: 4px;
+  background: var(--color-regression);
+}
+.spine-stripe[data-domain="data-science-practice"] {
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--color-practice) 0, var(--color-practice) 5px,
+    transparent 5px, transparent 8px
+  );
+}
+
+/* Right-edge variant — same patterns, anchored to the right edge. */
+.spine-stripe.spine-stripe-right {
+  left: auto;
+  right: 0;
+}
+
+/* Tick glyph for inline labels. Decorative — never a screen-reader anchor. */
+.domain-tick {
+  font-family: var(--font-mono);
+  letter-spacing: -1px;
+  display: inline-block;
+  margin-right: 6px;
+  opacity: 0.7;
+}
+
 /* ─── Glow Ring ─── */
 .glow-ring {
   position: relative;

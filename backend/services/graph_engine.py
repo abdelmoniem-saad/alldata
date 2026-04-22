@@ -13,6 +13,7 @@ from sqlalchemy.orm import selectinload
 
 from backend.models.content_block import ContentBlock
 from backend.models.edge import EdgeType, TopicEdge
+from backend.models.misconception import Misconception
 from backend.models.progress import UserProgress
 from backend.models.topic import Topic
 from backend.schemas.graph import (
@@ -21,6 +22,7 @@ from backend.schemas.graph import (
     GraphResponse,
     LearningPathResponse,
     LearningPathStep,
+    PrerequisiteEntry,
 )
 
 
@@ -32,6 +34,20 @@ async def _get_content_counts(db: AsyncSession, topic_ids: list) -> dict:
         select(ContentBlock.topic_id, func.count(ContentBlock.id))
         .where(ContentBlock.topic_id.in_(topic_ids))
         .group_by(ContentBlock.topic_id)
+    )
+    return {row[0]: row[1] for row in result}
+
+
+async def _get_misconception_counts(db: AsyncSession, topic_ids: list) -> dict:
+    """Get misconception counts per topic. G7: the ForceGraph uses this to
+    render a small "!" marker so the misconception-aware claim is visible
+    before a user enters the topic."""
+    if not topic_ids:
+        return {}
+    result = await db.execute(
+        select(Misconception.topic_id, func.count(Misconception.id))
+        .where(Misconception.topic_id.in_(topic_ids))
+        .group_by(Misconception.topic_id)
     )
     return {row[0]: row[1] for row in result}
 
@@ -56,6 +72,11 @@ async def get_full_graph(db: AsyncSession, status_filter: str | None = "publishe
 
     topic_ids = {t.id for t in topics}
 
+    # G7: misconception count per topic. Populated here so the full graph
+    # view can show the "!" marker; other GraphNode-returning endpoints
+    # keep the schema default of 0 unless/until they need the signal.
+    misconception_counts = await _get_misconception_counts(db, list(topic_ids))
+
     return GraphResponse(
         nodes=[
             GraphNode(
@@ -67,6 +88,7 @@ async def get_full_graph(db: AsyncSession, status_filter: str | None = "publishe
                 depth=t.depth,
                 status=t.status,
                 has_content=content_counts.get(t.id, 0) > 0,
+                misconception_count=misconception_counts.get(t.id, 0),
             )
             for t in topics
         ],
@@ -157,10 +179,15 @@ async def get_subgraph(
 
 async def get_prerequisite_chain(
     db: AsyncSession, topic_slug: str
-) -> list[GraphNode]:
+) -> list[PrerequisiteEntry]:
     """Return all transitive prerequisites in topological order.
 
     Uses a recursive CTE for efficient traversal in PostgreSQL.
+
+    G8: Each entry carries a `why` that mirrors LearningPathStep.why_needed.
+    Only *direct* prerequisites (those with an edge straight to the target)
+    have a description — transitive prereqs surface without one, since only
+    the immediate dependency has a documented rationale.
     """
     # Get the topic ID first
     result = await db.execute(select(Topic).where(Topic.slug == topic_slug))
@@ -207,6 +234,14 @@ async def get_prerequisite_chain(
     )
     edges = edges_result.scalars().all()
 
+    # G8: direct-edge descriptions keyed by prereq topic_id. Transitive
+    # prereqs won't have an entry here and fall through to why=None.
+    direct_descriptions: dict = {
+        e.source_id: e.description
+        for e in edges
+        if e.target_id == target.id
+    }
+
     # Topological sort using Kahn's algorithm
     sorted_topics = _topological_sort(topics, edges)
 
@@ -214,10 +249,13 @@ async def get_prerequisite_chain(
     content_counts = await _get_content_counts(db, prereq_ids)
 
     return [
-        GraphNode(
-            id=t.id, slug=t.slug, title=t.title, domain=t.domain,
-            difficulty=t.difficulty, depth=t.depth, status=t.status,
-            has_content=content_counts.get(t.id, 0) > 0,
+        PrerequisiteEntry(
+            node=GraphNode(
+                id=t.id, slug=t.slug, title=t.title, domain=t.domain,
+                difficulty=t.difficulty, depth=t.depth, status=t.status,
+                has_content=content_counts.get(t.id, 0) > 0,
+            ),
+            why=direct_descriptions.get(t.id),
         )
         for t in sorted_topics
     ]
@@ -337,8 +375,13 @@ async def validate_edge(
     return True
 
 
-async def get_leads_to(db: AsyncSession, topic_slug: str) -> list[GraphNode]:
-    """Return topics that this topic is a prerequisite for (what it unlocks)."""
+async def get_leads_to(db: AsyncSession, topic_slug: str) -> list[PrerequisiteEntry]:
+    """Return topics that this topic is a prerequisite for (what it unlocks).
+
+    G8: Every entry here represents a direct edge, so every entry carries the
+    edge description (when one exists) as `why`. Phrased as 'unlocks …' by the
+    consumer.
+    """
     result = await db.execute(select(Topic).where(Topic.slug == topic_slug))
     topic = result.scalar_one_or_none()
     if not topic:
@@ -352,6 +395,8 @@ async def get_leads_to(db: AsyncSession, topic_slug: str) -> list[GraphNode]:
     )
     edges = edge_result.scalars().all()
     target_ids = [e.target_id for e in edges]
+    # G8: target_id -> edge description for the `why` projection.
+    descriptions: dict = {e.target_id: e.description for e in edges}
 
     if not target_ids:
         return []
@@ -362,10 +407,13 @@ async def get_leads_to(db: AsyncSession, topic_slug: str) -> list[GraphNode]:
     content_counts = await _get_content_counts(db, target_ids)
 
     return [
-        GraphNode(
-            id=t.id, slug=t.slug, title=t.title, domain=t.domain,
-            difficulty=t.difficulty, depth=t.depth, status=t.status,
-            has_content=content_counts.get(t.id, 0) > 0,
+        PrerequisiteEntry(
+            node=GraphNode(
+                id=t.id, slug=t.slug, title=t.title, domain=t.domain,
+                difficulty=t.difficulty, depth=t.depth, status=t.status,
+                has_content=content_counts.get(t.id, 0) > 0,
+            ),
+            why=descriptions.get(t.id),
         )
         for t in topics
     ]
@@ -388,8 +436,11 @@ async def get_readiness(
     )
     completed_ids = {p.topic_id for p in progress_result.scalars().all()}
 
-    completed = [p for p in prereqs if p.id in completed_ids]
-    missing = [p for p in prereqs if p.id not in completed_ids]
+    # G8: prereqs is now PrerequisiteEntry[]. The readiness endpoint's shape
+    # is a flat list of GraphNodes, so unwrap `.node` here.
+    prereq_nodes = [p.node for p in prereqs]
+    completed = [n for n in prereq_nodes if n.id in completed_ids]
+    missing = [n for n in prereq_nodes if n.id not in completed_ids]
 
     return {
         "ready": len(missing) == 0,

@@ -1,14 +1,23 @@
 import { Link } from 'react-router-dom'
 import { GraphNode } from '../../api/client'
-import { domainVar } from '../../lib/domain'
+import { domainVar, domainTick } from '../../lib/domain'
 
 interface Props {
   node: GraphNode | null
   prerequisites?: GraphNode[]
   leadsTo?: GraphNode[]
+  /** G5: map of source_id → edge.description, keyed so each prereq chip can
+   *  render its own "because {reason}" line. Missing entries (transitive
+   *  prereqs, edges without a description) render a chip without a reason. */
+  prereqReasons?: Record<string, string | null>
+  /** G5: same shape, keyed on target_id for downstream (leads-to) edges. */
+  leadsToReasons?: Record<string, string | null>
 }
 
-export default function GraphSidebar({ node, prerequisites = [], leadsTo = [] }: Props) {
+export default function GraphSidebar({
+  node, prerequisites = [], leadsTo = [],
+  prereqReasons = {}, leadsToReasons = {},
+}: Props) {
   if (!node) {
     return (
       <div style={{
@@ -104,6 +113,54 @@ export default function GraphSidebar({ node, prerequisites = [], leadsTo = [] }:
         </Link>
       </div>
 
+      {/* G7: Common misconceptions — surfaces the "misconception-aware"
+          identity claim before the user even opens the topic. Uses the amber
+          badge-intermediate vocabulary so it reads as a cautionary signal,
+          consistent with the '!' marker on the graph node itself. */}
+      {node.misconception_count > 0 && node.depth > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <div style={{
+            display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+            marginBottom: 8,
+          }}>
+            <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)' }}>
+              Common misconceptions
+            </h3>
+            <span className="badge badge-intermediate">
+              {node.misconception_count}
+            </span>
+          </div>
+          <Link
+            to={`/topic/${node.slug}`}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              fontSize: 12, lineHeight: 1.5,
+              color: 'var(--color-text-secondary)',
+              padding: '7px 10px',
+              borderRadius: 8,
+              background: 'var(--color-surface)',
+              border: '1px solid var(--color-border-subtle)',
+              transition: 'all var(--transition-fast)',
+            }}
+            onMouseEnter={e => {
+              const el = e.currentTarget as HTMLElement
+              el.style.borderColor = 'var(--color-intermediate)'
+            }}
+            onMouseLeave={e => {
+              const el = e.currentTarget as HTMLElement
+              el.style.borderColor = 'var(--color-border-subtle)'
+            }}
+          >
+            <span style={{ color: 'var(--color-intermediate)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>!</span>
+            <span style={{ flex: 1 }}>
+              {node.misconception_count === 1
+                ? 'See the documented misconception on the topic page'
+                : `See all ${node.misconception_count} on the topic page`}
+            </span>
+          </Link>
+        </div>
+      )}
+
       {/* Prerequisites */}
       {prerequisites.length > 0 && (
         <Section
@@ -113,7 +170,7 @@ export default function GraphSidebar({ node, prerequisites = [], leadsTo = [] }:
           count={prerequisites.length}
         >
           {prerequisites.map(p => (
-            <TopicChip key={p.id} node={p} />
+            <TopicChip key={p.id} node={p} reason={prereqReasons[p.id]} reasonPrefix="because" />
           ))}
         </Section>
       )}
@@ -127,7 +184,7 @@ export default function GraphSidebar({ node, prerequisites = [], leadsTo = [] }:
           count={leadsTo.length}
         >
           {leadsTo.map(p => (
-            <TopicChip key={p.id} node={p} />
+            <TopicChip key={p.id} node={p} reason={leadsToReasons[p.id]} reasonPrefix="unlocks" />
           ))}
         </Section>
       )}
@@ -172,9 +229,15 @@ function Section({ title, subtitle, color, count, children }: {
 }) {
   return (
     <div style={{ marginBottom: 20 }}>
+      {/* G5: heading row now carries a colored rule beneath it — the section's
+          "accent". Prereqs get amber (intermediate), leads-to gets teal accent.
+          This mirrors the graph's vocabulary: amber = "prerequisite signal",
+          teal = "energy / unlock". */}
       <div style={{
         display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
-        marginBottom: 8,
+        paddingBottom: 4,
+        borderBottom: `1px solid ${color}`,
+        marginBottom: 6,
       }}>
         <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)' }}>
           {title}
@@ -187,6 +250,18 @@ function Section({ title, subtitle, color, count, children }: {
           {count}
         </span>
       </div>
+      {subtitle && (
+        <p style={{
+          fontSize: 11,
+          color: 'var(--color-text-muted)',
+          marginBottom: 8,
+          fontStyle: 'italic',
+          display: 'flex', alignItems: 'center', gap: 6,
+        }}>
+          <span className="domain-tick" style={{ color, fontStyle: 'normal' }} aria-hidden="true">─</span>
+          {subtitle}
+        </p>
+      )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
         {children}
       </div>
@@ -194,15 +269,21 @@ function Section({ title, subtitle, color, count, children }: {
   )
 }
 
-function TopicChip({ node }: { node: GraphNode }) {
+function TopicChip({
+  node, reason, reasonPrefix = 'because',
+}: {
+  node: GraphNode
+  reason?: string | null
+  reasonPrefix?: string
+}) {
   const domainColor = domainVar(node.domain)
   return (
     <Link
       to={`/topic/${node.slug}`}
       style={{
         display: 'flex',
-        alignItems: 'center',
-        gap: 8,
+        flexDirection: 'column',
+        gap: 2,
         padding: '7px 10px',
         borderRadius: 8,
         background: 'var(--color-surface)',
@@ -222,22 +303,41 @@ function TopicChip({ node }: { node: GraphNode }) {
         el.style.background = 'var(--color-surface)'
       }}
     >
-      <span style={{
-        width: 7, height: 7, borderRadius: '50%',
-        background: domainColor,
-        boxShadow: `0 0 6px rgba(255,255,255,0.05)`,
-        flexShrink: 0,
-      }} />
-      <span style={{ flex: 1, fontWeight: 500 }}>{node.title}</span>
-      {node.difficulty && (
-            <span style={{
-              fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
-              color: `var(--color-${node.difficulty})`,
-              letterSpacing: '0.3px',
-            }}>
-              {node.difficulty}
-            </span>
-          )}
+      {/* G5: domain tick glyph carries the domain vocabulary in-language with
+          the graph. Color matches the domain's CSS var so the chip is self-
+          labeling without a separate dot legend. */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span
+          className="domain-tick"
+          style={{ color: domainColor, flexShrink: 0, fontStyle: 'normal' }}
+          aria-hidden="true"
+        >
+          {domainTick(node.domain)}
+        </span>
+        <span style={{ flex: 1, fontWeight: 500 }}>{node.title}</span>
+        {node.difficulty && (
+          <span style={{
+            fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
+            color: `var(--color-${node.difficulty})`,
+            letterSpacing: '0.3px',
+          }}>
+            {node.difficulty}
+          </span>
+        )}
+      </div>
+      {/* G5: edge.description surfaced as a reason line. Only direct edges
+          have a description; transitive chain entries render without one. */}
+      {reason && (
+        <div style={{
+          fontSize: 11,
+          fontStyle: 'italic',
+          color: 'var(--color-text-muted)',
+          paddingLeft: 22,
+          lineHeight: 1.4,
+        }}>
+          {reasonPrefix} {reason}
+        </div>
+      )}
     </Link>
   )
 }

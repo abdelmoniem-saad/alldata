@@ -27,6 +27,12 @@ export interface GraphNode {
   depth: number
   status: string
   has_content: boolean
+  /**
+   * G7: count of common misconceptions documented on this topic. The graph
+   * renders a "!" marker when > 0, and the sidebar surfaces the count as a
+   * badge. Backend default is 0 for endpoints that don't populate it.
+   */
+  misconception_count: number
 }
 
 export interface GraphEdge {
@@ -85,6 +91,17 @@ export interface LearningPathStep {
   why_needed: string | null
 }
 
+/**
+ * G8: Prereq / leads-to endpoints mirror the LearningPathStep `{topic, why}`
+ * shape so the Zen drawers can render a "because {reason}" / "unlocks {reason}"
+ * line under each row — same vocabulary as /explore's sidebar. Only direct
+ * edges carry a `why`; transitive prereqs surface with `why: null`.
+ */
+export interface PrerequisiteEntry {
+  node: GraphNode
+  why: string | null
+}
+
 export interface LearningPathResponse {
   from_topic: string
   to_topic: string
@@ -114,10 +131,10 @@ export const api = {
     request<LearningPathResponse>(`/graph/path?from=${from}&to=${to}`),
 
   getPrerequisites: (slug: string) =>
-    request<GraphNode[]>(`/graph/prerequisites/${slug}`),
+    request<PrerequisiteEntry[]>(`/graph/prerequisites/${slug}`),
 
   getLeadsTo: (slug: string) =>
-    request<GraphNode[]>(`/graph/leads-to/${slug}`),
+    request<PrerequisiteEntry[]>(`/graph/leads-to/${slug}`),
 
   // Topics
   getTopic: (slug: string, layer?: string) =>

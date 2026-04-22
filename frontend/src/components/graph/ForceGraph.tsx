@@ -3,7 +3,7 @@ import * as d3 from 'd3'
 import { GraphNode, GraphEdge } from '../../api/client'
 import { useProgressStore } from '../../stores/progressStore'
 import { useThemeStore } from '../../stores/themeStore'
-import { domainColorHex, cssVarHex } from '../../lib/domain'
+import { domainColorHex, cssVarHex, domainDash, domainStrokeWidth } from '../../lib/domain'
 
 interface Props {
   nodes: GraphNode[]
@@ -11,6 +11,7 @@ interface Props {
   width: number
   height: number
   onNodeClick?: (node: GraphNode) => void
+  onNodeDoubleClick?: (node: GraphNode) => void
   onNodeHover?: (node: GraphNode | null) => void
   highlightedNode?: string | null
 }
@@ -27,15 +28,17 @@ interface SimLink extends d3.SimulationLinkDatum<SimNode> {
 }
 
 export default function ForceGraph({
-  nodes, edges, width, height, onNodeClick, onNodeHover, highlightedNode,
+  nodes, edges, width, height, onNodeClick, onNodeDoubleClick, onNodeHover, highlightedNode,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const simRef = useRef<d3.Simulation<SimNode, SimLink> | null>(null)
   const completedSlugs = useProgressStore(s => s.completedSlugs)
+  const inProgressSlugs = useProgressStore(s => s.inProgressSlugs)
   const nodesRef = useRef<SimNode[]>([])
   const linksRef = useRef<SimLink[]>([])
   const transformRef = useRef(d3.zoomIdentity)
   const hoveredRef = useRef<SimNode | null>(null)
+  const hoveredEdgeRef = useRef<SimLink | null>(null)
   const draggedRef = useRef<SimNode | null>(null)
   const animFrameRef = useRef<number>(0)
   const mouseRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
@@ -55,6 +58,17 @@ export default function ForceGraph({
       'data-science-practice':   domainColorHex('data-science-practice'),
     } as Record<string, string>,
     fallback: isLight ? '#18181b' : '#52525b',
+    // G3: edge-label pill palette. Resolved once per theme change so the
+    // label pills track dark/light mode without per-frame lookups.
+    labelBg: isLight ? 'rgba(255,255,255,0.94)' : 'rgba(10,10,12,0.94)',
+    labelBorder: cssVarHex('--color-border-subtle', document.documentElement, isLight ? '#e4e4e7' : '#27272a'),
+    labelText: cssVarHex('--color-text-secondary', document.documentElement, isLight ? '#52525b' : '#a1a1aa'),
+    // G4: subtle green wash for completed nodes. 0.15-alpha applied at draw
+    // time via an '26' suffix so the tint reads as "done" without taking over.
+    completedTint: cssVarHex('--color-intro', document.documentElement, isLight ? '#16a34a' : '#22c55e'),
+    // G7: amber fill for the misconception '!' marker. Reuses the badge
+    // vocabulary already used for intermediate-difficulty pills in the DOM.
+    misconceptionFill: cssVarHex('--color-intermediate', document.documentElement, isLight ? '#d97706' : '#f59e0b'),
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [theme, isLight])
 
@@ -140,6 +154,12 @@ export default function ForceGraph({
       }
     }
 
+    // G3: collect edge labels during the edge pass. We draw them in screen
+    // coordinates after the world transform pops, so they stay legible at any
+    // zoom and always layer above the graph.
+    type EdgeLabel = { wx: number; wy: number; angle: number; text: string; prominent: boolean }
+    const edgeLabels: EdgeLabel[] = []
+
     // Draw edges with glow
     for (const link of linksRef.current) {
       const source = link.source as SimNode
@@ -209,6 +229,30 @@ export default function ForceGraph({
         ctx.closePath()
         ctx.fill()
       }
+
+      // G3: queue this edge's description for drawing if either the pointer
+      // is hovering the line, or a node is selected and this is one of its
+      // incoming prerequisites (so the user reads every "why" at once).
+      const isHoveredEdge = link === hoveredEdgeRef.current
+      const isIncomingPrereq =
+        highlightedNode != null &&
+        link.data.edge_type === 'prerequisite' &&
+        (link.target as SimNode).data.slug === highlightedNode
+
+      if ((isHoveredEdge || isIncomingPrereq) && link.data.description) {
+        const wx = (source.x + target.x) / 2
+        const wy = (source.y + target.y) / 2
+        let labelAngle = Math.atan2(target.y - source.y, target.x - source.x)
+        // Flip 180° if the edge points right-to-left so text stays upright.
+        if (labelAngle > Math.PI / 2) labelAngle -= Math.PI
+        else if (labelAngle < -Math.PI / 2) labelAngle += Math.PI
+        // Clamp to ±45° so nearly-vertical edges still read horizontally-ish.
+        labelAngle = Math.max(-Math.PI / 4, Math.min(Math.PI / 4, labelAngle))
+
+        const raw = link.data.description
+        const text = raw.length > 42 ? raw.slice(0, 41).trimEnd() + '\u2026' : raw
+        edgeLabels.push({ wx, wy, angle: labelAngle, text, prominent: isHoveredEdge })
+      }
     }
 
     // Draw nodes with multi-layer glow
@@ -216,8 +260,17 @@ export default function ForceGraph({
       if (node.x == null || node.y == null) continue
       const r = getNodeRadius(node.data)
       const isHighlighted = highlightedNode === node.data.slug
-      const glowIntensity = Math.max(node.glow, isHighlighted ? 1 : 0)
-      const color = getNodeColor(node.data, glowIntensity)
+      const isInProgress = inProgressSlugs.includes(node.data.slug)
+      const isCompleted = completedSlugs.includes(node.data.slug)
+      // G4: split "interactive" from "total" glow. Interactive glow decides
+      // when the node flips to accent teal (hover / highlight), so in-progress
+      // nodes keep their domain hue. Total glow drives the outer bloom layer,
+      // giving in-progress nodes a static 0.3 floor — an ambient "currently
+      // learning this" signal rather than an animation that fights
+      // prefers-reduced-motion.
+      const interactiveGlow = Math.max(node.glow, isHighlighted ? 1 : 0)
+      const glowIntensity = Math.max(interactiveGlow, isInProgress ? 0.3 : 0)
+      const color = getNodeColor(node.data, interactiveGlow)
       const isDragging = draggedRef.current === node
 
       // Outer glow (multiple layers for smooth bloom)
@@ -234,18 +287,26 @@ export default function ForceGraph({
       }
 
       const hasContent = node.data.has_content || node.data.depth === 0
-      const nodeAlpha = hasContent ? 1 : 0.35
+      // G4: empty shells drop to 0.45 fill alpha — they still read as
+      // "a node lives here" but clearly haven't been written yet. The ring
+      // stays at full pattern alpha so the domain vocabulary survives.
+      const nodeAlpha = hasContent ? 1 : 0.45
 
-      // Node ring (outer)
+      // Node ring (outer) — G2: domain encoded as stroke pattern.
+      // Zinc hue alone collapses at 11–28px; dash array + ring weight carry
+      // the five-domain vocabulary (see lib/domain.ts). Color still tints the
+      // ring but pattern is what reads at small render sizes and under
+      // colorblind emulation. Empty-shell signal moves to fill alpha (G4).
+      // isHot uses interactiveGlow so in-progress nodes don't bold their ring
+      // permanently — only hover/highlight does.
+      const isHot = interactiveGlow > 0.1
       ctx.beginPath()
       ctx.arc(node.x, node.y, r + 1.5, 0, Math.PI * 2)
-      ctx.strokeStyle = color + (glowIntensity > 0.1 ? 'bb' : hasContent ? '44' : '22')
-      ctx.lineWidth = isDragging ? 2.5 : 1.5
-      if (!hasContent && glowIntensity < 0.1) {
-        ctx.setLineDash([4, 4])
-      } else {
-        ctx.setLineDash([])
-      }
+      ctx.strokeStyle = color + (isHot ? 'bb' : hasContent ? '66' : '33')
+      ctx.lineWidth =
+        domainStrokeWidth(node.data.domain) +
+        (isDragging ? 1 : isHot ? 0.5 : 0)
+      ctx.setLineDash(domainDash(node.data.domain))
       ctx.stroke()
       ctx.setLineDash([])
 
@@ -262,6 +323,16 @@ export default function ForceGraph({
       ctx.arc(node.x, node.y, r, 0, Math.PI * 2)
       ctx.fillStyle = innerGrad
       ctx.fill()
+
+      // G4: completion tint — 0.15-alpha green wash so finished nodes read
+      // as "done" at a glance. The checkmark overlay below still carries the
+      // explicit signal; this just makes the fill echo it.
+      if (isCompleted) {
+        ctx.beginPath()
+        ctx.arc(node.x, node.y, r, 0, Math.PI * 2)
+        ctx.fillStyle = palette.completedTint + '26'
+        ctx.fill()
+      }
 
       // Inner highlight dot (gives depth)
       if (hasContent) {
@@ -307,7 +378,7 @@ export default function ForceGraph({
       }
 
       // Completed checkmark indicator
-      if (completedSlugs.includes(node.data.slug)) {
+      if (isCompleted) {
         const cx = node.x - r * 0.7
         const cy = node.y - r * 0.7
         // Teal circle background — the single "Energy" voice
@@ -326,15 +397,83 @@ export default function ForceGraph({
         ctx.lineTo(cx + 2.5, cy - 1.5)
         ctx.stroke()
       }
+
+      // G7: misconception marker — small amber '!' just outside the ring.
+      // Placed at the lower-right corner so it doesn't collide with the
+      // difficulty dot (upper-right, inside) or the completion check
+      // (upper-left, inside). Skipped on depth > 1 so leaf-sized nodes stay
+      // uncluttered. Surfaces the "misconception-aware" identity on the map.
+      if (node.data.misconception_count > 0 && node.data.depth <= 1) {
+        const mAngle = Math.PI / 4
+        const mx = node.x + (r + 4) * Math.cos(mAngle)
+        const my = node.y + (r + 4) * Math.sin(mAngle)
+        ctx.beginPath()
+        ctx.arc(mx, my, 5, 0, Math.PI * 2)
+        ctx.fillStyle = palette.misconceptionFill
+        ctx.fill()
+        // White '!' glyph
+        ctx.fillStyle = '#ffffff'
+        ctx.font = '700 8px "Inter", system-ui, sans-serif'
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillText('!', mx, my + 0.5)
+      }
     }
 
     ctx.restore()
+
+    // G3: edge-reason labels in screen coordinates. Drawn after the world
+    // transform pops so pill size and font stay constant at any zoom. Glass-
+    // style pill borrows the surface vocabulary used elsewhere in the chrome.
+    if (edgeLabels.length > 0) {
+      ctx.save()
+      ctx.font = '500 11px "JetBrains Mono", "Fira Code", ui-monospace, monospace'
+      ctx.textBaseline = 'middle'
+      ctx.textAlign = 'center'
+
+      for (const label of edgeLabels) {
+        const sx = label.wx * t.k + t.x
+        const sy = label.wy * t.k + t.y
+
+        ctx.save()
+        ctx.translate(sx, sy)
+        ctx.rotate(label.angle)
+
+        const textW = ctx.measureText(label.text).width
+        const padX = 8
+        const padY = 4
+        const w = textW + padX * 2
+        const h = 11 + padY * 2
+        const br = 4
+
+        // Rounded pill background
+        ctx.beginPath()
+        ctx.moveTo(-w / 2 + br, -h / 2)
+        ctx.arcTo(w / 2, -h / 2, w / 2, h / 2, br)
+        ctx.arcTo(w / 2, h / 2, -w / 2, h / 2, br)
+        ctx.arcTo(-w / 2, h / 2, -w / 2, -h / 2, br)
+        ctx.arcTo(-w / 2, -h / 2, w / 2, -h / 2, br)
+        ctx.closePath()
+        ctx.globalAlpha = label.prominent ? 0.96 : 0.82
+        ctx.fillStyle = palette.labelBg
+        ctx.fill()
+        ctx.strokeStyle = palette.labelBorder
+        ctx.lineWidth = 1
+        ctx.stroke()
+        ctx.globalAlpha = 1
+
+        ctx.fillStyle = palette.labelText
+        ctx.fillText(label.text, 0, 0.5)
+        ctx.restore()
+      }
+      ctx.restore()
+    }
 
     // Continue animation loop if glows are transitioning
     if (needsExtraFrame || simRef.current?.alpha() > 0.001) {
       animFrameRef.current = requestAnimationFrame(render)
     }
-  }, [width, height, getNodeColor, getNodeRadius, highlightedNode, completedSlugs, isLight])
+  }, [width, height, getNodeColor, getNodeRadius, highlightedNode, completedSlugs, inProgressSlugs, isLight])
 
   // Kick the render loop
   const scheduleRender = useCallback(() => {
@@ -445,6 +584,42 @@ export default function ForceGraph({
       return null
     }
 
+    // G3: perpendicular-distance edge hit-test. 6px in screen space so the
+    // threshold feels constant regardless of zoom. Only edges with a
+    // description can be hovered — empty-description edges have nothing to
+    // show and would be a dead hover target.
+    const findEdge = (mx: number, my: number): SimLink | null => {
+      const t = transformRef.current
+      const x = (mx - t.x) / t.k
+      const y = (my - t.y) / t.k
+      const threshold = 6 / t.k
+
+      let best: SimLink | null = null
+      let bestDist = threshold
+
+      for (const link of linksRef.current) {
+        if (!link.data.description) continue
+        const s = link.source as SimNode
+        const tgt = link.target as SimNode
+        if (s.x == null || s.y == null || tgt.x == null || tgt.y == null) continue
+
+        const dx = tgt.x - s.x
+        const dy = tgt.y - s.y
+        const lenSq = dx * dx + dy * dy
+        if (lenSq === 0) continue
+        let u = ((x - s.x) * dx + (y - s.y) * dy) / lenSq
+        u = Math.max(0, Math.min(1, u))
+        const px = s.x + u * dx
+        const py = s.y + u * dy
+        const dist = Math.sqrt((x - px) ** 2 + (y - py) ** 2)
+        if (dist < bestDist) {
+          bestDist = dist
+          best = link
+        }
+      }
+      return best
+    }
+
     // D3 Drag behavior — the core Obsidian-like interaction
     const drag = d3.drag<HTMLCanvasElement, unknown>()
       .subject((event) => {
@@ -520,7 +695,7 @@ export default function ForceGraph({
     selection.call(zoom)
     selection.call(drag)
 
-    // Mouse hover — smooth glow transitions
+    // Mouse hover — smooth node glow transitions + G3 edge reason reveal.
     const handleMouseMove = (e: MouseEvent) => {
       const rect = canvas.getBoundingClientRect()
       mouseRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top }
@@ -532,6 +707,10 @@ export default function ForceGraph({
       for (const n of nodesRef.current) {
         n.targetGlow = 0
       }
+
+      // Nodes always win hit-testing so they stay easy to grab — edge hover
+      // is only checked when no node is under the pointer.
+      const edge = node ? null : findEdge(mouseRef.current.x, mouseRef.current.y)
 
       if (node) {
         canvas.style.cursor = 'grab'
@@ -545,14 +724,20 @@ export default function ForceGraph({
           if (t === node) s.targetGlow = Math.max(s.targetGlow, 0.4)
         }
       } else {
-        canvas.style.cursor = 'default'
+        canvas.style.cursor = edge ? 'help' : 'default'
       }
 
-      if (hoveredRef.current !== node) {
+      const nodeChanged = hoveredRef.current !== node
+      const edgeChanged = hoveredEdgeRef.current !== edge
+
+      if (nodeChanged) {
         hoveredRef.current = node
         onNodeHover?.(node?.data || null)
-        scheduleRender()
       }
+      if (edgeChanged) {
+        hoveredEdgeRef.current = edge
+      }
+      if (nodeChanged || edgeChanged) scheduleRender()
     }
 
     const handleClick = (e: MouseEvent) => {
@@ -563,14 +748,25 @@ export default function ForceGraph({
       if (node) onNodeClick?.(node.data)
     }
 
+    const handleDoubleClick = (e: MouseEvent) => {
+      // Browser fires click → click → dblclick; single click already selected
+      // the node via handleClick, so here we just escalate to "open topic."
+      if (draggedRef.current) return
+      const rect = canvas.getBoundingClientRect()
+      const node = findNode(e.clientX - rect.left, e.clientY - rect.top)
+      if (node) onNodeDoubleClick?.(node.data)
+    }
+
     canvas.addEventListener('mousemove', handleMouseMove)
     canvas.addEventListener('click', handleClick)
+    canvas.addEventListener('dblclick', handleDoubleClick)
 
     return () => {
       canvas.removeEventListener('mousemove', handleMouseMove)
       canvas.removeEventListener('click', handleClick)
+      canvas.removeEventListener('dblclick', handleDoubleClick)
     }
-  }, [scheduleRender, getNodeRadius, onNodeClick, onNodeHover])
+  }, [scheduleRender, getNodeRadius, onNodeClick, onNodeDoubleClick, onNodeHover])
 
   return (
     <canvas
