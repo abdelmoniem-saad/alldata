@@ -5,7 +5,7 @@ import GraphSidebar from '../components/graph/GraphSidebar'
 import { useGraphStore } from '../stores/graphStore'
 import { api, GraphNode } from '../api/client'
 import {
-  DOMAIN_SLUGS, DOMAIN_DASH, DOMAIN_STROKE_WIDTH,
+  DOMAIN_SLUGS, DIFFICULTY_DASH, NODE_STROKE_WIDTH,
   domainVar, domainLabel, domainTick,
 } from '../lib/domain'
 
@@ -418,38 +418,84 @@ function GraphLegend() {
         <span style={{ fontSize: 12, opacity: 0.7 }} aria-hidden="true">{open ? '−' : '+'}</span>
       </button>
       {open && (
-        <div id="graph-legend-body" role="list" style={{
-          marginTop: 10,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 8,
-        }}>
-          {DOMAIN_SLUGS.map(slug => {
-            const dash = DOMAIN_DASH[slug]
-            const width = DOMAIN_STROKE_WIDTH[slug]
-            return (
+        <div id="graph-legend-body" style={{ marginTop: 10 }}>
+          {/* H11: legend is now two orthogonal vocabularies — color carries
+              domain, pattern carries difficulty. Pairing them in the key
+              makes the redundant encoding explicit for anyone reading. */}
+          <div style={{
+            fontSize: 9,
+            fontFamily: 'var(--font-mono)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.8px',
+            color: 'var(--color-text-muted)',
+            marginBottom: 6,
+            opacity: 0.8,
+          }}>
+            Domain (color)
+          </div>
+          <div role="list" style={{
+            display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12,
+          }}>
+            {DOMAIN_SLUGS.map(slug => (
               <div
                 key={slug}
                 role="listitem"
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                }}
+                style={{ display: 'flex', alignItems: 'center', gap: 10 }}
               >
-                <svg width="36" height="10" viewBox="0 0 36 10" aria-hidden="true">
-                  <line
-                    x1={2} y1={5} x2={34} y2={5}
-                    stroke={domainVar(slug)}
-                    strokeWidth={width}
-                    strokeDasharray={dash.length ? dash.join(' ') : undefined}
-                    strokeLinecap="round"
-                  />
-                </svg>
+                <span style={{
+                  width: 10, height: 10, borderRadius: '50%',
+                  background: domainVar(slug),
+                  flexShrink: 0,
+                }} />
                 <span style={{ color: 'var(--color-text)', fontSize: 11 }}>
                   {domainLabel(slug)}
                 </span>
               </div>
-            )
-          })}
+            ))}
+          </div>
+
+          <div style={{
+            fontSize: 9,
+            fontFamily: 'var(--font-mono)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.8px',
+            color: 'var(--color-text-muted)',
+            marginBottom: 6,
+            opacity: 0.8,
+          }}>
+            Difficulty (ring)
+          </div>
+          <div role="list" style={{
+            display: 'flex', flexDirection: 'column', gap: 6,
+          }}>
+            {(['intro', 'intermediate', 'advanced'] as const).map(level => {
+              const dash = DIFFICULTY_DASH[level]
+              return (
+                <div
+                  key={level}
+                  role="listitem"
+                  style={{ display: 'flex', alignItems: 'center', gap: 10 }}
+                >
+                  <svg width="36" height="10" viewBox="0 0 36 10" aria-hidden="true">
+                    <line
+                      x1={2} y1={5} x2={34} y2={5}
+                      stroke={`var(--color-${level})`}
+                      strokeWidth={NODE_STROKE_WIDTH}
+                      strokeDasharray={dash.length ? dash.join(' ') : undefined}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <span style={{
+                    color: 'var(--color-text)',
+                    fontSize: 11,
+                    textTransform: 'capitalize',
+                  }}>
+                    {level}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
         </div>
       )}
     </div>

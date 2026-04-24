@@ -356,18 +356,11 @@ function LeftDrawer({
   const domainColor = domainVar(topicDomain)
   return (
     <aside className="zen-drawer zen-drawer-left" aria-label="Topic context, prerequisites, and what this unlocks">
+      {/* H11: spine-stripe removed — the tall colored rule was too loud
+          against the zen surface. The DrawerPeek chevron already signals
+          "panel here" minimally, which is all this edge needs. Domain
+          vocabulary still carries through the prereq chips' tick glyphs. */}
       <DrawerPeek direction="left" />
-
-      {/* G8: spine-stripe on the drawer's content-side edge (right edge for
-          the left drawer) — pattern carries the topic's domain, framing the
-          lineage rows below as "the topic's prereq chain." */}
-      {topicDomain && (
-        <span
-          className="spine-stripe spine-stripe-right"
-          data-domain={topicDomain}
-          aria-hidden="true"
-        />
-      )}
 
       {/* Back to graph */}
       <Link

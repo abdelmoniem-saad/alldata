@@ -3,7 +3,7 @@ import * as d3 from 'd3'
 import { GraphNode, GraphEdge } from '../../api/client'
 import { useProgressStore } from '../../stores/progressStore'
 import { useThemeStore } from '../../stores/themeStore'
-import { domainColorHex, cssVarHex, domainDash, domainStrokeWidth, DOMAIN_SLUGS } from '../../lib/domain'
+import { domainColorHex, cssVarHex, difficultyDash, NODE_STROKE_WIDTH, DOMAIN_SLUGS } from '../../lib/domain'
 
 interface Props {
   nodes: GraphNode[]
@@ -314,21 +314,20 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
       // stays at full pattern alpha so the domain vocabulary survives.
       const nodeAlpha = hasContent ? 1 : 0.45
 
-      // Node ring (outer) — G2: domain encoded as stroke pattern.
-      // Zinc hue alone collapses at 11–28px; dash array + ring weight carry
-      // the five-domain vocabulary (see lib/domain.ts). Color still tints the
-      // ring but pattern is what reads at small render sizes and under
-      // colorblind emulation. Empty-shell signal moves to fill alpha (G4).
-      // isHot uses interactiveGlow so in-progress nodes don't bold their ring
-      // permanently — only hover/highlight does.
+      // Node ring (outer) — H11: pattern now encodes DIFFICULTY, not
+      // domain (domain is carried by color after H1's muted jewel palette;
+      // doubling up was redundant). intro = solid, intermediate = dashed,
+      // advanced = dotted. Ring width is uniform so pattern is the only
+      // variation — cleaner readability under colorblind emulation and at
+      // small render sizes (11–28px). isHot uses interactiveGlow so
+      // in-progress nodes don't bold their ring permanently — only hover
+      // or highlight does. Empty-shell signal stays on fill alpha (G4).
       const isHot = interactiveGlow > 0.1
       ctx.beginPath()
       ctx.arc(node.x, node.y, r + 1.5, 0, Math.PI * 2)
       ctx.strokeStyle = color + (isHot ? 'bb' : hasContent ? '66' : '33')
-      ctx.lineWidth =
-        domainStrokeWidth(node.data.domain) +
-        (isDragging ? 1 : isHot ? 0.5 : 0)
-      ctx.setLineDash(domainDash(node.data.domain))
+      ctx.lineWidth = NODE_STROKE_WIDTH + (isDragging ? 1 : isHot ? 0.5 : 0)
+      ctx.setLineDash(difficultyDash(node.data.difficulty))
       ctx.stroke()
       ctx.setLineDash([])
 
