@@ -21,12 +21,17 @@
   --color-accent-subtle: rgba(20, 184, 166, 0.08);
   --color-accent-glow: rgba(20, 184, 166, 0.2);
 
-  /* Domain colors — Unified Grayscale (for base state) */
-  --color-probability: #71717a;
-  --color-distributions: #a1a1aa;
-  --color-inference: #d4d4d8;
-  --color-regression: #52525b;
-  --color-practice: #3f3f46;
+  /* H1: Domain colors — muted jewel tones pair with G's pattern vocabulary.
+     The zinc ramp alone read as "five shades of gray with squiggles" at the
+     11–28px node scale; hue + pattern together is belt + suspenders.
+     Desaturated on purpose — keeps the Laboratory Monolith feel rather than
+     Skittles. Each hue also differs in luminance so achromatopsia still
+     leaves them distinguishable (pattern is the secondary signal there). */
+  --color-probability: #6b9bd1;   /* muted steel blue */
+  --color-distributions: #8b7ec8; /* muted violet */
+  --color-inference: #d4a574;     /* muted amber */
+  --color-regression: #7cb098;    /* muted sage */
+  --color-practice: #c98b8b;      /* muted terracotta */
 
   /* Difficulty colors */
   --color-intro: #22c55e;
@@ -87,12 +92,15 @@
   --color-overlay: rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.1);
 
-  /* Adjust Domain colors for Light Mode — Inky & Scholarly */
-  --color-probability: #52525b;
-  --color-distributions: #71717a;
-  --color-inference: #3f3f46;
-  --color-regression: #27272a;
-  --color-practice: #18181b;
+  /* H1: Light-mode domain palette — same five hues as dark mode, pulled
+     darker so they hold against white surfaces. Luminance ordering of the
+     five hues is preserved so the pattern vocabulary reads consistently
+     across themes. */
+  --color-probability: #3b6ea5;   /* deep steel blue */
+  --color-distributions: #6453a3; /* deep violet */
+  --color-inference: #a67028;     /* deep amber */
+  --color-regression: #4a8268;    /* deep sage */
+  --color-practice: #9b5858;      /* deep terracotta */
 
   /* Difficulty colors - slightly deeper for visibility on light bg */
   --color-intro: #15803d;
@@ -393,34 +401,34 @@ pre {
 .zen-bottom-bar:hover,
 .zen-bottom-bar:focus-within { opacity: 1; }
 
-/* Z4.3 / Z4.4: side drawers. 320px panels anchored at left/right edge,
-   translated mostly offscreen with a 12px peek that catches hover. */
+/* H2: single consolidated left drawer. 360px panel holds prereqs + leads-to
+   + next-topic. Right drawer deleted. No hard border line — the backdrop
+   blur is the drawer's visual frame. A soft box-shadow gives the edge just
+   enough anchoring without reading as chrome.
+   (Original Z4.3/Z4.4 width was 320px with a 1px border-right; widening and
+   dropping the line together keeps the perceived weight balanced.) */
 .zen-drawer {
   position: fixed;
   top: 0; bottom: 0;
-  width: min(320px, 85vw);
+  width: min(360px, 90vw);
   background: var(--glass-bg);
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
-  transition: transform var(--transition-smooth), background var(--transition-smooth), border-color var(--transition-smooth);
+  transition: transform var(--transition-smooth), background var(--transition-smooth), box-shadow var(--transition-smooth);
   z-index: 50;
   overflow-y: auto;
   padding: 88px 20px 96px;  /* top: navbar clearance; bottom: bottom-bar clearance */
 }
 .zen-drawer-left {
   left: 0;
-  border-right: 1px solid var(--color-border-subtle);
+  /* No border-right — the hard 1px seam was the user-reported "white line."
+     A 6px 20% shadow fades outward from the content-side edge, anchoring the
+     drawer visually without drawing a line across the reading surface. */
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.18);
   transform: translateX(calc(-100% + 12px));
-}
-.zen-drawer-right {
-  right: 0;
-  border-left: 1px solid var(--color-border-subtle);
-  transform: translateX(calc(100% - 12px));
 }
 .zen-drawer-left:hover,
 .zen-drawer-left:focus-within { transform: translateX(0); }
-.zen-drawer-right:hover,
-.zen-drawer-right:focus-within { transform: translateX(0); }
 
 /* The peek chevron at the drawer's edge — visible when drawer is closed. */
 .zen-drawer-peek {
@@ -433,7 +441,6 @@ pre {
   transition: opacity var(--transition-smooth);
 }
 .zen-drawer-left .zen-drawer-peek { right: -2px; }
-.zen-drawer-right .zen-drawer-peek { left: -2px; }
 .zen-drawer:hover .zen-drawer-peek,
 .zen-drawer:focus-within .zen-drawer-peek { opacity: 0; }
 

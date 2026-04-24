@@ -1,9 +1,9 @@
-import { useEffect, useRef, useCallback, useMemo } from 'react'
+import { useEffect, useRef, useCallback, useMemo, forwardRef, useImperativeHandle } from 'react'
 import * as d3 from 'd3'
 import { GraphNode, GraphEdge } from '../../api/client'
 import { useProgressStore } from '../../stores/progressStore'
 import { useThemeStore } from '../../stores/themeStore'
-import { domainColorHex, cssVarHex, domainDash, domainStrokeWidth } from '../../lib/domain'
+import { domainColorHex, cssVarHex, domainDash, domainStrokeWidth, DOMAIN_SLUGS } from '../../lib/domain'
 
 interface Props {
   nodes: GraphNode[]
@@ -14,6 +14,22 @@ interface Props {
   onNodeDoubleClick?: (node: GraphNode) => void
   onNodeHover?: (node: GraphNode | null) => void
   highlightedNode?: string | null
+}
+
+/**
+ * H6 / H8: imperative handle so parent containers (GraphExplorer's search
+ * chip, keyboard nav) can steer the canvas without prop-change re-renders.
+ * `centerOnSlug` pans+zooms onto a node; `getNeighborInDirection` is the
+ * arrow-key walker — it returns the neighbor whose angle from the given
+ * node is closest to the pressed arrow's cardinal direction (within a
+ * ±45° cone). Returns null when there's no neighbor in that direction.
+ */
+export interface ForceGraphHandle {
+  centerOnSlug: (slug: string) => void
+  getNeighborInDirection: (
+    slug: string,
+    dir: 'up' | 'down' | 'left' | 'right',
+  ) => GraphNode | null
 }
 
 interface SimNode extends d3.SimulationNodeDatum {
@@ -27,11 +43,14 @@ interface SimLink extends d3.SimulationLinkDatum<SimNode> {
   data: GraphEdge
 }
 
-export default function ForceGraph({
+const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
   nodes, edges, width, height, onNodeClick, onNodeDoubleClick, onNodeHover, highlightedNode,
-}: Props) {
+}, ref) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const simRef = useRef<d3.Simulation<SimNode, SimLink> | null>(null)
+  // H6: hold the d3 zoom behavior so centerOnSlug (via useImperativeHandle)
+  // can call zoom.transform() to pan/zoom the canvas onto a chosen node.
+  const zoomRef = useRef<d3.ZoomBehavior<HTMLCanvasElement, unknown> | null>(null)
   const completedSlugs = useProgressStore(s => s.completedSlugs)
   const inProgressSlugs = useProgressStore(s => s.inProgressSlugs)
   const nodesRef = useRef<SimNode[]>([])
@@ -42,6 +61,12 @@ export default function ForceGraph({
   const draggedRef = useRef<SimNode | null>(null)
   const animFrameRef = useRef<number>(0)
   const mouseRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
+  // H5a: RAF-throttle the edge hit-test. mousemove writes pendingHoverRef;
+  // at most one hit-test + glow update per frame is consumed from it.
+  // Prevents the per-event findEdge linear scan from running thousands of
+  // times per second while the user is scrubbing the canvas.
+  const hoverRafRef = useRef<number>(0)
+  const pendingHoverRef = useRef<{ x: number; y: number } | null>(null)
 
   const { theme } = useThemeStore()
   const isLight = theme === 'light'
@@ -66,9 +91,6 @@ export default function ForceGraph({
     // G4: subtle green wash for completed nodes. 0.15-alpha applied at draw
     // time via an '26' suffix so the tint reads as "done" without taking over.
     completedTint: cssVarHex('--color-intro', document.documentElement, isLight ? '#16a34a' : '#22c55e'),
-    // G7: amber fill for the misconception '!' marker. Reuses the badge
-    // vocabulary already used for intermediate-difficulty pills in the DOM.
-    misconceptionFill: cssVarHex('--color-intermediate', document.documentElement, isLight ? '#d97706' : '#f59e0b'),
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [theme, isLight])
 
@@ -398,26 +420,9 @@ export default function ForceGraph({
         ctx.stroke()
       }
 
-      // G7: misconception marker — small amber '!' just outside the ring.
-      // Placed at the lower-right corner so it doesn't collide with the
-      // difficulty dot (upper-right, inside) or the completion check
-      // (upper-left, inside). Skipped on depth > 1 so leaf-sized nodes stay
-      // uncluttered. Surfaces the "misconception-aware" identity on the map.
-      if (node.data.misconception_count > 0 && node.data.depth <= 1) {
-        const mAngle = Math.PI / 4
-        const mx = node.x + (r + 4) * Math.cos(mAngle)
-        const my = node.y + (r + 4) * Math.sin(mAngle)
-        ctx.beginPath()
-        ctx.arc(mx, my, 5, 0, Math.PI * 2)
-        ctx.fillStyle = palette.misconceptionFill
-        ctx.fill()
-        // White '!' glyph
-        ctx.fillStyle = '#ffffff'
-        ctx.font = '700 8px "Inter", system-ui, sans-serif'
-        ctx.textAlign = 'center'
-        ctx.textBaseline = 'middle'
-        ctx.fillText('!', mx, my + 0.5)
-      }
+      // H4: misconception '!' marker removed — added visual noise without
+      // driving decisions. `misconception_count` stays on the wire for the
+      // future consolidated misconceptions page (H10 backlog).
     }
 
     ctx.restore()
@@ -470,7 +475,7 @@ export default function ForceGraph({
     }
 
     // Continue animation loop if glows are transitioning
-    if (needsExtraFrame || simRef.current?.alpha() > 0.001) {
+    if (needsExtraFrame || (simRef.current?.alpha() ?? 0) > 0.001) {
       animFrameRef.current = requestAnimationFrame(render)
     }
   }, [width, height, getNodeColor, getNodeRadius, highlightedNode, completedSlugs, inProgressSlugs, isLight])
@@ -481,21 +486,54 @@ export default function ForceGraph({
     animFrameRef.current = requestAnimationFrame(render)
   }, [render])
 
+  // H5b: structural signatures over the node/edge sets. Using these as the
+  // sim-effect deps instead of [nodes, edges] prevents a full simulation
+  // rebuild when the store hands us a reference-changed but structurally
+  // identical array (a common case — GraphExplorer's filter, Zustand's
+  // selector invalidation). Velocities are preserved across renders.
+  const nodeKey = useMemo(() => nodes.map(n => n.id).join('|'), [nodes])
+  const edgeKey = useMemo(
+    () => edges.map(e => `${e.source_id}>${e.target_id}`).join('|'),
+    [edges],
+  )
+
   // Setup simulation — Obsidian-like physics
   useEffect(() => {
     if (nodes.length === 0) return
 
     // Preserve positions across re-renders
-    const oldPositions = new Map(nodesRef.current.map(n => [n.data.id, { x: n.x, y: n.y }]))
+    const oldPositions = new Map(nodesRef.current.map(n => [n.data.id, { x: n.x, y: n.y, vx: n.vx, vy: n.vy }]))
+
+    // H5e: polar-by-domain seed for nodes we haven't seen before. Random
+    // seeding made the first paint "bloom" out of the canvas center — long
+    // relaxation path, lots of motion. Seeding roughly into the final shape
+    // means the sim only has to relax, not converge from chaos.
+    const domainAngles: Record<string, number> = {}
+    DOMAIN_SLUGS.forEach((slug, i) => {
+      // Start at top (-π/2), step around clockwise. 5 domains → 72° apart.
+      domainAngles[slug] = -Math.PI / 2 + (i / DOMAIN_SLUGS.length) * Math.PI * 2
+    })
+    const cx = width / 2
+    const cy = height / 2
 
     const simNodes: SimNode[] = nodes.map(n => {
       const old = oldPositions.get(n.id)
+      if (old && old.x != null && old.y != null) {
+        return {
+          data: n, glow: 0, targetGlow: 0,
+          x: old.x, y: old.y, vx: old.vx ?? 0, vy: old.vy ?? 0,
+        }
+      }
+      if (n.depth === 0) {
+        return { data: n, glow: 0, targetGlow: 0, x: cx, y: cy }
+      }
+      const angle = domainAngles[n.domain || ''] ?? 0
+      const radius = Math.max(150, n.depth * 140)
+      const jitter = (Math.random() - 0.5) * 40
       return {
-        data: n,
-        glow: 0,
-        targetGlow: 0,
-        x: old?.x ?? width / 2 + (Math.random() - 0.5) * 200,
-        y: old?.y ?? height / 2 + (Math.random() - 0.5) * 200,
+        data: n, glow: 0, targetGlow: 0,
+        x: cx + Math.cos(angle) * radius + jitter,
+        y: cy + Math.sin(angle) * radius + jitter,
       }
     })
     const nodeMap = new Map(simNodes.map(n => [n.data.id, n]))
@@ -537,9 +575,13 @@ export default function ForceGraph({
         .distanceMax(500)
       )
       .force('center', d3.forceCenter(width / 2, height / 2).strength(0.03))
+      // H5c: tighter collision packing (+8 px, was +15) with more solver
+      // iterations so residual force doesn't carry frame-to-frame. Kills
+      // the visible "bounce" in dense clusters.
       .force('collision', d3.forceCollide<SimNode>()
-        .radius(d => getNodeRadius(d.data) + 15)
-        .strength(0.8)
+        .radius(d => getNodeRadius(d.data) + 8)
+        .strength(1.0)
+        .iterations(2)
       )
       // Keep domain clusters loosely grouped
       .force('x', d3.forceX<SimNode>().x(d => {
@@ -560,7 +602,12 @@ export default function ForceGraph({
       sim.stop()
       cancelAnimationFrame(animFrameRef.current)
     }
-  }, [nodes, edges, width, height, scheduleRender, getNodeRadius])
+    // H5b: nodeKey / edgeKey are structural proxies for the nodes / edges
+    // arrays — using them as deps avoids reference-identity rebuilds.
+    // nodes/edges are read inside the effect but ESLint can't see that
+    // nodeKey/edgeKey are equivalents.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodeKey, edgeKey, width, height, scheduleRender, getNodeRadius])
 
   // Setup zoom, drag, and mouse interaction
   useEffect(() => {
@@ -663,8 +710,11 @@ export default function ForceGraph({
         const node = event.subject?.node as SimNode | undefined
         if (!node) return
 
-        if (!event.active) simRef.current?.alphaTarget(0)
-        // Release the node — it springs back naturally
+        // H5d: bump alpha before releasing the pin so the sim has a short
+        // breath to settle the dragged node into its force-equilibrium
+        // smoothly. Without this the node clears fx/fy at alpha ~0 and
+        // snaps perceptibly — small jump, but it reads as "glitchy."
+        if (!event.active) simRef.current?.alphaTarget(0).alpha(0.1)
         node.fx = null
         node.fy = null
         draggedRef.current = null
@@ -690,18 +740,29 @@ export default function ForceGraph({
         transformRef.current = event.transform
         scheduleRender()
       })
+    // H6: expose the zoom behavior so useImperativeHandle.centerOnSlug can
+    // drive the transform via d3's transition API (smooth camera move).
+    zoomRef.current = zoom
 
     const selection = d3.select(canvas)
     selection.call(zoom)
     selection.call(drag)
 
-    // Mouse hover — smooth node glow transitions + G3 edge reason reveal.
-    const handleMouseMove = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect()
-      mouseRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top }
-      const node = findNode(mouseRef.current.x, mouseRef.current.y)
+    // H5a: mousemove is now RAF-throttled. The raw event writes only the
+    // latest pointer position; processHover is run at most once per frame
+    // from requestAnimationFrame. Prevents the findEdge linear scan (and
+    // the glow re-target loop) from firing thousands of times per second
+    // while the user scrubs the canvas.
+    const processHover = () => {
+      hoverRafRef.current = 0
+      const pending = pendingHoverRef.current
+      if (!pending) return
+      pendingHoverRef.current = null
 
       if (draggedRef.current) return // Don't change hover during drag
+
+      mouseRef.current = { x: pending.x, y: pending.y }
+      const node = findNode(pending.x, pending.y)
 
       // Update glow targets
       for (const n of nodesRef.current) {
@@ -710,7 +771,7 @@ export default function ForceGraph({
 
       // Nodes always win hit-testing so they stay easy to grab — edge hover
       // is only checked when no node is under the pointer.
-      const edge = node ? null : findEdge(mouseRef.current.x, mouseRef.current.y)
+      const edge = node ? null : findEdge(pending.x, pending.y)
 
       if (node) {
         canvas.style.cursor = 'grab'
@@ -740,6 +801,14 @@ export default function ForceGraph({
       if (nodeChanged || edgeChanged) scheduleRender()
     }
 
+    const handleMouseMove = (e: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect()
+      pendingHoverRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top }
+      if (!hoverRafRef.current) {
+        hoverRafRef.current = requestAnimationFrame(processHover)
+      }
+    }
+
     const handleClick = (e: MouseEvent) => {
       // Only fire click if we didn't just drag
       if (draggedRef.current) return
@@ -765,8 +834,82 @@ export default function ForceGraph({
       canvas.removeEventListener('mousemove', handleMouseMove)
       canvas.removeEventListener('click', handleClick)
       canvas.removeEventListener('dblclick', handleDoubleClick)
+      // H5a: cancel any in-flight hover RAF so we don't land a callback
+      // after unmount (would try to read nodesRef after the sim is gone).
+      if (hoverRafRef.current) {
+        cancelAnimationFrame(hoverRafRef.current)
+        hoverRafRef.current = 0
+      }
     }
   }, [scheduleRender, getNodeRadius, onNodeClick, onNodeDoubleClick, onNodeHover])
+
+  // H6 / H8: imperative handle.
+  // - centerOnSlug pans+zooms the canvas onto a node.
+  // - getNeighborInDirection picks the neighbor closest to the pressed
+  //   arrow's cardinal direction (±45° cone). Returns null if nothing's in
+  //   that cone — the caller can decide whether to beep, fall back, etc.
+  // Honors prefers-reduced-motion by skipping the camera transition.
+  useImperativeHandle(ref, () => ({
+    centerOnSlug: (slug: string) => {
+      const canvas = canvasRef.current
+      const zoom = zoomRef.current
+      if (!canvas || !zoom) return
+      const node = nodesRef.current.find(n => n.data.slug === slug)
+      if (!node || node.x == null || node.y == null) return
+
+      // Keep current zoom unless we're zoomed all the way out — in which case
+      // bring the user in a bit so the centered node is actually visible.
+      const currentK = transformRef.current.k
+      const targetK = currentK < 0.6 ? 1 : currentK
+      const tx = width / 2 - targetK * node.x
+      const ty = height / 2 - targetK * node.y
+      const target = d3.zoomIdentity.translate(tx, ty).scale(targetK)
+
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      const sel = d3.select(canvas)
+      if (reduced) {
+        sel.call(zoom.transform, target)
+      } else {
+        sel.transition().duration(450).call(zoom.transform, target)
+      }
+    },
+    getNeighborInDirection: (slug, dir) => {
+      const self = nodesRef.current.find(n => n.data.slug === slug)
+      if (!self || self.x == null || self.y == null) return null
+      // Cardinal target angles (canvas coords: y grows downward).
+      const targetAngle = {
+        right: 0,
+        down: Math.PI / 2,
+        left: Math.PI,
+        up: -Math.PI / 2,
+      }[dir]
+      const cone = Math.PI / 4 // ±45° on each side
+
+      let best: SimNode | null = null
+      let bestDelta = Infinity
+      for (const link of linksRef.current) {
+        const s = link.source as SimNode
+        const tgt = link.target as SimNode
+        let other: SimNode | null = null
+        if (s === self) other = tgt
+        else if (tgt === self) other = s
+        if (!other || other.x == null || other.y == null) continue
+
+        const a = Math.atan2(other.y - self.y, other.x - self.x)
+        // Smallest signed delta to targetAngle, normalized to [-π, π].
+        let delta = a - targetAngle
+        while (delta > Math.PI) delta -= 2 * Math.PI
+        while (delta < -Math.PI) delta += 2 * Math.PI
+        const absDelta = Math.abs(delta)
+        if (absDelta > cone) continue
+        if (absDelta < bestDelta) {
+          bestDelta = absDelta
+          best = other
+        }
+      }
+      return best ? best.data : null
+    },
+  }), [width, height])
 
   return (
     <canvas
@@ -779,4 +922,6 @@ export default function ForceGraph({
       }}
     />
   )
-}
+})
+
+export default ForceGraph

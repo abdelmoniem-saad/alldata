@@ -503,3 +503,56 @@ def _topological_sort(
                 queue.append(neighbor)
 
     return result
+
+
+async def search_graph_nodes(
+    db: AsyncSession, query: str, limit: int = 8
+) -> list[GraphNode]:
+    """H6: trigram-fuzzy search over published topic titles.
+
+    Returns the top `limit` matches as `GraphNode`s so the graph search chip
+    can navigate straight to the node without a second round-trip for the
+    rest of the topic metadata. Uses `pg_trgm` `similarity()` which is
+    already enabled in the DB (the existing `ilike`-based search in
+    content_service is keyword-literal; this one tolerates typos).
+    """
+    q = query.strip()
+    if not q:
+        return []
+
+    # Trigram similarity ranking. Fall back to ILIKE match so queries shorter
+    # than the trigram threshold (very short prefixes) still return results.
+    stmt = (
+        select(Topic, func.similarity(Topic.title, q).label("sim"))
+        .where(Topic.status == "published")
+        .where(
+            (func.similarity(Topic.title, q) > 0.15)
+            | Topic.title.ilike(f"%{q}%")
+        )
+        .order_by(text("sim DESC"), Topic.title.asc())
+        .limit(limit)
+    )
+    result = await db.execute(stmt)
+    topics = [row[0] for row in result.all()]
+
+    if not topics:
+        return []
+
+    topic_ids = [t.id for t in topics]
+    content_counts = await _get_content_counts(db, topic_ids)
+    misconception_counts = await _get_misconception_counts(db, topic_ids)
+
+    return [
+        GraphNode(
+            id=t.id,
+            slug=t.slug,
+            title=t.title,
+            domain=t.domain,
+            difficulty=t.difficulty,
+            depth=t.depth,
+            status=t.status,
+            has_content=content_counts.get(t.id, 0) > 0,
+            misconception_count=misconception_counts.get(t.id, 0),
+        )
+        for t in topics
+    ]

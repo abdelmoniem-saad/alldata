@@ -136,6 +136,21 @@ export const api = {
   getLeadsTo: (slug: string) =>
     request<PrerequisiteEntry[]>(`/graph/leads-to/${slug}`),
 
+  /**
+   * H7: server-side readiness check. Requires auth — returns {ready,
+   * completed, missing} based on the user's backend-synced progress.
+   * Used by the sidebar's readiness line once progress sync lands
+   * (H10 backlog). Until then the sidebar computes readiness locally
+   * from the already-loaded prereq list + localStorage completedSlugs,
+   * which works for anonymous users and matches the source of truth.
+   */
+  getReadiness: (slug: string) =>
+    request<{
+      ready: boolean
+      completed: GraphNode[]
+      missing: GraphNode[]
+    }>(`/graph/readiness/${slug}`),
+
   // Topics
   getTopic: (slug: string, layer?: string) =>
     request<TopicDetail>(`/topics/${slug}${layer ? `?layer=${layer}` : ''}`),
@@ -148,8 +163,14 @@ export const api = {
     return request<TopicDetail[]>(`/topics${qs ? `?${qs}` : ''}`)
   },
 
+  /**
+   * H6: trigram-fuzzy topic search for the /explore search chip. Backed by
+   * `GET /api/graph/search` which ranks matches by pg_trgm similarity on
+   * `Topic.title`. Returns up to 8 `GraphNode`s so the UI can jump straight
+   * to the node without a second metadata round-trip.
+   */
   searchTopics: (q: string) =>
-    request<GraphNode[]>(`/topics/search?q=${q}`),
+    request<GraphNode[]>(`/graph/search?q=${encodeURIComponent(q)}`),
 
   // Code execution
   executeCode: (code: string, language = 'python', theme = 'dark') =>

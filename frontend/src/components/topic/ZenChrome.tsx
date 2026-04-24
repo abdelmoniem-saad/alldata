@@ -64,19 +64,17 @@ export default function ZenChrome(props: Props) {
       {/* Bottom control bar */}
       <BottomBar {...props} />
 
-      {/* Left drawer — prerequisites + back */}
+      {/* H2: single drawer on the left carries prereqs + leads-to + next.
+          RightDrawer deleted — leads-to is secondary to prereqs, not a peer.
+          Consolidating keeps the reading surface uncluttered and removes the
+          ambient right-edge hover target that was pulling focus. */}
       <LeftDrawer
         topicTitle={props.topicTitle}
         topicDomain={props.topicDomain}
         topicDifficulty={props.topicDifficulty}
         prerequisites={props.prerequisites}
-      />
-
-      {/* Right drawer — leads-to + next */}
-      <RightDrawer
         leadsTo={props.leadsTo}
         nextTopic={props.nextTopic}
-        topicDomain={props.topicDomain}
       />
     </>
   )
@@ -340,22 +338,28 @@ function BottomBar(props: Props) {
 }
 
 // ─── Left Drawer ────────────────────────────────────────────────────────
+// H2: single consolidated drawer. Holds prereqs (what you need) + leads-to
+// (what this unlocks) + the recommended next topic. Reading order mirrors
+// the learning arc: "before → now → after." The right-side drawer has been
+// deleted and its contents folded in here.
 
 function LeftDrawer({
-  topicTitle, topicDomain, topicDifficulty, prerequisites,
+  topicTitle, topicDomain, topicDifficulty, prerequisites, leadsTo, nextTopic,
 }: {
   topicTitle: string
   topicDomain: string | null
   topicDifficulty: string | null
   prerequisites: PrerequisiteEntry[]
+  leadsTo: PrerequisiteEntry[]
+  nextTopic: GraphNode | undefined
 }) {
   const domainColor = domainVar(topicDomain)
   return (
-    <aside className="zen-drawer zen-drawer-left" aria-label="Topic context and prerequisites">
+    <aside className="zen-drawer zen-drawer-left" aria-label="Topic context, prerequisites, and what this unlocks">
       <DrawerPeek direction="left" />
 
       {/* G8: spine-stripe on the drawer's content-side edge (right edge for
-          left drawer) — pattern carries the topic's domain, framing the
+          the left drawer) — pattern carries the topic's domain, framing the
           lineage rows below as "the topic's prereq chain." */}
       {topicDomain && (
         <span
@@ -422,7 +426,7 @@ function LeftDrawer({
 
       {/* Prerequisites */}
       {prerequisites.length > 0 && (
-        <div>
+        <div style={{ marginBottom: 24 }}>
           <div style={{
             fontSize: 10,
             fontWeight: 700,
@@ -441,36 +445,23 @@ function LeftDrawer({
           </div>
         </div>
       )}
-    </aside>
-  )
-}
 
-// ─── Right Drawer ───────────────────────────────────────────────────────
-
-function RightDrawer({
-  leadsTo, nextTopic, topicDomain,
-}: {
-  leadsTo: PrerequisiteEntry[]
-  nextTopic: GraphNode | undefined
-  topicDomain: string | null
-}) {
-  return (
-    <aside className="zen-drawer zen-drawer-right" aria-label="What this topic unlocks">
-      <DrawerPeek direction="right" />
-
-      {/* G8: spine-stripe on the drawer's content-side edge (left edge for
-          right drawer). Same pattern as the left drawer — both frames read
-          as the topic's lineage, visually bookending the reading surface. */}
-      {topicDomain && (
-        <span
-          className="spine-stripe"
-          data-domain={topicDomain}
+      {/* Dashed divider only when both sections exist, to mark the pivot
+          from "before this topic" to "after this topic." */}
+      {prerequisites.length > 0 && leadsTo.length > 0 && (
+        <div
           aria-hidden="true"
+          style={{
+            borderTop: '1px dashed var(--color-border-subtle)',
+            margin: '0 0 20px',
+            opacity: 0.7,
+          }}
         />
       )}
 
+      {/* Leads to */}
       {leadsTo.length > 0 && (
-        <div style={{ marginBottom: 28 }}>
+        <div style={{ marginBottom: 24 }}>
           <div style={{
             fontSize: 10,
             fontWeight: 700,

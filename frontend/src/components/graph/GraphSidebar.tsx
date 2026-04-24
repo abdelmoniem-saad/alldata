@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { GraphNode } from '../../api/client'
 import { domainVar, domainTick } from '../../lib/domain'
+import { useProgressStore } from '../../stores/progressStore'
 
 interface Props {
   node: GraphNode | null
@@ -18,6 +19,19 @@ export default function GraphSidebar({
   node, prerequisites = [], leadsTo = [],
   prereqReasons = {}, leadsToReasons = {},
 }: Props) {
+  // H7: local readiness computation. `progressStore.completedSlugs` is the
+  // source of truth (localStorage-backed, works for anonymous users — the
+  // backend `/graph/readiness/{slug}` endpoint requires auth and isn't
+  // useful until progress sync lands on the H10 backlog). Count matches
+  // against the already-loaded transitive prereq list passed as a prop.
+  const completedSlugs = useProgressStore(s => s.completedSlugs)
+  const hasProgress = completedSlugs.length > 0
+  const totalPrereqs = prerequisites.length
+  const completedPrereqs = prerequisites.filter(p => completedSlugs.includes(p.slug)).length
+  const missingPrereqs = totalPrereqs - completedPrereqs
+  const showReadiness = !!node && node.depth > 0 && totalPrereqs > 0 && hasProgress
+  const allReady = missingPrereqs === 0
+
   if (!node) {
     return (
       <div style={{
@@ -92,6 +106,65 @@ export default function GraphSidebar({
           </div>
         )}
 
+        {/* H7: readiness line. Only surfaces once the user has at least
+            one completed topic — first-time users shouldn't wonder what
+            "0/3 prereqs complete" means. Green when ready, amber with
+            a learning-path shortcut when not. */}
+        {showReadiness && (
+          <div style={{
+            display: 'flex', alignItems: 'center',
+            gap: 8,
+            marginBottom: 10,
+            padding: '8px 10px',
+            borderRadius: 8,
+            background: allReady ? 'var(--color-accent-subtle)' : 'var(--color-bg-secondary)',
+            border: `1px solid ${allReady ? 'var(--color-intro)' : 'var(--color-intermediate)'}`,
+            fontSize: 12,
+          }}>
+            {allReady ? (
+              <>
+                <span aria-hidden="true" style={{
+                  color: 'var(--color-intro)',
+                  fontWeight: 700,
+                  fontSize: 14,
+                  lineHeight: 1,
+                }}>
+                  ✓
+                </span>
+                <span style={{ color: 'var(--color-text)', flex: 1 }}>
+                  Ready — {completedPrereqs}/{totalPrereqs} prereqs complete
+                </span>
+              </>
+            ) : (
+              <>
+                <span aria-hidden="true" style={{
+                  color: 'var(--color-intermediate)',
+                  fontWeight: 700,
+                  fontSize: 13,
+                  lineHeight: 1,
+                }}>
+                  ●
+                </span>
+                <span style={{ color: 'var(--color-text)', flex: 1 }}>
+                  {missingPrereqs} prereq{missingPrereqs === 1 ? '' : 's'} remaining
+                </span>
+                <Link
+                  to={`/path?to=${node.slug}`}
+                  style={{
+                    fontSize: 11,
+                    color: 'var(--color-accent)',
+                    textDecoration: 'none',
+                    fontWeight: 600,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  show path →
+                </Link>
+              </>
+            )}
+          </div>
+        )}
+
         <Link
           to={`/topic/${node.slug}`}
           className="btn btn-primary glow-ring"
@@ -113,53 +186,9 @@ export default function GraphSidebar({
         </Link>
       </div>
 
-      {/* G7: Common misconceptions — surfaces the "misconception-aware"
-          identity claim before the user even opens the topic. Uses the amber
-          badge-intermediate vocabulary so it reads as a cautionary signal,
-          consistent with the '!' marker on the graph node itself. */}
-      {node.misconception_count > 0 && node.depth > 0 && (
-        <div style={{ marginBottom: 20 }}>
-          <div style={{
-            display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
-            marginBottom: 8,
-          }}>
-            <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)' }}>
-              Common misconceptions
-            </h3>
-            <span className="badge badge-intermediate">
-              {node.misconception_count}
-            </span>
-          </div>
-          <Link
-            to={`/topic/${node.slug}`}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              fontSize: 12, lineHeight: 1.5,
-              color: 'var(--color-text-secondary)',
-              padding: '7px 10px',
-              borderRadius: 8,
-              background: 'var(--color-surface)',
-              border: '1px solid var(--color-border-subtle)',
-              transition: 'all var(--transition-fast)',
-            }}
-            onMouseEnter={e => {
-              const el = e.currentTarget as HTMLElement
-              el.style.borderColor = 'var(--color-intermediate)'
-            }}
-            onMouseLeave={e => {
-              const el = e.currentTarget as HTMLElement
-              el.style.borderColor = 'var(--color-border-subtle)'
-            }}
-          >
-            <span style={{ color: 'var(--color-intermediate)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>!</span>
-            <span style={{ flex: 1 }}>
-              {node.misconception_count === 1
-                ? 'See the documented misconception on the topic page'
-                : `See all ${node.misconception_count} on the topic page`}
-            </span>
-          </Link>
-        </div>
-      )}
+      {/* H4: Common-misconceptions section removed. The data still arrives
+          via node.misconception_count for the future consolidated
+          /misconceptions surface (H10 backlog). */}
 
       {/* Prerequisites */}
       {prerequisites.length > 0 && (

@@ -121,8 +121,10 @@ function TopicSearchInput({ value, onChange, topics, placeholder, label }: Topic
             setFocusedIndex(-1)
           }}
           onBlur={() => {
-            // Delay to allow click on dropdown
-            setTimeout(() => setOpen(false), 200)
+            // H3: no setTimeout — the dropdown rows use onMouseDown with
+            // preventDefault() so focus never leaves the input on selection.
+            // Blur here means the user truly clicked outside, close cleanly.
+            setOpen(false)
           }}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
@@ -172,7 +174,14 @@ function TopicSearchInput({ value, onChange, topics, placeholder, label }: Topic
                 return (
                   <div
                     key={topic.slug}
-                    onClick={() => selectTopic(topic)}
+                    // H3: onMouseDown + preventDefault fires BEFORE the input's
+                    // blur and keeps focus anchored to the input — so the
+                    // "select this topic" event can't race against blur+close.
+                    // This is the fix for the "clicks do nothing" bug.
+                    onMouseDown={(e) => {
+                      e.preventDefault()
+                      selectTopic(topic)
+                    }}
                     style={{
                       padding: '10px 14px',
                       cursor: 'pointer',

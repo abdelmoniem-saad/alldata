@@ -1,23 +1,26 @@
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import ForceGraph from '../components/graph/ForceGraph'
+import ForceGraph, { ForceGraphHandle } from '../components/graph/ForceGraph'
 import GraphSidebar from '../components/graph/GraphSidebar'
 import { useGraphStore } from '../stores/graphStore'
 import { api, GraphNode } from '../api/client'
 import {
   DOMAIN_SLUGS, DOMAIN_DASH, DOMAIN_STROKE_WIDTH,
-  domainVar, domainLabel,
+  domainVar, domainLabel, domainTick,
 } from '../lib/domain'
 
 export default function GraphExplorer() {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { nodes, edges, loading, error, fetchGraph, selectNode, selectedNode } = useGraphStore()
   const [prerequisites, setPrerequisites] = useState<GraphNode[]>([])
   const [leadsTo, setLeadsTo] = useState<GraphNode[]>([])
   const [dimensions, setDimensions] = useState({ width: 900, height: 600 })
   const [activeDomain, setActiveDomain] = useState<string | null>(searchParams.get('domain'))
   const [showHelp, setShowHelp] = useState(true)
+  // H6: imperative handle on ForceGraph so the search chip can pan+zoom
+  // onto a chosen node without prop-drilling a transform.
+  const graphRef = useRef<ForceGraphHandle>(null)
 
   useEffect(() => { fetchGraph() }, [fetchGraph])
 
@@ -37,6 +40,20 @@ export default function GraphExplorer() {
   useEffect(() => {
     if (selectedNode) setShowHelp(false)
   }, [selectedNode])
+
+  // H9: bidirectional `?domain=` URL sync. The initial read on mount is
+  // handled by the useState initializer; this effect pushes changes back
+  // so toggling a filter updates the URL (shareable view) and browser
+  // back/forward preserves filter state without extra work. Functional
+  // form preserves any unrelated query params other routes may set.
+  useEffect(() => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      if (activeDomain) next.set('domain', activeDomain)
+      else next.delete('domain')
+      return next
+    }, { replace: true })
+  }, [activeDomain, setSearchParams])
 
   // Filter nodes by domain
   const filteredNodes = activeDomain
@@ -98,6 +115,88 @@ export default function GraphExplorer() {
     if (node.depth > 0) navigate(`/topic/${node.slug}`)
   }, [navigate])
 
+  // H6: search-chip selection. If the chosen node is outside the active
+  // domain filter, clear the filter so the node ends up in the rendered
+  // set; then select + center-on. The rAF delay lets the filter update
+  // flush through before we try to look up the node's canvas position.
+  const handleSearchSelect = useCallback((node: GraphNode) => {
+    if (activeDomain && node.domain !== activeDomain && node.depth > 0) {
+      setActiveDomain(null)
+    }
+    handleNodeClick(node)
+    requestAnimationFrame(() => {
+      graphRef.current?.centerOnSlug(node.slug)
+    })
+  }, [activeDomain, handleNodeClick])
+
+  // H8: page-scoped keyboard navigation for the graph.
+  //   Esc     — deselect node / close drawers (search chip has its own)
+  //   1-5     — toggle domain filters in DOMAIN_SLUGS order
+  //   Enter   — open the selected topic (same as double-click)
+  //   Arrows  — walk to the neighbor in that direction (via imperative handle)
+  // '/' is handled inside GraphSearchChip to keep its ref concerns local.
+  // Typing in inputs/textareas bypasses these keys so the search chip and
+  // any future forms keep full keyboard control.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null
+      if (
+        target && (
+          target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable
+        )
+      ) return
+
+      if (e.key === 'Escape') {
+        if (selectedNode) {
+          e.preventDefault()
+          selectNode(null)
+        }
+        return
+      }
+
+      // Domain filter toggles 1..5 — ignore modifiers so Ctrl/Cmd+N etc. pass.
+      if (!e.altKey && !e.ctrlKey && !e.metaKey && /^[1-5]$/.test(e.key)) {
+        const idx = Number(e.key) - 1
+        const slug = DOMAIN_SLUGS[idx]
+        if (slug) {
+          e.preventDefault()
+          setActiveDomain(prev => (prev === slug ? null : slug))
+        }
+        return
+      }
+
+      if (!selectedNode) return
+
+      if (e.key === 'Enter') {
+        e.preventDefault()
+        handleNodeDoubleClick(selectedNode)
+        return
+      }
+
+      const dirMap: Record<string, 'up' | 'down' | 'left' | 'right'> = {
+        ArrowUp: 'up',
+        ArrowDown: 'down',
+        ArrowLeft: 'left',
+        ArrowRight: 'right',
+      }
+      const dir = dirMap[e.key]
+      if (!dir) return
+
+      e.preventDefault()
+      const next = graphRef.current?.getNeighborInDirection(selectedNode.slug, dir)
+      if (next) {
+        handleNodeClick(next)
+        requestAnimationFrame(() => {
+          graphRef.current?.centerOnSlug(next.slug)
+        })
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [selectedNode, selectNode, handleNodeClick, handleNodeDoubleClick])
+
   if (loading && nodes.length === 0) {
     return (
       <div style={{
@@ -129,6 +228,7 @@ export default function GraphExplorer() {
       {/* Graph canvas */}
       <div style={{ flex: 1, position: 'relative' }}>
         <ForceGraph
+          ref={graphRef}
           nodes={filteredNodes}
           edges={filteredEdges}
           width={dimensions.width}
@@ -199,6 +299,13 @@ export default function GraphExplorer() {
             )
           })}
         </div>
+
+        {/* H6: graph search chip — top-right counterweight to the top-left
+            domain filter. Collapsed pill; expands into a combobox on click
+            or '/' keypress. Filters the full nodes set (not the filtered
+            set) so a user can jump to a node that's currently filtered out,
+            and the select handler clears the filter if needed. */}
+        <GraphSearchChip nodes={nodes} onSelect={handleSearchSelect} />
 
         {/* G10: collapsible stroke-pattern legend. Pairs with the stats bar
             at the bottom-left. Collapsed by default; state remembered in
@@ -343,6 +450,219 @@ function GraphLegend() {
               </div>
             )
           })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// H6: floating search chip — top-right counterweight to the domain filters.
+// Collapsed state is a pill-shaped button; expanded state renders a fuzzy
+// combobox over the in-memory nodes list (no network round-trip needed —
+// every node is already loaded on /explore). Uses the same onMouseDown +
+// preventDefault trick as H3 to make row clicks land reliably.
+function GraphSearchChip({ nodes, onSelect }: {
+  nodes: GraphNode[]
+  onSelect: (node: GraphNode) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const [focusedIndex, setFocusedIndex] = useState(-1)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  // '/' keypress from anywhere on /explore focuses the search box.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== '/') return
+      const target = e.target as HTMLElement | null
+      // Don't hijack '/' if the user's typing into a form field.
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return
+      e.preventDefault()
+      setOpen(true)
+      // wait a tick for the input to mount, then focus
+      requestAnimationFrame(() => inputRef.current?.focus())
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  const results = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return nodes.filter(n => n.depth > 0).slice(0, 8)
+    // Simple substring match with a weak prefix-bias — matches are ordered
+    // by (title starts with q) > (title contains q) > (slug contains q).
+    const scored: Array<{ node: GraphNode; score: number }> = []
+    for (const n of nodes) {
+      if (n.depth === 0) continue
+      const title = n.title.toLowerCase()
+      const slug = n.slug.toLowerCase()
+      let score = 0
+      if (title.startsWith(q)) score = 3
+      else if (title.includes(q)) score = 2
+      else if (slug.includes(q)) score = 1
+      if (score > 0) scored.push({ node: n, score })
+    }
+    scored.sort((a, b) => b.score - a.score || a.node.title.localeCompare(b.node.title))
+    return scored.slice(0, 8).map(s => s.node)
+  }, [nodes, query])
+
+  const choose = (node: GraphNode) => {
+    onSelect(node)
+    setOpen(false)
+    setQuery('')
+    setFocusedIndex(-1)
+  }
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => {
+          setOpen(true)
+          requestAnimationFrame(() => inputRef.current?.focus())
+        }}
+        className="glass"
+        title="Search topics (press /)"
+        style={{
+          position: 'absolute',
+          top: 16,
+          right: 16,
+          padding: '8px 12px',
+          display: 'flex', alignItems: 'center', gap: 8,
+          fontSize: 12,
+          color: 'var(--color-text-muted)',
+          cursor: 'pointer',
+          border: '1px solid var(--color-border-subtle)',
+          borderRadius: 'var(--radius)',
+          background: 'var(--color-surface)',
+        }}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="11" cy="11" r="7" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+        <span>Search</span>
+        <span style={{
+          fontSize: 10,
+          padding: '1px 5px',
+          border: '1px solid var(--color-border-subtle)',
+          borderRadius: 4,
+          fontFamily: 'var(--font-mono)',
+          color: 'var(--color-text-muted)',
+        }}>
+          /
+        </span>
+      </button>
+    )
+  }
+
+  return (
+    <div
+      className="glass"
+      style={{
+        position: 'absolute',
+        top: 16,
+        right: 16,
+        width: 320,
+        padding: 8,
+        border: '1px solid var(--color-border-subtle)',
+        borderRadius: 'var(--radius)',
+        background: 'var(--color-surface)',
+        zIndex: 20,
+      }}
+    >
+      <input
+        ref={inputRef}
+        type="text"
+        value={query}
+        placeholder="Search topics by title"
+        onChange={e => { setQuery(e.target.value); setFocusedIndex(-1) }}
+        onBlur={() => {
+          // Close on blur; row click uses onMouseDown + preventDefault so
+          // it fires before blur kills the dropdown.
+          setOpen(false)
+        }}
+        onKeyDown={e => {
+          if (e.key === 'Escape') { setOpen(false); setQuery('') }
+          else if (e.key === 'ArrowDown') {
+            e.preventDefault()
+            setFocusedIndex(i => Math.min(results.length - 1, i + 1))
+          } else if (e.key === 'ArrowUp') {
+            e.preventDefault()
+            setFocusedIndex(i => Math.max(0, i - 1))
+          } else if (e.key === 'Enter') {
+            e.preventDefault()
+            const target = focusedIndex >= 0 ? results[focusedIndex] : results[0]
+            if (target) choose(target)
+          }
+        }}
+        autoFocus
+        style={{
+          width: '100%',
+          padding: '8px 10px',
+          border: '1px solid var(--color-border-subtle)',
+          borderRadius: 6,
+          background: 'var(--color-bg-secondary)',
+          color: 'var(--color-text)',
+          fontSize: 13,
+          outline: 'none',
+        }}
+      />
+      {results.length > 0 && (
+        <div style={{ marginTop: 6, maxHeight: 280, overflowY: 'auto' }}>
+          {results.map((node, i) => {
+            const dColor = domainVar(node.domain)
+            const isFocused = i === focusedIndex
+            return (
+              <button
+                key={node.id}
+                onMouseDown={e => {
+                  // H3 pattern: prevent blur from killing the click.
+                  e.preventDefault()
+                  choose(node)
+                }}
+                onMouseEnter={() => setFocusedIndex(i)}
+                style={{
+                  width: '100%',
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '6px 8px',
+                  border: 'none',
+                  borderRadius: 6,
+                  background: isFocused ? 'var(--color-surface-hover)' : 'transparent',
+                  color: 'var(--color-text)',
+                  fontSize: 13,
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                }}
+              >
+                <span
+                  className="domain-tick"
+                  style={{ color: dColor, flexShrink: 0, fontStyle: 'normal' }}
+                  aria-hidden="true"
+                >
+                  {domainTick(node.domain)}
+                </span>
+                <span style={{ flex: 1 }}>{node.title}</span>
+                {node.difficulty && (
+                  <span style={{
+                    fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
+                    color: `var(--color-${node.difficulty})`,
+                    letterSpacing: '0.3px',
+                  }}>
+                    {node.difficulty}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      )}
+      {query.trim() && results.length === 0 && (
+        <div style={{
+          marginTop: 8, padding: '8px 10px',
+          fontSize: 12, color: 'var(--color-text-muted)',
+          fontStyle: 'italic',
+        }}>
+          No matches
         </div>
       )}
     </div>

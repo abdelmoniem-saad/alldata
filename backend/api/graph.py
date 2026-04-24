@@ -29,6 +29,21 @@ async def get_full_graph(
     return await graph_engine.get_full_graph(db, status_filter=status_filter)
 
 
+@router.get("/search", response_model=list[GraphNode])
+async def search_graph(
+    db: DB,
+    q: str = Query(..., description="Fuzzy search query over topic titles"),
+    limit: int = Query(8, ge=1, le=20),
+):
+    """H6: fuzzy-search topics for the /explore search chip.
+
+    Returns up to `limit` GraphNode matches ranked by pg_trgm similarity,
+    so the search result cards can jump straight to the node in the graph
+    canvas without a second metadata fetch.
+    """
+    return await graph_engine.search_graph_nodes(db, q, limit=limit)
+
+
 @router.get("/subgraph", response_model=GraphResponse)
 async def get_subgraph(
     db: DB,
