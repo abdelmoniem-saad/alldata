@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useSearchParams } from 'react-router-dom'
 import { api, TopicDetail, PrerequisiteEntry } from '../api/client'
-import ContentRenderer from '../components/topic/ContentRenderer'
+import ScrollReader from '../components/topic/ScrollReader'
 import SlideView from '../components/topic/SlideView'
 import ZenChrome from '../components/topic/ZenChrome'
 import { useProgressStore } from '../stores/progressStore'
@@ -16,7 +16,13 @@ export default function TopicView() {
   const [prerequisites, setPrerequisites] = useState<PrerequisiteEntry[]>([])
   const [leadsTo, setLeadsTo] = useState<PrerequisiteEntry[]>([])
   const [activeLayer, setActiveLayer] = useState<'intuition' | 'formal' | 'both'>('intuition')
-  const [viewMode, setViewMode] = useState<'slides' | 'scroll'>('slides')
+  // I3: scroll (ScrollReader) is the default. SlideView lives behind ?mode=slides
+  // for the small fraction of authors who still want crossfade decks. The
+  // initial mode is read once from the URL so a deep-link to a slide deck still
+  // resolves correctly; ZenChrome's mode toggle drives subsequent changes.
+  const [searchParams] = useSearchParams()
+  const initialMode = searchParams.get('mode') === 'slides' ? 'slides' : 'scroll'
+  const [viewMode, setViewMode] = useState<'slides' | 'scroll'>(initialMode)
   const [slideIdx, setSlideIdx] = useState(0)
   const [slideTotal, setSlideTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -149,42 +155,40 @@ export default function TopicView() {
               onSlidesCount={setSlideTotal}
             />
           ) : (
-            <div style={{
-              padding: 'clamp(88px, 12vh, 160px) clamp(32px, 8vw, 180px) clamp(120px, 16vh, 200px)',
-              minHeight: '100vh',
-            }}>
-              {/* In scroll mode, lead with a large serif headline so the
-                  reader knows what topic they're in. In slide mode, each
-                  slide has its own heading so we skip this. */}
-              <div style={{ marginBottom: 48 }}>
-                <h1 style={{
-                  fontSize: 'clamp(32px, 5vw, 56px)',
-                  fontWeight: 700,
-                  fontFamily: 'var(--font-serif)',
-                  letterSpacing: '-1.5px',
-                  lineHeight: 1.05,
-                  color: 'var(--color-text)',
-                  marginBottom: 16,
-                }}>
-                  {topic.title}
-                </h1>
-                {topic.summary && (
-                  <p style={{
-                    fontSize: 18,
-                    color: 'var(--color-text-secondary)',
-                    lineHeight: 1.7,
+            // I3: ScrollReader is now the default reading surface. The header
+            // is passed in so the surface owns its outer padding without
+            // duplicating it across modes.
+            <ScrollReader
+              blocks={topic.content_blocks}
+              misconceptions={topic.misconceptions}
+              activeLayer={activeLayer}
+              scrollRef={scrollRef}
+              slug={slug || ''}
+              header={
+                <div style={{ marginBottom: 48, maxWidth: 760, margin: '0 auto 48px' }}>
+                  <h1 style={{
+                    fontSize: 'clamp(32px, 5vw, 56px)',
+                    fontWeight: 700,
+                    fontFamily: 'var(--font-serif)',
+                    letterSpacing: '-1.5px',
+                    lineHeight: 1.05,
+                    color: 'var(--color-text)',
+                    marginBottom: 16,
                   }}>
-                    {topic.summary}
-                  </p>
-                )}
-              </div>
-
-              <ContentRenderer
-                blocks={topic.content_blocks}
-                misconceptions={topic.misconceptions}
-                activeLayer={activeLayer}
-              />
-            </div>
+                    {topic.title}
+                  </h1>
+                  {topic.summary && (
+                    <p style={{
+                      fontSize: 18,
+                      color: 'var(--color-text-secondary)',
+                      lineHeight: 1.7,
+                    }}>
+                      {topic.summary}
+                    </p>
+                  )}
+                </div>
+              }
+            />
           )
         ) : (
           /* Empty topic — Coming Soon state, centered in the viewport */

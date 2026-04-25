@@ -16,6 +16,16 @@ class BlockType(str, enum.Enum):
     QUIZ = "quiz"  # Micro-challenge / proof of understanding
     IMAGE = "image"
     INTERACTIVE = "interactive"
+    # I — Dynamic Topic View
+    PLOT = "plot"  # Reactive D3 plot bound to TopicState keys
+    STEP_THROUGH = "step_through"  # Numbered reveal sequence
+    CALLOUT = "callout"  # Insight / warning / aside panel
+    DERIVATION = "derivation"  # Collapsible math derivation
+    MISCONCEPTION_INLINE = "misconception_inline"  # Inline misconception card
+    DECISION = "decision"  # Felt-consequence decision block (writes to TopicState)
+    PLAYGROUND = "playground"  # Goal-driven controls bound to TopicState
+    STATE = "state"  # TopicState defaults declaration (no rendered output)
+    STATE_RESET = "state_reset"  # Snap state back to defaults at an anchor
 
 
 class ExplanationLayer(str, enum.Enum):
@@ -47,6 +57,15 @@ class ContentBlock(Base):
     # For quiz/micro-challenge blocks
     hint: Mapped[str | None] = mapped_column(Text, nullable=True)
     solution: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # I — Dynamic Topic View
+    # `anchor` — slug used by the ScrollReader to pin viz / target navigation.
+    # `meta` — JSON-serialized dict of directive params (plot spec/binds, callout kind,
+    #          derivation title/collapsed, step_through steps, decision options, playground
+    #          controls/goal, state defaults). Convention follows `simulation_config` (Text
+    #          holding JSON) rather than introducing a JSONB column on a SQLite-friendly schema.
+    anchor: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    meta: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())

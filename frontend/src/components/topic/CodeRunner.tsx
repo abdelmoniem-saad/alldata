@@ -7,10 +7,12 @@ interface Props {
   isEditable: boolean
   expectedOutput: string | null
   isSimulation?: boolean
+  /** I4: when true, run once on first scroll-into-view (cached after). */
+  autoRun?: boolean
 }
 
 export default function CodeRunner({
-  code: initialCode, language, isEditable, expectedOutput, isSimulation,
+  code: initialCode, language, isEditable, expectedOutput, isSimulation, autoRun,
 }: Props) {
   const [code, setCode] = useState(initialCode)
   const [lang, setLang] = useState<'python' | 'r'>(language)
@@ -18,7 +20,9 @@ export default function CodeRunner({
   const [running, setRunning] = useState(false)
   const [showOutput, setShowOutput] = useState(!!expectedOutput)
   const [isFocused, setIsFocused] = useState(false)
+  const [autoRan, setAutoRan] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const containerRef = useRef<HTMLDivElement | null>(null)
 
   // Auto-resize textarea
   useEffect(() => {
@@ -57,10 +61,32 @@ export default function CodeRunner({
     setShowOutput(!!expectedOutput)
   }
 
+  // I4 — auto-run on first intersection. Result is cached in component state
+  // so re-scrolling doesn't re-execute. Skipped for editable blocks (where
+  // user input is the point) and once the user has explicitly clicked Run.
+  useEffect(() => {
+    if (!autoRun || autoRan || isEditable) return
+    const el = containerRef.current
+    if (!el) return
+    const obs = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        if (entry.isIntersecting && !autoRan) {
+          setAutoRan(true)
+          run()
+          obs.disconnect()
+          break
+        }
+      }
+    }, { threshold: 0.2 })
+    obs.observe(el)
+    return () => obs.disconnect()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoRun, autoRan, isEditable])
+
   const accentColor = isSimulation ? 'var(--color-accent)' : 'var(--color-accent)'
 
   return (
-    <div style={{
+    <div ref={containerRef} style={{
       borderRadius: 'var(--radius-lg)',
       border: `1px solid ${isFocused ? 'var(--color-accent)' : isSimulation ? 'var(--color-accent-glow)' : 'var(--color-border)'}`,
       boxShadow: isFocused ? '0 0 20px var(--color-accent-glow)' : 'none',

@@ -14,6 +14,8 @@ class ContentBlockCreate(BaseModel):
     simulation_config: str | None = None
     hint: str | None = None
     solution: str | None = None
+    anchor: str | None = None
+    meta: str | None = None
 
 
 class ContentBlockResponse(BaseModel):
@@ -27,6 +29,10 @@ class ContentBlockResponse(BaseModel):
     simulation_config: str | None
     hint: str | None
     solution: str | None
+    anchor: str | None = None
+    # `meta` is stored as a JSON-serialized string on the model. Returned as-is
+    # so the frontend can `JSON.parse` once and route on `block_type`.
+    meta: str | None = None
 
     model_config = {"from_attributes": True}
 

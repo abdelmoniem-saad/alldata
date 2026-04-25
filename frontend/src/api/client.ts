@@ -59,6 +59,13 @@ export interface ContentBlock {
   simulation_config: string | null
   hint: string | null
   solution: string | null
+  // I — Dynamic Topic View
+  // `anchor` — slug used by ScrollReader to pin the right-column viz to scroll position.
+  // `meta`   — JSON-serialized directive params; renderers `JSON.parse` once and route
+  //            on `block_type` (plot spec/binds, decision options, playground controls/goal,
+  //            callout kind, derivation title/collapsed, step_through steps, …).
+  anchor: string | null
+  meta: string | null
 }
 
 export interface Misconception {
