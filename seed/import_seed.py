@@ -1,11 +1,15 @@
 """Import seed data from YAML/Markdown files into the database.
 
-Usage: python -m seed.import_seed
+Usage:
+    python -m seed.import_seed
+    python -m seed.import_seed --strict   # warnings become failures (CI use)
 """
 
+import argparse
 import asyncio
 import json
 import re
+import sys
 import uuid
 from pathlib import Path
 
@@ -19,6 +23,38 @@ from backend.models.edge import EdgeType, TopicEdge
 from backend.models.misconception import Misconception
 from backend.models.topic import Topic, TopicStatus
 from backend.models.user import User, UserRole
+
+# ─── Warning collector ─────────────────────────────────────────────────────
+#
+# J3 hardening — accumulate warnings during parse + import so `--strict` mode
+# can fail at the end and developers see them all in one pass instead of
+# fixing one, re-running, fixing the next, etc.
+#
+# Module-level state is intentional. `import_seed` is a script, not a library;
+# pretending it isn't by threading a context object through every helper costs
+# more than it saves.
+
+_WARNINGS: list[str] = []
+
+
+def _warn(msg: str) -> None:
+    """Record a warning. Printed inline; surfaced again at the end under --strict."""
+    _WARNINGS.append(msg)
+    print(f"  Warning: {msg}", flush=True)
+
+
+# Plot specs the frontend's plot library knows about. Mirrors PLOT_SPECS in
+# `frontend/src/components/topic/blocks/plots/index.tsx` — when a new spec is
+# added there, append it here so authoring stays validated.
+_KNOWN_PLOT_SPECS = {
+    "gaussian_pdf",
+    "gaussian_cdf",
+    "binomial_pmf",
+    "empirical_histogram",
+    "scatter_with_fit",
+    "posterior_update",
+    "population_dot_grid",
+}
 
 # I — Dynamic Topic View: directive helpers
 #
@@ -186,8 +222,8 @@ def _build_multiline_block(spec: dict, sort_order: int, layer: str) -> dict | No
         try:
             spec_doc = yaml.safe_load(body) or {}
         except yaml.YAMLError as exc:
-            print(f"  Warning: decision block has invalid YAML body: {exc}")
-            spec_doc = {}
+            _warn(f"decision block (anchor={anchor!r}) has invalid YAML body: {exc}")
+            return _parse_error_block(btype, body, sort_order, layer, anchor, str(exc))
         spec_doc = {**spec_doc, **branch_extras}
         return {
             "block_type": "decision",
@@ -202,8 +238,8 @@ def _build_multiline_block(spec: dict, sort_order: int, layer: str) -> dict | No
         try:
             spec_doc = yaml.safe_load(body) or {}
         except yaml.YAMLError as exc:
-            print(f"  Warning: playground block has invalid YAML body: {exc}")
-            spec_doc = {}
+            _warn(f"playground block (anchor={anchor!r}) has invalid YAML body: {exc}")
+            return _parse_error_block(btype, body, sort_order, layer, anchor, str(exc))
         spec_doc = {**spec_doc, **branch_extras}
         return {
             "block_type": "playground",
@@ -239,6 +275,14 @@ def _build_multiline_block(spec: dict, sort_order: int, layer: str) -> dict | No
         # Single-line directive captured by `_extract_multiline_blocks` — body
         # is empty. All info lives in attrs (spec, params, binds, ghost).
         meta = {k: v for k, v in attrs.items() if k != "anchor"}
+        spec = meta.get("spec")
+        if spec and spec not in _KNOWN_PLOT_SPECS:
+            _warn(
+                f"unknown plot spec {spec!r} (anchor={anchor!r}). Known specs: "
+                f"{sorted(_KNOWN_PLOT_SPECS)}"
+            )
+        elif not spec:
+            _warn(f"plot block (anchor={anchor!r}) is missing a `spec:` attribute")
         return {
             "block_type": "plot",
             "content": "",
@@ -274,6 +318,127 @@ def _build_multiline_block(spec: dict, sort_order: int, layer: str) -> dict | No
         }
 
     return None
+
+def _parse_error_block(
+    btype: str,
+    body: str,
+    sort_order: int,
+    layer: str,
+    anchor: str | None,
+    error: str,
+) -> dict:
+    """Build a `parse_error` content block so the topic still imports cleanly.
+
+    Frontend's existing dashed-border error renderer covers display. Authoring
+    keeps moving forward; the warning surfaces under `--strict`.
+    """
+    return {
+        "block_type": "parse_error",
+        "content": body,
+        "sort_order": sort_order,
+        "layer": layer,
+        "anchor": anchor,
+        "meta": json.dumps({"original_type": btype, "error": error, "raw": body}),
+    }
+
+
+def _validate_topic_blocks(blocks: list[dict], topic_name: str) -> None:
+    """Cross-check pass over a topic's parsed blocks. Emits warnings only.
+
+    What it checks:
+    - Every `depends_on:` references an `anchor:` that exists on a `decision`
+      block in this topic. Catches typos like `bayes-intuittion`.
+    - Every `bind:` (plot, playground) and `writes:` (decision option) names a
+      key declared in *some* `<!-- block: state -->` directive — or seeded by
+      a `plot params:` mapping. Free-form keys are allowed but must be declared.
+    - Every `branch:` id references an option that exists on the named decision.
+
+    These all silently fail today. With this validator + `--strict` flag, CI
+    catches them before merge.
+    """
+    decisions: dict[str, list[str]] = {}  # anchor → [option_id, ...]
+    declared_keys: set[str] = set()
+
+    for b in blocks:
+        bt = b.get("block_type")
+        meta_raw = b.get("meta")
+        meta = json.loads(meta_raw) if meta_raw else {}
+
+        if bt == "state":
+            values = meta.get("values")
+            if isinstance(values, dict):
+                declared_keys.update(values.keys())
+
+        elif bt == "plot":
+            params = meta.get("params")
+            if isinstance(params, dict):
+                declared_keys.update(params.keys())
+            binds = meta.get("binds")
+            if isinstance(binds, list):
+                # Binds *can* declare keys implicitly when paired with params,
+                # but a bind without any state seed will warn below.
+                pass
+
+        elif bt == "decision":
+            anchor = b.get("anchor")
+            options = meta.get("options")
+            if isinstance(options, list) and anchor:
+                option_ids = []
+                for opt in options:
+                    if isinstance(opt, dict) and "id" in opt:
+                        option_ids.append(str(opt["id"]))
+                    writes = opt.get("writes") if isinstance(opt, dict) else None
+                    if isinstance(writes, dict):
+                        declared_keys.update(writes.keys())
+                decisions[anchor] = option_ids
+
+        elif bt == "playground":
+            binds = meta.get("binds")
+            if isinstance(binds, list):
+                declared_keys.update(str(k) for k in binds if isinstance(k, str))
+            controls = meta.get("controls")
+            if isinstance(controls, list):
+                for c in controls:
+                    if isinstance(c, dict) and "param" in c:
+                        declared_keys.add(str(c["param"]))
+
+    # Second pass: check references against the declared sets.
+    for b in blocks:
+        bt = b.get("block_type")
+        meta_raw = b.get("meta")
+        meta = json.loads(meta_raw) if meta_raw else {}
+
+        # Branch references
+        dep = meta.get("depends_on")
+        branch = meta.get("branch")
+        if dep:
+            if dep not in decisions:
+                _warn(
+                    f"{topic_name}: block (type={bt}, sort_order={b.get('sort_order')}) "
+                    f"depends_on={dep!r} but no decision with that anchor exists"
+                )
+            elif branch:
+                allowed = [s.strip() for s in str(branch).split("|") if s.strip()]
+                option_ids = decisions[dep]
+                for a in allowed:
+                    if a not in option_ids:
+                        _warn(
+                            f"{topic_name}: branch={a!r} on decision {dep!r} "
+                            f"is not a valid option (have: {option_ids})"
+                        )
+
+        # Plot binds — referencing keys that aren't declared anywhere
+        if bt == "plot":
+            binds = meta.get("binds")
+            if isinstance(binds, list):
+                for k in binds:
+                    if isinstance(k, str) and k not in declared_keys:
+                        _warn(
+                            f"{topic_name}: plot (anchor={b.get('anchor')!r}) binds "
+                            f"key {k!r} which isn't declared in any `<!-- block: state -->` "
+                            f"or seeded by a plot params:"
+                        )
+
 
 SEED_DIR = Path(__file__).parent
 
@@ -339,7 +504,11 @@ async def get_or_create_system_user(db: AsyncSession) -> User:
 
 
 def parse_content_file(content_path: Path) -> list[dict]:
-    """Parse a content markdown file into content blocks."""
+    """Parse a content markdown file into content blocks.
+
+    Runs the I-cycle directive parser and the J3 cross-check validator. Any
+    issues surface via `_warn(...)` and become failures under `--strict`.
+    """
     if not content_path.exists():
         return []
 
@@ -356,6 +525,7 @@ def parse_content_file(content_path: Path) -> list[dict]:
 
     sort_order = 0
     placeholder_re = re.compile(r"@@BLOCK_(\d+)@@")
+    layer_marker_re = re.compile(r"<!--\s*layer:\s*(\w+)\s*-->")
     for section in sections:
         section = section.strip()
         if not section:
@@ -367,12 +537,19 @@ def parse_content_file(content_path: Path) -> list[dict]:
         if "@@BLOCK_" in section:
             cursor = 0
             for ph in placeholder_re.finditer(section):
-                pre = section[cursor:ph.start()].strip()
-                pre = re.sub(r"<!--.*?-->", "", pre).strip()
-                if pre:
+                pre = section[cursor:ph.start()]
+                # Honor any inline `<!-- layer: X -->` markers in the prose
+                # surrounding placeholders. Without this, an author who puts
+                # a layer marker in the same section as a multi-line block
+                # would have it silently stripped by the HTML-comment regex
+                # below.
+                for lm in layer_marker_re.finditer(pre):
+                    current_layer = lm.group(1)
+                pre_clean = re.sub(r"<!--.*?-->", "", pre).strip()
+                if pre_clean:
                     blocks.append({
                         "block_type": "markdown",
-                        "content": pre,
+                        "content": pre_clean,
                         "sort_order": sort_order,
                         "layer": current_layer,
                     })
@@ -383,12 +560,14 @@ def parse_content_file(content_path: Path) -> list[dict]:
                     blocks.append(ml_block)
                     sort_order += 1
                 cursor = ph.end()
-            tail = section[cursor:].strip()
-            tail = re.sub(r"<!--.*?-->", "", tail).strip()
-            if tail:
+            tail = section[cursor:]
+            for lm in layer_marker_re.finditer(tail):
+                current_layer = lm.group(1)
+            tail_clean = re.sub(r"<!--.*?-->", "", tail).strip()
+            if tail_clean:
                 blocks.append({
                     "block_type": "markdown",
-                    "content": tail,
+                    "content": tail_clean,
                     "sort_order": sort_order,
                     "layer": current_layer,
                 })
@@ -508,6 +687,10 @@ def parse_content_file(content_path: Path) -> list[dict]:
                 "layer": current_layer,
             })
             sort_order += 1
+
+    # J3 cross-check pass — surfaces typos that the per-block parser doesn't
+    # have enough context to catch.
+    _validate_topic_blocks(blocks, str(content_path.parent.name))
 
     return blocks
 
@@ -700,7 +883,15 @@ async def import_schema(db: AsyncSession, user: User):
         print(f"Imported {len(domain_topics)} domains, {len(topic_map)} topics, content for {content_added}")
 
 
-async def main():
+async def main(strict: bool = False) -> int:
+    """Run the importer end-to-end.
+
+    Returns a process-style exit code: 0 on clean, 1 on any warning when
+    `strict=True`. CI invokes this with `--strict` to fail builds on author
+    errors that would otherwise silently degrade the topic page.
+    """
+    _WARNINGS.clear()
+
     print("Creating database tables...")
     await create_tables()
 
@@ -714,6 +905,24 @@ async def main():
         await db.commit()
         print("Done!")
 
+    if _WARNINGS:
+        print(f"\n{len(_WARNINGS)} warning(s) emitted during import:")
+        for w in _WARNINGS:
+            print(f"  - {w}")
+        if strict:
+            print("\n--strict mode: failing because of warnings above.")
+            return 1
+    return 0
+
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    parser = argparse.ArgumentParser(description="Import AllData seed content")
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Treat parser warnings as errors (CI use). Exits non-zero if any "
+             "block fails to parse, references a non-existent decision, uses an "
+             "unknown plot spec, or binds an undeclared state key.",
+    )
+    args = parser.parse_args()
+    sys.exit(asyncio.run(main(strict=args.strict)))

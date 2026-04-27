@@ -83,7 +83,9 @@ export default function CodeRunner({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoRun, autoRan, isEditable])
 
-  const accentColor = isSimulation ? 'var(--color-accent)' : 'var(--color-accent)'
+  // Both code blocks and simulation blocks use the teal accent (principle 2:
+  // one accent only). The branch was a vestige of an earlier per-mode color.
+  const accentColor = 'var(--color-accent)'
 
   return (
     <div ref={containerRef} style={{

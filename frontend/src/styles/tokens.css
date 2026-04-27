@@ -1,0 +1,137 @@
+/* tokens.css — J2
+ *
+ * The named ramps the surface uses everywhere. `global.css` keeps the color +
+ * theme system; this file holds typography, spacing, and motion tokens that
+ * were previously scattered across inline component styles and the prose
+ * section. `docs/brand.md` cites these vars by name.
+ *
+ * The file is import-ordered AFTER `global.css` so it can read color vars but
+ * its own ramps win where component CSS uses them. Component CSS never uses
+ * raw px for type or space values that have a token — `grep -r 'fontSize:'`
+ * over `frontend/src/components/topic/` should return zero hits.
+ */
+
+:root {
+  /* ─── Typography scale ────────────────────────────────────────────────────
+   * Six steps. `display` is for the topic header only; everything else is
+   * the prose / chrome ramp. Body and small carry the 1.7 line-height that
+   * makes long-form math prose readable. Mono carries 1.6 — code is tighter.
+   */
+  --text-display-size: clamp(32px, 5vw, 56px);
+  --text-display-line: 1.05;
+  --text-display-weight: 700;
+  --text-display-tracking: -1.5px;
+
+  --text-h1-size: 32px;
+  --text-h1-line: 1.2;
+  --text-h1-weight: 700;
+  --text-h1-tracking: -0.5px;
+
+  --text-h2-size: 26px;
+  --text-h2-line: 1.25;
+  --text-h2-weight: 700;
+  --text-h2-tracking: -0.3px;
+
+  --text-h3-size: 20px;
+  --text-h3-line: 1.3;
+  --text-h3-weight: 600;
+  --text-h3-tracking: 0;
+
+  --text-body-size: 15px;
+  --text-body-line: 1.75;
+  --text-body-weight: 400;
+
+  --text-small-size: 13px;
+  --text-small-line: 1.6;
+  --text-small-weight: 400;
+
+  --text-mono-size: 13px;
+  --text-mono-line: 1.6;
+  --text-mono-weight: 400;
+
+  /* Mobile overrides — preserved from the previous global.css media block.
+   * Each ramp step's *size* gets a clamp with a smaller minimum so the page
+   * compresses gracefully on phones. Line/weight/tracking are unchanged. */
+  /* (mobile clamps applied below in @media (max-width: 768px)) */
+
+  /* ─── Spacing scale ───────────────────────────────────────────────────────
+   * 4-px base. Use these instead of raw px in component CSS / inline styles.
+   * Step naming matches the multiplier (`--space-4` = 16px = 4 × 4).
+   */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* ─── Motion ──────────────────────────────────────────────────────────────
+   * The existing `--transition-fast/smooth/spring` vars stay (global.css
+   * defines them). Adding named *durations* here lets components use the
+   * raw number when they need a setTimeout or staggered animation rather
+   * than a CSS transition string.
+   */
+  --duration-fast: 120ms;
+  --duration-smooth: 200ms;
+  --duration-slow: 600ms;
+  --easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ─── Layout ──────────────────────────────────────────────────────────────
+   * Header height is referenced by the sticky aside in ScrollReader (J4) and
+   * by the navbar's auto-hide chrome. Single source of truth.
+   */
+  --header-h: 56px;
+}
+
+@media (max-width: 768px) {
+  :root {
+    --text-h1-size: 22px;
+    --text-h2-size: 18px;
+    --text-h3-size: 15px;
+    --text-body-size: 14px;
+    --text-small-size: 12px;
+  }
+}
+
+/* ─── Reduced motion ────────────────────────────────────────────────────────
+ * Principle 6: every animation gates on `prefers-reduced-motion`. The
+ * existing global.css block targets specific zen-chrome elements; this one
+ * is the catchall for the rest of the surface. Component CSS that wants a
+ * motion effect can read `var(--duration-fast)` and trust this gate to
+ * collapse it to instant when the user has asked.
+ */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-smooth: 0ms;
+    --duration-slow: 0ms;
+  }
+}
+
+/* ─── Focus ring ────────────────────────────────────────────────────────────
+ * J6: a single focus-visible style for every interactive element. Mouse
+ * users don't see it; keyboard users always do. Components that need a
+ * different accent can override on `:focus-visible` directly.
+ */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius);
+}
+
+button:focus,
+a:focus,
+[role="button"]:focus,
+summary:focus {
+  outline: none; /* Suppress default; focus-visible above handles keyboard. */
+}

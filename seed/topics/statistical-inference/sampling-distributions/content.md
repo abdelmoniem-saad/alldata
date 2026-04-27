@@ -1,116 +1,162 @@
+<!-- block: state, values: {mu: 0, sigma: 1, n: 1} -->
+
+<!-- block: plot, spec: gaussian_pdf, params: {mu: 0, sigma: 1}, binds: [mu, sigma], anchor: sampling-feel, mobile_order: 1 -->
+
+---
+
 <!-- layer: intuition -->
 
-## The Distribution of Your Estimate
+## The distribution of your estimate
 
-Here's a mind-bending idea: your sample mean is just one number from one sample. But if you could repeat the sampling process thousands of times, you'd get thousands of different sample means. Those sample means form their own distribution — the **sampling distribution**.
+Your sample mean is one number from one sample. Pull a different sample, you'd get a different number. Pull a thousand samples and the means form their own distribution — the **sampling distribution**.
 
-The sampling distribution answers: "How much would my estimate change if I collected a different sample?"
-
-This is the bridge between a single dataset and statements about the population. Without understanding sampling distributions, confidence intervals and hypothesis tests are just magic formulas.
+The sampling distribution is the answer to "how much would my estimate change if I'd collected a different sample?" It's the bridge between the one dataset you have and any honest claim about the population.
 
 ---
 
-## The Central Limit Theorem at Work
+## The shape of $\bar{X}$
 
-The most powerful result in statistics: regardless of the population's shape, the sampling distribution of the mean is approximately **Normal** for large enough samples.
+The Central Limit Theorem says: regardless of the population's shape, the sampling distribution of the mean is approximately normal for large enough samples.
 
-$$\bar{X} \sim N\left(\mu, \frac{\sigma^2}{n}\right) \text{ approximately}$$
+$$\bar{X} \sim N\!\left(\mu,\, \frac{\sigma^2}{n}\right) \text{ approximately}$$
 
-This means:
-- The average of the sample means equals the population mean (no bias)
-- The spread shrinks by $1/\sqrt{n}$ (precision improves with more data)
-- The shape is Normal (even if the population is skewed, uniform, or bimodal!)
+Three things to notice:
+
+- The mean of sample means equals the population mean. Estimates of $\mu$ are unbiased on average.
+- The spread shrinks by a factor of $1/\sqrt{n}$. Doubling your sample size doesn't halve the spread; it shrinks it by about 30%.
+- The shape goes to normal even if the population is skewed, uniform, or bimodal.
 
 ---
 
-<!-- block: simulation, editable: true -->
+## Feel the standard error
+
+The plot above is showing $N(\mu, \sigma^2 / n)$ — the sampling distribution of the mean from a population with the parameters you set. As you increase $n$, the curve gets narrower; the dashed target shows what "5×-narrower-than-the-population" looks like. Your job: find an $n$ that gets you there.
+
+<!-- block: state_reset, anchor: sampling-goal -->
+
+<!-- block: playground, anchor: sampling-goal -->
+binds: [mu, sigma, n]
+controls:
+  - param: mu
+    label: "Population mean (μ)"
+    min: -2
+    max: 2
+    step: 0.1
+  - param: sigma
+    label: "Population SD (σ)"
+    min: 0.5
+    max: 3
+    step: 0.1
+  - param: n
+    label: "Sample size (n)"
+    min: 1
+    max: 100
+    step: 1
+goal:
+  prompt: |
+    Make the sampling distribution five times narrower than the population
+    standard deviation — i.e. find an $n$ where $\sigma/\sqrt{n} \le \sigma/5$.
+  target: { mu: 0, sigma: 1, n: 25 }
+  success_when: "n >= 25"
+  on_success: |
+    There it is. To shrink the standard error by a factor of 5, you need
+    $n = 25$. By a factor of 10? $n = 100$. By a factor of 100? $n = 10{,}000$.
+    That square-root scaling is why "more data" gets expensive fast — and why
+    sample sizes in the low hundreds are the sweet spot for most applied work.
+  hints:
+    - after_seconds: 25
+      text: "The standard error is σ/√n. You want σ/√n = σ/5."
+    - after_seconds: 50
+      text: "Solve √n = 5. So n = 25."
+<!-- /block -->
+
+---
+
+<!-- block: derivation, title: "Why the standard error scales as 1/√n", collapsed: true -->
+The sample mean of $n$ iid observations is
+
+$$\bar{X} = \frac{1}{n}\sum_{i=1}^{n} X_i$$
+
+If each $X_i$ has variance $\sigma^2$, then by linearity of variance for independent terms:
+
+$$\text{Var}(\bar{X}) = \frac{1}{n^2}\sum_{i=1}^{n} \text{Var}(X_i) = \frac{n \sigma^2}{n^2} = \frac{\sigma^2}{n}$$
+
+The standard error is the square root: $\sigma / \sqrt{n}$. The variance shrinks linearly in $n$; the standard error shrinks as the square root. That's the law of large numbers in numerical form.
+<!-- /block -->
+
+---
+
+<!-- block: simulation, editable: true, auto_run: true, anchor: clt-sim -->
 ```python
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats
 
-# The CLT in action: sample from VERY non-normal populations
+# Pick a heavily non-normal population — exponential — and watch the sample
+# means of size n approach normality as n grows.
 np.random.seed(42)
 n_samples = 5000
-
-# Population: exponential (heavily right-skewed)
 pop_mean = 2.0
-population = np.random.exponential(pop_mean, 1000000)
 
-fig, axes = plt.subplots(2, 3, figsize=(12, 7))
+fig, axes = plt.subplots(2, 3, figsize=(11, 6))
 
-# Top row: the population + sampling distributions
-axes[0, 0].hist(population[:10000], bins=50, color='#71717a', alpha=0.7, density=True)
-axes[0, 0].set_title('Population (Exponential)', fontweight='bold')
-axes[0, 0].axvline(pop_mean, color='red', linestyle='--')
+# Row 1: exponential population
+axes[0, 0].hist(np.random.exponential(pop_mean, 10000), bins=50,
+                color='#71717a', alpha=0.7, density=True)
+axes[0, 0].set_title('Population: Exponential')
+axes[0, 0].axvline(pop_mean, color='#14b8a6', linestyle='--')
 
 for idx, n in enumerate([5, 30]):
     means = [np.random.exponential(pop_mean, n).mean() for _ in range(n_samples)]
-    axes[0, idx+1].hist(means, bins=50, color='#d4d4d8', alpha=0.7, density=True)
-    
-    # Overlay theoretical normal
+    axes[0, idx + 1].hist(means, bins=50, color='#d4d4d8', alpha=0.7, density=True)
     x = np.linspace(min(means), max(means), 200)
-    axes[0, idx+1].plot(x, stats.norm.pdf(x, pop_mean, pop_mean/np.sqrt(n)),
-                         'r-', linewidth=2, label='Normal approx')
-    axes[0, idx+1].set_title(f'Sample Means (n={n})', fontweight='bold')
-    axes[0, idx+1].legend(fontsize=9)
-    axes[0, idx+1].axvline(pop_mean, color='red', linestyle='--')
+    axes[0, idx + 1].plot(x, stats.norm.pdf(x, pop_mean, pop_mean / np.sqrt(n)),
+                          color='#14b8a6', linewidth=2, label='N(μ, σ²/n)')
+    axes[0, idx + 1].set_title(f'Sample means, n={n}')
+    axes[0, idx + 1].legend(fontsize=9)
+    axes[0, idx + 1].axvline(pop_mean, color='#14b8a6', linestyle='--')
 
-# Bottom row: uniform population (very different from normal!)
+# Row 2: uniform population
 pop = np.random.uniform(0, 10, 1000000)
 axes[1, 0].hist(pop[:10000], bins=50, color='#71717a', alpha=0.7, density=True)
-axes[1, 0].set_title('Population (Uniform)', fontweight='bold')
-axes[1, 0].axvline(5, color='red', linestyle='--')
+axes[1, 0].set_title('Population: Uniform')
+axes[1, 0].axvline(5, color='#14b8a6', linestyle='--')
 
 for idx, n in enumerate([5, 30]):
     means = [np.random.uniform(0, 10, n).mean() for _ in range(n_samples)]
-    axes[1, idx+1].hist(means, bins=50, color='#d4d4d8', alpha=0.7, density=True)
-    axes[1, idx+1].set_title(f'Sample Means (n={n})', fontweight='bold')
-    axes[1, idx+1].axvline(5, color='red', linestyle='--')
+    axes[1, idx + 1].hist(means, bins=50, color='#d4d4d8', alpha=0.7, density=True)
+    axes[1, idx + 1].set_title(f'Sample means, n={n}')
+    axes[1, idx + 1].axvline(5, color='#14b8a6', linestyle='--')
 
-plt.suptitle('Central Limit Theorem: Any Population → Normal Sample Means', fontsize=13, y=1.02)
+plt.suptitle('CLT: any population → normal sample means', fontsize=12, y=1.0)
 plt.tight_layout()
 plt.show()
-
-print("Even heavily skewed or flat populations → Normal sample means!")
-print(f"Standard error = σ/√n: for n=30, SE is {1/np.sqrt(30):.1%} of population σ")
 ```
-<!-- expected_output: Even skewed populations produce Normal sample means -->
 
 ---
 
 <!-- layer: formal -->
 
-## Formal Definition
+## Formal definition
 
-The **sampling distribution** of a statistic $T(X_1, \ldots, X_n)$ is the probability distribution of $T$ induced by the random sampling.
+The **sampling distribution** of a statistic $T(X_1, \ldots, X_n)$ is the probability distribution of $T$ induced by random sampling.
 
 For $X_1, \ldots, X_n$ iid with mean $\mu$ and variance $\sigma^2$:
 
 $$E[\bar{X}] = \mu, \quad \text{Var}(\bar{X}) = \frac{\sigma^2}{n}$$
 
-**Central Limit Theorem:** As $n \to \infty$:
+**Central Limit Theorem.** As $n \to \infty$:
 
-$$\frac{\bar{X} - \mu}{\sigma/\sqrt{n}} \xrightarrow{d} N(0, 1)$$
+$$\frac{\bar{X} - \mu}{\sigma / \sqrt{n}} \xrightarrow{d} N(0, 1)$$
 
-**Standard Error:** $\text{SE}(\bar{X}) = \frac{\sigma}{\sqrt{n}}$ (estimated by $\frac{s}{\sqrt{n}}$)
-
----
-
-<!-- block: misconception -->
-**Misconception: "The CLT says data becomes Normal with large samples."**
-
-*Wrong belief:* If I collect enough data, my data will follow a Normal distribution.
-
-*Correction:* The CLT says the **sample mean** (or sum) becomes Normal, NOT the data itself. If your population is skewed, your data will still be skewed no matter how much you collect. It's the *average* of the data that becomes Normal. This distinction is crucial!
-
-*Why this is common:* The shorthand "everything is Normal for large n" loses the critical nuance about what exactly becomes Normal.
+**Standard error.** $\text{SE}(\bar{X}) = \sigma / \sqrt{n}$, estimated by $s / \sqrt{n}$ when $\sigma$ is unknown.
 
 ---
 
-<!-- block: quiz -->
-**Micro-challenge:** A population has mean 100 and standard deviation 20. You take samples of size n=64. What's the standard error of the sample mean? What's the probability that the sample mean falls between 97 and 103?
+<!-- block: misconception, inline: true -->
+**"The CLT says my data becomes normal with large samples."**
 
-*Hint:* SE = σ/√n. Then standardize and use the Normal distribution.
+*Wrong:* if I collect enough data, my data will follow a normal distribution.
 
-<!-- solution: SE = 20/√64 = 20/8 = 2.5. Z₁ = (97-100)/2.5 = -1.2. Z₂ = (103-100)/2.5 = 1.2. P(-1.2 < Z < 1.2) = 2·Φ(1.2) - 1 ≈ 2·0.8849 - 1 = 0.7699. About 77% of sample means will fall within ±3 of the true mean. -->
+*Correct:* the CLT says the **sample mean** (or sum) becomes normal — not the data itself. If your population is skewed, the data stays skewed no matter how much you collect. It's the *average* of the data that goes normal. The shorthand "everything is normal for large $n$" loses exactly this distinction.
+<!-- /block -->
