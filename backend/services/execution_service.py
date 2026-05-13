@@ -441,6 +441,32 @@ def _capture_show(*args, **kwargs):
 
 plt.show = _capture_show
 
+# K5: load(name) — read a curated dataset by name. Returns a pandas
+# DataFrame when pandas is available, otherwise a list of dicts. Path is
+# resolved relative to wherever uvicorn runs from, matching
+# seed/datasets/{{name}}.csv. Slug-shaped names only.
+import re as _re_load
+def load(name):
+    if not _re_load.fullmatch(r"[A-Za-z0-9_-]+", str(name)):
+        raise ValueError("Invalid dataset name: " + repr(name))
+    candidates = []
+    for d in (os.getcwd(), "/app", "/work"):
+        candidates.append(os.path.join(d, "seed", "datasets", str(name) + ".csv"))
+    p = os.getcwd()
+    for _ in range(4):
+        candidates.append(os.path.join(p, "seed", "datasets", str(name) + ".csv"))
+        p = os.path.dirname(p)
+    for path in candidates:
+        if os.path.exists(path):
+            try:
+                import pandas as _pd
+                return _pd.read_csv(path)
+            except ImportError:
+                import csv as _csv
+                with open(path, encoding="utf-8") as _f:
+                    return list(_csv.DictReader(_f))
+    raise FileNotFoundError("Dataset " + repr(name) + " not found")
+
 # Run user code
 {code}
 

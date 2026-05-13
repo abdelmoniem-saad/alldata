@@ -1,105 +1,161 @@
-<!-- layer: intuition -->
+<!-- block: state, values: {mu: 0, sigma: 1} -->
 
-## Making Your Best Guess
-
-You want to know the average height of all adults in your country. You can't measure everyone, so you measure 100 people and compute their average. That number — the sample average — is your **point estimate** of the population average.
-
-**Point estimation** is the art of using sample data to produce a single "best guess" for an unknown population parameter.
-
-Common examples:
-- Sample mean $\bar{x}$ estimates the population mean $\mu$
-- Sample proportion $\hat{p}$ estimates the population proportion $p$
-- Sample variance $s^2$ estimates the population variance $\sigma^2$
+<!-- block: plot, spec: gaussian_pdf, params: {mu: 0, sigma: 1}, binds: [mu, sigma], anchor: pe-pdf, mobile_order: 1 -->
 
 ---
 
-## What Makes a Good Estimator?
+<!-- block: gear, n: 1, label: "The spark" -->
 
-Not all guesses are equal. A good estimator should be:
+# Point estimation
 
-1. **Unbiased:** On average, it hits the target. $E[\hat{\theta}] = \theta$
-2. **Consistent:** With more data, it gets closer to the truth
-3. **Efficient:** Among all unbiased estimators, it has the smallest variance
-
-The sample mean $\bar{X}$ is the gold standard: it's unbiased, consistent, and efficient for estimating the population mean (under mild conditions). This is why "take the average" is the most common statistical procedure.
+You have data. You have a parameter you want to know. The estimator is the rule that turns the data into a single number. The interesting question isn't "what's the rule?" — it's "how good is it?"
 
 ---
 
-<!-- block: code_python, editable: true -->
-```python
-import numpy as np
-import matplotlib.pyplot as plt
+<!-- block: gear, n: 2, label: "Intuition" -->
 
-# Demonstrate: sample mean is unbiased but variable
-np.random.seed(42)
-true_mean = 170  # True population mean height (cm)
-true_std = 10
+## Two questions an estimator has to answer
 
-n_experiments = 5000
-sample_sizes = [5, 20, 100]
+For any estimator $\hat{\theta}$ of a parameter $\theta$:
 
-fig, axes = plt.subplots(1, 3, figsize=(12, 4), sharey=True)
+- **Bias.** Does $\mathbb{E}[\hat{\theta}] = \theta$? If yes, the estimator is *unbiased* — on average, across many samples, it lands on the parameter.
+- **Variance.** How much does $\hat{\theta}$ jump around between samples? Even an unbiased estimator can be useless if it's too noisy.
 
-for ax, n in zip(axes, sample_sizes):
-    estimates = [np.random.normal(true_mean, true_std, n).mean() for _ in range(n_experiments)]
-    ax.hist(estimates, bins=50, color='#d4d4d8', alpha=0.7, density=True, edgecolor='white')
-    ax.axvline(true_mean, color='#ef4444', linestyle='--', linewidth=2, label=f'True μ={true_mean}')
-    ax.axvline(np.mean(estimates), color='#22c55e', linestyle=':', linewidth=2,
-               label=f'Mean of estimates={np.mean(estimates):.1f}')
-    ax.set_title(f'n = {n}', fontweight='bold')
-    ax.set_xlabel('Sample mean')
-    ax.legend(fontsize=8)
+The sample mean $\bar{X}$ is an unbiased estimator of the population mean $\mu$. Its variance is $\sigma^2/n$. Doubling the data doesn't halve the variance — it cuts it in half *linearly*, but the *standard error* (the spread you actually see) drops as $1/\sqrt{n}$.
 
-axes[0].set_ylabel('Density')
-plt.suptitle('Sampling Variability: More Data → Tighter Estimates', fontsize=13, y=1.02)
-plt.tight_layout()
-plt.show()
+---
 
-print("Standard error of the mean = σ/√n:")
-for n in sample_sizes:
-    print(f"  n={n:3d}: SE = {true_std/np.sqrt(n):.2f} cm")
-```
-<!-- expected_output: Standard error decreases with sample size -->
+<!-- block: gear, n: 3, label: "The decision" -->
+
+<!-- block: decision, anchor: pe-pick -->
+question: |
+  You have two estimators of a population mean. Estimator $A$ is unbiased
+  with variance 4. Estimator $B$ has bias 0.5 (always estimates 0.5 high) but
+  variance 1. Which is better?
+options:
+  - id: a
+    label: "A — unbiased always wins."
+    writes: { sigma: 2 }
+    response: |
+      Unbiasedness is a virtue, but not the only one. The mean squared error
+      of A is $0^2 + 4 = 4$. The MSE of B is $0.5^2 + 1 = 1.25$. B has a
+      systematic offset, but it's so much more *precise* that it's closer to
+      the truth on average. Unbiasedness alone doesn't beat smaller MSE.
+  - id: b
+    label: "B — its MSE is 1.25, lower than A's 4."
+    writes: { sigma: 1 }
+    response: |
+      Right. Mean squared error decomposes into $\text{bias}^2 + \text{variance}$.
+      B trades a known bias for a much smaller variance and wins on the total.
+      This is the **bias-variance tradeoff** in its simplest form: a slightly
+      biased estimator can be *better* than an unbiased one if it's enough
+      tighter.
+  - id: c
+    label: "It depends on the cost of being wrong."
+    writes: { sigma: 1.5 }
+    response: |
+      True in spirit, but for the standard MSE loss the question has a clean
+      answer. MSE penalizes squared error symmetrically, and B wins on MSE.
+      For asymmetric loss functions (where over-estimating is much worse than
+      under-estimating, say), the answer can flip — but that's a separate
+      decision-theory question.
+correct: b
+<!-- /block -->
+
+---
+
+<!-- block: callout, kind: insight, depends_on: pe-pick, branch: b -->
+The bias-variance decomposition is everywhere downstream. Regularized regression (ridge, lasso) deliberately introduces bias to cut variance — and the resulting estimator can dominate the unbiased least-squares fit when predictors are correlated or noisy. This is the same trade you just made in the toy problem.
+<!-- /block -->
+
+<!-- block: callout, kind: insight, depends_on: pe-pick, branch: a|c -->
+The trap was over-weighting unbiasedness as a virtue. MSE = bias² + variance, and a small bias with much smaller variance beats unbiased + huge variance. This is the basic argument for shrinkage estimators, regularization, and most modern ML.
+<!-- /block -->
 
 ---
 
 <!-- layer: formal -->
 
-## Formal Definition
+<!-- block: gear, n: 4, label: "The formalism" -->
 
-An **estimator** $\hat{\theta}$ is a function of the sample data used to estimate a parameter $\theta$.
+## Bias-variance decomposition
 
-**Bias:** $\text{Bias}(\hat{\theta}) = E[\hat{\theta}] - \theta$
+For estimator $\hat{\theta}$ of parameter $\theta$:
 
-**Mean Squared Error:**
+$$\text{MSE}(\hat{\theta}) = \mathbb{E}[(\hat{\theta} - \theta)^2] = \text{Var}(\hat{\theta}) + \text{Bias}(\hat{\theta})^2$$
 
-$$\text{MSE}(\hat{\theta}) = E[(\hat{\theta} - \theta)^2] = \text{Var}(\hat{\theta}) + \text{Bias}(\hat{\theta})^2$$
+where $\text{Bias}(\hat{\theta}) = \mathbb{E}[\hat{\theta}] - \theta$.
 
-**Sample mean:** For $X_1, \ldots, X_n$ iid with mean $\mu$ and variance $\sigma^2$:
+Two estimators that come up everywhere:
 
-$$\bar{X} = \frac{1}{n}\sum_{i=1}^n X_i$$
+- **Method of moments.** Set sample moments equal to population moments and solve. Easy, often inefficient.
+- **Maximum likelihood.** Pick $\hat{\theta}$ that maximizes $\prod_i f(x_i; \theta)$. Asymptotically optimal under regularity conditions (Cramér–Rao bound).
 
-$$E[\bar{X}] = \mu \quad \text{(unbiased)}$$
-$$\text{Var}(\bar{X}) = \frac{\sigma^2}{n} \quad \text{(decreasing in n)}$$
+<!-- block: derivation, title: "Why MSE = bias² + variance", collapsed: true -->
+Add and subtract $\mathbb{E}[\hat{\theta}]$ inside the square:
 
-**Bessel's correction:** $s^2 = \frac{1}{n-1}\sum(X_i - \bar{X})^2$ uses $n-1$ to be unbiased for $\sigma^2$.
+$$\mathbb{E}[(\hat{\theta} - \theta)^2] = \mathbb{E}[(\hat{\theta} - \mathbb{E}[\hat{\theta}] + \mathbb{E}[\hat{\theta}] - \theta)^2]$$
 
----
+Expand:
 
-<!-- block: misconception -->
-**Misconception: "A bigger sample always gives a better estimate."**
+$$= \mathbb{E}[(\hat{\theta} - \mathbb{E}[\hat{\theta}])^2] + 2 \, \mathbb{E}[(\hat{\theta} - \mathbb{E}[\hat{\theta}])(\mathbb{E}[\hat{\theta}] - \theta)] + (\mathbb{E}[\hat{\theta}] - \theta)^2$$
 
-*Wrong belief:* If my sample size is large enough, my estimate must be close to the truth.
-
-*Correction:* A larger sample reduces **random error** (variance), but it doesn't fix **systematic error** (bias). If your sampling method is biased — for example, an online survey that only reaches tech-savvy people — then more data just gives you a more precise wrong answer. The famous 1936 Literary Digest poll surveyed 2.4 million people and predicted the wrong president, while Gallup polled 50,000 and got it right. Bias beats sample size.
-
-*Why this is common:* Statistics courses focus on random sampling, where bigger IS better. Real-world data collection rarely achieves pure random sampling.
+The first term is $\text{Var}(\hat{\theta})$. The middle term is zero because $\mathbb{E}[\hat{\theta}] - \theta$ is a constant and $\mathbb{E}[\hat{\theta} - \mathbb{E}[\hat{\theta}]] = 0$. The last term is $\text{Bias}^2$. The cross term *vanishes* — that's the structural fact that makes the decomposition clean.
+<!-- /block -->
 
 ---
 
-<!-- block: quiz -->
-**Micro-challenge:** You measure the weights of 8 fish: [2.1, 3.4, 2.8, 3.1, 2.5, 3.6, 2.9, 3.2] kg. Calculate the sample mean and sample standard deviation. Why do we divide by n-1 = 7 (not 8) for the standard deviation?
+<!-- block: gear, n: 5, label: "Code" -->
 
-*Hint:* The mean is straightforward. For s², we divide by n-1 (Bessel's correction) because using the sample mean instead of the true mean makes the deviations systematically smaller.
+<!-- block: dataset, name: heights, source: synthetic -->
 
-<!-- solution: Mean = (2.1+3.4+2.8+3.1+2.5+3.6+2.9+3.2)/8 = 23.6/8 = 2.95 kg. Sample variance s² = Σ(xᵢ - 2.95)²/7 = (0.7225+0.2025+0.0225+0.0225+0.2025+0.4225+0.0025+0.0625)/7 = 1.66/7 ≈ 0.237. s ≈ 0.487 kg. We divide by n-1 because the sample mean "uses up" one piece of information — the deviations from x̄ always sum to 0, so only n-1 are free to vary. Dividing by n would systematically underestimate σ². -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: pe-sim -->
+```python
+import numpy as np
+
+# Two estimators on the same draws: A unbiased high-variance, B biased low-variance.
+# Watch their MSE behavior over many simulated samples.
+np.random.seed(42)
+mu_true = 5
+sigma = 2
+n = 20
+
+n_sims = 5000
+estimates_A = []
+estimates_B = []
+for _ in range(n_sims):
+    sample = np.random.normal(mu_true, sigma, n)
+    estimates_A.append(sample.mean())                  # unbiased, var = σ²/n = 0.2
+    estimates_B.append(sample.mean() * 0.9 + 0.5)      # biased toward 0.5 + 0.9μ, lower var
+
+A = np.array(estimates_A)
+B = np.array(estimates_B)
+
+def mse(est, truth): return ((est - truth) ** 2).mean()
+def bias(est, truth): return est.mean() - truth
+def var(est): return est.var()
+
+print(f"  bias    var     MSE     decomposition")
+print(f"A: {bias(A, mu_true):+.4f}  {var(A):.4f}  {mse(A, mu_true):.4f}  ({bias(A,mu_true)**2 + var(A):.4f})")
+print(f"B: {bias(B, mu_true):+.4f}  {var(B):.4f}  {mse(B, mu_true):.4f}  ({bias(B,mu_true)**2 + var(B):.4f})")
+```
+
+---
+
+<!-- layer: both -->
+
+<!-- block: gear, n: 6, label: "Connections" -->
+
+<!-- block: callout, kind: insight -->
+**Where this leads.** **Confidence intervals** quantify uncertainty around a point estimate. **Maximum likelihood estimation** is the most common general-purpose recipe for picking estimators. **The bias-variance tradeoff** in machine learning is the same decomposition; **regularization** trades bias for variance to lower MSE on out-of-sample data.
+<!-- /block -->
+
+---
+
+<!-- block: misconception, inline: true -->
+**"Unbiased estimators are always better."**
+
+*Wrong:* if it's unbiased, use it.
+
+*Correct:* unbiasedness is one virtue. Variance is another. The James–Stein estimator beats the sample mean (in $\ge 3$ dimensions) on MSE — by being biased. Ridge regression beats OLS on prediction error in many real settings — by being biased. The right metric is usually MSE (or out-of-sample loss), not unbiasedness.
+<!-- /block -->

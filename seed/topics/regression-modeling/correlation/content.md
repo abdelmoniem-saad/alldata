@@ -1,118 +1,141 @@
-<!-- layer: intuition -->
+<!-- block: state, values: {slope: 0.7, intercept: 0.3} -->
 
-## Measuring Linear Relationships
-
-**Correlation** quantifies how strongly two variables are linearly related. The most common measure is Pearson's correlation coefficient, **r**, which ranges from -1 to +1:
-
-- **r = +1:** Perfect positive linear relationship (as X increases, Y increases proportionally)
-- **r = 0:** No linear relationship (but there might be a non-linear one!)
-- **r = -1:** Perfect negative linear relationship (as X increases, Y decreases proportionally)
-
-**Key insight:** Correlation measures **linear** association only. Two variables can be strongly related but have r ≈ 0 if the relationship is curved.
+<!-- block: plot, spec: scatter_with_fit, params: {slope: 0.7, intercept: 0.3}, binds: [slope, intercept], anchor: corr-scatter, mobile_order: 1 -->
 
 ---
 
-## The Most Important Warning in Statistics
+<!-- block: gear, n: 1, label: "The spark" -->
 
-**Correlation does not imply causation.** Ice cream sales and drowning deaths are correlated (both increase in summer), but ice cream doesn't cause drowning.
+# Correlation
 
-Correlations arise from:
-1. **Causation:** X actually causes Y
-2. **Reverse causation:** Y causes X
-3. **Confounding:** A third variable Z causes both
-4. **Coincidence:** Spurious correlation from mining many variables
-
-Always ask: is there a plausible mechanism? Could there be a confounder?
+Two variables move together. By how much? The Pearson correlation $r$ takes that question and gives you a single number between $-1$ and $+1$. It's compact. It's intuitive. And it answers a much narrower question than people usually think.
 
 ---
 
-<!-- block: code_python, editable: true -->
-```python
-import numpy as np
-import matplotlib.pyplot as plt
+<!-- block: gear, n: 2, label: "Intuition" -->
 
-# Anscombe's Quartet: four datasets with identical statistics but very different shapes
-# Same mean, variance, correlation, and regression line — but look completely different!
-np.random.seed(42)
+## The shape on a scatter plot
 
-# Anscombe's quartet data
-x1 = [10, 8, 13, 9, 11, 14, 6, 4, 12, 7, 5]
-y1 = [8.04, 6.95, 7.58, 8.81, 8.33, 9.96, 7.24, 4.26, 10.84, 4.82, 5.68]
-x2 = [10, 8, 13, 9, 11, 14, 6, 4, 12, 7, 5]
-y2 = [9.14, 8.14, 8.74, 8.77, 9.26, 8.10, 6.13, 3.10, 9.13, 7.26, 4.74]
-x3 = [10, 8, 13, 9, 11, 14, 6, 4, 12, 7, 5]
-y3 = [7.46, 6.77, 12.74, 7.11, 7.81, 8.84, 6.08, 5.39, 8.15, 6.42, 5.73]
-x4 = [8, 8, 8, 8, 8, 8, 8, 19, 8, 8, 8]
-y4 = [6.58, 5.76, 7.71, 8.84, 8.47, 7.04, 5.25, 12.50, 5.56, 7.91, 6.89]
+Plot $y$ against $x$. The cloud of points has a shape. **Correlation** measures how close that shape is to a straight line:
 
-datasets = [(x1,y1,'I: Linear'), (x2,y2,'II: Curved'), (x3,y3,'III: Outlier'), (x4,y4,'IV: Leverage')]
-fig, axes = plt.subplots(2, 2, figsize=(10, 8))
+- $r = +1$ — perfect positive linear relationship.
+- $r = -1$ — perfect negative linear relationship.
+- $r = 0$ — no *linear* relationship (the cloud could still have a clear nonlinear pattern; $r$ won't tell you).
 
-for ax, (x, y, title) in zip(axes.flat, datasets):
-    x, y = np.array(x), np.array(y)
-    r = np.corrcoef(x, y)[0, 1]
-    ax.scatter(x, y, color='#14b8a6', s=60, edgecolors='white', zorder=3)
-    
-    # Regression line
-    m, b = np.polyfit(x, y, 1)
-    ax.plot([3, 20], [m*3+b, m*20+b], 'r--', alpha=0.5)
-    
-    ax.set_title(f'{title}\nr = {r:.2f}, ȳ = {y.mean():.1f}', fontweight='bold')
-    ax.set_xlim(3, 20)
-    ax.set_ylim(2, 14)
-    ax.grid(alpha=0.2)
+Two key limits to remember:
 
-plt.suptitle("Anscombe's Quartet: Same Statistics, Different Stories!", fontsize=14, y=1.02)
-plt.tight_layout()
-plt.show()
+- **Correlation is symmetric.** $r$ between $X$ and $Y$ is the same as between $Y$ and $X$. Causation isn't symmetric; correlation can't carry causal direction.
+- **Correlation only sees lines.** A perfect quadratic ($y = x^2$ on $[-1, 1]$) has $r = 0$ — there's a perfect deterministic relationship and Pearson's $r$ misses it entirely.
 
-print("All four datasets have nearly identical:")
-print(f"  Mean of x: ~9.0  |  Mean of y: ~7.5")
-print(f"  Correlation: ~0.82  |  Regression line: y ≈ 0.5x + 3.0")
-print(f"\nBut they tell COMPLETELY different stories.")
-print(f"ALWAYS plot your data before computing statistics!")
-```
-<!-- expected_output: Anscombe's quartet — same r, different relationships -->
+---
+
+<!-- block: gear, n: 3, label: "Drag the line" -->
+
+<!-- block: state_reset, anchor: corr-feel -->
+
+<!-- block: playground, anchor: corr-feel -->
+binds: [slope, intercept]
+controls:
+  - param: slope
+    label: "Slope"
+    min: -2
+    max: 2
+    step: 0.1
+  - param: intercept
+    label: "Intercept"
+    min: -2
+    max: 2
+    step: 0.1
+goal:
+  prompt: "Match the points by adjusting slope and intercept. Aim for slope ≈ 0.7, intercept ≈ 0.3 (the values that generated the cloud)."
+  target: { slope: 0.7, intercept: 0.3 }
+  success_when: "abs(slope - 0.7) < 0.1 and abs(intercept - 0.3) < 0.15"
+  on_success: |
+    The slope you found is approximately $r \cdot (s_y / s_x)$ — the
+    least-squares fit. Pearson's $r$ measures how *tight* the points hug the
+    line; the slope tells you the line's *direction and steepness*. They
+    answer different questions.
+<!-- /block -->
 
 ---
 
 <!-- layer: formal -->
 
-## Formal Definition
+<!-- block: gear, n: 4, label: "The formalism" -->
 
-**Pearson's correlation coefficient:**
+## Definition
 
-$$r = \frac{\sum_{i=1}^n (x_i - \bar{x})(y_i - \bar{y})}{\sqrt{\sum_{i=1}^n (x_i - \bar{x})^2 \sum_{i=1}^n (y_i - \bar{y})^2}}$$
+For two random variables $X, Y$ with finite variances:
 
-Equivalently:
+$$\rho(X, Y) = \frac{\text{Cov}(X, Y)}{\sigma_X \, \sigma_Y} = \frac{\mathbb{E}[(X - \mu_X)(Y - \mu_Y)]}{\sigma_X \, \sigma_Y}$$
 
-$$r = \frac{\text{Cov}(X, Y)}{\text{SD}(X) \cdot \text{SD}(Y)}$$
+The sample version, computed from $n$ paired observations:
 
-**Properties:**
-- $-1 \leq r \leq 1$
-- $r$ is invariant to linear transformations of X or Y
-- $r^2$ = proportion of variance in Y "explained" by linear relationship with X
+$$r = \frac{\sum_i (x_i - \bar{x})(y_i - \bar{y})}{\sqrt{\sum_i (x_i - \bar{x})^2 \cdot \sum_i (y_i - \bar{y})^2}}$$
 
-**Testing:** Under $H_0: \rho = 0$:
+Both sit in $[-1, +1]$ by Cauchy–Schwarz.
 
-$$t = \frac{r\sqrt{n-2}}{\sqrt{1-r^2}} \sim t(n-2)$$
+<!-- block: derivation, title: "Why $|\\rho| \\le 1$ — Cauchy–Schwarz", collapsed: true -->
+For random variables $U = X - \mu_X$ and $V = Y - \mu_Y$,
+
+$$|\mathbb{E}[UV]|^2 \le \mathbb{E}[U^2] \cdot \mathbb{E}[V^2]$$
+
+(Cauchy–Schwarz inequality.) Substituting the definitions:
+
+$$|\text{Cov}(X, Y)|^2 \le \sigma_X^2 \, \sigma_Y^2$$
+
+Take square roots and divide:
+
+$$|\rho| = \frac{|\text{Cov}(X, Y)|}{\sigma_X \sigma_Y} \le 1$$
+
+Equality iff $V = a U$ for some constant $a$ — i.e., $Y$ is a perfect linear function of $X$.
+<!-- /block -->
 
 ---
 
-<!-- block: misconception -->
-**Misconception: "Correlation of 0 means no relationship."**
+<!-- block: gear, n: 5, label: "Code" -->
 
-*Wrong belief:* If r = 0, X and Y are completely unrelated.
+<!-- block: simulation, editable: true, auto_run: true, anchor: corr-sim -->
+```python
+import numpy as np
 
-*Correction:* r = 0 means no **linear** relationship. X and Y could have a strong **non-linear** relationship (U-shaped, circular, etc.) and still have r ≈ 0. Always plot your data! In Anscombe's quartet, dataset II has r = 0.82 but the true relationship is curved — the correlation is misleading.
+np.random.seed(42)
+n = 200
 
-*Why this is common:* "Correlation" in everyday language means "any relationship." In statistics, Pearson's r specifically measures linear association only. Rank correlations (Spearman's) can detect monotonic non-linear relationships.
+# Three relationships, three correlations:
+#   1. y = 0.7x + noise — strong positive linear, r ≈ 0.85
+#   2. y = -0.5x + noise — moderate negative linear, r ≈ -0.7
+#   3. y = x² — perfect quadratic, r ≈ 0 (Pearson can't see it)
+x1 = np.random.uniform(-2, 2, n)
+y1 = 0.7 * x1 + np.random.normal(0, 0.5, n)
+
+x2 = np.random.uniform(-2, 2, n)
+y2 = -0.5 * x2 + np.random.normal(0, 0.5, n)
+
+x3 = np.random.uniform(-2, 2, n)
+y3 = x3 ** 2 + np.random.normal(0, 0.05, n)
+
+print(f"linear positive:  r = {np.corrcoef(x1, y1)[0, 1]:+.4f}")
+print(f"linear negative:  r = {np.corrcoef(x2, y2)[0, 1]:+.4f}")
+print(f"quadratic:        r = {np.corrcoef(x3, y3)[0, 1]:+.4f}  ← perfect relationship, r ≈ 0")
+```
 
 ---
 
-<!-- block: quiz -->
-**Micro-challenge:** You find r = 0.85 between hours studied and exam score. Does this prove studying causes higher scores? What's r² and what does it mean?
+<!-- layer: both -->
 
-*Hint:* Think about confounders. r² is the coefficient of determination.
+<!-- block: gear, n: 6, label: "Connections" -->
 
-<!-- solution: No! Correlation ≠ causation. Possible confounders: motivation (motivated students both study more AND perform better), prior knowledge, intelligence. A randomized experiment would be needed to establish causation. r² = 0.85² = 0.7225, meaning about 72% of the variation in exam scores can be "explained" by the linear relationship with hours studied. The remaining 28% is due to other factors. -->
+<!-- block: callout, kind: insight -->
+**Where this leads.** **Simple linear regression** uses correlation as a building block: the OLS slope is $r \cdot (s_y / s_x)$. **Multiple regression** generalizes to multiple predictors and partial correlations. **Causal inference** picks up where correlation gives up — $r$ tells you *that* two variables move together; causal methods try to tell you *why*.
+<!-- /block -->
+
+---
+
+<!-- block: misconception, inline: true -->
+**"Correlation implies causation."**
+
+*Wrong:* if $r$ is high, $X$ causes $Y$ (or vice versa).
+
+*Correct:* high correlation can come from $X \to Y$, from $Y \to X$, from a common cause $Z$, or from a selection bias in how the sample was collected. Correlation is symmetric; causation isn't. The classic gotchas — ice cream sales correlate with drowning deaths (both driven by summer); shoe size correlates with vocabulary in children (both driven by age) — are correlation without direct causation. To get causation you need experimental data (random assignment) or a careful causal model. Pearson's $r$ alone never gets you there.
+<!-- /block -->

@@ -6,3 +6,6 @@ summary: Mapping outcomes to numbers — the bridge between probability and stat
 prerequisites: [basic-probability]
 has_intuition_layer: true
 has_formal_layer: true
+recall_prompt: |
+  A random variable isn't a variable in the algebra sense — what is it, and why does the difference matter?
+cycle_ported: K

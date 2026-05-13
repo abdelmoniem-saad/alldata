@@ -307,6 +307,42 @@ export default function GraphExplorer() {
             and the select handler clears the filter if needed. */}
         <GraphSearchChip nodes={nodes} onSelect={handleSearchSelect} />
 
+        {/* K2: quiet "Start here" affordance for first-time visitors. Sits
+            below the search chip in the same top-right corner. Routes to
+            the Shape of Statistics flythrough — an 8-minute tour that gives
+            a new reader the map before they pick a node to start. */}
+        <button
+          onClick={() => navigate('/topic/shape-of-statistics')}
+          style={{
+            position: 'absolute',
+            top: 'calc(var(--header-h) + var(--space-12))',
+            right: 'var(--space-4)',
+            padding: '6px 12px',
+            background: 'transparent',
+            border: '1px solid var(--color-border-subtle)',
+            borderRadius: 'var(--radius)',
+            color: 'var(--color-text-secondary)',
+            fontSize: 12,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            transition: 'all var(--transition-fast)',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.color = 'var(--color-text)'
+            e.currentTarget.style.borderColor = 'var(--color-accent)'
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.color = 'var(--color-text-secondary)'
+            e.currentTarget.style.borderColor = 'var(--color-border-subtle)'
+          }}
+          aria-label="Start with the Shape of Statistics tour"
+        >
+          <span style={{ color: 'var(--color-accent)', fontSize: 9 }}>●</span>
+          New here? Start with the tour
+        </button>
+
         {/* G10: collapsible stroke-pattern legend. Pairs with the stats bar
             at the bottom-left. Collapsed by default; state remembered in
             localStorage so a user who cares about pattern language keeps it

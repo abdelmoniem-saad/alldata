@@ -78,9 +78,12 @@ _MULTILINE_BLOCK_TYPES = {
     # matched by the section-loop regex below.
     "misconception",
 }
+# K1: gear marker — `<!-- block: gear, n: 1, label: "..." -->`. Single-line,
+# pure metadata. Renderer emits a small-caps section divider; parser stores
+# `n` and `label` in meta. Authors can omit gear markers entirely.
 # Single-line block types that own their own placeholder so they survive the
 # `---` splitter and never get merged into surrounding prose.
-_SINGLE_LINE_BLOCK_TYPES = {"plot", "state", "state_reset"}
+_SINGLE_LINE_BLOCK_TYPES = {"plot", "state", "state_reset", "gear", "graph_view", "dataset"}
 _DIRECTIVE_OPEN_RE = re.compile(
     r"<!--\s*block:\s*(?P<type>[a-z_]+)(?P<rest>[^>]*?)-->",
     re.IGNORECASE,
@@ -310,6 +313,57 @@ def _build_multiline_block(spec: dict, sort_order: int, layer: str) -> dict | No
         meta = {k: v for k, v in attrs.items() if k != "anchor"}
         return {
             "block_type": "state_reset",
+            "content": "",
+            "sort_order": sort_order,
+            "layer": layer,
+            "anchor": anchor,
+            "meta": json.dumps(meta),
+        }
+
+    if btype == "graph_view":
+        # K2: pin a GraphFlythrough on the right column. `target` is a node
+        # slug (or a domain-root slug, which is itself a topic).
+        meta = {k: v for k, v in attrs.items() if k != "anchor"}
+        if not meta.get("target"):
+            _warn(f"graph_view block (anchor={anchor!r}) is missing `target:`")
+        return {
+            "block_type": "graph_view",
+            "content": "",
+            "sort_order": sort_order,
+            "layer": layer,
+            "anchor": anchor,
+            "meta": json.dumps(meta),
+        }
+
+    if btype == "dataset":
+        # K5: in-prose dataset attribution ("Loaded from Kaggle, ..."). Pure
+        # metadata — renders as a small chip above the relevant code block.
+        meta = {k: v for k, v in attrs.items() if k != "anchor"}
+        if not meta.get("name"):
+            _warn(f"dataset block (anchor={anchor!r}) is missing `name:`")
+        return {
+            "block_type": "dataset",
+            "content": "",
+            "sort_order": sort_order,
+            "layer": layer,
+            "anchor": anchor,
+            "meta": json.dumps(meta),
+        }
+
+    if btype == "gear":
+        # K1: gear marker. Pure structure metadata — no body. `n` is the
+        # gear index (1..6), `label` is the displayed name. Authors map
+        # their topic onto Spark / Intuition / Visualization / Formalism /
+        # Code / Connections.
+        meta = {k: v for k, v in attrs.items() if k != "anchor"}
+        n = meta.get("n")
+        if not isinstance(n, int) or n < 1 or n > 6:
+            _warn(
+                f"gear block (anchor={anchor!r}): `n` must be an integer 1..6, "
+                f"got {n!r}"
+            )
+        return {
+            "block_type": "gear",
             "content": "",
             "sort_order": sort_order,
             "layer": layer,
@@ -710,6 +764,69 @@ async def import_schema(db: AsyncSession, user: User):
         result = await db.execute(select(Topic))
         all_topics = result.scalars().all()
         topic_map: dict[str, Topic] = {t.slug: t for t in all_topics}
+
+        # K2: additive schema-merge. New domains/topics in `schema.yaml` that
+        # don't yet exist in the DB get inserted on every run. This keeps the
+        # "reimport from seed" migration story working when the schema grows
+        # — without it, schema additions silently no-op until the DB is
+        # wiped (which loses user progress).
+        domain_topics_existing = {t.slug: t for t in all_topics if t.depth == 0}
+        for domain in schema.get("domains", []):
+            if domain["slug"] in domain_topics_existing:
+                continue
+            t = Topic(
+                slug=domain["slug"],
+                title=domain["title"],
+                summary=domain.get("description"),
+                depth=0,
+                domain=domain["slug"],
+                status=TopicStatus.PUBLISHED.value,
+                created_by=user.id,
+            )
+            db.add(t)
+            domain_topics_existing[domain["slug"]] = t
+            print(f"  Added domain: {domain['slug']}")
+        await db.flush()
+
+        # New topic rows.
+        new_topics: list[Topic] = []
+        for topic_data in schema.get("topics", []):
+            slug = topic_data["slug"]
+            if slug in topic_map:
+                continue
+            domain_slug = topic_data.get("domain")
+            parent = domain_topics_existing.get(domain_slug)
+            t = Topic(
+                slug=slug,
+                title=topic_data["title"],
+                summary=topic_data.get("summary"),
+                parent_id=parent.id if parent else None,
+                depth=2,
+                domain=domain_slug,
+                difficulty=topic_data.get("difficulty"),
+                status=TopicStatus.PUBLISHED.value,
+                created_by=user.id,
+            )
+            db.add(t)
+            topic_map[slug] = t
+            new_topics.append((t, topic_data))
+            print(f"  Added topic: {slug}")
+        await db.flush()
+
+        # New prerequisite edges for the new topics.
+        for t, topic_data in new_topics:
+            for prereq_slug in topic_data.get("prerequisites", []):
+                source = topic_map.get(prereq_slug)
+                if not source:
+                    _warn(f"prerequisite '{prereq_slug}' for '{t.slug}' not found")
+                    continue
+                edge = TopicEdge(
+                    source_id=source.id,
+                    target_id=t.id,
+                    edge_type=EdgeType.PREREQUISITE.value,
+                )
+                db.add(edge)
+        await db.flush()
     else:
         # Create domain topics (depth 0)
         domain_topics: dict[str, Topic] = {}
@@ -795,11 +912,16 @@ async def import_schema(db: AsyncSession, user: User):
                 entry_topic = topic_map.get(entry_slug)
                 if not entry_topic:
                     continue
+                # K0: structural edges (domain root → entry topic) carry no
+                # caption. The domain hue + cluster geometry already encode
+                # "this node belongs to this domain"; an explicit label adds
+                # visual weight that competes with concept-edge captions.
+                # Visual contract: if a line has a label, the label says
+                # something the colors don't.
                 edge = TopicEdge(
                     source_id=root.id,
                     target_id=entry_topic.id,
                     edge_type=EdgeType.PREREQUISITE.value,
-                    description=f"Part of {root.title}",
                 )
                 db.add(edge)
 
@@ -844,6 +966,15 @@ async def import_schema(db: AsyncSession, user: User):
                 if meta.get("has_formal_layer"):
                     topic.has_formal_layer = True
                     topic.has_intuition_layer = True
+
+                # K3: optional spaced-repetition recall prompt — surfaced
+                # above the prose when the topic is due-for-review.
+                if meta.get("recall_prompt"):
+                    topic.recall_prompt = str(meta["recall_prompt"]).strip()
+
+                # K5: optional canonical dataset for the topic's code blocks.
+                if meta.get("dataset"):
+                    topic.dataset = str(meta["dataset"]).strip()
 
                 # Parse and add content blocks
                 blocks = parse_content_file(content_path)

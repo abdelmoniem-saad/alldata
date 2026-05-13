@@ -13,6 +13,55 @@ Edit any file under `seed/topics/{domain}/{slug}/`, save, refresh.
 
 ---
 
+## The six-gear scaffold (recommended template)
+
+The platform's vision document names six gears every topic should pass through. Treat this as a fill-in-the-blanks template; it makes a topic feel complete and rhymes with how readers already navigate.
+
+| Gear | Name | Purpose | Block types that fit |
+|---|---|---|---|
+| 1 | Spark | One to three sentences that make the reader feel the concept before understanding it. Viewport-centered. | `markdown` |
+| 2 | Intuition | Conversational prose building a mental model through analogy. No equations, no jargon. | `markdown`, optional `callout` |
+| 3 | Visualization | The user manipulates something. Two valid modes: *observational* (a `playground` slider drags the curve) or *commitment* (a `decision` forces a pick before the consequence is revealed). | `playground`, `decision`, `plot` |
+| 4 | Formalism | The equation, color-coded term-by-term, walked through as a sentence. | `markdown` for the equation, `derivation` (collapsed) for the proof |
+| 5 | Code | Running code that demonstrates exactly what was just explained. Comments are part of the explanation. | `simulation`, `code_python` (with `auto_run: true`) |
+| 6 | Connections | One to three nearby topics with one-sentence reasons each. Not definitions — reasons. | `callout` listing related anchors |
+
+Mark each gear with a `gear` directive at the start of its section:
+
+```markdown
+<!-- block: gear, n: 1, label: "The spark" -->
+
+You're 99% accurate, the disease is rare, and you tested positive. Should
+you be worried?
+
+---
+
+<!-- block: gear, n: 2, label: "Intuition" -->
+
+The trap is treating the test's accuracy as the answer to the question...
+
+---
+
+<!-- block: gear, n: 3, label: "The decision" -->
+
+<!-- block: decision, anchor: bayes-intuition -->
+question: "What's the chance you actually have it?"
+options: [...]
+correct: c
+<!-- /block -->
+```
+
+Gear markers are pure metadata — they render as a quiet small-caps section divider in the prose column. Authors can omit them entirely; topics without gear markers parse and render identically.
+
+**Rule of thumb.** Most topics use all six gears. Exceptions:
+- The "Shape of Statistics" intro skips Formalism and Code (gears 4 + 5).
+- A pure derivation topic might skip the Spark + Intuition (1 + 2) and lead with the equation.
+- Don't skip Connections (gear 6) — that's where the graph stays alive on the page.
+
+Pick *one* mechanic for Gear 3 — observational (playground) or commitment (decision). Mixing both in one topic dilutes the felt experience.
+
+---
+
 ## Mental model
 
 A topic is a directory: `seed/topics/{domain}/{slug}/` containing `meta.yaml` plus one or more `.md` files. The parser splits each `.md` file into typed **blocks** the frontend renders. There are two block syntaxes:
@@ -117,6 +166,16 @@ Pinned right-column visual on desktop. Inline on mobile.
 - `scatter_with_fit` — points + least-squares line. Binds `points`, optional `slope`, `intercept`.
 - `posterior_update` — three-bar P(H), P(H \| +), P(H \| −). Binds `prior`, `sensitivity`, `specificity`, `observed_result`.
 - `population_dot_grid` — 1,000-dot Bayes canvas. Binds `prior`, `sensitivity`, `specificity`, `treatment_strategy`. The Bayes decision drives this one.
+
+### `gear`
+
+```markdown
+<!-- block: gear, n: 1, label: "The spark" -->
+```
+
+Pure structure metadata — names the gear a section belongs to. `n` is 1..6 (Spark / Intuition / Visualization / Formalism / Code / Connections). `label` is the displayed name. Renders as a quiet small-caps divider; no semantic effect on neighboring blocks. See "The six-gear scaffold" above for the template.
+
+Optional. A topic without gear markers renders identically.
 
 ### `step_through`
 

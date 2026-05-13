@@ -1,2 +1,5 @@
 slug: basic-probability
 has_formal_layer: true
+recall_prompt: |
+  Why does $P(A \cup B) = P(A) + P(B) - P(A \cap B)$, and not just $P(A) + P(B)$?
+cycle_ported: K

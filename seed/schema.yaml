@@ -23,6 +23,14 @@ domains:
     title: Data Science Practice
     description: Applied skills for working with real data
 
+  # K2: hidden navigation domain for meta topics like the Shape of Statistics
+  # intro flythrough. The frontend filters `_meta` out of the graph view so
+  # these topics don't appear as cluster nodes; they're reachable only via
+  # explicit links (e.g. /explore's "Start here").
+  - slug: _meta
+    title: Navigation
+    description: Hidden navigation surfaces — not part of the curriculum graph.
+
 topics:
   # ── Probability Foundations ──────────────────────────────────
   - slug: sample-spaces
@@ -312,3 +320,11 @@ topics:
     difficulty: intermediate
     summary: Handling incomplete datasets — when values are absent and why it matters.
     prerequisites: [exploratory-data-analysis, point-estimation]
+
+  # ── Navigation (hidden from the public graph) ────────────────
+  - slug: shape-of-statistics
+    title: The Shape of Statistics
+    domain: _meta
+    difficulty: intro
+    summary: An eight-minute flythrough of the whole graph. No equations, no code — just the map.
+    prerequisites: []

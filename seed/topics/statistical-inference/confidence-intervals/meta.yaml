@@ -1,2 +1,5 @@
 slug: confidence-intervals
 has_formal_layer: true
+recall_prompt: |
+  A 95% confidence interval contains the true parameter 95% of the time — but that's a statement about the *procedure*, not the *interval*. Why does the distinction matter?
+cycle_ported: K

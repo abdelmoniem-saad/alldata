@@ -1,106 +1,127 @@
-<!-- layer: intuition -->
+<!-- block: state, values: {mu: 0, sigma: 1} -->
 
-## The Long-Run Average
-
-If you played a game a million times, what would you expect to win *on average per game*? That's the **expected value**.
-
-It's a weighted average: each possible outcome multiplied by its probability.
-
-**Example:** A fair die roll. Each face has probability 1/6:
-
-$$E[X] = 1 \cdot \frac{1}{6} + 2 \cdot \frac{1}{6} + 3 \cdot \frac{1}{6} + 4 \cdot \frac{1}{6} + 5 \cdot \frac{1}{6} + 6 \cdot \frac{1}{6} = 3.5$$
-
-You'll never actually roll 3.5 — it's the "center of gravity" of the distribution.
+<!-- block: plot, spec: gaussian_pdf, params: {mu: 0, sigma: 1}, binds: [mu, sigma], anchor: expectation-pdf, mobile_order: 1 -->
 
 ---
 
-## Why Expected Value Matters
+<!-- block: gear, n: 1, label: "The spark" -->
 
-Expected value is the foundation of decision-making under uncertainty:
+# Expectation
 
-- **Gambling:** A game where you pay $1 to roll a die and win $X has E[winnings] = $3.50 - $1 = $2.50 per game. Positive expected value = good bet.
-- **Insurance:** Companies set premiums above the expected payout.
-- **Investing:** Expected return guides portfolio decisions.
-
-**Key insight:** Expected value doesn't tell you what will happen in a single trial — it tells you what happens *on average over many trials*. A lottery ticket has negative expected value, but someone still wins.
+The expected value $\mathbb{E}[X]$ is the average — but a *long-run* average. Roll a fair die a million times and the running mean converges to 3.5. You'll never roll a 3.5; the expectation isn't a value you'll see, it's the value the world settles around.
 
 ---
 
-<!-- block: code_python, editable: true -->
-```python
-import numpy as np
-import matplotlib.pyplot as plt
+<!-- block: gear, n: 2, label: "Intuition" -->
 
-# Watch the sample mean converge to E[X]
-np.random.seed(42)
+## The balance point
 
-# A loaded die: P(6) = 1/3, P(1-5) = 2/15 each
-probs = [2/15, 2/15, 2/15, 2/15, 2/15, 1/3]
-values = [1, 2, 3, 4, 5, 6]
-theoretical_ev = sum(v * p for v, p in zip(values, probs))
+For a discrete random variable $X$ taking value $x_i$ with probability $p_i$:
 
-n_rolls = 10000
-rolls = np.random.choice(values, n_rolls, p=probs)
-running_mean = np.cumsum(rolls) / np.arange(1, n_rolls + 1)
+$$\mathbb{E}[X] = \sum_i x_i \, p_i$$
 
-plt.figure(figsize=(8, 4))
-plt.plot(running_mean, color='#14b8a6', linewidth=1, alpha=0.8)
-plt.axhline(y=theoretical_ev, color='#71717a', linestyle='--', linewidth=2,
-            label=f'E[X] = {theoretical_ev:.2f}')
-plt.xlabel('Number of rolls')
-plt.ylabel('Running average')
-plt.title('Sample Mean → Expected Value (Loaded Die)')
-plt.legend()
-plt.grid(alpha=0.2)
-plt.xlim(0, n_rolls)
-plt.tight_layout()
-plt.show()
+Mechanical reading: place weights $p_i$ at positions $x_i$ on a number line. $\mathbb{E}[X]$ is where the line balances. The center of mass.
 
-print(f"Theoretical E[X] = {theoretical_ev:.4f}")
-print(f"Sample mean after {n_rolls} rolls = {rolls.mean():.4f}")
-print(f"The sample mean gets closer to E[X] as n grows!")
-```
-<!-- expected_output: Sample mean converges to E[X] -->
+For continuous variables it's an integral instead of a sum:
+
+$$\mathbb{E}[X] = \int_{-\infty}^{\infty} x \, f(x) \, dx$$
+
+Same picture — just with a continuous weight density $f(x)$ instead of point masses.
+
+---
+
+<!-- block: gear, n: 3, label: "Feel the balance" -->
+
+<!-- block: state_reset, anchor: expectation-feel -->
+
+<!-- block: playground, anchor: expectation-feel -->
+binds: [mu, sigma]
+controls:
+  - param: mu
+    label: "Mean (μ — the balance point)"
+    min: -3
+    max: 3
+    step: 0.1
+  - param: sigma
+    label: "Std dev (σ — the spread)"
+    min: 0.3
+    max: 3
+    step: 0.1
+goal:
+  prompt: |
+    Slide the curve to a non-zero center. Notice that the *spread* (σ) doesn't
+    change where the balance point is — it only changes how concentrated the
+    weight is around that point. Land $\mu = 1.5$ to confirm.
+  target: { mu: 1.5, sigma: 1 }
+  success_when: "abs(mu - 1.5) < 0.1"
+  on_success: |
+    The balance point moved with $\mu$, and only with $\mu$. Expectation is a
+    *location* parameter — it tells you where the center of mass sits.
+    Variance ($\sigma^2$) is the orthogonal *spread* parameter that tells you
+    how concentrated the weight is around that center.
+  hints:
+    - after_seconds: 30
+      text: "Drag the mean slider; the std-dev slider doesn't move the center."
+<!-- /block -->
 
 ---
 
 <!-- layer: formal -->
 
-## Formal Definition
+<!-- block: gear, n: 4, label: "The formalism" -->
 
-For a **discrete** random variable X:
+## Linearity of expectation
 
-$$E[X] = \sum_{x} x \cdot P(X = x) = \sum_{x} x \cdot p_X(x)$$
+The single most-used fact about expectation:
 
-For a **continuous** random variable X with PDF $f_X$:
+$$\mathbb{E}[aX + bY] = a \, \mathbb{E}[X] + b \, \mathbb{E}[Y]$$
 
-$$E[X] = \int_{-\infty}^{\infty} x \cdot f_X(x) \, dx$$
+It holds whether or not $X$ and $Y$ are independent. That's the magical part — for variance, you'd need independence; for expectation, never.
 
-**Properties (linearity):**
+<!-- block: derivation, title: "Why linearity holds without independence", collapsed: true -->
+For discrete variables on a joint distribution $p(x, y)$:
 
-$$E[aX + b] = aE[X] + b$$
-$$E[X + Y] = E[X] + E[Y] \quad \text{(always, even if dependent!)}$$
+$$\mathbb{E}[X + Y] = \sum_{x,y} (x + y) \, p(x, y) = \sum_{x,y} x \, p(x,y) + \sum_{x,y} y \, p(x,y)$$
 
-**Law of the Unconscious Statistician (LOTUS):**
+The first sum reduces to $\sum_x x \, p(x) = \mathbb{E}[X]$ (marginalize over $y$). The second to $\mathbb{E}[Y]$. Independence is never used. The same argument extends to integrals for continuous variables.
 
-$$E[g(X)] = \sum_{x} g(x) \cdot p_X(x)$$
-
----
-
-<!-- block: misconception -->
-**Misconception: "The expected value is the most likely outcome."**
-
-*Wrong belief:* E[X] = 3.5 for a die roll means 3.5 is the most probable result.
-
-*Correction:* The expected value is the **average** over many trials, not the **mode** (most likely single outcome). For a die, the expected value 3.5 is impossible to roll! For a Bernoulli trial with p=0.3, E[X]=0.3 but the most likely outcome is 0. Expected value and mode are different concepts.
-
-*Why this is common:* The word "expected" in everyday English means "what you anticipate will happen," which sounds like the most likely outcome. In probability, it specifically means the long-run average.
+This is why the expected number of heads in $n$ fair flips is $n/2$ even though the flips don't have to be independent — *any* dependency structure gives the same expectation.
+<!-- /block -->
 
 ---
 
-<!-- block: quiz -->
-**Micro-challenge:** A game costs $5 to play. You roll two dice: if the sum is 7, you win $20; if the sum is 12, you win $50; otherwise you win nothing. What's the expected profit per game? Should you play?
+<!-- block: gear, n: 5, label: "Code" -->
 
-*Hint:* P(sum=7) = 6/36, P(sum=12) = 1/36. Expected profit = Expected winnings - cost.
+<!-- block: simulation, editable: true, auto_run: true, anchor: expectation-sim -->
+```python
+import numpy as np
 
-<!-- solution: E[winnings] = 20·(6/36) + 50·(1/36) + 0·(29/36) = 120/36 + 50/36 = 170/36 ≈ $4.72. Expected profit = $4.72 - $5.00 = -$0.28 per game. You lose 28 cents on average — don't play! -->
+# Roll a fair die a million times and watch the running mean converge to 3.5.
+np.random.seed(42)
+rolls = np.random.randint(1, 7, 1_000_000)
+running = np.cumsum(rolls) / np.arange(1, len(rolls) + 1)
+
+# Spot checks at orders of magnitude.
+for n in [10, 100, 10_000, 1_000_000]:
+    print(f"n={n:>10,}  running mean = {running[n-1]:.4f}  (E[X] = 3.5000)")
+```
+
+---
+
+<!-- layer: both -->
+
+<!-- block: gear, n: 6, label: "Connections" -->
+
+<!-- block: callout, kind: insight -->
+**Where this leads.** **Variance** is $\mathbb{E}[(X - \mathbb{E}[X])^2]$ — the expected squared distance from the balance point. **The law of large numbers** says the sample mean converges to the expectation as $n \to \infty$. **The CLT** tells you the *shape* the sample mean takes around that limit. All three are direct consequences of expectation's mechanics.
+<!-- /block -->
+
+---
+
+<!-- block: misconception, inline: true -->
+**"$\mathbb{E}[X]$ is a value you'll observe."**
+
+*Wrong:* the expectation is a "typical" outcome of $X$.
+
+*Correct:* the expected number of heads in 3 flips is 1.5. You'll never *see* 1.5 heads. Expectation is a population parameter, not a sample value. It's the long-run average — what the running mean settles at as the sample grows. For most distributions, no single observation equals the expectation.
+<!-- /block -->

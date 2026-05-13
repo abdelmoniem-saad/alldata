@@ -87,6 +87,10 @@ export interface TopicDetail {
   depth: number
   has_intuition_layer: boolean
   has_formal_layer: boolean
+  /** K3: spaced-repetition recall prompt. Null when the topic doesn't opt in. */
+  recall_prompt: string | null
+  /** K5: canonical dataset name for the topic. Null when no dataset declared. */
+  dataset: string | null
   parent_id: string | null
   content_blocks: ContentBlock[]
   misconceptions: Misconception[]

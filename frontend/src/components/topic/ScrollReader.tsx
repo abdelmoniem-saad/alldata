@@ -43,6 +43,8 @@ import CodeRunner from './CodeRunner'
 import PlotBlock from './blocks/PlotBlock'
 import DecisionBlock from './blocks/DecisionBlock'
 import PlaygroundBlock from './blocks/PlaygroundBlock'
+import GraphFlythrough from './blocks/GraphFlythrough'
+import ConfusionFlag from './blocks/ConfusionFlag'
 import {
   useTopicStateStore,
   StateValue,
@@ -144,10 +146,73 @@ function Anchor({ id, onActive, rootRef }: AnchorProps) {
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-const PINNED_BLOCK_TYPES = new Set(['plot'])
+// K2: `graph_view` shares the pinned-pane treatment with `plot` — it owns
+// the right column when its anchor is active. The pinned plot becomes a
+// pinned graph for "Shape of Statistics" and any future tour topic.
+const PINNED_BLOCK_TYPES = new Set(['plot', 'graph_view'])
+
+// K4: block types eligible for the "I want to revisit this" confusion flag.
+// Excludes purely structural / metadata blocks (state, state_reset, gear,
+// graph_view) — flagging those carries no signal an author can act on.
+// `plot` is also excluded since it renders inline-only on mobile and pinned
+// elsewhere on desktop, so the flag would attach to the wrong surface.
+const CONFUSION_FLAGGABLE_TYPES = new Set([
+  'markdown', 'code_python', 'code_r', 'simulation', 'callout',
+  'derivation', 'step_through', 'misconception_inline',
+  'decision', 'playground', 'quiz',
+])
 
 /** Stable reference for "no decisions for this topic" — see selector below. */
 const EMPTY_EVENTS: Record<string, import('../../stores/progressStore').DecisionEvent> = {}
+
+/**
+ * BlockShell — K4. Wraps a single block in the prose column. Adds:
+ *   - A hairline left-border + tint when flagged for revisit.
+ *   - A `ConfusionFlag` button at the bottom (when the block type warrants).
+ *   - `?debug=confusion` heatmap tint scaled to the flag count.
+ *
+ * Reads the flag state via Zustand selectors keyed by (slug, blockId), so
+ * a flag toggle on one block doesn't re-render unrelated ones.
+ */
+function BlockShell({
+  slug, block, showConfusionFlag, children,
+}: {
+  slug: string
+  block: ContentBlock
+  showConfusionFlag: boolean
+  children: ReactNode
+}) {
+  const flagged = useProgressStore(
+    s => (s.confusionFlags?.[slug]?.[block.id] ?? 0) > 0,
+  )
+  const flagCount = useProgressStore(
+    s => s.confusionFlags?.[slug]?.[block.id] ?? 0,
+  )
+  const debug = typeof window !== 'undefined'
+    && new URLSearchParams(window.location.search).get('debug') === 'confusion'
+
+  return (
+    <div
+      style={{
+        marginBottom: 24,
+        position: 'relative',
+        paddingLeft: flagged ? 12 : 0,
+        borderLeft: flagged ? '1px solid var(--color-text-muted)' : 'none',
+        background: debug && flagCount > 0
+          ? `rgba(20, 184, 166, ${Math.min(0.04 + flagCount * 0.05, 0.25)})`
+          : undefined,
+        transition: 'all var(--transition-fast)',
+      }}
+    >
+      {children}
+      {showConfusionFlag && slug && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <ConfusionFlag slug={slug} blockId={block.id} />
+        </div>
+      )}
+    </div>
+  )
+}
 
 function parseMeta(block: ContentBlock): Record<string, unknown> {
   if (!block.meta) return {}
@@ -198,6 +263,11 @@ function BlockSwitch({ block, meta, slug, inlinePlots }: BlockProps) {
       // Desktop: pinned in the right column, hidden inline. Mobile: render in flow.
       if (!inlinePlots) return null
       return <PlotBlock slug={slug} meta={meta} />
+
+    case 'graph_view':
+      // K2: same pinning rule as `plot` — desktop pins; mobile renders inline.
+      if (!inlinePlots) return null
+      return <GraphFlythrough target={String(meta.target ?? '')} />
 
     case 'callout': {
       const kind = String(meta.kind ?? 'insight')
@@ -294,6 +364,84 @@ function BlockSwitch({ block, meta, slug, inlinePlots }: BlockProps) {
     case 'state_reset':
       // Authoring-only — wired in via effects, no rendered output.
       return null
+
+    case 'dataset': {
+      // K5: in-prose dataset attribution chip — sits above a code block
+      // that uses `load("name")`. Pure metadata, links to /datasets#name.
+      const name = String(meta.name ?? '')
+      const source = String(meta.source ?? '')
+      if (!name) return null
+      return (
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 'var(--space-2)',
+            padding: '4px 10px',
+            borderRadius: 'var(--radius)',
+            border: '1px solid var(--color-border-subtle)',
+            background: 'var(--color-bg-secondary)',
+            fontSize: 11,
+            color: 'var(--color-text-secondary)',
+            marginBottom: 'var(--space-2)',
+          }}
+        >
+          <span style={{
+            fontSize: 9,
+            fontWeight: 700,
+            letterSpacing: '1px',
+            textTransform: 'uppercase',
+            color: 'var(--color-accent)',
+          }}>
+            Dataset
+          </span>
+          <a
+            href={`/datasets#${name}`}
+            style={{ color: 'var(--color-text)', textDecoration: 'none' }}
+          >
+            {name}
+          </a>
+          {source && <span style={{ opacity: 0.7 }}>· {source}</span>}
+        </div>
+      )
+    }
+
+    case 'gear': {
+      // K1: a quiet section divider. The number + label name where the
+      // reader is in the topic's six-gear structure (Spark / Intuition /
+      // Visualization / Formalism / Code / Connections). Pure metadata —
+      // no semantic effect on neighboring blocks.
+      const n = typeof meta.n === 'number' ? meta.n : null
+      const label = String(meta.label ?? '')
+      if (n === null) return null
+      return (
+        <div
+          aria-label={`Gear ${n}: ${label}`}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--space-3)',
+            margin: 'var(--space-8) 0 var(--space-4)',
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: '1.5px',
+            textTransform: 'uppercase',
+            color: 'var(--color-text-muted)',
+          }}
+        >
+          <span style={{ color: 'var(--color-accent)' }}>Gear {n}</span>
+          <span
+            aria-hidden
+            style={{
+              flex: '0 0 1.5rem',
+              height: 1,
+              background: 'var(--color-border-subtle)',
+            }}
+          />
+          <span>{label}</span>
+        </div>
+      )
+    }
 
     default:
       return (
@@ -606,7 +754,12 @@ export default function ScrollReader({
               const isAnchorBearing = anchoredBlockIds.has(block.id)
               const meta = metaCache.get(block.id) ?? {}
               return (
-                <div key={block.id} style={{ marginBottom: 24, position: 'relative' }}>
+                <BlockShell
+                  key={block.id}
+                  slug={slug}
+                  block={block}
+                  showConfusionFlag={CONFUSION_FLAGGABLE_TYPES.has(block.block_type)}
+                >
                   {isAnchorBearing && block.anchor && (
                     <Anchor id={block.anchor} onActive={handleAnchorActive} rootRef={scrollRef} />
                   )}
@@ -616,7 +769,7 @@ export default function ScrollReader({
                     slug={slug}
                     inlinePlots={!isWide}
                   />
-                </div>
+                </BlockShell>
               )
             })}
 
@@ -682,11 +835,17 @@ export default function ScrollReader({
               }}
             >
               {pinnedPlot ? (
-                <PlotBlock
-                  slug={slug}
-                  meta={pinnedMeta}
-                  ghostOverride={ghostOverride}
-                />
+                pinnedPlot.block_type === 'graph_view' ? (
+                  <GraphFlythrough
+                    target={String(pinnedMeta.target ?? '')}
+                  />
+                ) : (
+                  <PlotBlock
+                    slug={slug}
+                    meta={pinnedMeta}
+                    ghostOverride={ghostOverride}
+                  />
+                )
               ) : (
                 <div style={{
                   color: 'var(--color-text-muted)', fontSize: 13,

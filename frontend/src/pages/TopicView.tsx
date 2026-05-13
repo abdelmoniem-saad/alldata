@@ -4,6 +4,7 @@ import { api, TopicDetail, PrerequisiteEntry } from '../api/client'
 import ScrollReader from '../components/topic/ScrollReader'
 import SlideView from '../components/topic/SlideView'
 import ZenChrome from '../components/topic/ZenChrome'
+import RecallPrompt from '../components/topic/RecallPrompt'
 import { useProgressStore } from '../stores/progressStore'
 import { domainVar } from '../lib/domain'
 
@@ -30,6 +31,16 @@ export default function TopicView() {
   const [readProgress, setReadProgress] = useState(0)
   const [justCompleted, setJustCompleted] = useState(false)
   const { markCompleted, unmarkCompleted, isCompleted, markInProgress, completedSlugs } = useProgressStore()
+
+  // K3: surface a recall prompt when this topic is due-for-review and we
+  // haven't reviewed it yet in this page's lifetime. The prompt itself comes
+  // from `topic.recall_prompt` (meta.yaml field). The schedule comes from
+  // `progressStore.reviewSchedule`. The "haven't reviewed yet this session"
+  // check lives in RecallPrompt's local `dismissed` state.
+  const reviewRecord = useProgressStore(s =>
+    slug ? s.reviewSchedule?.[slug] ?? null : null
+  )
+  const isDueForReview = reviewRecord != null && reviewRecord.dueAt <= Date.now()
 
   const scrollRef = useRef<HTMLDivElement | null>(null)
 
@@ -166,6 +177,9 @@ export default function TopicView() {
               slug={slug || ''}
               header={
                 <div style={{ marginBottom: 48, maxWidth: 760, margin: '0 auto 48px' }}>
+                  {isDueForReview && topic.recall_prompt && slug && (
+                    <RecallPrompt slug={slug} prompt={topic.recall_prompt} />
+                  )}
                   <h1 style={{
                     fontSize: 'clamp(32px, 5vw, 56px)',
                     fontWeight: 700,

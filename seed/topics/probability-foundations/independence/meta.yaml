@@ -1,2 +1,5 @@
 slug: independence
 has_formal_layer: true
+recall_prompt: |
+  Two events are independent when $P(A \cap B) = P(A) \cdot P(B)$. What does that condition *mean* — what does it say about the information one event gives you about the other?
+cycle_ported: K

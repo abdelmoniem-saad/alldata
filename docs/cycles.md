@@ -123,3 +123,39 @@ What the next cycle should pick up:
 - Mobile pinned-viz pane (I7 backlog).
 - High-contrast mode beyond existing tokens.
 - Marketing surface (`vision.md` is internal; no landing page copy this cycle).
+
+---
+
+## K — Vision reconciliation & cluster buildout
+
+**Intent.** Take the high-ROI items from the platform vision document, reconcile them with the I-cycle directive surface, and validate by porting 8 more topics in the probability arm. Defer forks / WebR / LTI to L+.
+
+**Shipped.**
+- K0: graph edge-label noise — root → entry-topic edges no longer carry "Part of {domain}" descriptions; the visual contract is now "if a line has a label, the label says something the colors don't."
+- K1: six-gear authoring scaffold — new `gear` directive (purely metadata), six-gear template documented in `docs/authoring.md`, `gear: 3` explicitly admits both modes (observation / commitment) so playgrounds and decisions are equally valid expressions of the gear.
+- K2: `Shape of Statistics` flythrough — new `_meta` hidden domain in `seed/schema.yaml`, additive schema-merge in `import_seed.py` (so future schema additions land on every run, not just fresh DBs), `GraphFlythrough` component reusing ForceGraph + `centerOnSlug`, "Start here" chip on `/explore`.
+- K3: spaced repetition — SM-2 in `progressStore` (`reviewSchedule` map keyed by slug), `RecallPrompt` component above the prose when due, `ForceGraph` alpha-lift on overdue completed nodes, `recall_prompt` field in `meta.yaml` + `Topic` model.
+- K4: confusion signal — `confusionFlags` on `progressStore`, `ConfusionFlag` button per block in `ScrollReader` ("I want to revisit this"), hairline left-border on flagged blocks, `?debug=confusion` heatmap overlay tinted by flag count.
+- K5: real data layer — `Topic.dataset` column, `dataset` directive (in-prose attribution chip), `dataset:` field in `meta.yaml`, 4 curated CSVs (coin-flips-1000, medical-test-results, monty-hall-runs, heights), `manifest.yaml`, `GET /api/datasets[/:name]`, `load(name)` helper injected into the Python execution context, `/datasets` index page with reverse-index by topic.
+- K6: 8 ports — `basic-probability`, `independence`, `expectation`, `random-variables`, `central-limit-theorem` (new directory), `confidence-intervals`, `point-estimation`, `correlation`. Every port uses the K1 six-gear scaffold; every port runs `--strict` clean. The probability arm now has 12 ported topics on the I-cycle directive surface (4 from J7 + 8 from K6).
+- K7: public graph snapshot — `/u/:username` route, `GET /api/users/:username/snapshot` (returns empty progress until H10 server-sync lands; the `me` shortcut reads local `progressStore`), `ForceGraph.progressOverride` prop so a viewer's session can render someone else's progress, per-cluster depth bars (proportional fill, no numbers — depth signal, not a grade).
+
+**Retrospective.**
+
+What the docs missed:
+- The new `_meta` domain mechanic (K2) didn't end up in `docs/meta-yaml.md` or `principles.md`. Future cycle: when a new architectural concept lands (hidden domains, additive schema-merge), add a one-paragraph note to the relevant doc in the same change. The pattern of "feature first, doc later" the J retrospective called out continues to bite.
+- `manifest.yaml` (K5) is its own format with no schema doc. It worked here because there's exactly one author for the seed, but the moment a contributor wants to add a dataset they'll have to read the source. K's `docs/authoring.md` should get a "Datasets" section in K's own retrospective phase, not L.
+
+What the refinement still didn't catch:
+- The 600ms dot-grid transition (J6 carryover) wasn't tuned this cycle. The J retrospective flagged it; K had higher-priority work. Still on the bench.
+- `BlockShell`'s confusion-flag overlay (K4) re-renders on every store change because it doesn't use `useShallow` on its block-id selector. Per-block re-render cost is small but it's the same family of bug J5 fixed for plots. Worth a tighter selector in L.
+- `GraphFlythrough` (K2) re-fetches the full graph on every topic mount. For "Shape of Statistics" that's fine; if any other tour topics land, the graph payload should be cached at the App level.
+
+What the next cycle should pick up:
+- **L1 — content fill.** 17 schema topics still legacy. K hit 12 ported in the probability arm; L should aim for ~15 ports across distributions + statistical-inference. The vision doc's 15–20-per-cluster goal still stands.
+- **L2 — H10 progress sync.** K7 is functional but the public-snapshot story is a stub until server-side sync lands. L is when this becomes the priority — the K7 retro (and the K4 confusion-flag aggregation, and any future analytics) all gate on it.
+- **Fork model — feasibility study.** With ~30 ported topics by end of L, the fork model becomes argumentatively meaningful. M cycle considers it explicitly.
+- **Plot library expansion**, only when a port surfaces a concrete need. K6 didn't surface any.
+
+**Deferred.** All of the K plan's "Not in scope" list, plus the new items in the K retrospective above (K1's missing principles-doc update, K5's missing manifest-doc).
+

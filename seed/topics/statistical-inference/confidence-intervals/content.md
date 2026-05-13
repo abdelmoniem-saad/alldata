@@ -1,121 +1,161 @@
-<!-- layer: intuition -->
+<!-- block: state, values: {mu: 0, sigma: 1, n: 30} -->
 
-## A Range of Plausible Values
-
-A point estimate gives you one number. But how confident are you in that number? A **confidence interval** gives you a range: "The true value is probably somewhere in here."
-
-A 95% confidence interval means: if you repeated this experiment 100 times, about 95 of those intervals would contain the true parameter. It's a statement about the **procedure**, not about any single interval.
-
-**The formula for a mean:**
-
-$$\bar{x} \pm z^* \cdot \frac{s}{\sqrt{n}}$$
-
-Where $z^* = 1.96$ for 95% confidence. The interval gets **narrower** with:
-- More data (larger n)
-- Less variability (smaller s)
-- Lower confidence level (but you'd be less sure!)
+<!-- block: plot, spec: gaussian_pdf, params: {mu: 0, sigma: 1}, binds: [mu, sigma], anchor: ci-pdf, mobile_order: 1 -->
 
 ---
 
-## The Trade-off: Precision vs. Confidence
+<!-- block: gear, n: 1, label: "The spark" -->
 
-Want a narrower interval? Lower your confidence level. Want higher confidence? Accept a wider interval.
+# Confidence intervals
 
-- **90% CI:** narrower, but misses the truth 10% of the time
-- **95% CI:** the standard — balances precision and coverage
-- **99% CI:** wider, but very reliable
-
-There's no free lunch. The only way to get **both** narrow intervals and high confidence is to **collect more data**.
+A 95% confidence interval is the most-misunderstood statistic in everyday use. The math is precise. The popular reading isn't.
 
 ---
 
-<!-- block: simulation, editable: true -->
-```python
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy import stats
+<!-- block: gear, n: 2, label: "Intuition" -->
 
-# Visualize: "95 of 100 intervals contain the truth"
-np.random.seed(42)
-true_mean = 50
-true_std = 10
-n = 25
-n_intervals = 100
+## What 95% actually means
 
-fig, ax = plt.subplots(figsize=(10, 8))
+You compute a 95% CI for the mean. You report $[2.1, 4.3]$. Most people read that as "there's a 95% chance the true mean is in $[2.1, 4.3]$."
 
-contains_count = 0
-for i in range(n_intervals):
-    sample = np.random.normal(true_mean, true_std, n)
-    x_bar = sample.mean()
-    se = sample.std(ddof=1) / np.sqrt(n)
-    t_crit = stats.t.ppf(0.975, df=n-1)
-    ci_low = x_bar - t_crit * se
-    ci_high = x_bar + t_crit * se
-    
-    contains = ci_low <= true_mean <= ci_high
-    if contains:
-        contains_count += 1
-    
-    color = '#22c55e' if contains else '#ef4444'
-    ax.plot([ci_low, ci_high], [i, i], color=color, linewidth=1.5, alpha=0.7)
-    ax.plot(x_bar, i, 'o', color=color, markersize=3)
+That reading is *wrong* under the frequentist framework — and it matters.
 
-ax.axvline(true_mean, color='#14b8a6', linewidth=2, linestyle='--', label=f'True μ = {true_mean}')
-ax.set_xlabel('Value', fontsize=12)
-ax.set_ylabel('Experiment number', fontsize=12)
-ax.set_title(f'100 Confidence Intervals (95%): {contains_count} contain the true mean', fontsize=13)
-ax.legend(fontsize=11)
-plt.tight_layout()
-plt.show()
+The correct reading: if you re-ran your study many times, computing a fresh 95% CI each time, **95% of those intervals** would contain the true mean. The 95% is a property of the *procedure*, not of any single interval. Once you've computed a specific interval, the true mean either is or isn't in it — there's no probability about *that* anymore.
 
-print(f"Coverage: {contains_count}/100 intervals contain the true mean")
-print(f"This is close to the theoretical 95%!")
-```
-<!-- expected_output: ~95 out of 100 intervals contain the true mean -->
+---
+
+<!-- block: gear, n: 3, label: "The decision" -->
+
+<!-- block: decision, anchor: ci-pick -->
+question: |
+  You compute a 95% CI for a population mean and get $[2.1, 4.3]$. Which of
+  these statements is *correct* under the frequentist definition of CI?
+options:
+  - id: a
+    label: "There's a 95% probability the true mean is between 2.1 and 4.3."
+    writes: { mu: 0 }
+    response: |
+      This is the popular reading — and it's wrong frequentist-wise. The true
+      mean is a fixed (unknown) constant; either it *is* in $[2.1, 4.3]$ or it
+      isn't. The 95% can't refer to a probability about the parameter once the
+      data is collected. (A Bayesian credible interval *would* support this
+      reading — but it requires a prior, and the math is different.)
+  - id: b
+    label: "If we repeated this procedure many times, 95% of the resulting intervals would contain the true mean."
+    writes: { mu: 1.5 }
+    response: |
+      Right. The 95% describes the *long-run frequency* of intervals containing
+      the parameter. It's a property of the procedure (and of the assumptions
+      it relies on — normality, iid, etc.), not of any single interval you
+      happen to have computed.
+  - id: c
+    label: "95% of the data falls between 2.1 and 4.3."
+    writes: { sigma: 0.5 }
+    response: |
+      That would be a *prediction* interval for individual observations, not a
+      confidence interval for the *mean*. They're different things — prediction
+      intervals are wider because they have to account for the variability of
+      single observations, not just the precision of the mean estimate.
+correct: b
+<!-- /block -->
+
+---
+
+<!-- block: callout, kind: insight, depends_on: ci-pick, branch: b -->
+The frequentist CI is a statement about the long-run reliability of the *procedure* under repeated sampling. Most readers want a Bayesian credible interval — *given my data, where do I think the parameter is?* — and the two coincide numerically only under specific priors. Knowing which one you're computing matters.
+<!-- /block -->
+
+<!-- block: callout, kind: insight, depends_on: ci-pick, branch: a|c -->
+The trap was conflating "95% of intervals contain the parameter" with "this interval contains the parameter with 95% probability." Frequentists treat the parameter as fixed; the randomness is in the *interval*. Bayesians treat the parameter as a random variable and *can* make probability statements about it — but that's a different framework with different machinery.
+<!-- /block -->
 
 ---
 
 <!-- layer: formal -->
 
-## Formal Definition
+<!-- block: gear, n: 4, label: "The formalism" -->
 
-A **confidence interval** at level $1 - \alpha$ for parameter $\theta$ is a random interval $[L(X), U(X)]$ such that:
+## Construction
 
-$$P(L(X) \leq \theta \leq U(X)) = 1 - \alpha$$
-
-**For the mean (known σ):**
+For the mean of a normal population with known variance:
 
 $$\bar{X} \pm z_{\alpha/2} \cdot \frac{\sigma}{\sqrt{n}}$$
 
-**For the mean (unknown σ):**
+For 95% CIs, $z_{0.025} \approx 1.96$. With unknown variance you swap the normal critical value for a $t$-distribution critical value with $n-1$ degrees of freedom:
 
 $$\bar{X} \pm t_{\alpha/2, n-1} \cdot \frac{s}{\sqrt{n}}$$
 
-**For a proportion:**
+For other parameters (proportions, variances, regression coefficients), the form is the same: an estimate, plus or minus a critical value times a standard error.
 
-$$\hat{p} \pm z_{\alpha/2} \sqrt{\frac{\hat{p}(1-\hat{p})}{n}}$$
+<!-- block: derivation, title: "Why $\bar{X} \pm 1.96 \, \sigma/\sqrt{n}$ has 95% coverage", collapsed: true -->
+By the CLT, $\bar{X} \sim N(\mu, \sigma^2/n)$. Standardize:
 
-**Required sample size for desired margin of error $E$:**
+$$Z = \frac{\bar{X} - \mu}{\sigma / \sqrt{n}} \sim N(0, 1)$$
 
-$$n = \left(\frac{z_{\alpha/2} \cdot \sigma}{E}\right)^2$$
+By construction, $P(-1.96 < Z < 1.96) = 0.95$. Algebra:
 
----
+$$P\!\left(\bar{X} - 1.96 \cdot \tfrac{\sigma}{\sqrt{n}} < \mu < \bar{X} + 1.96 \cdot \tfrac{\sigma}{\sqrt{n}}\right) = 0.95$$
 
-<!-- block: misconception -->
-**Misconception: "There's a 95% probability the true mean is in this interval."**
-
-*Wrong belief:* After computing [47.2, 52.8], there's a 95% chance μ is between 47.2 and 52.8.
-
-*Correction:* Once you've computed the interval, μ is either in it or not — it's not random. The 95% refers to the **procedure**: if you repeated the experiment many times, 95% of the resulting intervals would contain μ. Think of it as: "I used a method that works 95% of the time," not "there's a 95% chance this specific answer is right."
-
-*Why this is common:* The frequentist interpretation is genuinely counterintuitive. The Bayesian credible interval DOES have the interpretation "95% probability the parameter is in here," which is what most people actually want to say.
+The probability is over $\bar{X}$, not over $\mu$. That's the whole subtlety: $\mu$ is the constant; the *interval* is what's random.
+<!-- /block -->
 
 ---
 
-<!-- block: quiz -->
-**Micro-challenge:** A sample of 36 light bulbs has mean lifetime 1200 hours with standard deviation 150 hours. Calculate the 95% confidence interval. How many bulbs would you need to test to get the margin of error down to ±25 hours?
+<!-- block: gear, n: 5, label: "Code" -->
 
-*Hint:* For n=36, use z*=1.96 (large enough for Normal approximation). For the required n, solve n = (z*·s/E)².
+<!-- block: simulation, editable: true, auto_run: true, anchor: ci-sim -->
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import stats
 
-<!-- solution: 95% CI: 1200 ± 1.96·(150/√36) = 1200 ± 1.96·25 = 1200 ± 49 = [1151, 1249] hours. For margin of error ±25: n = (1.96·150/25)² = (11.76)² ≈ 138.3 → need n=139 bulbs. That's almost 4× more bulbs to cut the margin of error in half! -->
+# Simulate the frequentist promise: build 100 95%-CIs for the mean of a
+# normal population with known μ=0, σ=1, n=30. Count how many cover μ=0.
+np.random.seed(42)
+n = 30
+mu_true = 0
+sigma = 1
+n_intervals = 100
+
+intervals = []
+for _ in range(n_intervals):
+    sample = np.random.normal(mu_true, sigma, n)
+    se = sigma / np.sqrt(n)
+    z = stats.norm.ppf(0.975)
+    intervals.append((sample.mean() - z * se, sample.mean() + z * se))
+
+contains = sum(lo <= mu_true <= hi for lo, hi in intervals)
+print(f"{contains} / {n_intervals} intervals contain the true mean (target: ~95)")
+
+fig, ax = plt.subplots(figsize=(8, 5))
+for i, (lo, hi) in enumerate(intervals):
+    color = '#14b8a6' if lo <= mu_true <= hi else '#c98b8b'
+    ax.plot([lo, hi], [i, i], color=color, linewidth=1.5)
+ax.axvline(mu_true, color='#a1a1aa', linestyle='--', linewidth=1, label='true μ')
+ax.set_ylabel('Replication')
+ax.set_xlabel('CI for μ')
+ax.set_title(f'{contains}/{n_intervals} intervals cover the true mean')
+ax.legend()
+plt.tight_layout()
+plt.show()
+```
+
+---
+
+<!-- layer: both -->
+
+<!-- block: gear, n: 6, label: "Connections" -->
+
+<!-- block: callout, kind: insight -->
+**Where this leads.** **Hypothesis testing** is a mirror of CIs — a CI that excludes 0 corresponds to a rejection of $H_0: \mu = 0$ at the same level. **Bayesian inference** offers credible intervals that *do* support the popular reading, at the cost of a prior. **Sampling distributions** is the engine room: every CI relies on a sampling distribution to compute its critical value.
+<!-- /block -->
+
+---
+
+<!-- block: misconception, inline: true -->
+**"A 95% CI has a 95% probability of containing the true value."**
+
+*Wrong:* the interval is a probabilistic statement about where the parameter lives.
+
+*Correct:* under frequentism, the parameter is fixed and the interval is random. *Before* you collect data, the interval-construction *procedure* covers the parameter 95% of the time. *After* the data is collected, the specific interval either covers the parameter or doesn't — there's no remaining probability statement to make. For a probabilistic reading of the parameter given the data, you need Bayesian inference.
+<!-- /block -->

@@ -1,0 +1,10 @@
+slug: shape-of-statistics
+title: The Shape of Statistics
+domain: _meta
+difficulty: intro
+summary: An eight-minute flythrough of the whole graph. No equations, no code — just the map.
+prerequisites: []
+has_intuition_layer: true
+has_formal_layer: false
+estimated_minutes: 8
+cycle_ported: K

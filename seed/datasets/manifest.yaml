@@ -1,0 +1,45 @@
+# K5: dataset manifest. The frontend `/datasets` page reads this to render
+# the list and reverse-index by topic. Each entry here must have a matching
+# `{name}.csv` file in this directory.
+#
+# Fields:
+#   name        — slug used in `meta.yaml: dataset:` and `load("…")` calls
+#   title       — human-readable name
+#   description — one sentence about what the dataset shows
+#   source      — origin / attribution (free-form string)
+#   columns     — column names, for the dataset card
+#   rows        — row count, for the dataset card
+#   synthetic   — true if generated; false if real-world
+
+datasets:
+  - name: coin-flips-1000
+    title: 1,000 coin flips
+    description: A thousand independent fair-coin trials. Useful for sampling-distribution feel.
+    source: Synthetic (seeded RNG)
+    columns: [flip_id, outcome]
+    rows: 1000
+    synthetic: true
+
+  - name: medical-test-results
+    title: Medical test results
+    description: 1,000 patients with a 1% prevalence disease tested under a 99%/99% sensitivity/specificity test. Shows the base-rate fallacy in raw form.
+    source: Synthetic (seeded RNG)
+    columns: [patient_id, true_status, test_result]
+    rows: 1000
+    synthetic: true
+
+  - name: monty-hall-runs
+    title: Monty Hall game outcomes
+    description: 1,000 simulated three-door games with stay/switch outcomes. Shows the 1/3 vs 2/3 split converging.
+    source: Synthetic (seeded RNG)
+    columns: [game_id, car_door, initial_pick, monty_opens, stay_wins, switch_wins]
+    rows: 1000
+    synthetic: true
+
+  - name: heights
+    title: Adult heights
+    description: 500 adult heights drawn from sex-conditional normals (μ_F=165, μ_M=178, σ=6.5cm). Shows a real bimodal sample.
+    source: Synthetic (seeded RNG)
+    columns: [person_id, height_cm, sex]
+    rows: 500
+    synthetic: true

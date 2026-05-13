@@ -1,0 +1,12 @@
+title: Central Limit Theorem
+slug: central-limit-theorem
+domain: probability-foundations
+difficulty: intermediate
+summary: Why the average of anything turns into a bell curve.
+prerequisites: [random-variables, expectation]
+has_intuition_layer: true
+has_formal_layer: true
+recall_prompt: |
+  The CLT says sample means become normal as $n$ grows. What's the clean statement of *which* normal — and what does $n$ do to its parameters?
+estimated_minutes: 10
+cycle_ported: K

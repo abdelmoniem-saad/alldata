@@ -45,6 +45,17 @@ class Topic(Base):
     has_intuition_layer: Mapped[bool] = mapped_column(default=True)
     has_formal_layer: Mapped[bool] = mapped_column(default=False)
 
+    # K3: spaced-repetition recall prompt. Surfaced above the prose when a
+    # topic is due-for-review. One sentence ("What is the posterior under
+    # 1% prevalence?") sourced from `meta.yaml`. Optional.
+    recall_prompt: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # K5: canonical real-world dataset for the topic's code blocks. Name
+    # must match a CSV in `seed/datasets/{name}.csv`. The frontend reverse-
+    # indexes this on `/datasets` so a reader can browse "what topics use
+    # the titanic dataset?"
+    dataset: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
+
     # Authorship
     created_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())

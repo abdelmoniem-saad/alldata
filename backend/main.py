@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.api import auth, content, courses, execute, graph, topics
+from backend.api import auth, content, courses, datasets, execute, graph, topics, users
 from backend.config import settings
 
 
@@ -39,6 +39,8 @@ app.include_router(graph.router, prefix="/api/graph", tags=["graph"])
 app.include_router(content.router, prefix="/api/content", tags=["content"])
 app.include_router(courses.router, prefix="/api/courses", tags=["courses"])
 app.include_router(execute.router, prefix="/api/execute", tags=["execute"])
+app.include_router(datasets.router, prefix="/api/datasets", tags=["datasets"])
+app.include_router(users.router, prefix="/api/users", tags=["users"])
 
 
 @app.get("/")

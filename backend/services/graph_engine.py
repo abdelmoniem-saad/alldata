@@ -53,12 +53,21 @@ async def _get_misconception_counts(db: AsyncSession, topic_ids: list) -> dict:
 
 
 async def get_full_graph(db: AsyncSession, status_filter: str | None = "published") -> GraphResponse:
-    """Return the full graph (all nodes and edges) for visualization."""
+    """Return the full graph (all nodes and edges) for visualization.
+
+    K2: topics whose domain begins with `_` are hidden navigation surfaces
+    (e.g. `_meta` for the Shape of Statistics intro). They live in the DB
+    so the topic page can render them via the normal route, but the public
+    graph view skips them — they aren't part of the curriculum.
+    """
     topic_query = select(Topic)
     if status_filter:
         topic_query = topic_query.where(Topic.status == status_filter)
     result = await db.execute(topic_query)
-    topics = result.scalars().all()
+    topics = [
+        t for t in result.scalars().all()
+        if not (t.domain and t.domain.startswith("_"))
+    ]
 
     edge_result = await db.execute(select(TopicEdge))
     edges = edge_result.scalars().all()

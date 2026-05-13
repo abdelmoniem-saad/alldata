@@ -1,2 +1,4 @@
 slug: conditional-probability
 has_formal_layer: true
+recall_prompt: |
+  Monty opens an empty door. You picked door 1. Why does switching to door 2 win two-thirds of the time, and not 50-50?

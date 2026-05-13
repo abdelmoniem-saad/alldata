@@ -1,2 +1,5 @@
 slug: expectation
 has_formal_layer: true
+recall_prompt: |
+  $\mathbb{E}[X]$ is "the average value of $X$." But it's also the *balance point* of the distribution. What does that geometric reading buy you?
+cycle_ported: K

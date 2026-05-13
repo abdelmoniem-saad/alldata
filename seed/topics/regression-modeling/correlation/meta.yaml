@@ -1,2 +1,5 @@
 slug: correlation
 has_formal_layer: true
+recall_prompt: |
+  Pearson's $r$ measures linear association on a $[-1, +1]$ scale. What does $r = 0$ NOT tell you?
+cycle_ported: K

@@ -14,6 +14,16 @@ interface Props {
   onNodeDoubleClick?: (node: GraphNode) => void
   onNodeHover?: (node: GraphNode | null) => void
   highlightedNode?: string | null
+  /**
+   * K7: render someone *else's* progress instead of the viewer's. Public
+   * snapshot pages pass a `{completed, inProgress}` slug map here; the
+   * graph then colors nodes against that override rather than reading the
+   * viewer's `progressStore`. The viewer's own progress is unaffected.
+   */
+  progressOverride?: {
+    completedSlugs: string[]
+    inProgressSlugs: string[]
+  } | null
 }
 
 /**
@@ -45,14 +55,34 @@ interface SimLink extends d3.SimulationLinkDatum<SimNode> {
 
 const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
   nodes, edges, width, height, onNodeClick, onNodeDoubleClick, onNodeHover, highlightedNode,
+  progressOverride,
 }, ref) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const simRef = useRef<d3.Simulation<SimNode, SimLink> | null>(null)
   // H6: hold the d3 zoom behavior so centerOnSlug (via useImperativeHandle)
   // can call zoom.transform() to pan/zoom the canvas onto a chosen node.
   const zoomRef = useRef<d3.ZoomBehavior<HTMLCanvasElement, unknown> | null>(null)
-  const completedSlugs = useProgressStore(s => s.completedSlugs)
-  const inProgressSlugs = useProgressStore(s => s.inProgressSlugs)
+  // K7: when `progressOverride` is set, snapshot view substitutes someone
+  // else's slug sets for the viewer's. The Zustand selectors are still
+  // present below so the hook order stays stable across renders; the values
+  // get *overridden* by the prop after the subscription resolves.
+  const localCompleted = useProgressStore(s => s.completedSlugs)
+  const localInProgress = useProgressStore(s => s.inProgressSlugs)
+  const completedSlugs = progressOverride?.completedSlugs ?? localCompleted
+  const inProgressSlugs = progressOverride?.inProgressSlugs ?? localInProgress
+  // K3: graph-level "subtle dimming" cue for spaced-repetition due topics.
+  // Recompute the due-set on every render — cheap (filter over a small map),
+  // and the draw pass is repaint-on-rAF anyway. Subscribing to the
+  // schedule keeps us reactive when `recordReview` mutates it.
+  const reviewSchedule = useProgressStore(s => s.reviewSchedule ?? {})
+  const dueSet = useMemo(() => {
+    const now = Date.now()
+    const out = new Set<string>()
+    for (const [slug, rec] of Object.entries(reviewSchedule)) {
+      if (rec && rec.dueAt <= now) out.add(slug)
+    }
+    return out
+  }, [reviewSchedule])
   const nodesRef = useRef<SimNode[]>([])
   const linksRef = useRef<SimLink[]>([])
   const transformRef = useRef(d3.zoomIdentity)
@@ -312,7 +342,12 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
       // G4: empty shells drop to 0.45 fill alpha — they still read as
       // "a node lives here" but clearly haven't been written yet. The ring
       // stays at full pattern alpha so the domain vocabulary survives.
-      const nodeAlpha = hasContent ? 1 : 0.45
+      // K3: completed-but-due-for-review nodes get an additional alpha lift
+      // (0.7 multiplier). Subtle by design — the doc's "subtle dimming"
+      // signals "ready to revisit" without competing with the stronger
+      // empty-shell or completed-tint signals.
+      const isDueForReview = isCompleted && dueSet.has(node.data.slug)
+      const nodeAlpha = (hasContent ? 1 : 0.45) * (isDueForReview ? 0.7 : 1)
 
       // Node ring (outer) — H11: pattern now encodes DIFFICULTY, not
       // domain (domain is carried by color after H1's muted jewel palette;
@@ -477,7 +512,7 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
     if (needsExtraFrame || (simRef.current?.alpha() ?? 0) > 0.001) {
       animFrameRef.current = requestAnimationFrame(render)
     }
-  }, [width, height, getNodeColor, getNodeRadius, highlightedNode, completedSlugs, inProgressSlugs, isLight])
+  }, [width, height, getNodeColor, getNodeRadius, highlightedNode, completedSlugs, inProgressSlugs, isLight, dueSet])
 
   // Kick the render loop
   const scheduleRender = useCallback(() => {

@@ -101,6 +101,10 @@ class TopicDetail(BaseModel):
     depth: int
     has_intuition_layer: bool
     has_formal_layer: bool
+    # K3: spaced-repetition recall prompt. None when the topic doesn't opt in.
+    recall_prompt: str | None = None
+    # K5: canonical dataset name for the topic.
+    dataset: str | None = None
     parent_id: uuid.UUID | None
     created_by: uuid.UUID
     created_at: datetime
