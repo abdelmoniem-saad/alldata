@@ -8,3 +8,5 @@ has_intuition_layer: true
 has_formal_layer: false
 estimated_minutes: 8
 cycle_ported: K
+# M: immersive tour rendering — the graph is the background.
+tour: true

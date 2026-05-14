@@ -91,6 +91,8 @@ export interface TopicDetail {
   recall_prompt: string | null
   /** K5: canonical dataset name for the topic. Null when no dataset declared. */
   dataset: string | null
+  /** M: immersive tour rendering (graph background + floating prose). */
+  tour: boolean
   parent_id: string | null
   content_blocks: ContentBlock[]
   misconceptions: Misconception[]

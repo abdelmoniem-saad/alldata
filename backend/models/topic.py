@@ -56,6 +56,16 @@ class Topic(Base):
     # the titanic dataset?"
     dataset: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
 
+    # M: topic uses the immersive "tour" reading surface — graph as the
+    # full-viewport background, prose floating on top — instead of the
+    # standard ScrollReader. Flipped on per-topic via `meta.yaml: tour:
+    # true`. Today only the Shape of Statistics intro uses this; future
+    # onboarding tours opt in the same way.
+    # `server_default='0'` lets the J3 self-heal pass ALTER an existing
+    # SQLite table without supplying a row-fill value manually — SQLite
+    # rejects `ADD COLUMN ... NOT NULL` otherwise.
+    tour: Mapped[bool] = mapped_column(default=False, server_default="0")
+
     # Authorship
     created_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())

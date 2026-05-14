@@ -519,7 +519,12 @@ async def create_tables():
 
 
 def _self_heal_columns(conn) -> None:
-    """Add any columns declared on the model but missing in the live DB."""
+    """Add any columns declared on the model but missing in the live DB.
+
+    Handles SQLite's quirk that `ALTER TABLE ADD COLUMN ... NOT NULL`
+    requires a DEFAULT clause — we read the model's `server_default` (or
+    fall back to a sensible value per type) and emit it.
+    """
     from sqlalchemy import inspect, text
 
     inspector = inspect(conn)
@@ -533,9 +538,32 @@ def _self_heal_columns(conn) -> None:
             # Compile column type to a SQL string for the dialect we're on.
             col_type = col.type.compile(dialect=conn.dialect)
             nullable = "" if col.nullable else " NOT NULL"
-            print(f"  Self-heal: adding column {table.name}.{col.name} ({col_type})")
+
+            # Build a DEFAULT clause: prefer the model's server_default;
+            # otherwise synthesize a type-appropriate fallback for NOT NULL
+            # columns (SQLite rejects ALTER ADD NOT NULL without a default).
+            default_clause = ""
+            if col.server_default is not None:
+                # `server_default` may be a DefaultClause wrapping text
+                # like `'0'`. Pull out the raw literal.
+                raw = getattr(col.server_default, "arg", col.server_default)
+                if hasattr(raw, "text"):
+                    raw_str = str(raw.text)
+                else:
+                    raw_str = str(raw)
+                default_clause = f" DEFAULT {raw_str}"
+            elif not col.nullable:
+                type_str = col_type.upper()
+                if "BOOL" in type_str or "INT" in type_str:
+                    default_clause = " DEFAULT 0"
+                elif "FLOAT" in type_str or "REAL" in type_str or "NUMERIC" in type_str:
+                    default_clause = " DEFAULT 0"
+                else:
+                    default_clause = " DEFAULT ''"
+
+            print(f"  Self-heal: adding column {table.name}.{col.name} ({col_type}{default_clause})")
             conn.execute(
-                text(f'ALTER TABLE {table.name} ADD COLUMN {col.name} {col_type}{nullable}')
+                text(f'ALTER TABLE {table.name} ADD COLUMN {col.name} {col_type}{nullable}{default_clause}')
             )
 
 
@@ -975,6 +1003,10 @@ async def import_schema(db: AsyncSession, user: User):
                 # K5: optional canonical dataset for the topic's code blocks.
                 if meta.get("dataset"):
                     topic.dataset = str(meta["dataset"]).strip()
+
+                # M: immersive tour rendering flag.
+                if "tour" in meta:
+                    topic.tour = bool(meta["tour"])
 
                 # Parse and add content blocks
                 blocks = parse_content_file(content_path)

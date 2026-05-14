@@ -3,6 +3,7 @@ import { useParams, Link, useSearchParams } from 'react-router-dom'
 import { api, TopicDetail, PrerequisiteEntry } from '../api/client'
 import ScrollReader from '../components/topic/ScrollReader'
 import SlideView from '../components/topic/SlideView'
+import TourView from '../components/topic/TourView'
 import ZenChrome from '../components/topic/ZenChrome'
 import RecallPrompt from '../components/topic/RecallPrompt'
 import { useProgressStore } from '../stores/progressStore'
@@ -154,7 +155,42 @@ export default function TopicView() {
         }}
       >
         {hasContent ? (
-          viewMode === 'slides' ? (
+          topic.tour ? (
+            // M (immersive tour): graph fills the viewport behind the
+            // prose. The standard ScrollReader/SlideView surfaces don't
+            // apply — TourView owns its own layout.
+            <TourView
+              blocks={topic.content_blocks}
+              misconceptions={topic.misconceptions}
+              activeLayer={activeLayer}
+              scrollRef={scrollRef}
+              slug={slug || ''}
+              header={
+                <div style={{ marginBottom: 'var(--space-8)' }}>
+                  <h1 style={{
+                    fontSize: 'clamp(32px, 5vw, 52px)',
+                    fontWeight: 700,
+                    fontFamily: 'var(--font-serif)',
+                    letterSpacing: '-1.2px',
+                    lineHeight: 1.08,
+                    color: 'var(--color-text)',
+                    marginBottom: 12,
+                  }}>
+                    {topic.title}
+                  </h1>
+                  {topic.summary && (
+                    <p style={{
+                      fontSize: 17,
+                      color: 'var(--color-text-secondary)',
+                      lineHeight: 1.7,
+                    }}>
+                      {topic.summary}
+                    </p>
+                  )}
+                </div>
+              }
+            />
+          ) : viewMode === 'slides' ? (
             <SlideView
               blocks={topic.content_blocks}
               misconceptions={topic.misconceptions}

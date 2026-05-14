@@ -189,3 +189,30 @@ What's still not addressed:
 
 **Deferred.** All of the L plan's "Not in scope" list. Plus the new items above (K6 gear-label rewrite pass, dev-stack doc, server-side progress sync still gating analytics and public snapshots).
 
+---
+
+## M — Immersive tour (out-of-band start)
+
+This work landed outside the L→M planning cadence as a one-off response to user feedback on the Shape of Statistics intro. It establishes the substrate for a later M cycle; the rest of M's scope (H10 progress sync, content fill, K6 gear-label rewrite) carries forward as originally planned.
+
+**Intent.** The Shape of Statistics intro used a small graph pinned in the right column. The graph should be the *background* — full viewport, dimmed — and the prose should float over it. As the reader scrolls into each cluster's section, the background graph should zoom to that cluster and dim the rest of the field.
+
+**Shipped.**
+- `ForceGraph` gained two new props: `focusDomain` (dim non-matching nodes + edges) and `ambientAlpha` (overall opacity multiplier so the graph reads as background). The handle gained `fitNodes(slugs?)`, which computes the AABB of the requested nodes and pan/zooms to fit (no args → fits every visible node).
+- New `Topic.tour: bool` column (with `server_default='0'` so the self-heal pass adds it cleanly to SQLite). Pydantic schema + frontend `TopicDetail` type mirror it. Importer reads `meta.yaml: tour: true`.
+- `TourView` component — fixed-viewport graph as the background, soft radial vignette between graph and prose, prose blocks floating in zinc panels with `backdrop-filter`. Honors the same branch filter as `ScrollReader` / `SlideView`. IntersectionObserver band positioned near the top of the viewport (-22%/-76% rootMargin) so each section's anchor crosses it as the reader scrolls into the section header.
+- Tour-specific `graph_view` target semantics:
+  - `target: all` → camera fits every node; no focus dim.
+  - `target: <domain-slug>` → camera fits that cluster's centroid + bbox; non-matching domains dim.
+  - `target: <topic-slug>` → existing `centerOnSlug` behavior (single-node center).
+- `TopicView` dispatch — when `topic.tour === true`, mounts `TourView` and bypasses ScrollReader / SlideView entirely.
+- Updated `seed/topics/_meta/shape-of-statistics/{meta.yaml, content.md}` to flip on `tour: true` and to use the new target semantics (`target: all` for the overview, then each domain slug per cluster section).
+- J3 self-heal pass extended: it now emits a SQL `DEFAULT` clause for ALTER ADD COLUMN on NOT NULL columns, so future model additions land cleanly on SQLite (which otherwise rejects ADD NOT NULL without a default).
+
+**Retrospective.**
+- The narrow-band-near-top IntersectionObserver pattern is more reliable than ScrollReader's mid-viewport band when there's no content after the last anchor. A bottom spacer (`80vh`) ensures even the final anchor scrolls through the band.
+- Alpha tuning matters: `ambientAlpha=0.55` rendered the graph nearly invisible. Settled at `0.85` (graph reads as visible-but-quiet) paired with the radial vignette layer between graph and prose. Focus contrast 1.0 vs. 0.4 (was 0.22) — the off-cluster nodes need to stay readable as the *map*, not erase to context-nothing.
+- The force layout doesn't cleanly isolate clusters — neighboring clusters' nodes bleed into the frame when a cluster is targeted. Acceptable: the dim contrast still surfaces the focused cluster, and seeing how clusters touch is honest about the actual graph topology.
+
+**Deferred.** L's full "Not in scope" list still stands. The L retrospective items still apply (K6 gear-label rewrite pass, dev-stack doc, server-side progress sync).
+

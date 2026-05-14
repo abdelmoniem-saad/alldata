@@ -24,6 +24,21 @@ interface Props {
     completedSlugs: string[]
     inProgressSlugs: string[]
   } | null
+  /**
+   * M (immersive tour): when set, nodes whose domain does NOT match this
+   * value get their alpha multiplied down (so the rest of the graph reads
+   * as faint context behind the focused cluster). Edges connecting to
+   * non-matching nodes get the same treatment.
+   * Used by `TourView` to highlight a cluster section-by-section as the
+   * reader scrolls through the Shape of Statistics flythrough.
+   */
+  focusDomain?: string | null
+  /**
+   * M (immersive tour): overall alpha multiplier applied to every node
+   * and edge after the focusDomain math. Lets the caller render the graph
+   * as a dimmed *background* behind floating prose. Default 1 (no dim).
+   */
+  ambientAlpha?: number
 }
 
 /**
@@ -40,6 +55,13 @@ export interface ForceGraphHandle {
     slug: string,
     dir: 'up' | 'down' | 'left' | 'right',
   ) => GraphNode | null
+  /**
+   * M (immersive tour): pan + zoom so the named slugs fit inside the
+   * viewport with a small padding. Pass an empty array or no argument to
+   * fit every visible node. Used by the Shape of Statistics tour to frame
+   * a cluster as the reader scrolls into its section.
+   */
+  fitNodes: (slugs?: string[]) => void
 }
 
 interface SimNode extends d3.SimulationNodeDatum {
@@ -56,6 +78,8 @@ interface SimLink extends d3.SimulationLinkDatum<SimNode> {
 const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
   nodes, edges, width, height, onNodeClick, onNodeDoubleClick, onNodeHover, highlightedNode,
   progressOverride,
+  focusDomain,
+  ambientAlpha = 1,
 }, ref) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const simRef = useRef<d3.Simulation<SimNode, SimLink> | null>(null)
@@ -223,7 +247,16 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
       const edgeHot = sourceHot || targetHot
 
       const baseAlpha = link.data.edge_type === 'prerequisite' ? (isLight ? 0.25 : 0.18) : (isLight ? 0.12 : 0.08)
-      const alpha = edgeHot ? 0.5 : baseAlpha
+      // M (immersive tour): edges whose source AND target are outside the
+      // focused domain get dimmed alongside their nodes. Edges that bridge
+      // *into* the focused cluster stay at full alpha so prereq lines
+      // remain visible into the cluster.
+      const edgeMatchesFocus =
+        !focusDomain
+        || source.data.domain === focusDomain
+        || target.data.domain === focusDomain
+      const focusEdgeAlpha = edgeMatchesFocus ? 1 : 0.4
+      const alpha = (edgeHot ? 0.5 : baseAlpha) * focusEdgeAlpha * ambientAlpha
 
       const color = getNodeColor(source.data, source.glow)
 
@@ -347,7 +380,21 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
       // signals "ready to revisit" without competing with the stronger
       // empty-shell or completed-tint signals.
       const isDueForReview = isCompleted && dueSet.has(node.data.slug)
-      const nodeAlpha = (hasContent ? 1 : 0.45) * (isDueForReview ? 0.7 : 1)
+      // M (immersive tour): when `focusDomain` is set, nodes outside that
+      // domain dim to 0.22 so the focused cluster reads as the foreground
+      // and the rest of the graph as faint context. `ambientAlpha`
+      // multiplies *all* nodes/edges so the tour can render the whole
+      // graph as a background layer behind floating prose.
+      const matchesFocus = !focusDomain || node.data.domain === focusDomain
+      // M: 0.4 dim for off-focus nodes keeps them readable as context
+      // (the user wants to see the *rest* of the graph faintly behind
+      // the focused cluster, not erase it). 0.22 looked broken.
+      const focusAlpha = matchesFocus ? 1 : 0.4
+      const nodeAlpha =
+        (hasContent ? 1 : 0.45)
+        * (isDueForReview ? 0.7 : 1)
+        * focusAlpha
+        * ambientAlpha
 
       // Node ring (outer) — H11: pattern now encodes DIFFICULTY, not
       // domain (domain is carried by color after H1's muted jewel palette;
@@ -512,7 +559,7 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
     if (needsExtraFrame || (simRef.current?.alpha() ?? 0) > 0.001) {
       animFrameRef.current = requestAnimationFrame(render)
     }
-  }, [width, height, getNodeColor, getNodeRadius, highlightedNode, completedSlugs, inProgressSlugs, isLight, dueSet])
+  }, [width, height, getNodeColor, getNodeRadius, highlightedNode, completedSlugs, inProgressSlugs, isLight, dueSet, focusDomain, ambientAlpha])
 
   // Kick the render loop
   const scheduleRender = useCallback(() => {
@@ -928,6 +975,68 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
         sel.call(zoom.transform, target)
       } else {
         sel.transition().duration(450).call(zoom.transform, target)
+      }
+    },
+    /**
+     * M (immersive tour): pan + zoom so the given slugs fit in the
+     * viewport. Pass no args (or an empty array) to fit every visible
+     * node. Used by `TourView` to frame a cluster as the reader scrolls.
+     *
+     * The math:
+     *   - Compute the AABB of the selected nodes' simulation positions.
+     *   - Choose a zoom level k such that the bbox fits inside the
+     *     viewport with a 12% padding on each side.
+     *   - Choose a translate that centers the bbox in the viewport.
+     * Honors prefers-reduced-motion (snaps without easing).
+     */
+    fitNodes: (slugs?: string[]) => {
+      const canvas = canvasRef.current
+      const zoom = zoomRef.current
+      if (!canvas || !zoom) return
+
+      const requested = slugs && slugs.length > 0 ? new Set(slugs) : null
+      const subset = nodesRef.current.filter(n => {
+        if (n.x == null || n.y == null) return false
+        if (!requested) return true
+        return requested.has(n.data.slug)
+      })
+      if (subset.length === 0) return
+
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+      for (const n of subset) {
+        if (n.x! < minX) minX = n.x!
+        if (n.x! > maxX) maxX = n.x!
+        if (n.y! < minY) minY = n.y!
+        if (n.y! > maxY) maxY = n.y!
+      }
+      // Single-node case: synthesize a bbox of 200px so we don't zoom past max.
+      const bboxW = Math.max(maxX - minX, 200)
+      const bboxH = Math.max(maxY - minY, 200)
+      const cx = (minX + maxX) / 2
+      const cy = (minY + maxY) / 2
+
+      // M: small padding (5%) so clusters fill the viewport. Larger
+      // padding made the fit-all view feel zoomed out into nothing.
+      const padding = 0.05
+      const fitK = Math.min(
+        width / (bboxW * (1 + 2 * padding)),
+        height / (bboxH * (1 + 2 * padding)),
+      )
+      // Clamp so a tiny cluster doesn't zoom in past sanity, and a huge
+      // bbox doesn't pull the camera too far out. Min 0.45 keeps node
+      // labels legible; max 2.0 lets a single-cluster pan zoom in tight.
+      const targetK = Math.max(0.45, Math.min(fitK, 2.0))
+      const tx = width / 2 - targetK * cx
+      const ty = height / 2 - targetK * cy
+      const target = d3.zoomIdentity.translate(tx, ty).scale(targetK)
+
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      const sel = d3.select(canvas)
+      if (reduced) {
+        sel.call(zoom.transform, target)
+      } else {
+        sel.transition().duration(700).ease(d3.easeCubicInOut)
+          .call(zoom.transform, target)
       }
     },
     getNeighborInDirection: (slug, dir) => {

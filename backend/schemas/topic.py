@@ -105,6 +105,9 @@ class TopicDetail(BaseModel):
     recall_prompt: str | None = None
     # K5: canonical dataset name for the topic.
     dataset: str | None = None
+    # M: immersive tour rendering — full-viewport graph background +
+    # floating prose. Defaults to false; only opt-in topics set this.
+    tour: bool = False
     parent_id: uuid.UUID | None
     created_by: uuid.UUID
     created_at: datetime

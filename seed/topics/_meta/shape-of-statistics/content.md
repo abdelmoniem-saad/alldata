@@ -1,12 +1,10 @@
-<!-- block: graph_view, target: probability-foundations, anchor: tour-start, mobile_order: 1 -->
+<!-- block: graph_view, target: all, anchor: tour-start, mobile_order: 1 -->
 
 ---
 
 <!-- block: gear, n: 1, label: "Where you are" -->
 
-# The Shape of Statistics
-
-You're looking at every concept this platform teaches, all at once. Each glowing dot is an idea. Each line between them is a relationship — usually "this depends on that." There are about fifty dots. The graph on the right is the whole field, compressed into a single picture.
+You're looking at every concept this platform teaches, all at once. Each glowing dot is an idea. Each line between them is a relationship — usually "this depends on that." There are about fifty dots. The graph behind these words is the whole field, compressed into a single picture.
 
 Before we go anywhere, take eight minutes to walk through the shape of it. No equations, no code. Just the map.
 
@@ -28,7 +26,9 @@ You'll start here because every later concept points back to it.
 
 <!-- block: graph_view, target: distributions, anchor: tour-distributions -->
 
-## Distributions are the nouns
+<!-- block: gear, n: 3, label: "Distributions" -->
+
+## The nouns of the field
 
 Once you have the language, you need the things you talk about. **Distributions** are those things — the canonical shapes that show up over and over: normal, binomial, exponential, t, chi-squared.
 
@@ -40,7 +40,9 @@ Distributions are the nouns of the field. Inference is the verb.
 
 <!-- block: graph_view, target: statistical-inference, anchor: tour-inference -->
 
-## Inference is the move
+<!-- block: gear, n: 4, label: "Inference" -->
+
+## The move
 
 **Statistical inference** is what you do when you have data and you want to say something about the world the data came from. It's the move from "this sample" to "the population that produced it."
 
@@ -52,7 +54,9 @@ Most of statistics' bad reputation comes from people doing inference without kno
 
 <!-- block: graph_view, target: regression-modeling, anchor: tour-regression -->
 
-## Regression is the workhorse
+<!-- block: gear, n: 5, label: "Regression" -->
+
+## The workhorse
 
 When the question becomes "given X, what should I expect Y to be?", you've crossed into **regression**. Linear regression first — every later technique is a small modification of it. Logistic for binary outcomes. Multiple regression when you have several predictors. Regularization when you have too many.
 
@@ -62,7 +66,9 @@ Regression is the workhorse of applied data science. Most actual analysis you'll
 
 <!-- block: graph_view, target: data-science-practice, anchor: tour-practice -->
 
-## Practice is where it lands
+<!-- block: gear, n: 6, label: "Practice" -->
+
+## Where it lands
 
 **Data science practice** is the cluster of skills that lets you take the math out into the world. Exploratory data analysis. Cross-validation. The bias-variance tradeoff. Handling missing data. A/B tests. The bits the textbooks usually leave out.
 
@@ -70,9 +76,7 @@ This cluster is small because most of what makes a good practitioner is *judgmen
 
 ---
 
-<!-- block: graph_view, target: probability-foundations, anchor: tour-end -->
-
-<!-- block: gear, n: 6, label: "Where to start" -->
+<!-- block: graph_view, target: all, anchor: tour-end -->
 
 ## So — where do you start?
 
