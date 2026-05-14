@@ -35,16 +35,12 @@ import {
   useState,
   ReactNode,
 } from 'react'
-import ReactMarkdown from 'react-markdown'
-import remarkMath from 'remark-math'
-import rehypeKatex from 'rehype-katex'
 import { ContentBlock, Misconception } from '../../api/client'
-import CodeRunner from './CodeRunner'
 import PlotBlock from './blocks/PlotBlock'
-import DecisionBlock from './blocks/DecisionBlock'
-import PlaygroundBlock from './blocks/PlaygroundBlock'
 import GraphFlythrough from './blocks/GraphFlythrough'
 import ConfusionFlag from './blocks/ConfusionFlag'
+import BlockRenderer from './blocks/BlockRenderer'
+import { applyBranchFilter, parseMeta } from './blocks/branchFilter'
 import {
   useTopicStateStore,
   StateValue,
@@ -182,12 +178,14 @@ function BlockShell({
   showConfusionFlag: boolean
   children: ReactNode
 }) {
-  const flagged = useProgressStore(
-    s => (s.confusionFlags?.[slug]?.[block.id] ?? 0) > 0,
-  )
+  // L5: collapse two parallel selectors into one — both used to subscribe
+  // to the same `(slug, blockId)` cell. The primitive `Object.is` equality
+  // Zustand uses already prevents re-renders when an unrelated cell
+  // changes, but the duplicate subscription was wasteful in dev tools.
   const flagCount = useProgressStore(
     s => s.confusionFlags?.[slug]?.[block.id] ?? 0,
   )
+  const flagged = flagCount > 0
   const debug = typeof window !== 'undefined'
     && new URLSearchParams(window.location.search).get('debug') === 'confusion'
 
@@ -214,17 +212,18 @@ function BlockShell({
   )
 }
 
-function parseMeta(block: ContentBlock): Record<string, unknown> {
-  if (!block.meta) return {}
-  try {
-    const parsed = JSON.parse(block.meta)
-    return parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : {}
-  } catch {
-    return {}
-  }
-}
+// `parseMeta` and `applyBranchFilter` live in `./blocks/branchFilter.ts` so
+// SlideView (and any future reading surface) can reuse them without
+// re-implementing branch gating.
 
 // ─── Block dispatch ─────────────────────────────────────────────────────────
+//
+// L2: this used to be a 200-line inline switch over `block.block_type`.
+// SlideView grew its own (out-of-date) version, which is why every K-cycle
+// block type rendered as a black slide in `?mode=slides`. We extracted the
+// switch into `./blocks/BlockRenderer.tsx` and both surfaces now route
+// through it. The wrapper below preserves the ScrollReader-specific
+// `inlinePlots` mobile-fallback flag while delegating the actual rendering.
 
 interface BlockProps {
   block: ContentBlock
@@ -235,316 +234,18 @@ interface BlockProps {
 }
 
 function BlockSwitch({ block, meta, slug, inlinePlots }: BlockProps) {
-  switch (block.block_type) {
-    case 'markdown':
-      return (
-        <div className="prose">
-          <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-            {block.content}
-          </ReactMarkdown>
-        </div>
-      )
-
-    case 'code_python':
-    case 'simulation':
-    case 'code_r':
-      return (
-        <CodeRunner
-          code={block.content}
-          language={block.block_type === 'code_r' ? 'r' : 'python'}
-          isEditable={block.is_editable}
-          expectedOutput={block.expected_output}
-          isSimulation={block.block_type === 'simulation'}
-          autoRun={meta.auto_run === true}
-        />
-      )
-
-    case 'plot':
-      // Desktop: pinned in the right column, hidden inline. Mobile: render in flow.
-      if (!inlinePlots) return null
-      return <PlotBlock slug={slug} meta={meta} />
-
-    case 'graph_view':
-      // K2: same pinning rule as `plot` — desktop pins; mobile renders inline.
-      if (!inlinePlots) return null
-      return <GraphFlythrough target={String(meta.target ?? '')} />
-
-    case 'callout': {
-      const kind = String(meta.kind ?? 'insight')
-      const accent =
-        kind === 'warning' ? 'var(--color-advanced)' :
-        kind === 'aside' ? 'var(--color-text-muted)' :
-        'var(--color-accent)'
-      const label =
-        kind === 'warning' ? 'Note' :
-        kind === 'aside' ? 'Aside' :
-        'Insight'
-      return (
-        <div style={{
-          padding: '14px 18px',
-          borderRadius: 'var(--radius)',
-          background: 'var(--color-bg-secondary)',
-          borderLeft: `3px solid ${accent}`,
-        }}>
-          <div style={{
-            fontSize: 10, fontWeight: 700, letterSpacing: '1.5px',
-            textTransform: 'uppercase', color: accent, marginBottom: 6,
-          }}>{label}</div>
-          <div className="prose">
-            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-              {block.content}
-            </ReactMarkdown>
-          </div>
-        </div>
-      )
-    }
-
-    case 'derivation': {
-      const title = String(meta.title ?? 'Derivation')
-      const collapsed = meta.collapsed !== false
-      return (
-        <details open={!collapsed} style={{
-          padding: 14,
-          borderRadius: 'var(--radius)',
-          border: '1px solid var(--color-border-subtle)',
-          background: 'var(--color-bg-secondary)',
-        }}>
-          <summary style={{
-            cursor: 'pointer',
-            fontSize: 13,
-            fontWeight: 600,
-            color: 'var(--color-text)',
-            listStyle: 'none',
-            display: 'flex', alignItems: 'center', gap: 8,
-          }}>
-            <span style={{ color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)', fontSize: 10 }}>›</span>
-            {title}
-          </summary>
-          <div className="prose" style={{ marginTop: 12 }}>
-            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-              {block.content}
-            </ReactMarkdown>
-          </div>
-        </details>
-      )
-    }
-
-    case 'step_through': {
-      const steps = Array.isArray(meta.steps) ? (meta.steps as string[]) : []
-      return <StepThrough steps={steps} />
-    }
-
-    case 'misconception_inline':
-      return (
-        <div style={{
-          padding: '14px 18px',
-          borderRadius: 'var(--radius)',
-          background: 'var(--color-bg-secondary)',
-          borderLeft: '3px solid var(--color-advanced)',
-        }}>
-          <div style={{
-            fontSize: 10, fontWeight: 700, letterSpacing: '1.5px',
-            textTransform: 'uppercase', color: 'var(--color-advanced)', marginBottom: 6,
-          }}>Misconception</div>
-          <div className="prose">
-            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-              {block.content}
-            </ReactMarkdown>
-          </div>
-        </div>
-      )
-
-    case 'decision':
-      return <DecisionBlock slug={slug} anchor={block.anchor} meta={meta as any} />
-
-    case 'playground':
-      return <PlaygroundBlock slug={slug} anchor={block.anchor} meta={meta as any} />
-
-    case 'state':
-    case 'state_reset':
-      // Authoring-only — wired in via effects, no rendered output.
-      return null
-
-    case 'dataset': {
-      // K5: in-prose dataset attribution chip — sits above a code block
-      // that uses `load("name")`. Pure metadata, links to /datasets#name.
-      const name = String(meta.name ?? '')
-      const source = String(meta.source ?? '')
-      if (!name) return null
-      return (
-        <div
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 'var(--space-2)',
-            padding: '4px 10px',
-            borderRadius: 'var(--radius)',
-            border: '1px solid var(--color-border-subtle)',
-            background: 'var(--color-bg-secondary)',
-            fontSize: 11,
-            color: 'var(--color-text-secondary)',
-            marginBottom: 'var(--space-2)',
-          }}
-        >
-          <span style={{
-            fontSize: 9,
-            fontWeight: 700,
-            letterSpacing: '1px',
-            textTransform: 'uppercase',
-            color: 'var(--color-accent)',
-          }}>
-            Dataset
-          </span>
-          <a
-            href={`/datasets#${name}`}
-            style={{ color: 'var(--color-text)', textDecoration: 'none' }}
-          >
-            {name}
-          </a>
-          {source && <span style={{ opacity: 0.7 }}>· {source}</span>}
-        </div>
-      )
-    }
-
-    case 'gear': {
-      // K1: a quiet section divider. The number + label name where the
-      // reader is in the topic's six-gear structure (Spark / Intuition /
-      // Visualization / Formalism / Code / Connections). Pure metadata —
-      // no semantic effect on neighboring blocks.
-      const n = typeof meta.n === 'number' ? meta.n : null
-      const label = String(meta.label ?? '')
-      if (n === null) return null
-      return (
-        <div
-          aria-label={`Gear ${n}: ${label}`}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 'var(--space-3)',
-            margin: 'var(--space-8) 0 var(--space-4)',
-            fontSize: 10,
-            fontWeight: 700,
-            letterSpacing: '1.5px',
-            textTransform: 'uppercase',
-            color: 'var(--color-text-muted)',
-          }}
-        >
-          <span style={{ color: 'var(--color-accent)' }}>Gear {n}</span>
-          <span
-            aria-hidden
-            style={{
-              flex: '0 0 1.5rem',
-              height: 1,
-              background: 'var(--color-border-subtle)',
-            }}
-          />
-          <span>{label}</span>
-        </div>
-      )
-    }
-
-    default:
-      return (
-        <div className="prose">
-          <ReactMarkdown>{block.content}</ReactMarkdown>
-        </div>
-      )
-  }
-}
-
-// ─── StepThrough ────────────────────────────────────────────────────────────
-
-/**
- * Reveals steps with a 300ms stagger once the list scrolls into view. Under
- * `prefers-reduced-motion` all steps are visible immediately.
- */
-function StepThrough({ steps }: { steps: string[] }) {
-  const reduced = usePrefersReducedMotion()
-  const [visible, setVisible] = useState(reduced ? steps.length : 0)
-  const ref = useRef<HTMLOListElement | null>(null)
-
-  useEffect(() => {
-    if (reduced) {
-      setVisible(steps.length)
-      return
-    }
-    const el = ref.current
-    if (!el) return
-    const obs = new IntersectionObserver(entries => {
-      for (const e of entries) {
-        if (e.isIntersecting) {
-          obs.disconnect()
-          let i = 0
-          const tick = () => {
-            i++
-            setVisible(i)
-            if (i < steps.length) setTimeout(tick, 300)
-          }
-          tick()
-          break
-        }
-      }
-    }, { threshold: 0.25 })
-    obs.observe(el)
-    return () => obs.disconnect()
-  }, [steps.length, reduced])
-
   return (
-    <ol
-      ref={ref}
-      style={{
-        paddingLeft: 24,
-        borderLeft: '2px solid var(--color-accent)',
-        margin: 0,
-        listStyle: 'decimal',
-      }}
-    >
-      {steps.map((s, i) => (
-        <li
-          key={i}
-          style={{
-            marginBottom: 12,
-            paddingLeft: 4,
-            lineHeight: 1.7,
-            opacity: i < visible ? 1 : 0,
-            transform: i < visible ? 'translateY(0)' : 'translateY(4px)',
-            transition: 'opacity 280ms ease, transform 280ms ease',
-          }}
-        >
-          <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-            {s}
-          </ReactMarkdown>
-        </li>
-      ))}
-    </ol>
+    <BlockRenderer
+      block={block}
+      meta={meta}
+      slug={slug}
+      mode="scroll"
+      inlinePlots={inlinePlots}
+    />
   )
 }
 
 // ─── Branch filter ──────────────────────────────────────────────────────────
-
-/**
- * Drop blocks tagged `depends_on: <anchor>, branch: <id>` whose decision the
- * user didn't pick. Untagged blocks always render — branching is opt-in.
- *
- * `branch` may be a single id or `|`-separated ids ("a|c") for "show if any".
- */
-function applyBranchFilter(
-  blocks: ContentBlock[],
-  metaCache: Map<string, Record<string, unknown>>,
-  decisions: Record<string, string>,
-): ContentBlock[] {
-  return blocks.filter(b => {
-    const meta = metaCache.get(b.id)
-    if (!meta) return true
-    const dep = meta.depends_on
-    const branch = meta.branch
-    if (typeof dep !== 'string' || typeof branch !== 'string') return true
-    const picked = decisions[dep]
-    if (!picked) return false
-    const allowed = branch.split('|').map(s => s.trim()).filter(Boolean)
-    return allowed.includes(picked)
-  })
-}
 
 // ─── ScrollReader ───────────────────────────────────────────────────────────
 

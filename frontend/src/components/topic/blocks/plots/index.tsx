@@ -292,6 +292,12 @@ const PopulationDotGrid: Spec = ({ state, width = 420, height = 320 }) => {
   const strategy = str(state, 'treatment_strategy', 'none')
   useColors()
 
+  // L5: track the previous strategy so we can pick a snappier transition
+  // when the user picks a decision option (discrete state change). The
+  // 600ms ease feels right for slider drags but laggy on one-shot picks
+  // — see the K retrospective for the carry-over.
+  const prevStrategyRef = useRef(strategy)
+
   // J5: scaffolding effect. Runs once per mount (or geometry change). Creates
   // 1,000 circles at fixed positions. The expensive bit — DOM allocation — is
   // paid once instead of every state write.
@@ -353,19 +359,27 @@ const PopulationDotGrid: Spec = ({ state, width = 420, height = 320 }) => {
       return colors.muted
     }
 
-    // J6: respect prefers-reduced-motion. Without it, dot recolor eases over
-    // ~600ms so the consequence of a decision lands as a visible pulse rather
-    // than an instant snap.
+    // J6 / L5: respect prefers-reduced-motion. Without it, dot recolor eases
+    // over a duration that depends on what changed:
+    //   - 300ms when `treatment_strategy` changed (a discrete option pick —
+    //     the user clicked a decision, wants snappy feedback)
+    //   - 600ms when only scalar parameters changed (prior / sens / spec —
+    //     usually a slider drag where the smoother ease reads as the curve
+    //     "responding" to the drag)
     const reducedMotion =
       typeof window !== 'undefined' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const strategyChanged = prevStrategyRef.current !== strategy
+    prevStrategyRef.current = strategy
+    const duration = strategyChanged ? 300 : 600
+
     const sel = g.selectAll<SVGCircleElement, number>('circle').data(d3.range(N))
     if (reducedMotion) {
       sel
         .attr('fill', i => colorFor(dots[i]))
         .attr('opacity', i => dots[i].sick ? 1 : 0.55)
     } else {
-      sel.transition().duration(600).ease(d3.easeCubicInOut)
+      sel.transition().duration(duration).ease(d3.easeCubicInOut)
         .attr('fill', i => colorFor(dots[i]))
         .attr('opacity', i => dots[i].sick ? 1 : 0.55)
     }

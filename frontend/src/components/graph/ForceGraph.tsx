@@ -891,12 +891,35 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
       const node = nodesRef.current.find(n => n.data.slug === slug)
       if (!node || node.x == null || node.y == null) return
 
+      // L3: domain roots (depth-0 nodes whose slug equals their own domain
+      // name) sit at the center of nothing useful in the force layout — the
+      // simulation balances them against repulsion from every cluster
+      // member, so the root often ends up *outside* the visible cloud of
+      // its own cluster. For those, target the cluster centroid instead:
+      // the geometric center of all non-root nodes that share the domain.
+      // Falls back to the root's own position if the cluster is empty (rare
+      // — only `_meta` is empty, and it's filtered out of /explore anyway).
+      let targetX = node.x
+      let targetY = node.y
+      if (node.data.depth === 0) {
+        const members = nodesRef.current.filter(
+          n => n.data.domain === slug
+            && n.data.depth !== 0
+            && n.x != null
+            && n.y != null,
+        )
+        if (members.length > 0) {
+          targetX = members.reduce((s, n) => s + (n.x ?? 0), 0) / members.length
+          targetY = members.reduce((s, n) => s + (n.y ?? 0), 0) / members.length
+        }
+      }
+
       // Keep current zoom unless we're zoomed all the way out — in which case
       // bring the user in a bit so the centered node is actually visible.
       const currentK = transformRef.current.k
       const targetK = currentK < 0.6 ? 1 : currentK
-      const tx = width / 2 - targetK * node.x
-      const ty = height / 2 - targetK * node.y
+      const tx = width / 2 - targetK * targetX
+      const ty = height / 2 - targetK * targetY
       const target = d3.zoomIdentity.translate(tx, ty).scale(targetK)
 
       const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches

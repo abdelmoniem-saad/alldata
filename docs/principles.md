@@ -46,6 +46,8 @@ Schema changes ship alongside a `python -m seed.import_seed` run, not hand-writt
 
 Topics live in `seed/topics/{domain}/{slug}/` as the source of truth. The database is a derived artifact. Adding a column to a model means: edit the model, run the importer, and the importer's self-healing pass adds the column to the live DB. There are no Alembic migrations, no manual SQL, no migration ordering to track. If a change can't be expressed by re-running the importer, it's the wrong change.
 
+**Hidden domains.** Domains whose slug starts with an underscore (`_meta`, future `_drafts`, etc.) are hidden navigation surfaces. They live in the DB and serve topic pages normally — `/topic/shape-of-statistics` works — but they're filtered out of `/explore`, the search dropdowns, and the public-snapshot graph. The convention is the leading underscore; the filter is applied at the graph API layer (`backend/services/graph_engine.py:get_full_graph`). New hidden domains land by adding a `_<name>` entry to `seed/schema.yaml`'s domain list. (K2 introduced this for the "Shape of Statistics" intro.)
+
 ---
 
 ## How to use this list

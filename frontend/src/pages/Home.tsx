@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useRef } from 'react'
+import { Link } from 'react-router-dom'
 import { useProgressStore } from '../stores/progressStore'
 import { useThemeStore } from '../stores/themeStore'
 import { DOMAIN_SLUGS, DOMAIN_LABEL, DOMAIN_DESC, domainColorHex, cssVarHex } from '../lib/domain'
+import SearchDropdown from '../components/SearchDropdown'
 
 // Domain metadata lives here; colors are resolved at render time from CSS vars
 // so the theme toggle owns the palette.
@@ -24,8 +25,6 @@ const domains = DOMAIN_SLUGS.map(slug => ({
 const TOTAL_CONTENT_TOPICS = 20  // Topics with actual content
 
 export default function Home() {
-  const navigate = useNavigate()
-  const [searchQuery, setSearchQuery] = useState('')
   const { completedSlugs } = useProgressStore()
   const { theme } = useThemeStore()
 
@@ -98,38 +97,28 @@ export default function Home() {
           run live code. Learn statistics the way your brain actually works.
         </p>
 
-        {/* Quick path finder */}
+        {/* L4: Home hero search uses the shared `SearchDropdown`. Typing
+            surfaces a live dropdown of matching topics; pressing Enter on a
+            highlighted result navigates. The "Explore Graph" CTA stays
+            beside the search as the alternate entry point. */}
         <div style={{
           display: 'flex',
-          gap: 8,
-          maxWidth: 480,
+          gap: 'var(--space-2)',
+          maxWidth: 560,
           margin: '0 auto 20px',
-          padding: 4,
-          background: 'var(--color-surface)',
-          borderRadius: 14,
-          border: '1px solid var(--color-border)',
+          alignItems: 'flex-start',
         }}>
-          <input
-            className="input"
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === 'Enter' && searchQuery) {
-                navigate(`/topic/${searchQuery.toLowerCase().replace(/\s+/g, '-')}`)
-              }
-            }}
-            placeholder="What do you want to learn? e.g. Bayesian Inference"
-            style={{
-              flex: 1,
-              border: 'none',
-              background: 'transparent',
-              padding: '10px 14px',
-            }}
-          />
+          <div style={{ flex: 1 }}>
+            <SearchDropdown
+              variant="inline"
+              placeholder="What do you want to learn? e.g. Bayesian Inference"
+            />
+          </div>
           <Link to="/explore" className="btn btn-primary" style={{
             borderRadius: 10,
-            padding: '10px 20px',
+            padding: '12px 20px',
             fontSize: 14,
+            whiteSpace: 'nowrap',
           }}>
             Explore Graph
           </Link>

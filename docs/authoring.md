@@ -1,6 +1,6 @@
 # Authoring guide
 
-The directive reference. This is the spec for everyone writing topic content. Pair with `meta-yaml.md` for the per-topic header and `principles.md` for the hard constraints.
+The directive reference. This is the spec for everyone writing topic content. Pair with [`meta-yaml.md`](meta-yaml.md) for the per-topic header and [`principles.md`](principles.md) for the hard constraints. For the rendered behavior of each directive — what the reader actually sees on the page — see [`features.md`](features.md).
 
 The authoring loop is short:
 
@@ -51,9 +51,11 @@ correct: c
 <!-- /block -->
 ```
 
-Gear markers are pure metadata — they render as a quiet small-caps section divider in the prose column. Authors can omit them entirely; topics without gear markers parse and render identically.
+Gear markers are pure metadata. The reader sees only the `label:` text — a quiet hairline divider with a small-caps caption. The `n:` number is for ordering and validation only; it doesn't appear in the rendered topic. Markers without an explicit `label:` render *nothing* — they're invisible structural anchors.
 
-**Rule of thumb.** Most topics use all six gears. Exceptions:
+**Don't reuse the canonical gear names verbatim.** The names *Spark / Intuition / Visualization / Formalism / Code / Connections* are template placeholders, not section titles. When every topic carries the same six labels in the same order the topics feel templated. Pick a label that names what *this* section is about: "The 99% trap," "Why $1/\sqrt{n}$," "Where Monty's choice gives you information." Or drop the label entirely and let the section flow without a divider — that's also fine.
+
+**Rule of thumb.** Most topics walk through all six gears. Exceptions:
 - The "Shape of Statistics" intro skips Formalism and Code (gears 4 + 5).
 - A pure derivation topic might skip the Spark + Intuition (1 + 2) and lead with the equation.
 - Don't skip Connections (gear 6) — that's where the graph stays alive on the page.
@@ -173,9 +175,33 @@ Pinned right-column visual on desktop. Inline on mobile.
 <!-- block: gear, n: 1, label: "The spark" -->
 ```
 
-Pure structure metadata — names the gear a section belongs to. `n` is 1..6 (Spark / Intuition / Visualization / Formalism / Code / Connections). `label` is the displayed name. Renders as a quiet small-caps divider; no semantic effect on neighboring blocks. See "The six-gear scaffold" above for the template.
+Pure structure metadata. `n` is 1..6 (Spark / Intuition / Visualization / Formalism / Code / Connections) — used for parser validation and authoring ordering; **not rendered**. `label` is what the reader sees: a small-caps hairline divider. A marker without `label:` renders nothing — invisible structural anchor. See "The six-gear scaffold" above for the template and the rule against reusing the canonical gear names verbatim.
 
 Optional. A topic without gear markers renders identically.
+
+### `dataset`
+
+```markdown
+<!-- block: dataset, name: "titanic", source: "Kaggle" -->
+```
+
+In-prose attribution chip above a code block that uses `load("titanic")`. `name` must match a dataset in `seed/datasets/manifest.yaml` (and a corresponding `seed/datasets/{name}.csv`). `source` is free-form attribution text. Pure metadata — links to `/datasets#{name}`.
+
+The topic-level `dataset:` field in `meta.yaml` is the parallel surface: setting `dataset: titanic` adds the topic to `/datasets`' reverse index (so a reader can browse "what topics use the titanic dataset?"). The two are independent — use the directive for inline attribution, the meta.yaml field for catalog membership.
+
+**The manifest format.** `seed/datasets/manifest.yaml` catalogs every shipped dataset. Each entry has:
+
+| Field | Required | Description |
+|---|---|---|
+| `name` | yes | Slug used in `load("…")` and `meta.yaml: dataset:`. Must match `{name}.csv` in the same directory. |
+| `title` | yes | Human-readable name shown in the `/datasets` index. |
+| `description` | yes | One sentence about what the dataset shows. |
+| `source` | yes | Origin / attribution (free-form string: "Synthetic (seeded RNG)", "Kaggle", "1936 Fisher", etc.). |
+| `columns` | yes | Column names, for the dataset card. |
+| `rows` | yes | Row count, for the dataset card. |
+| `synthetic` | yes | `true` if generated, `false` if real-world. |
+
+A manifest entry without a matching CSV will return 404 from `/api/datasets/{name}` — keep the two paired.
 
 ### `step_through`
 

@@ -2,6 +2,8 @@
 
 The development ledger. Each cycle is a coordinated batch of work named with a single letter. Inside a cycle, sub-phases are numbered (sometimes lettered for parallel sub-tracks: H5a, H5b, …). Code references like `// H6: search chip` or `// I5a: decision block` point to whichever cycle introduced or last touched a piece of code, so this file is the only place where those references get glossed.
 
+For the live catalog of every user-visible feature (cross-referenced with the cycle that introduced or last touched it) see [`features.md`](features.md). This file is the *when and why*; that file is the *what and how*.
+
 Future cycles append. Closed cycles don't get edited except to add a retrospective.
 
 ---
@@ -158,4 +160,32 @@ What the next cycle should pick up:
 - **Plot library expansion**, only when a port surfaces a concrete need. K6 didn't surface any.
 
 **Deferred.** All of the K plan's "Not in scope" list, plus the new items in the K retrospective above (K1's missing principles-doc update, K5's missing manifest-doc).
+
+---
+
+## L — Polish & parity
+
+**Intent.** Fix four small-but-corrosive bugs the user surfaced after the K7 close: gear labels making every topic feel templated, SlideView breaking on every K-cycle block type, GraphFlythrough landing outside cluster nodes, and search dropdowns missing in two of three surfaces. Plus carry-over polish from K's retrospective and a comprehensive feature catalog to close the docs-ecosystem gap.
+
+**Shipped.**
+- L1: Gear dividers feel organic — dropped the "Gear N" prefix from rendering; unlabeled gears now invisible; clean hairline + small-caps label only. Authoring guide explicitly warns against reusing canonical gear names.
+- L2: SlideView parity — extracted `BlockRenderer` into `frontend/src/components/topic/blocks/BlockRenderer.tsx` shared by both reading surfaces. SlideView now routes every block through it (with mode='slides' branching for slide-specific framing: full-bleed plots, hero-typography gear titles, invisible dataset/state directives). Pulled `StepThrough` and `branchFilter` / `parseMeta` into their own modules so SlideView can import the same filter ScrollReader uses.
+- L3: GraphFlythrough cluster centroid — `centerOnSlug` auto-detects depth-0 nodes (domain roots) and pans to the centroid of their cluster's members instead of the root node's force-balanced position. Targets like `probability-foundations` now land in regions that actually contain visible cluster members.
+- L4: SearchDropdown unification — new `frontend/src/components/SearchDropdown.tsx` shared by the navbar Ctrl-K modal and the Home page hero. The Home page lost its naive Enter-slugify navigation in favor of a live dropdown. Backend `/api/graph/search` made dialect-portable: Postgres path keeps pg_trgm; SQLite path falls back to a CASE-ranked LIKE so the dev stack works.
+- L5: K-retro carry-overs — `BlockShell`'s parallel confusion-flag selectors collapsed into one. Dot-grid recolor transition now scales by state-change type (300ms for decision picks, 600ms for slider drags). `GraphFlythrough` gained a session-scoped module-level graph-payload cache so multiple tour mounts don't re-fetch. Doc gaps: `docs/principles.md` got the `_meta` hidden-domain note under Principle 7; `docs/authoring.md` got a `dataset` directive section + the `manifest.yaml` schema.
+- L6: `docs/features.md` — comprehensive feature catalog. Every user-visible thing organized by surface, with where/what/how-it-works/code-pointer/cycle-origin per entry. Cross-linked from `cycles.md`, `authoring.md`, and `vision.md`.
+
+**Retrospective.**
+
+What L exposed:
+- The K6 ports already use generic gear labels ("The spark", "Intuition", "The decision"). L1's authoring guidance only affects *new* ports — the existing 12 still need a label-rewrite pass. Queued for M as part of either the content-fill phase or its own polish pass.
+- The SlideView `gear → title slide` treatment works but doesn't *merge* with the next content slide as the plan originally imagined. Adjacent gear-then-content stay as two separate slides today. That's actually cleaner than the merge — but if it stops feeling right we can revisit.
+- The dev stack's SQLite-vs-Postgres split (L4 search) is the second time this season we've hit it (J3 was the first, with the dataset endpoint that uses raw filesystem paths). Worth a small `docs/dev-stack.md` entry in M explaining which features differ between the two and why.
+
+What's still not addressed:
+- Server-side progress sync (H10) — still M's headline. K4's heatmap and K7's snapshot both gate on it.
+- 17 schema topics remain on the legacy 3-block structure. K6 hit 12 ports in the probability arm; M's content-fill phase aims for the distributions + statistical-inference clusters.
+- The `connections` directive proposed in I7 is still uncalled-for — `callout` covers Gear 6 fine.
+
+**Deferred.** All of the L plan's "Not in scope" list. Plus the new items above (K6 gear-label rewrite pass, dev-stack doc, server-side progress sync still gating analytics and public snapshots).
 

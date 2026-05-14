@@ -161,6 +161,7 @@ export default function TopicView() {
               activeLayer={activeLayer}
               topicTitle={topic.title}
               domainColor={domainColor}
+              slug={slug || ''}
               current={slideIdx}
               onChange={setSlideIdx}
               onSlidesCount={setSlideTotal}

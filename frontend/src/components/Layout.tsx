@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
-import { api, GraphNode } from '../api/client'
 import { useThemeStore } from '../stores/themeStore'
-import { domainVar } from '../lib/domain'
+import SearchDropdown from './SearchDropdown'
+import { GraphNode } from '../api/client'
 
 const navItems = [
   { path: '/', label: 'Home' },
@@ -204,15 +204,16 @@ export default function Layout() {
   )
 }
 
-/** Command palette style search */
+/**
+ * CommandSearch — L4. Ctrl-K modal that hosts a `SearchDropdown` inside
+ * the modal frame. The modal owns the open/closed state + keyboard
+ * shortcut; the search behavior (debounce, dropdown, arrow-key nav, empty
+ * states) lives in `SearchDropdown` so the navbar and the Home page
+ * share one implementation.
+ */
 function CommandSearch() {
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
-  const [query, setQuery] = useState('')
-  const [results, setResults] = useState<GraphNode[]>([])
-  const [selectedIdx, setSelectedIdx] = useState(0)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>()
 
   // Keyboard shortcut: Ctrl/Cmd + K
   useEffect(() => {
@@ -227,45 +228,9 @@ function CommandSearch() {
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
-  useEffect(() => {
-    if (open) {
-      inputRef.current?.focus()
-      setQuery('')
-      setResults([])
-    }
-  }, [open])
-
-  const search = (q: string) => {
-    setQuery(q)
-    setSelectedIdx(0)
-    clearTimeout(debounceRef.current)
-    if (q.length < 2) { setResults([]); return }
-
-    debounceRef.current = setTimeout(async () => {
-      try {
-        const res = await api.searchTopics(q)
-        setResults(res)
-      } catch {
-        setResults([])
-      }
-    }, 200)
-  }
-
-  const go = (slug: string) => {
-    navigate(`/topic/${slug}`)
+  const onSelect = (node: GraphNode) => {
+    navigate(`/topic/${node.slug}`)
     setOpen(false)
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowDown') {
-      e.preventDefault()
-      setSelectedIdx(i => Math.min(i + 1, results.length - 1))
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault()
-      setSelectedIdx(i => Math.max(i - 1, 0))
-    } else if (e.key === 'Enter' && results[selectedIdx]) {
-      go(results[selectedIdx].slug)
-    }
   }
 
   return (
@@ -354,90 +319,14 @@ function CommandSearch() {
               transition: 'background var(--transition-smooth), border-color var(--transition-smooth), box-shadow var(--transition-smooth)',
             }}
           >
-            {/* Search input */}
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 10,
-              padding: '12px 16px',
-              borderBottom: '1px solid var(--color-border)',
-            }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                stroke="var(--color-text-muted)" strokeWidth="2">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-              </svg>
-              <input
-                ref={inputRef}
-                value={query}
-                onChange={e => search(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Search topics, concepts, formulas..."
-                style={{
-                  flex: 1,
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'var(--color-text)',
-                  fontSize: 15,
-                  outline: 'none',
-                  fontFamily: 'var(--font-sans)',
-                }}
-              />
-              <kbd style={{
-                padding: '2px 6px', borderRadius: 4,
-                background: 'var(--color-surface)', border: '1px solid var(--color-border)',
-                fontSize: 10, color: 'var(--color-text-muted)',
-              }}>
-                ESC
-              </kbd>
-            </div>
-
-            {/* Results */}
-            <div style={{ maxHeight: 360, overflow: 'auto', padding: 6 }}>
-              {results.length === 0 && query.length >= 2 && (
-                <div style={{
-                  padding: 24, textAlign: 'center',
-                  color: 'var(--color-text-muted)', fontSize: 13,
-                }}>
-                  No topics found for "{query}"
-                </div>
-              )}
-              {results.map((r, i) => {
-                const domainColor = domainVar(r.domain)
-                return (
-                  <button
-                    key={r.id}
-                    onClick={() => go(r.slug)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 10,
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: 8,
-                      border: 'none',
-                      background: i === selectedIdx ? 'var(--color-surface)' : 'transparent',
-                      color: 'var(--color-text)',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      fontSize: 14,
-                      transition: 'background 0.1s',
-                    }}
-                    onMouseEnter={() => setSelectedIdx(i)}
-                  >
-                    <span style={{
-                      width: 8, height: 8, borderRadius: '50%',
-                      background: domainColor,
-                      boxShadow: '0 0 6px var(--glass-border)',
-                      flexShrink: 0,
-                    }} />
-                    <span style={{ fontWeight: 500 }}>{r.title}</span>
-                    {r.difficulty && (
-                      <span className={`badge badge-${r.difficulty}`} style={{ marginLeft: 'auto' }}>
-                        {r.difficulty}
-                      </span>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
+            {/* L4: the embedded variant has its own input + results list;
+                the modal just hosts it inside the overlay frame. */}
+            <SearchDropdown
+              variant="embedded"
+              autoFocus
+              placeholder="Search topics, concepts, formulas..."
+              onSelect={onSelect}
+            />
           </div>
         </div>
       )}

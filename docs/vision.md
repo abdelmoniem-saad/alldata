@@ -32,3 +32,7 @@ The reader's experience inside a topic is **ask → act → explain**.
 ## What success looks like
 
 A reader finishes a topic and the felt understanding sticks. They could explain to someone else why the false-positive rate dominates the posterior at low prevalence, not because they memorized a formula, but because they watched the dot grid recolor under their own choice. The platform's job is to keep building topics that work that way and to keep the surface around them quiet enough that the math is what the reader remembers.
+
+---
+
+For the inventory of what's been built so far — every user-visible feature, no matter how small — see [`features.md`](features.md).

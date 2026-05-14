@@ -30,15 +30,39 @@ interface Props {
   height?: number
 }
 
+// L5: session-scoped cache for the graph payload. A tour topic that uses
+// multiple `graph_view` directives mounts a fresh `GraphFlythrough` per
+// section, and without this cache every section re-fetched `/api/graph`.
+// The graph is theme-independent and stable for a session; we keep the
+// payload + the in-flight promise so concurrent mounts share one fetch.
+type GraphPayload = { nodes: GraphNode[]; edges: GraphEdge[] }
+let _graphCache: GraphPayload | null = null
+let _graphInflight: Promise<GraphPayload> | null = null
+
+async function fetchGraphCached(): Promise<GraphPayload> {
+  if (_graphCache) return _graphCache
+  if (_graphInflight) return _graphInflight
+  _graphInflight = api.getGraph().then(g => {
+    _graphCache = { nodes: g.nodes, edges: g.edges }
+    _graphInflight = null
+    return _graphCache
+  }).catch(err => {
+    _graphInflight = null
+    throw err
+  })
+  return _graphInflight
+}
+
 export default function GraphFlythrough({ target, width = 420, height = 360 }: Props) {
   const handleRef = useRef<ForceGraphHandle>(null)
-  const [nodes, setNodes] = useState<GraphNode[]>([])
-  const [edges, setEdges] = useState<GraphEdge[]>([])
+  const [nodes, setNodes] = useState<GraphNode[]>(_graphCache?.nodes ?? [])
+  const [edges, setEdges] = useState<GraphEdge[]>(_graphCache?.edges ?? [])
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (_graphCache) return
     let cancelled = false
-    api.getGraph()
+    fetchGraphCached()
       .then(g => {
         if (cancelled) return
         setNodes(g.nodes)

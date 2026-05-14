@@ -7,7 +7,7 @@ subgraph extraction, and adaptive graph personalization.
 import uuid
 from collections import defaultdict, deque
 
-from sqlalchemy import func, select, text
+from sqlalchemy import case, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -517,32 +517,66 @@ def _topological_sort(
 async def search_graph_nodes(
     db: AsyncSession, query: str, limit: int = 8
 ) -> list[GraphNode]:
-    """H6: trigram-fuzzy search over published topic titles.
+    """H6 / L4: fuzzy-ish search over published topic titles.
 
-    Returns the top `limit` matches as `GraphNode`s so the graph search chip
+    Returns the top `limit` matches as `GraphNode`s so the search surfaces
     can navigate straight to the node without a second round-trip for the
-    rest of the topic metadata. Uses `pg_trgm` `similarity()` which is
-    already enabled in the DB (the existing `ilike`-based search in
-    content_service is keyword-literal; this one tolerates typos).
+    rest of the topic metadata.
+
+    Originally used `pg_trgm.similarity()` for Postgres deployments, but
+    the dev/test stack runs SQLite which doesn't expose that function.
+    L4 makes this dialect-portable:
+      - Postgres: still uses `similarity()` for trigram ranking + ILIKE fallback
+      - SQLite (and anything else): falls back to LIKE-based prefix/substring
+        match, ordering by where in the title the match occurs (prefix > word
+        boundary > anywhere) so a query like "bay" surfaces "Bayes' Theorem"
+        ahead of "Bayesian Inference" only when that's the more relevant order.
     """
     q = query.strip()
     if not q:
         return []
 
-    # Trigram similarity ranking. Fall back to ILIKE match so queries shorter
-    # than the trigram threshold (very short prefixes) still return results.
-    stmt = (
-        select(Topic, func.similarity(Topic.title, q).label("sim"))
-        .where(Topic.status == "published")
-        .where(
-            (func.similarity(Topic.title, q) > 0.15)
-            | Topic.title.ilike(f"%{q}%")
+    is_postgres = db.bind and db.bind.dialect.name == "postgresql"
+    q_like = f"%{q}%"
+    q_prefix = f"{q}%"
+    q_space_prefix = f"% {q}%"
+
+    if is_postgres:
+        # Trigram similarity ranking. Fall back to ILIKE match so queries
+        # shorter than the trigram threshold (very short prefixes) still
+        # return results.
+        stmt = (
+            select(Topic, func.similarity(Topic.title, q).label("sim"))
+            .where(Topic.status == "published")
+            .where(
+                (func.similarity(Topic.title, q) > 0.15)
+                | Topic.title.ilike(q_like)
+            )
+            .order_by(text("sim DESC"), Topic.title.asc())
+            .limit(limit)
         )
-        .order_by(text("sim DESC"), Topic.title.asc())
-        .limit(limit)
-    )
-    result = await db.execute(stmt)
-    topics = [row[0] for row in result.all()]
+        result = await db.execute(stmt)
+        topics = [row[0] for row in result.all()]
+    else:
+        # SQLite path: rank by where the match lands.
+        #   case 0 — title starts with q                  (best)
+        #   case 1 — q follows a space (word boundary)    (good)
+        #   case 2 — substring match anywhere              (fallback)
+        # `LIKE` in SQLite is case-insensitive for ASCII by default.
+        rank = case(
+            (Topic.title.ilike(q_prefix), 0),
+            (Topic.title.ilike(q_space_prefix), 1),
+            else_=2,
+        ).label("rank")
+        stmt = (
+            select(Topic, rank)
+            .where(Topic.status == "published")
+            .where(Topic.title.ilike(q_like))
+            .order_by(text("rank ASC"), Topic.title.asc())
+            .limit(limit)
+        )
+        result = await db.execute(stmt)
+        topics = [row[0] for row in result.all()]
 
     if not topics:
         return []

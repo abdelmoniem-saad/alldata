@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
 import { ContentBlock, Misconception } from '../../api/client'
-import CodeRunner from './CodeRunner'
+import BlockRenderer from './blocks/BlockRenderer'
+import { applyBranchFilter, parseMeta } from './blocks/branchFilter'
+import { useProgressStore } from '../../stores/progressStore'
 
 interface Props {
   blocks: ContentBlock[]
@@ -11,6 +13,9 @@ interface Props {
   activeLayer: 'intuition' | 'formal' | 'both'
   topicTitle: string
   domainColor: string
+  /** L2: slug is required so decision / playground blocks can dispatch
+   *  state writes against the topic's `useTopicState` namespace. */
+  slug: string
   current: number
   onChange: (i: number) => void
   onSlidesCount?: (n: number) => void
@@ -22,16 +27,71 @@ interface Slide {
   misconceptions?: Misconception[]
 }
 
+// L2: block types that should not get their own slide. `state` and
+// `state_reset` are invisible authoring directives; `dataset` is metadata
+// for the next code block and merges visually via the code block's chrome
+// (its attribution chip is suppressed in slides mode by BlockRenderer).
+const SKIP_AS_SLIDE = new Set(['state', 'state_reset', 'dataset', 'parse_error'])
+
+// Stable reference for the empty-events case so the Zustand selector doesn't
+// return a fresh `{}` every render and trip React 18's getSnapshot infinite-
+// loop guard. Same pattern ScrollReader uses.
+const EMPTY_EVENTS: Record<string, import('../../stores/progressStore').DecisionEvent> = {}
+
 export default function SlideView({
-  blocks, misconceptions, activeLayer, current, onChange, onSlidesCount,
+  blocks, misconceptions, activeLayer, slug, current, onChange, onSlidesCount,
 }: Props) {
-  const visibleBlocks = blocks.filter(b =>
-    activeLayer === 'both' || b.layer === 'both' || b.layer === activeLayer
+  const layeredBlocks = useMemo(
+    () => blocks.filter(b =>
+      activeLayer === 'both' || b.layer === 'both' || b.layer === activeLayer
+    ),
+    [blocks, activeLayer],
+  )
+
+  // L2: apply the same branch filter ScrollReader uses. Without this, a
+  // branch-tagged callout/derivation/playground (introduced in I5) would
+  // show in slides mode regardless of the user's decision, contradicting
+  // the I-cycle contract.
+  const metaCache = useMemo(() => {
+    const m = new Map<string, Record<string, unknown>>()
+    for (const b of layeredBlocks) m.set(b.id, parseMeta(b))
+    return m
+  }, [layeredBlocks])
+
+  const decisionEvents = useProgressStore(
+    s => (slug ? s.decisionEvents?.[slug] : undefined) ?? EMPTY_EVENTS,
+  )
+  const decisions = useMemo(() => {
+    const out: Record<string, string> = {}
+    for (const [anchor, ev] of Object.entries(decisionEvents)) {
+      out[anchor] = ev.optionId
+    }
+    return out
+  }, [decisionEvents])
+
+  const visibleBlocks = useMemo(
+    () => applyBranchFilter(layeredBlocks, metaCache, decisions),
+    [layeredBlocks, metaCache, decisions],
+  )
+
+  // L2: drop invisible authoring blocks from the slide list. A `state`
+  // directive becoming an empty slide was the worst of the K-cycle gaps —
+  // the deck would interrupt the reader's flow with a blank screen for
+  // every state seeding.
+  const slideBlocks = useMemo(
+    () => visibleBlocks.filter(b => !SKIP_AS_SLIDE.has(b.block_type)),
+    [visibleBlocks],
   )
 
   // Build slides from blocks — each block becomes a slide, misconceptions at the end
   const slides: Slide[] = [
-    ...visibleBlocks.map(b => ({ type: b.block_type === 'quiz' ? 'quiz' as const : b.block_type.startsWith('code') || b.block_type === 'simulation' ? 'code' as const : 'content' as const, block: b })),
+    ...slideBlocks.map(b => ({
+      type:
+        b.block_type === 'quiz' ? 'quiz' as const :
+        (b.block_type.startsWith('code') || b.block_type === 'simulation') ? 'code' as const :
+        'content' as const,
+      block: b,
+    })),
     ...(misconceptions.length > 0 ? [{ type: 'misconceptions' as const, misconceptions }] : []),
   ]
 
@@ -91,7 +151,7 @@ export default function SlideView({
             }}
           >
             <div className={isSpark ? 'prose-hero' : undefined}>
-              <SlideContent slide={s} />
+              <SlideContent slide={s} slug={slug} />
             </div>
           </div>
         )
@@ -100,7 +160,7 @@ export default function SlideView({
   )
 }
 
-function SlideContent({ slide }: { slide: Slide }) {
+function SlideContent({ slide, slug }: { slide: Slide; slug: string }) {
   if (slide.type === 'misconceptions' && slide.misconceptions) {
     return (
       <div>
@@ -122,39 +182,28 @@ function SlideContent({ slide }: { slide: Slide }) {
   if (!slide.block) return null
   const block = slide.block
 
-  switch (block.block_type) {
-    case 'markdown':
-      return (
-        <div className="prose" style={{ fontSize: 16, lineHeight: 1.8 }}>
-          <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-            {block.content}
-          </ReactMarkdown>
-        </div>
-      )
-
-    case 'code_python':
-    case 'simulation':
-    case 'code_r':
-      return (
-        <CodeRunner
-          code={block.content}
-          language={block.block_type === 'code_r' ? 'r' : 'python'}
-          isEditable={block.is_editable}
-          expectedOutput={block.expected_output}
-          isSimulation={block.block_type === 'simulation'}
-        />
-      )
-
-    case 'quiz':
-      return <SlideQuiz block={block} />
-
-    default:
-      return (
-        <div className="prose">
-          <ReactMarkdown>{block.content}</ReactMarkdown>
-        </div>
-      )
+  // L2: SlideView's quiz block is a legacy SlideView-only renderer with its
+  // own answer field + hint/solution toggles. `BlockRenderer` doesn't know
+  // about quiz today, so we keep this special case until the legacy quiz
+  // path gets a directive-style replacement (deferred).
+  if (block.block_type === 'quiz') {
+    return <SlideQuiz block={block} />
   }
+
+  // L2: every other block type routes through the shared renderer, which
+  // gives slides parity with scroll mode automatically. The `mode='slides'`
+  // axis lets specific renderers branch (gear → title slide, plot → full
+  // bleed, dataset → invisible).
+  const meta = parseMeta(block)
+  return (
+    <BlockRenderer
+      block={block}
+      meta={meta}
+      slug={slug}
+      mode="slides"
+      inlinePlots={true}
+    />
+  )
 }
 
 function SlideQuiz({ block }: { block: ContentBlock }) {
