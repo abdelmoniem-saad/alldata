@@ -27,7 +27,6 @@
  */
 
 import {
-  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -68,48 +67,15 @@ function resolveTarget(rawTarget: string): TourTarget {
 }
 
 /**
- * IntersectionObserver sentinel — same shape as ScrollReader's. Fires
- * `onActive(id)` when its top crosses ~35% from the top of the scroll root.
+ * Anchor — a 1px positional sentinel. The active anchor is picked by
+ * `TourView`'s scroll listener (a single listener on the scroll root) so
+ * the algorithm is deterministic across fast scrolls, programmatic jumps,
+ * and the bottom-of-the-document edge case where the last anchor can
+ * never cross a narrow IO band. See `pickActiveAnchor` below.
  */
-function Anchor({
-  id,
-  onActive,
-  rootRef,
-}: {
-  id: string
-  onActive: (id: string) => void
-  rootRef: React.RefObject<HTMLElement | null>
-}) {
-  const ref = useRef<HTMLDivElement | null>(null)
-  useEffect(() => {
-    const el = ref.current
-    const root = rootRef.current
-    if (!el || !root) return
-    // M: narrow band placed near the *top* of the viewport — the active
-    // section is whichever anchor most recently crossed an "I'm now near
-    // the top" line. The narrow band keeps only one anchor firing at a
-    // time (a wide band would over-advance the camera if the reader
-    // scrolls fast through a short section).
-    //
-    // The band is 22%-24% from the top: as the user scrolls into a
-    // section, the sentinel crosses this band on the way up and
-    // setActiveTarget runs. The bottom spacer below the last block
-    // ensures every anchor can reach this band even though the last
-    // section has no content after it to push its sentinel through.
-    const obs = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) onActive(id)
-        }
-      },
-      { root, rootMargin: '-22% 0px -76% 0px', threshold: 0 },
-    )
-    obs.observe(el)
-    return () => obs.disconnect()
-  }, [id, onActive, rootRef])
+function Anchor({ id }: { id: string }) {
   return (
     <div
-      ref={ref}
       data-anchor={id}
       aria-hidden
       role="presentation"
@@ -117,6 +83,36 @@ function Anchor({
       style={{ height: 1 }}
     />
   )
+}
+
+/**
+ * Read every `[data-anchor]` in the scroll root and return the id of the
+ * anchor whose top is closest-to-but-not-past the activation line. This
+ * is the "topmost anchor above the line" — the section the reader has
+ * most recently scrolled into.
+ *
+ * Why not IntersectionObserver: a per-anchor IO with a narrow band misses
+ * transitions when the reader scrolls fast (the anchor jumps past the
+ * band between frames). A scroll-listener picks the right anchor on every
+ * frame regardless of how the scroll position got there.
+ */
+function pickActiveAnchor(root: HTMLElement, activationY: number): string | null {
+  const rootTop = root.getBoundingClientRect().top
+  const anchors = root.querySelectorAll<HTMLElement>('[data-anchor]')
+  let best: { id: string; top: number } | null = null
+  for (const el of Array.from(anchors)) {
+    const top = el.getBoundingClientRect().top - rootTop
+    if (top > activationY) continue // not yet reached the line
+    if (!best || top > best.top) {
+      best = { id: el.getAttribute('data-anchor') || '', top }
+    }
+  }
+  // If nothing is above the line yet (user is above the first anchor),
+  // fall back to the first anchor so the camera starts in a known state.
+  if (!best && anchors.length > 0) {
+    return anchors[0].getAttribute('data-anchor')
+  }
+  return best?.id ?? null
 }
 
 export default function TourView({
@@ -208,11 +204,29 @@ export default function TourView({
 
   const [activeTarget, setActiveTarget] = useState<TourTarget>({ kind: 'all' })
 
-  const handleAnchorActive = useCallback((anchorId: string) => {
-    const t = targetByAnchor.get(anchorId)
-    if (!t) return // anchor with no graph_view — keep the current frame
-    setActiveTarget(t)
-  }, [targetByAnchor])
+  // M: single scroll listener on the scroll root — runs `pickActiveAnchor`
+  // on every scroll, then maps the picked anchor to its `graph_view` target.
+  // Anchors without a target keep the previous frame (no flicker). The
+  // activation line is 30% from the top of the scroll root, which is a
+  // forgiving "I'm reading this section now" position that fires reliably
+  // for both slow reads and fast scrolls. Also runs once on mount + when
+  // the anchor list changes so the initial frame matches the entry anchor.
+  useEffect(() => {
+    const root = scrollRef.current
+    if (!root || anchorBlocks.length === 0) return
+    let lastId: string | null = null
+    const update = () => {
+      const id = pickActiveAnchor(root, root.clientHeight * 0.30)
+      if (!id || id === lastId) return
+      lastId = id
+      const t = targetByAnchor.get(id)
+      if (!t) return // anchor with no graph_view directive — keep the frame
+      setActiveTarget(t)
+    }
+    update()
+    root.addEventListener('scroll', update, { passive: true })
+    return () => root.removeEventListener('scroll', update)
+  }, [scrollRef, anchorBlocks, targetByAnchor])
 
   // When the target or the graph data changes, frame the camera.
   useEffect(() => {
@@ -248,14 +262,15 @@ export default function TourView({
     }
   }, [activeTarget, nodes])
 
-  const focusDomain = activeTarget.kind === 'domain' ? activeTarget.slug ?? null : null
+  const visibleDomain = activeTarget.kind === 'domain' ? activeTarget.slug ?? null : null
 
   return (
     <>
       {/* Background graph — fixed to the viewport. The whole topic surface
           scrolls *over* this layer (the scrollRef parent owns the scroll).
-          ambientAlpha 0.55 makes the graph read as quiet context behind the
-          prose; focusDomain dims everything outside the active cluster. */}
+          `visibleDomain` filters the cluster currently in focus (same
+          semantics as the /explore domain legend); ambientAlpha keeps
+          everything readable-but-quiet behind the prose. */}
       <div
         aria-hidden
         style={{
@@ -272,19 +287,19 @@ export default function TourView({
             edges={edges}
             width={dim.width}
             height={dim.height}
-            focusDomain={focusDomain}
-            // M: 0.85 keeps the graph readable as a background reference
-            // — at 0.55 the nodes shrank into near-invisible specks in the
-            // "fit all" view. Combined with the radial vignette below this
-            // layer, the graph reads as visible-but-quiet behind the prose.
+            visibleDomain={visibleDomain}
+            // M: 0.85 keeps the graph readable as a background reference.
+            // Lower values rendered nodes as near-invisible specks.
             ambientAlpha={0.85}
           />
         )}
       </div>
 
-      {/* Subtle radial vignette so the prose reads on top of the graph
-          without competing for attention. Positioned between the graph
-          layer and the prose layer. */}
+      {/* Side-vignette: darkens (or lightens, on light theme) the *left*
+          side of the viewport where the prose lives, so text reads cleanly
+          while the right half of the canvas shows the graph at its native
+          brightness. Themed via CSS vars so light mode doesn't end up
+          painting a black gradient over a white page. */}
       <div
         aria-hidden
         style={{
@@ -293,12 +308,16 @@ export default function TourView({
           zIndex: 1,
           pointerEvents: 'none',
           background:
-            'radial-gradient(ellipse at center, rgba(5,5,5,0) 0%, rgba(5,5,5,0.35) 60%, rgba(5,5,5,0.6) 100%)',
+            'linear-gradient(to right, var(--color-bg) 0%, '
+            + 'color-mix(in srgb, var(--color-bg) 85%, transparent) 40%, '
+            + 'color-mix(in srgb, var(--color-bg) 50%, transparent) 60%, '
+            + 'transparent 75%)',
         }}
       />
 
-      {/* Floating prose. Anchored at z-index 2 so it sits above the graph
-          + vignette but inside the same scroll container TopicView owns. */}
+      {/* Floating prose. Left-aligned column so the right half of the
+          viewport shows the graph clearly. z-index 2 puts the prose above
+          the graph + vignette layers. */}
       <div
         style={{
           position: 'relative',
@@ -306,14 +325,10 @@ export default function TourView({
           padding: 'clamp(96px, 18vh, 220px) clamp(20px, 6vw, 80px) clamp(120px, 16vh, 200px)',
         }}
       >
-        <div style={{ maxWidth: 680, margin: '0 auto' }}>
+        <div style={{ maxWidth: 560, marginLeft: 0, marginRight: 'auto' }}>
           {header}
           {anchorBlocks.length > 0 && (
-            <Anchor
-              id={anchorBlocks[0].anchor!}
-              onActive={handleAnchorActive}
-              rootRef={scrollRef}
-            />
+            <Anchor id={anchorBlocks[0].anchor!} />
           )}
           {visibleBlocks.map(block => {
             const meta = metaCache.get(block.id) ?? {}
@@ -327,23 +342,22 @@ export default function TourView({
                 }}
               >
                 {isAnchorBearing && block.anchor && (
-                  <Anchor
-                    id={block.anchor}
-                    onActive={handleAnchorActive}
-                    rootRef={scrollRef}
-                  />
+                  <Anchor id={block.anchor} />
                 )}
                 {/* graph_view blocks render nothing in prose flow — they're
                     pure metadata for the background graph in tour mode. */}
                 {block.block_type === 'graph_view' ? null : (
                   <div
                     style={{
-                      // Quiet zinc panel behind each prose block so the
-                      // graph behind doesn't fight the text for contrast.
-                      // Hairline rule + soft background; not a heavy card.
+                      // Quiet panel behind each prose block. Theme-aware:
+                      // `--color-bg-secondary` is dark zinc in dark mode,
+                      // light zinc in light mode. `color-mix` gives the
+                      // panel translucency so the graph stays slightly
+                      // visible through it.
                       padding: '14px 18px',
                       borderRadius: 'var(--radius-lg)',
-                      background: 'rgba(13, 13, 13, 0.72)',
+                      background:
+                        'color-mix(in srgb, var(--color-bg-secondary) 82%, transparent)',
                       border: '1px solid var(--color-border-subtle)',
                       backdropFilter: 'blur(6px)',
                     }}
@@ -361,12 +375,12 @@ export default function TourView({
             )
           })}
 
-          {/* M: a tall bottom spacer so the LAST anchor can still scroll
-              through the active band. Without it, no content sits below
-              the final `graph_view` sentinel and the reader can't scroll
-              past 22% from top — so the last section's camera frame
-              would never activate. */}
-          <div aria-hidden style={{ height: '80vh' }} />
+          {/* M: bottom spacer so the last block is comfortable to read
+              instead of pinned to the viewport edge. The activation
+              algorithm picks the topmost anchor above the 30% line, so
+              this spacer is purely about *reading comfort* now — it
+              doesn't affect which anchor is active. */}
+          <div aria-hidden style={{ height: '60vh' }} />
         </div>
       </div>
     </>

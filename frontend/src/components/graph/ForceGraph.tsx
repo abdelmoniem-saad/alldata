@@ -25,14 +25,21 @@ interface Props {
     inProgressSlugs: string[]
   } | null
   /**
-   * M (immersive tour): when set, nodes whose domain does NOT match this
-   * value get their alpha multiplied down (so the rest of the graph reads
-   * as faint context behind the focused cluster). Edges connecting to
-   * non-matching nodes get the same treatment.
-   * Used by `TourView` to highlight a cluster section-by-section as the
-   * reader scrolls through the Shape of Statistics flythrough.
+   * M (immersive tour): when set, only that domain's nodes are drawn —
+   * everything else is skipped at draw time. Same semantics as the
+   * `/explore` page's domain legend filter: clicking "Probability"
+   * narrows the view to the probability cluster.
+   *
+   * Nodes outside the visible domain stay in the simulation (so the
+   * layout doesn't reshuffle between sections), they just aren't
+   * painted. Edges only draw when *both* endpoints are in the visible
+   * domain.
+   *
+   * Originally this was a dim-not-hide signal called `focusDomain`. The
+   * dim variant left non-cluster nodes faintly visible, which read as
+   * "broken" — the user expected the legend-style narrowing behavior.
    */
-  focusDomain?: string | null
+  visibleDomain?: string | null
   /**
    * M (immersive tour): overall alpha multiplier applied to every node
    * and edge after the focusDomain math. Lets the caller render the graph
@@ -78,7 +85,7 @@ interface SimLink extends d3.SimulationLinkDatum<SimNode> {
 const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
   nodes, edges, width, height, onNodeClick, onNodeDoubleClick, onNodeHover, highlightedNode,
   progressOverride,
-  focusDomain,
+  visibleDomain,
   ambientAlpha = 1,
 }, ref) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -242,21 +249,20 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
       const target = link.target as SimNode
       if (source.x == null || source.y == null || target.x == null || target.y == null) continue
 
+      // M (immersive tour): skip edges whose source or target isn't in
+      // the visible domain. Matches the `/explore` legend behavior — only
+      // intra-cluster edges show when a cluster is selected.
+      if (visibleDomain && (
+        source.data.domain !== visibleDomain
+        || target.data.domain !== visibleDomain
+      )) continue
+
       const sourceHot = source.glow > 0.1 || highlightedNode === source.data.slug
       const targetHot = target.glow > 0.1 || highlightedNode === target.data.slug
       const edgeHot = sourceHot || targetHot
 
       const baseAlpha = link.data.edge_type === 'prerequisite' ? (isLight ? 0.25 : 0.18) : (isLight ? 0.12 : 0.08)
-      // M (immersive tour): edges whose source AND target are outside the
-      // focused domain get dimmed alongside their nodes. Edges that bridge
-      // *into* the focused cluster stay at full alpha so prereq lines
-      // remain visible into the cluster.
-      const edgeMatchesFocus =
-        !focusDomain
-        || source.data.domain === focusDomain
-        || target.data.domain === focusDomain
-      const focusEdgeAlpha = edgeMatchesFocus ? 1 : 0.4
-      const alpha = (edgeHot ? 0.5 : baseAlpha) * focusEdgeAlpha * ambientAlpha
+      const alpha = (edgeHot ? 0.5 : baseAlpha) * ambientAlpha
 
       const color = getNodeColor(source.data, source.glow)
 
@@ -380,20 +386,16 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
       // signals "ready to revisit" without competing with the stronger
       // empty-shell or completed-tint signals.
       const isDueForReview = isCompleted && dueSet.has(node.data.slug)
-      // M (immersive tour): when `focusDomain` is set, nodes outside that
-      // domain dim to 0.22 so the focused cluster reads as the foreground
-      // and the rest of the graph as faint context. `ambientAlpha`
-      // multiplies *all* nodes/edges so the tour can render the whole
-      // graph as a background layer behind floating prose.
-      const matchesFocus = !focusDomain || node.data.domain === focusDomain
-      // M: 0.4 dim for off-focus nodes keeps them readable as context
-      // (the user wants to see the *rest* of the graph faintly behind
-      // the focused cluster, not erase it). 0.22 looked broken.
-      const focusAlpha = matchesFocus ? 1 : 0.4
+      // M (immersive tour): when `visibleDomain` is set, only that
+      // domain's nodes are painted. Off-domain nodes stay in the
+      // simulation (so the layout doesn't reshuffle between sections)
+      // but are skipped here. `ambientAlpha` multiplies *all* nodes
+      // so the tour can render the whole graph as a background layer
+      // behind floating prose.
+      if (visibleDomain && node.data.domain !== visibleDomain) continue
       const nodeAlpha =
         (hasContent ? 1 : 0.45)
         * (isDueForReview ? 0.7 : 1)
-        * focusAlpha
         * ambientAlpha
 
       // Node ring (outer) — H11: pattern now encodes DIFFICULTY, not
@@ -559,7 +561,7 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
     if (needsExtraFrame || (simRef.current?.alpha() ?? 0) > 0.001) {
       animFrameRef.current = requestAnimationFrame(render)
     }
-  }, [width, height, getNodeColor, getNodeRadius, highlightedNode, completedSlugs, inProgressSlugs, isLight, dueSet, focusDomain, ambientAlpha])
+  }, [width, height, getNodeColor, getNodeRadius, highlightedNode, completedSlugs, inProgressSlugs, isLight, dueSet, visibleDomain, ambientAlpha])
 
   // Kick the render loop
   const scheduleRender = useCallback(() => {
