@@ -1,2 +1,11 @@
+title: "t-Distribution"
 slug: t-distribution
+domain: distributions
+difficulty: intermediate
+summary: The normal distribution's "I don't know σ" cousin — fatter tails that thin toward normality as degrees of freedom grow.
+prerequisites: [normal-distribution]
+has_intuition_layer: true
 has_formal_layer: true
+estimated_minutes: 9
+cycle_ported: M
+recall_prompt: "Why are t-distribution tails fatter than the normal's, and what makes them converge as degrees of freedom grow?"

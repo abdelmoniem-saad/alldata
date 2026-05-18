@@ -1,2 +1,11 @@
+title: "Sample Spaces and Events"
 slug: sample-spaces
+domain: probability-foundations
+difficulty: intro
+summary: The two structures every probability question starts with — the set of outcomes and the subsets you care about.
+prerequisites: []
+has_intuition_layer: true
 has_formal_layer: true
+estimated_minutes: 8
+cycle_ported: M
+recall_prompt: "What is the difference between a sample space and an event, and why does the distinction matter when assigning probabilities?"

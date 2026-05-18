@@ -1,107 +1,133 @@
-<!-- layer: intuition -->
+<!-- block: state, values: {prior: 0.5} -->
 
-## The Starting Point of All Probability
-
-Before you can calculate the probability of *anything*, you need to answer one question: **what could possibly happen?**
-
-A **sample space** is the complete set of all possible outcomes of an experiment. Think of it as the universe of possibilities:
-
-- Flip a coin → Sample space: {Heads, Tails}
-- Roll a die → Sample space: {1, 2, 3, 4, 5, 6}
-- Pick a card → Sample space: all 52 cards
-
-An **event** is any subset of the sample space — it's the thing you're actually interested in. "Rolling an even number" is the event {2, 4, 6}, which lives inside the sample space {1, 2, 3, 4, 5, 6}.
-
-**Key insight:** If you define the sample space wrong, your entire probability calculation is wrong. Getting this right is the foundation of everything else.
+<!-- block: plot, spec: posterior_update, params: {prior: 0.5, sensitivity: 0.9, specificity: 0.9, observed_result: "positive"}, binds: [prior], anchor: sample-spaces-feel, mobile_order: 1 -->
 
 ---
 
-## Events and Set Operations
+<!-- block: gear, n: 1, label: "TODO — name the spark" -->
 
-Events combine using the same operations as sets:
+# Sample Spaces and Events
 
-- **Union** (A ∪ B): "A or B happens" — rolling a 2 OR a 4
-- **Intersection** (A ∩ B): "A and B both happen" — drawing a card that is red AND a face card
-- **Complement** (Aᶜ): "A doesn't happen" — NOT rolling a 6
+Before you can calculate the probability of *anything*, you need to answer one question: **what could possibly happen?** That set of possibilities is the sample space. Everything else in probability is built on it.
 
-Venn diagrams are your best friend here. Every probability problem starts by identifying the sample space and the events of interest.
+> TODO (N): replace this paragraph with the spark — the sentence or example that makes the reader feel why getting the sample space right matters.
 
 ---
 
-<!-- block: code_python, editable: true -->
-```python
-import numpy as np
-import matplotlib.pyplot as plt
+<!-- block: gear, n: 2, label: "TODO — name the intuition" -->
 
-# Simulate rolling two dice — what's the sample space?
-np.random.seed(42)
-n_rolls = 50000
-die1 = np.random.randint(1, 7, n_rolls)
-die2 = np.random.randint(1, 7, n_rolls)
+## What you mean by "could happen"
 
-# The sample space has 36 equally likely outcomes
-# Let's visualize how often each (die1, die2) pair appears
-heatmap = np.zeros((6, 6))
-for i in range(n_rolls):
-    heatmap[die1[i]-1, die2[i]-1] += 1
-heatmap /= n_rolls
+A **sample space** $\Omega$ is the complete set of every outcome an experiment could produce. Flip a coin: $\{H, T\}$. Roll a die: $\{1, 2, 3, 4, 5, 6\}$. Draw a card: all 52 cards.
 
-plt.figure(figsize=(6, 5))
-plt.imshow(heatmap, cmap='Blues', vmin=0)
-plt.colorbar(label='Relative frequency')
-plt.xticks(range(6), range(1, 7))
-plt.yticks(range(6), range(1, 7))
-plt.xlabel('Die 2')
-plt.ylabel('Die 1')
-plt.title('Sample Space of Two Dice (each cell ≈ 1/36)')
-for i in range(6):
-    for j in range(6):
-        plt.text(j, i, f'{heatmap[i,j]:.3f}', ha='center', va='center', fontsize=8)
-plt.tight_layout()
-plt.show()
+An **event** is any subset of $\Omega$. "Rolled an even number" is the event $\{2, 4, 6\}$. Events combine like sets:
 
-# Event: "sum is 7"
-event_sum7 = np.sum(die1 + die2 == 7) / n_rolls
-print(f"P(sum = 7) = {event_sum7:.4f} (theoretical: {6/36:.4f})")
-print(f"Sample space size: 6 × 6 = 36 outcomes")
-```
-<!-- expected_output: P(sum = 7) ≈ 0.1667 -->
+- Union $A \cup B$ — A or B (or both)
+- Intersection $A \cap B$ — A and B together
+- Complement $A^c$ — not A
+
+> TODO (N): expand on what changes when the sample space is wrong. The "Monty Hall trap" framing or a coin-flips-with-conditional reveal both work.
+
+---
+
+<!-- block: gear, n: 3, label: "TODO — name the mechanic" -->
+
+<!-- block: decision, anchor: sample-spaces-pick -->
+question: |
+  Two coins are flipped. Someone tells you "at least one is heads." Given
+  that information, what's the probability *both* are heads?
+options:
+  - id: a
+    label: "1/2 — once you know one is heads, the other is independent."
+    writes: { prior: 0.5 }
+    response: |
+      The trap: the two flips *are* independent before conditioning, but the
+      conditional information changes the sample space. The four equally
+      likely outcomes were {HH, HT, TH, TT}; "at least one heads" eliminates
+      TT, leaving three equally likely outcomes. Only one of them (HH) has
+      both heads.
+  - id: b
+    label: "1/3 — the condition narrows the sample space to three outcomes."
+    writes: { prior: 0.333 }
+    response: |
+      Right. The original sample space had four equally likely outcomes.
+      Conditioning on "at least one heads" removes TT and leaves
+      $\{HH, HT, TH\}$ — three outcomes, each still equally likely. Only HH
+      has both heads, so $P = 1/3$.
+  - id: c
+    label: "1/4 — both heads is one of the original four outcomes."
+    writes: { prior: 0.25 }
+    response: |
+      That's the unconditional probability — the answer to "what's the chance
+      both flips come up heads" with no extra information. The "at least one
+      is heads" condition rules out one of the four outcomes, so the
+      denominator shrinks from 4 to 3.
+correct: b
+<!-- /block -->
+
+> TODO (N): expand the response prose. Add a callout (branch: b) that connects this to conditional probability.
 
 ---
 
 <!-- layer: formal -->
 
-## Formal Definition
+<!-- block: gear, n: 4, label: "TODO — name the formalism" -->
 
-A **probability space** is a triple $(\Omega, \mathcal{F}, P)$ where:
+## Probability space, formally
 
-- $\Omega$ is the **sample space** — the set of all possible outcomes
-- $\mathcal{F}$ is a **σ-algebra** on $\Omega$ — a collection of events (subsets of $\Omega$) closed under complement and countable union
-- $P: \mathcal{F} \to [0,1]$ is a **probability measure** satisfying:
-  - $P(\Omega) = 1$
-  - $P(\emptyset) = 0$
-  - For disjoint events $A_1, A_2, \ldots$: $P\left(\bigcup_{i=1}^{\infty} A_i\right) = \sum_{i=1}^{\infty} P(A_i)$
+A **probability space** is a triple $(\Omega, \mathcal{F}, P)$:
 
-For **finite** sample spaces with equally likely outcomes:
+- $\Omega$ is the **sample space** — the set of every possible outcome.
+- $\mathcal{F}$ is a **σ-algebra** on $\Omega$ — a collection of subsets (events) closed under complement and countable union.
+- $P : \mathcal{F} \to [0, 1]$ is a **probability measure**: $P(\Omega) = 1$, $P(\emptyset) = 0$, and countable additivity for disjoint events.
+
+For a **finite** sample space with equally likely outcomes,
 
 $$P(A) = \frac{|A|}{|\Omega|}$$
 
----
+> TODO (N): walk through the derivation of conditional probability from the probability-space axioms — that's the natural next step after the decision above.
 
-<!-- block: misconception -->
-**Misconception: "The sample space is just the outcomes I care about."**
-
-*Wrong belief:* When calculating P(rolling a 6), the sample space is just {6, not-6}.
-
-*Correction:* The sample space must include ALL possible outcomes: {1, 2, 3, 4, 5, 6}. The event "rolling a 6" is {6}, but the sample space is the full set. Collapsing outcomes you don't care about into "not-6" can work for simple problems but leads to errors in conditional probability and more complex scenarios.
-
-*Why this is common:* For simple yes/no questions, a two-element sample space gives the right answer, so students don't realize they're implicitly using the full sample space.
+<!-- block: derivation, title: "Why σ-algebras and not just power sets", collapsed: true -->
+> TODO (N): explain why on infinite Ω we need σ-algebras (not the full power set) for the probability measure to exist. Vitali sets, Banach-Tarski as the cautionary tales.
+<!-- /block -->
 
 ---
 
-<!-- block: quiz -->
-**Micro-challenge:** Two coins are flipped. Someone tells you "at least one is heads." What's the sample space for this experiment? What's the probability both are heads, given this information?
+<!-- block: gear, n: 5, label: "TODO — name the code" -->
 
-*Hint:* The full sample space is {HH, HT, TH, TT}. The condition "at least one heads" eliminates one outcome. Be careful — it's not 1/2!
+<!-- block: simulation, editable: true, auto_run: true, anchor: sample-spaces-sim -->
+```python
+import numpy as np
 
-<!-- solution: The sample space given "at least one heads" is {HH, HT, TH}. P(both heads | at least one heads) = 1/3, not 1/2. The key is that HT and TH are different outcomes. -->
+# Two coins, 50,000 flips. Check that the sample space is {HH, HT, TH, TT}
+# in equal proportions, then conditionally re-rank to verify the decision above.
+np.random.seed(42)
+n = 50_000
+c1 = np.random.randint(0, 2, n)
+c2 = np.random.randint(0, 2, n)
+
+# Encode each outcome as a 2-char string for tallying
+labels = np.array([f"{'H' if a else 'T'}{'H' if b else 'T'}" for a, b in zip(c1, c2)])
+
+unique, counts = np.unique(labels, return_counts=True)
+print("Unconditional sample space frequencies (each ~0.25):")
+for u, c in zip(unique, counts):
+    print(f"  {u}: {c/n:.4f}")
+
+# Condition on "at least one heads" — drop TT outcomes
+mask = labels != "TT"
+print(f"\nP(both heads | at least one heads) = "
+      f"{(labels[mask] == 'HH').mean():.4f}  (theoretical 1/3 ≈ 0.3333)")
+```
+
+> TODO (N): expand the prose intro to the simulation; explain what the code is checking against the decision above.
+
+---
+
+<!-- layer: both -->
+
+<!-- block: gear, n: 6, label: "Where it leads" -->
+
+<!-- block: callout, kind: insight -->
+**Where this leads.** Once you can write down sample spaces and events cleanly, **basic probability** gives you the three axioms that turn them into measures, **conditional probability** formalizes what "at least one is heads" did to the sample space above, and **independence** gives the test for when two events don't constrain each other.
+<!-- /block -->

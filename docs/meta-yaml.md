@@ -68,6 +68,20 @@ Reading-time estimate in minutes. Surfaced as a chip in the topic header and use
 The cycle in which the topic was last ported to the current directive vocabulary. `I` means the topic uses the I-cycle's `decision` / `playground` / `plot` directives; legacy topics omit this (or set it to nothing). Useful for filtering "what still needs porting?"
 **If omitted:** treated as legacy. Doesn't affect rendering.
 
+### `recall_prompt`
+**Type:** string. Optional. *(cycle: K3)*
+A single question the platform surfaces above the prose when the topic is due-for-review per its SM-2 schedule. Drives the `RecallPrompt` component — the reader picks "Show me again / Coming back / I remember" and the schedule advances. Skip the prompt and the topic still participates in spaced repetition, but the reader sees no above-prose nudge on the next review.
+**Good:** "What does 95% in a confidence interval mean — and what does it *not* mean?"
+**Bad:** "Do you remember Bayes' Theorem?" (the question shouldn't be answerable without engaging the content).
+
+### `dataset`
+**Type:** string (dataset name). Optional. *(cycle: K5)*
+Names a dataset from `seed/datasets/manifest.yaml` that this topic uses. Adds the topic to the `/datasets` reverse index so a reader browsing datasets can find which topics teach with each one. Does *not* affect content rendering — for in-prose attribution use the `dataset` directive in `content.md`.
+
+### `tour`
+**Type:** bool. Optional, defaults to `false`. *(cycle: M0)*
+When `true`, the topic is rendered by `TourView` instead of `ScrollReader` / `SlideView` — the graph fills the viewport as the background and the prose floats over it. Per-section `graph_view` directives in `content.md` drive the background camera (cluster filter + fit-to-bbox). Designed for orientation topics that *show* the graph itself (Shape of Statistics is the canonical example); the wrong surface for ordinary content topics. See [`authoring.md` § Immersive tour mode](authoring.md#immersive-tour-mode).
+
 ---
 
 ## Fields *not* on this list

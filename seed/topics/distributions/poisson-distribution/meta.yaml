@@ -1,2 +1,11 @@
+title: "Poisson Distribution"
 slug: poisson-distribution
+domain: distributions
+difficulty: intro
+summary: Counts of rare events over a fixed window — when each instant has a tiny independent chance and you tally what actually happens.
+prerequisites: [binomial-distribution]
+has_intuition_layer: true
 has_formal_layer: true
+estimated_minutes: 9
+cycle_ported: M
+recall_prompt: "Under what assumptions does a count of events become Poisson-distributed, and how is that related to the binomial?"

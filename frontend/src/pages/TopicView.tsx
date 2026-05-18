@@ -299,6 +299,10 @@ export default function TopicView() {
         hasFormalLayer={!!topic.has_formal_layer}
         activeLayer={activeLayer}
         setActiveLayer={setActiveLayer}
+        // M5: TopicView short-circuits view-mode dispatch when topic.tour
+        // is true. Tell ZenChrome so it can hide the scroll/slides toggle
+        // and the slide-nav UI (both would be inert in tour mode).
+        isTour={!!topic.tour}
         showSlideNav={viewMode === 'slides' && hasContent}
         slideIdx={slideIdx}
         slideTotal={slideTotal}

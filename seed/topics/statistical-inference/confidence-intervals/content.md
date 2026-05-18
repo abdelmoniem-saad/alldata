@@ -4,7 +4,7 @@
 
 ---
 
-<!-- block: gear, n: 1, label: "The spark" -->
+<!-- block: gear, n: 1, label: "The most-misread number in stats" -->
 
 # Confidence intervals
 
@@ -12,7 +12,7 @@ A 95% confidence interval is the most-misunderstood statistic in everyday use. T
 
 ---
 
-<!-- block: gear, n: 2, label: "Intuition" -->
+<!-- block: gear, n: 2, label: "What 95% actually means" -->
 
 ## What 95% actually means
 
@@ -24,7 +24,7 @@ The correct reading: if you re-ran your study many times, computing a fresh 95% 
 
 ---
 
-<!-- block: gear, n: 3, label: "The decision" -->
+<!-- block: gear, n: 3, label: "Which reading is right?" -->
 
 <!-- block: decision, anchor: ci-pick -->
 question: |
@@ -73,7 +73,7 @@ The trap was conflating "95% of intervals contain the parameter" with "this inte
 
 <!-- layer: formal -->
 
-<!-- block: gear, n: 4, label: "The formalism" -->
+<!-- block: gear, n: 4, label: "Estimate ± critical × SE" -->
 
 ## Construction
 
@@ -101,7 +101,7 @@ The probability is over $\bar{X}$, not over $\mu$. That's the whole subtlety: $\
 
 ---
 
-<!-- block: gear, n: 5, label: "Code" -->
+<!-- block: gear, n: 5, label: "100 intervals, ~95 should cover" -->
 
 <!-- block: simulation, editable: true, auto_run: true, anchor: ci-sim -->
 ```python
@@ -144,7 +144,7 @@ plt.show()
 
 <!-- layer: both -->
 
-<!-- block: gear, n: 6, label: "Connections" -->
+<!-- block: gear, n: 6, label: "Where it leads" -->
 
 <!-- block: callout, kind: insight -->
 **Where this leads.** **Hypothesis testing** is a mirror of CIs — a CI that excludes 0 corresponds to a rejection of $H_0: \mu = 0$ at the same level. **Bayesian inference** offers credible intervals that *do* support the popular reading, at the cost of a prior. **Sampling distributions** is the engine room: every CI relies on a sampling distribution to compute its critical value.

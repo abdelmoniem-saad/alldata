@@ -4,7 +4,7 @@
 
 ---
 
-<!-- block: gear, n: 1, label: "The spark" -->
+<!-- block: gear, n: 1, label: "What you can't observe" -->
 
 # Basic probability
 
@@ -12,7 +12,7 @@ Probability is what you do when you can't observe what you want. You don't know 
 
 ---
 
-<!-- block: gear, n: 2, label: "Intuition" -->
+<!-- block: gear, n: 2, label: "Outcomes, events, ratios" -->
 
 ## Outcomes, events, probabilities
 
@@ -28,7 +28,7 @@ The third rule has a trap. "Disjoint" means the events can't both happen at once
 
 ---
 
-<!-- block: gear, n: 3, label: "The decision" -->
+<!-- block: gear, n: 3, label: "When events overlap" -->
 
 <!-- block: decision, anchor: union-pick -->
 question: |
@@ -74,7 +74,7 @@ The trap was treating overlapping events like disjoint ones (option a) or confus
 
 <!-- layer: formal -->
 
-<!-- block: gear, n: 4, label: "The formalism" -->
+<!-- block: gear, n: 4, label: "The three axioms" -->
 
 ## Probability axioms
 
@@ -96,7 +96,7 @@ $$P(A \cup B) = [P(A) - P(A \cap B)] + P(A \cap B) + [P(B) - P(A \cap B)] = P(A)
 
 ---
 
-<!-- block: gear, n: 5, label: "Code" -->
+<!-- block: gear, n: 5, label: "50,000 die rolls" -->
 
 <!-- block: simulation, editable: true, auto_run: true, anchor: dice-sim -->
 ```python
@@ -121,7 +121,7 @@ print(f"P(even AND >3): {(is_even & is_gt3).mean():.4f}  (theoretical 2/6 = 0.33
 
 <!-- layer: both -->
 
-<!-- block: gear, n: 6, label: "Connections" -->
+<!-- block: gear, n: 6, label: "Where it leads" -->
 
 <!-- block: callout, kind: insight -->
 **Where this leads.** Once you can write down sample spaces and events, you can ask: "given that I know $B$ happened, what's the probability of $A$?" That's **conditional probability** — the next stop. Beyond it lies **Bayes' theorem**, which flips the conditional, and **independence**, which formalizes when two events don't constrain each other.

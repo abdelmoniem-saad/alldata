@@ -78,6 +78,10 @@ _MULTILINE_BLOCK_TYPES = {
     # matched by the section-loop regex below.
     "misconception",
 }
+# M5: code-block directives are multi-line with a *different* close — the
+# closing ``` of their fenced code body. Tracked separately so the extractor
+# knows to look for ``` instead of <!-- /block -->.
+_CODE_BLOCK_TYPES = {"code_python", "simulation", "code_r"}
 # K1: gear marker — `<!-- block: gear, n: 1, label: "..." -->`. Single-line,
 # pure metadata. Renderer emits a small-caps section divider; parser stores
 # `n` and `label` in meta. Authors can omit gear markers entirely.
@@ -144,9 +148,42 @@ def _extract_multiline_blocks(text: str) -> tuple[str, list[dict]]:
             out_chunks.append(f"\n@@BLOCK_{len(blocks) - 1}@@\n")
             cursor = m.end()
             continue
+        if block_type in _CODE_BLOCK_TYPES:
+            # M5: capture code blocks as placeholders too. Their close is the
+            # next ``` after the opening ```{python|r}, not <!-- /block -->.
+            # Without this the section loop's regex would still pick them up,
+            # *unless* the section also contains a placeholder for another
+            # block (e.g., a `dataset` chip) — in which case the placeholder
+            # mode strips the directive comment and the code becomes orphan
+            # markdown. Lifting code into the placeholder pipeline closes
+            # that gap and makes adjacent paired blocks survive cleanly.
+            fence_open = re.search(r"```(python|r)\n", text[m.end():])
+            if not fence_open:
+                # Malformed — no opening fence. Leave for the legacy path.
+                out_chunks.append(text[cursor:m.end()])
+                cursor = m.end()
+                continue
+            body_start = m.end() + fence_open.end()
+            fence_close = text.find("```", body_start)
+            if fence_close < 0:
+                out_chunks.append(text[cursor:m.end()])
+                cursor = m.end()
+                continue
+            out_chunks.append(text[cursor:m.start()])
+            attrs = _parse_directive_attrs(m.group("rest"))
+            body = text[body_start:fence_close].rstrip("\n")
+            blocks.append({
+                "type": block_type,
+                "attrs": attrs,
+                "body": body,
+                "code_lang": fence_open.group(1),
+            })
+            out_chunks.append(f"\n@@BLOCK_{len(blocks) - 1}@@\n")
+            cursor = fence_close + 3  # past closing ```
+            continue
         if block_type not in _MULTILINE_BLOCK_TYPES:
             # Unknown directive — leave it for the legacy splitter (matches
-            # the original code_python / quiz / legacy misconception flows).
+            # any future directive types we haven't formally added).
             out_chunks.append(text[cursor:m.end()])
             cursor = m.end()
             continue
@@ -177,6 +214,32 @@ def _build_multiline_block(spec: dict, sort_order: int, layer: str) -> dict | No
     branch_extras = {
         k: attrs[k] for k in ("depends_on", "branch") if k in attrs
     }
+
+    if btype in _CODE_BLOCK_TYPES:
+        # M5: code blocks captured via the M5 extractor branch carry the
+        # opening fence's language as `spec['code_lang']`. The DB row mirrors
+        # the legacy code-block row shape so `BlockRenderer` doesn't need to
+        # change. `pair_id` (and any other surfaced attr) lands in `meta`.
+        is_editable = bool(attrs.get("editable") is True or attrs.get("editable") == "true")
+        expected_output = attrs.get("expected_output")
+        auto_run = bool(attrs.get("auto_run") is True or attrs.get("auto_run") == "true")
+        meta_dict: dict = {}
+        if auto_run:
+            meta_dict["auto_run"] = True
+        for k, v in attrs.items():
+            if k in ("anchor", "auto_run", "editable", "expected_output"):
+                continue
+            meta_dict[k] = v
+        return {
+            "block_type": btype,
+            "content": body,
+            "sort_order": sort_order,
+            "layer": layer,
+            "anchor": anchor,
+            "expected_output": expected_output,
+            "is_editable": is_editable,
+            "meta": json.dumps(meta_dict) if meta_dict else None,
+        }
 
     if btype == "step_through":
         # Body is a numbered markdown list; split on lines starting with `\d+.`.
@@ -551,6 +614,20 @@ def _self_heal_columns(conn) -> None:
                     raw_str = str(raw.text)
                 else:
                     raw_str = str(raw)
+                # M1: Forgiveness for JSON columns. If the column type is JSON
+                # and the literal looks like a Python-style JSON value (`{}`,
+                # `[]`, `{...}`, `[...]`) without SQL string quoting, wrap it
+                # in single quotes so the resulting DDL parses on SQLite. A
+                # model author who passes `server_default="'{}'"` already has
+                # quotes — leave that alone.
+                type_str_upper = col_type.upper()
+                looks_unquoted_json = (
+                    raw_str
+                    and raw_str[0] in "{["
+                    and not raw_str.startswith("'")
+                )
+                if "JSON" in type_str_upper and looks_unquoted_json:
+                    raw_str = f"'{raw_str}'"
                 default_clause = f" DEFAULT {raw_str}"
             elif not col.nullable:
                 type_str = col_type.upper()
@@ -558,6 +635,8 @@ def _self_heal_columns(conn) -> None:
                     default_clause = " DEFAULT 0"
                 elif "FLOAT" in type_str or "REAL" in type_str or "NUMERIC" in type_str:
                     default_clause = " DEFAULT 0"
+                elif "JSON" in type_str:
+                    default_clause = " DEFAULT '{}'"
                 else:
                     default_clause = " DEFAULT ''"
 
@@ -669,8 +748,11 @@ def parse_content_file(content_path: Path) -> list[dict]:
         # never reach this point as raw HTML comments.
 
         # Check for code block
+        # M5: accept either a `python` or `r` fenced block. Authors who use
+        # `code_r` typically open with ```r so the fence language matches
+        # the directive type; the legacy regex was hardcoded to ```python.
         code_match = re.search(
-            r"<!--\s*block:\s*(code_python|simulation|code_r).*?-->\s*```python\n(.*?)```",
+            r"<!--\s*block:\s*(code_python|simulation|code_r).*?-->\s*```(?:python|r)\n(.*?)```",
             section,
             re.DOTALL,
         )
@@ -697,11 +779,33 @@ def parse_content_file(content_path: Path) -> list[dict]:
                 })
                 sort_order += 1
 
-            # I — anchor + auto_run extras for code blocks
+            # I — anchor + auto_run extras for code blocks.
+            # M5 — surface any other directive attrs (notably `pair_id`)
+            # so the frontend can recognize paired code blocks. We pull the
+            # directive's attrs via the same parser the multi-line path
+            # uses; this keeps the legacy single-line parser flexible
+            # without rewriting it to be fully attr-driven.
             anchor_match = re.search(r"anchor:\s*([\w-]+)", section)
             anchor = anchor_match.group(1) if anchor_match else None
             auto_run = "auto_run: true" in section
-            code_meta = {"auto_run": True} if auto_run else None
+            # Extract the directive's `rest` (the chars after `block: TYPE`)
+            # so we can hand them to the generic attrs parser. The legacy
+            # regex only captured TYPE; re-find the directive to lift the
+            # whole attribute string.
+            rest_match = re.search(
+                r"<!--\s*block:\s*(?:code_python|simulation|code_r)\s*,?\s*(.*?)-->",
+                section,
+            )
+            extra_attrs = _parse_directive_attrs(rest_match.group(1)) if rest_match else {}
+            code_meta: dict = {}
+            if auto_run:
+                code_meta["auto_run"] = True
+            # Forward `pair_id` and any other unknown-but-harmless attrs
+            # (excluding the ones we already represent as dedicated cols).
+            for k, v in extra_attrs.items():
+                if k in ("anchor", "auto_run", "editable", "expected_output"):
+                    continue
+                code_meta[k] = v
             blocks.append({
                 "block_type": block_type,
                 "content": code,

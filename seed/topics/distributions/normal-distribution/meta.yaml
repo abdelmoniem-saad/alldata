@@ -1,8 +1,12 @@
-title: Normal (Gaussian) Distribution
+title: "Normal (Gaussian) Distribution"
 slug: normal-distribution
 domain: distributions
 difficulty: intro
-summary: The bell curve — the most important continuous distribution in statistics.
-prerequisites: [expectation, variance]
+summary: The bell curve — two parameters control everything, and the CLT makes it the limit of nearly every averaged quantity.
+prerequisites: [expectation, random-variables]
 has_intuition_layer: true
 has_formal_layer: true
+estimated_minutes: 10
+cycle_ported: M
+recall_prompt: "Why does the normal distribution show up so often — what's the mechanism (not the curve itself) that makes it inevitable?"
+dataset: heights

@@ -1,104 +1,118 @@
-<!-- layer: intuition -->
+<!-- block: state, values: {mu: 0, sigma: 1} -->
 
-## Why Is It Everywhere?
-
-The normal distribution shows up constantly in nature: heights, measurement errors, exam scores, stock returns. This isn't a coincidence — it's a consequence of the **Central Limit Theorem**: whenever you add up many small, independent effects, the result tends toward a bell curve.
-
-A person's height is the sum of contributions from hundreds of genes plus environmental factors. Each factor adds a tiny amount. Sum them up → normal distribution.
+<!-- block: plot, spec: gaussian_pdf, params: {mu: 0, sigma: 1}, binds: [mu, sigma], anchor: normal-feel, mobile_order: 1 -->
 
 ---
 
-## The Shape
+<!-- block: gear, n: 1, label: "TODO — name the spark" -->
 
-The bell curve is defined by just two numbers:
-- **Mean (μ)** — the center, where the peak is
-- **Standard deviation (σ)** — the width, how spread out the data is
+# Normal (Gaussian) Distribution
 
-The **68-95-99.7 rule** tells you almost everything:
-- 68% of data falls within 1σ of the mean
-- 95% within 2σ
-- 99.7% within 3σ
+The bell curve shows up everywhere — heights, exam scores, measurement errors, stock returns, sample means. That ubiquity isn't a coincidence; it's mechanical.
+
+> TODO (N): replace with the spark. Pick a single concrete example (adult heights, lab measurements) and lead with what surprises about it.
 
 ---
 
-<!-- block: simulation, editable: true -->
-```python
-import numpy as np
-import matplotlib.pyplot as plt
+<!-- block: gear, n: 2, label: "TODO — name the intuition" -->
 
-# SIMULATION FIRST: See the Central Limit Theorem create a normal distribution
-np.random.seed(42)
+## Two parameters, everything
 
-# Roll a single die — NOT normal (it's uniform)
-single_die = np.random.randint(1, 7, 10000)
+Two numbers determine a normal distribution completely:
 
-# Average of 2 dice — getting closer
-avg_2 = np.array([np.random.randint(1, 7, 2).mean() for _ in range(10000)])
+- $\mu$ (mean) — where the bell is centered.
+- $\sigma$ (standard deviation) — how spread out it is.
 
-# Average of 30 dice — nearly perfect normal!
-avg_30 = np.array([np.random.randint(1, 7, 30).mean() for _ in range(10000)])
+That's all you need. No third parameter, no skew, no extra mass anywhere. If you can quote $\mu$ and $\sigma$, you can answer any probability question about the distribution.
 
-fig, axes = plt.subplots(1, 3, figsize=(14, 4))
+The plot on the right is $N(\mu, \sigma^2)$ — drag the sliders below and you'll move the bell or change its width independently. **Mean is location; standard deviation is scale.** They never trade.
 
-axes[0].hist(single_die, bins=6, density=True, color='#71717a', edgecolor='white')
-axes[0].set_title('1 die: Uniform')
-axes[0].set_xlabel('Value')
+> TODO (N): expand. Optional: hint at why the normal shows up so often (preview of CLT) without giving the full argument away — that comes in Gear 6.
 
-axes[1].hist(avg_2, bins=30, density=True, color='#a1a1aa', edgecolor='white')
-axes[1].set_title('Average of 2 dice')
-axes[1].set_xlabel('Average')
+---
 
-axes[2].hist(avg_30, bins=40, density=True, color='#14b8a6', edgecolor='white')
-axes[2].set_title('Average of 30 dice: Normal!')
-axes[2].set_xlabel('Average')
+<!-- block: gear, n: 3, label: "TODO — name the mechanic" -->
 
-# Overlay the theoretical normal on the last plot
-from scipy import stats
-x = np.linspace(avg_30.min(), avg_30.max(), 100)
-axes[2].plot(x, stats.norm.pdf(x, avg_30.mean(), avg_30.std()), 'k-', lw=2, label='Normal PDF')
-axes[2].legend()
+<!-- block: state_reset, anchor: normal-feel -->
 
-plt.suptitle('The Central Limit Theorem in Action', fontsize=14, fontweight='bold')
-plt.tight_layout()
-plt.show()
+<!-- block: playground, anchor: normal-feel -->
+binds: [mu, sigma]
+controls:
+  - param: mu
+    label: "Mean (μ)"
+    min: -3
+    max: 3
+    step: 0.1
+  - param: sigma
+    label: "Std dev (σ)"
+    min: 0.3
+    max: 3
+    step: 0.1
+goal:
+  prompt: "Make a tall, narrow bell centered at μ = 1.5 (σ ≈ 0.4)."
+  target: { mu: 1.5, sigma: 0.4 }
+  success_when: "abs(mu - 1.5) < 0.1 and abs(sigma - 0.4) < 0.1"
+  on_success: |
+    Centering and spreading are independent levers. The bell *integrates* to 1
+    no matter what — when σ shrinks the peak grows; when σ grows the peak
+    falls. The total area is fixed.
+<!-- /block -->
 
-print(f"Average of 30 dice — Mean: {avg_30.mean():.3f}, Std: {avg_30.std():.3f}")
-print(f"Theoretical — Mean: 3.500, Std: {np.sqrt(35/12/30):.3f}")
-```
+> TODO (N): use this gear to name the 68-95-99.7 rule. The empirical-rule prose fits naturally as a follow-up to the playground above.
 
 ---
 
 <!-- layer: formal -->
 
-## Formal Definition
+<!-- block: gear, n: 4, label: "TODO — name the formalism" -->
 
-A random variable $X$ follows a normal distribution, written $X \sim N(\mu, \sigma^2)$, if its PDF is:
+## PDF and the standard normal
 
-$$f(x) = \frac{1}{\sigma\sqrt{2\pi}} \exp\left(-\frac{(x-\mu)^2}{2\sigma^2}\right)$$
+The probability density function is
 
-for $x \in (-\infty, \infty)$.
+$$f(x) = \frac{1}{\sigma\sqrt{2\pi}} \, \exp\!\left(-\frac{(x - \mu)^2}{2\sigma^2}\right)$$
 
-**Properties:**
-- $E[X] = \mu$
-- $\text{Var}(X) = \sigma^2$
-- Symmetric about $\mu$
-- If $X \sim N(\mu, \sigma^2)$, then $Z = \frac{X - \mu}{\sigma} \sim N(0, 1)$ (standardization)
-- The sum of independent normals is normal: if $X_i \sim N(\mu_i, \sigma_i^2)$ independently, then $\sum X_i \sim N(\sum \mu_i, \sum \sigma_i^2)$
+The **standard normal** $Z \sim N(0, 1)$ is the special case $\mu = 0, \sigma = 1$. Every normal random variable transforms back to a standard normal:
 
-The **standard normal** $Z \sim N(0, 1)$ has CDF denoted $\Phi(z)$, used in virtually all statistical tables.
+$$Z = \frac{X - \mu}{\sigma}$$
 
----
+That's why z-tables work — once you can answer a question about $Z$, you can answer it for any normal.
 
-<!-- block: misconception -->
-**Misconception: "If data is bell-shaped, it's normally distributed."**
-
-*Wrong belief:* Any symmetric, unimodal distribution is normal.
-
-*Correction:* Many distributions look bell-shaped but aren't normal. The t-distribution has heavier tails. The logistic distribution looks similar but has different tail behavior. "Bell-shaped" is necessary but not sufficient. Use QQ-plots or formal tests (Shapiro-Wilk) to check normality.
-
-*Why this is common:* The normal distribution is taught so early and so often that it becomes the default mental model for any symmetric data.
+<!-- block: derivation, title: "Why the $\\sqrt{2\\pi}$ in the denominator", collapsed: true -->
+> TODO (N): walk through the Gaussian integral $\int_{-\infty}^{\infty} e^{-x^2/2} \, dx = \sqrt{2\pi}$. The polar-coordinates trick is the classic move.
+<!-- /block -->
 
 ---
 
-<!-- block: quiz -->
-**Micro-challenge:** Modify the simulation to use `np.random.exponential` instead of `np.random.randint`. The exponential distribution is *heavily skewed* (not symmetric at all). Does the average of 30 exponential draws still look normal? What does this tell you about the Central Limit Theorem?
+<!-- block: gear, n: 5, label: "TODO — name the code" -->
+
+<!-- block: dataset, name: heights, source: synthetic -->
+
+<!-- block: simulation, editable: true, auto_run: true, anchor: normal-sim -->
+```python
+import numpy as np
+
+# The `heights` dataset is synthetic adult heights drawn from sex-conditional
+# normals. Check that the empirical mean / std match the normal fit and that
+# the 68% rule holds within rounding.
+heights = load("heights")          # pandas DataFrame, column 'height_cm'
+h = heights["height_cm"].to_numpy()
+mu, sigma = h.mean(), h.std()
+print(f"n = {len(h)}, mean = {mu:.2f} cm, sd = {sigma:.2f} cm")
+
+# Empirical 68% rule: fraction of data within ±1 sd of the mean
+within_1sd = ((h > mu - sigma) & (h < mu + sigma)).mean()
+print(f"Fraction within ±1 sd: {within_1sd:.4f} (normal target: 0.6827)")
+```
+
+> TODO (N): expand the prose intro. The `heights` chip above is the K5 dataset attribution; mention the source explicitly in your prose so readers know what they're working with.
+
+---
+
+<!-- layer: both -->
+
+<!-- block: gear, n: 6, label: "Where it leads" -->
+
+<!-- block: callout, kind: insight -->
+**Where this leads.** The **Central Limit Theorem** explains *why* the normal is everywhere — it's the limit shape of the sample mean. **Confidence intervals** and **hypothesis tests** lean on normal critical values almost everywhere. The **t-distribution** is the normal's "I don't know σ" cousin. And the **standard normal table** is the lookup that turns any normal question into an integral against $N(0, 1)$.
+<!-- /block -->

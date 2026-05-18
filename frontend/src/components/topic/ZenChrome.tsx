@@ -39,6 +39,17 @@ interface Props {
   prerequisites: PrerequisiteEntry[]
   leadsTo: PrerequisiteEntry[]
   nextTopic: GraphNode | undefined
+
+  /**
+   * M5: when the topic is in immersive tour mode (`meta.yaml: tour: true`),
+   * `TopicView` short-circuits the view-mode dispatch and always mounts
+   * `TourView`. The scroll/slides toggle and the slide-nav UI would be
+   * inert in that mode — clicking them flips `viewMode` but nothing visible
+   * changes (TopicView keeps rendering TourView). Hiding them here keeps
+   * the chrome honest: the user never sees an affordance that doesn't do
+   * what it claims.
+   */
+  isTour?: boolean
 }
 
 export default function ZenChrome(props: Props) {
@@ -87,6 +98,7 @@ function BottomBar(props: Props) {
     viewMode, setViewMode, hasFormalLayer, activeLayer, setActiveLayer,
     showSlideNav, slideIdx, slideTotal, onSlidePrev, onSlideNext, onSlideGoto,
     slug, isCompleted, justCompleted, onMarkCompleted, onUnmark,
+    isTour,
   } = props
 
   const canPrev = slideIdx > 0
@@ -128,7 +140,9 @@ function BottomBar(props: Props) {
         </div>
       )}
 
-      {/* View mode toggle */}
+      {/* View mode toggle — hidden in tour mode where TopicView ignores
+          `viewMode` and always renders TourView. M5. */}
+      {!isTour && (
       <div style={{
         display: 'inline-flex', gap: 2, padding: 2,
         borderRadius: 8,
@@ -169,9 +183,11 @@ function BottomBar(props: Props) {
           </button>
         ))}
       </div>
+      )}
 
-      {/* Slide navigation — center of the bar when in slides mode */}
-      {showSlideNav && slideTotal > 0 && (
+      {/* Slide navigation — center of the bar when in slides mode. Hidden
+          in tour mode (same reason as the view-mode toggle above). M5. */}
+      {!isTour && showSlideNav && slideTotal > 0 && (
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -257,9 +273,12 @@ function BottomBar(props: Props) {
         </div>
       )}
 
-      {/* Mark as Learned — right side */}
+      {/* Mark as Learned — right side. Push to right with margin-left:auto
+          unless the (visible) slide-nav already sits in the center via its
+          own margin. In tour mode the toggle + slide-nav are both hidden,
+          so the LEARNED chip should still float right. */}
       {slug && (
-        <div style={{ marginLeft: showSlideNav ? 0 : 'auto', flexShrink: 0 }}>
+        <div style={{ marginLeft: !isTour && showSlideNav ? 0 : 'auto', flexShrink: 0 }}>
           {isCompleted && !justCompleted ? (
             <button
               onClick={onUnmark}

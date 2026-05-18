@@ -131,6 +131,37 @@ export interface ExecutionResult {
   truncated: boolean
 }
 
+/**
+ * M1: progress-sync wire shapes. The frontend's `progressStore` slices
+ * mirror these one-to-one — the wire is just "the topic's slice of state."
+ * One topic = one upsert. Conflict resolution is last-write-wins on
+ * `client_updated_at` (the client's wall-clock at mutation time).
+ */
+export interface TopicProgressUpsert {
+  topic_slug: string
+  status: 'not_started' | 'in_progress' | 'completed'
+  comfort_level: number
+  decision_events: Record<string, { optionId: string; pickedAt: number }>
+  review_schedule: {
+    ease: number
+    interval: number
+    lastReviewedAt: number
+    dueAt: number
+  } | null
+  confusion_flags: Record<string, number>
+  client_updated_at: number  // epoch ms
+}
+
+export interface TopicProgressOut extends TopicProgressUpsert {
+  /** Server's canonical timestamp. Store this back as the next push's
+   *  baseline for conflict resolution. */
+  server_updated_at: number
+}
+
+export interface ProgressBundle {
+  topics: TopicProgressOut[]
+}
+
 // API functions
 export const api = {
   // Graph
@@ -203,5 +234,34 @@ export const api = {
     request<{ access_token: string; user: any }>('/auth/register', {
       method: 'POST',
       body: JSON.stringify({ email, display_name, password }),
+    }),
+
+  // M1: progress sync
+  //
+  // `getProgress` is called on boot (if a token exists) and on window focus
+  // (debounced); the returned bundle is merged into the local progressStore
+  // per-topic via last-write-wins.
+  //
+  // `putTopicProgress` is fired by the sync orchestrator's debounced push
+  // when any topic's `topicUpdatedAt` ticks. The server returns the
+  // post-merge wire shape (which may be older than what the client sent if
+  // a newer write from another device clobbered it — the client adopts).
+  //
+  // `batchProgress` is used once at login when local localStorage holds a
+  // non-empty progress slice and we want to push everything before the
+  // initial pull races it.
+  getProgress: () =>
+    request<ProgressBundle>('/users/me/progress'),
+
+  putTopicProgress: (payload: TopicProgressUpsert) =>
+    request<TopicProgressOut>(`/users/me/progress/${payload.topic_slug}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+
+  batchProgress: (payloads: TopicProgressUpsert[]) =>
+    request<ProgressBundle>('/users/me/progress/batch', {
+      method: 'POST',
+      body: JSON.stringify(payloads),
     }),
 }

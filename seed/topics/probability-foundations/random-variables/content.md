@@ -4,7 +4,7 @@
 
 ---
 
-<!-- block: gear, n: 1, label: "The spark" -->
+<!-- block: gear, n: 1, label: "It's actually a function" -->
 
 # Random variables
 
@@ -12,7 +12,7 @@ A random variable is a function. That sounds wrong — it's called a *variable*,
 
 ---
 
-<!-- block: gear, n: 2, label: "Intuition" -->
+<!-- block: gear, n: 2, label: "Outcomes to numbers" -->
 
 ## A function in disguise
 
@@ -73,7 +73,7 @@ goal:
 
 <!-- layer: formal -->
 
-<!-- block: gear, n: 4, label: "The formalism" -->
+<!-- block: gear, n: 4, label: "Measurable, CDF, PMF, PDF" -->
 
 ## Formal definition
 
@@ -95,7 +95,7 @@ For pathological functions (rare in practice but real in measure theory), some "
 
 ---
 
-<!-- block: gear, n: 5, label: "Code" -->
+<!-- block: gear, n: 5, label: "Two RVs on one experiment" -->
 
 <!-- block: simulation, editable: true, auto_run: true, anchor: rv-sim -->
 ```python
@@ -131,7 +131,7 @@ print(f"E[Y] = {y.mean():.4f}  (theoretical 0.5)")
 
 <!-- layer: both -->
 
-<!-- block: gear, n: 6, label: "Connections" -->
+<!-- block: gear, n: 6, label: "Where it leads" -->
 
 <!-- block: callout, kind: insight -->
 **Where this leads.** **Distributions** catalog the canonical shapes random variables take (normal, binomial, Poisson, exponential). **Expectation** summarizes a variable's center; **variance** its spread. **Independence of random variables** generalizes the events case. Almost everything downstream is "what does the distribution of $X$ tell us?" — random variables are the lever.

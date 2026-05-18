@@ -4,7 +4,7 @@
 
 ---
 
-<!-- block: gear, n: 1, label: "The spark" -->
+<!-- block: gear, n: 1, label: "Data to a single number" -->
 
 # Point estimation
 
@@ -12,7 +12,7 @@ You have data. You have a parameter you want to know. The estimator is the rule 
 
 ---
 
-<!-- block: gear, n: 2, label: "Intuition" -->
+<!-- block: gear, n: 2, label: "Bias and variance, together" -->
 
 ## Two questions an estimator has to answer
 
@@ -25,7 +25,7 @@ The sample mean $\bar{X}$ is an unbiased estimator of the population mean $\mu$.
 
 ---
 
-<!-- block: gear, n: 3, label: "The decision" -->
+<!-- block: gear, n: 3, label: "Biased and tight beats unbiased and loose" -->
 
 <!-- block: decision, anchor: pe-pick -->
 question: |
@@ -76,7 +76,7 @@ The trap was over-weighting unbiasedness as a virtue. MSE = bias² + variance, a
 
 <!-- layer: formal -->
 
-<!-- block: gear, n: 4, label: "The formalism" -->
+<!-- block: gear, n: 4, label: "MSE = bias² + variance" -->
 
 ## Bias-variance decomposition
 
@@ -105,7 +105,7 @@ The first term is $\text{Var}(\hat{\theta})$. The middle term is zero because $\
 
 ---
 
-<!-- block: gear, n: 5, label: "Code" -->
+<!-- block: gear, n: 5, label: "Comparing two estimators" -->
 
 <!-- block: dataset, name: heights, source: synthetic -->
 
@@ -144,7 +144,7 @@ print(f"B: {bias(B, mu_true):+.4f}  {var(B):.4f}  {mse(B, mu_true):.4f}  ({bias(
 
 <!-- layer: both -->
 
-<!-- block: gear, n: 6, label: "Connections" -->
+<!-- block: gear, n: 6, label: "Where it leads" -->
 
 <!-- block: callout, kind: insight -->
 **Where this leads.** **Confidence intervals** quantify uncertainty around a point estimate. **Maximum likelihood estimation** is the most common general-purpose recipe for picking estimators. **The bias-variance tradeoff** in machine learning is the same decomposition; **regularization** trades bias for variance to lower MSE on out-of-sample data.

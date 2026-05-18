@@ -6,6 +6,10 @@
 
 <!-- layer: intuition -->
 
+<!-- block: gear, n: 1, label: "TODO — name the spark" -->
+
+# Hypothesis Testing
+
 ## The core question
 
 You have data. You have a claim. Is the data consistent with that claim, or does it provide evidence against it?
@@ -18,7 +22,11 @@ The logic of hypothesis testing is proof by contradiction:
 
 The pinned plot is showing 1,000 *experiments* — half where the null is actually true, half where the alternative is. As you read on, you'll set the test's two error rates and watch which experiments get caught.
 
+> TODO (N): replace this gear's intro paragraph with the spark — pick a concrete study (a drug trial, an A/B test) where the reader feels what's at stake.
+
 ---
+
+<!-- block: gear, n: 2, label: "TODO — name the intuition" -->
 
 ## The two errors
 
@@ -30,6 +38,8 @@ A test gives you a binary verdict: reject $H_0$ or don't. Reality also has two s
 You want both error rates low. You can't have both without help — either more data, or accepting that they trade against each other.
 
 ---
+
+<!-- block: gear, n: 3, label: "TODO — name the mechanic" -->
 
 <!-- block: decision, anchor: testing-decision -->
 question: |
@@ -90,6 +100,28 @@ You're right that $\alpha$ should match the cost structure of the decision. The 
 
 ---
 
+<!-- layer: formal -->
+
+<!-- block: gear, n: 4, label: "TODO — name the formalism" -->
+
+## Formal framework
+
+**Hypotheses.**
+- $H_0: \theta = \theta_0$
+- $H_1: \theta \ne \theta_0$ (two-sided), or $H_1: \theta > \theta_0$ (one-sided)
+
+**Test statistic.** $T = T(X_1, \ldots, X_n)$ — a function of the sample.
+
+**P-value.** $p = P(|T| \ge |t_\text{obs}| \mid H_0)$ for a two-sided test.
+
+**Decision rule.** Reject $H_0$ if $p < \alpha$, where $\alpha$ is pre-specified.
+
+**Type I error ($\alpha$).** Rejecting $H_0$ when it's true.
+**Type II error ($\beta$).** Failing to reject $H_0$ when $H_1$ is true.
+**Power.** $1 - \beta$.
+
+**Neyman–Pearson lemma.** Among all tests of size $\alpha$ for testing simple $H_0$ vs simple $H_1$, the likelihood-ratio test maximizes power.
+
 <!-- block: derivation, title: "What the p-value is and isn't", collapsed: true -->
 The p-value is
 
@@ -101,6 +133,8 @@ This is the **Lindley paradox**: with very large samples, even tiny deviations f
 <!-- /block -->
 
 ---
+
+<!-- block: gear, n: 5, label: "TODO — name the code" -->
 
 <!-- block: simulation, editable: true, auto_run: true, anchor: testing-sim -->
 ```python
@@ -151,32 +185,20 @@ plt.show()
 
 ---
 
-<!-- layer: formal -->
-
-## Formal framework
-
-**Hypotheses.**
-- $H_0: \theta = \theta_0$
-- $H_1: \theta \ne \theta_0$ (two-sided), or $H_1: \theta > \theta_0$ (one-sided)
-
-**Test statistic.** $T = T(X_1, \ldots, X_n)$ — a function of the sample.
-
-**P-value.** $p = P(|T| \ge |t_\text{obs}| \mid H_0)$ for a two-sided test.
-
-**Decision rule.** Reject $H_0$ if $p < \alpha$, where $\alpha$ is pre-specified.
-
-**Type I error ($\alpha$).** Rejecting $H_0$ when it's true.
-**Type II error ($\beta$).** Failing to reject $H_0$ when $H_1$ is true.
-**Power.** $1 - \beta$.
-
-**Neyman–Pearson lemma.** Among all tests of size $\alpha$ for testing simple $H_0$ vs simple $H_1$, the likelihood-ratio test maximizes power.
-
----
-
 <!-- block: misconception, inline: true -->
 **"Failing to reject $H_0$ means $H_0$ is true."**
 
 *Wrong:* if the p-value is above 0.05, the null hypothesis has been confirmed.
 
 *Correct:* "fail to reject" is **not** "accept." It means the data isn't surprising enough to rule out $H_0$ — but the study may simply lack the power to detect a real effect. Absence of evidence isn't evidence of absence. The binary reject / fail-to-reject framing encourages black-and-white thinking; in reality $p = 0.04$ and $p = 0.06$ represent nearly identical evidence.
+<!-- /block -->
+
+---
+
+<!-- layer: both -->
+
+<!-- block: gear, n: 6, label: "Where it leads" -->
+
+<!-- block: callout, kind: insight -->
+**Where this leads.** **P-values** is the next stop — what the number really measures and what it doesn't. **Confidence intervals** are the dual: a CI that excludes the null value corresponds to rejecting it at the same level. **Statistical power** is the orthogonal question: given my design, what's $\beta$? Underpowered studies are how false negatives proliferate; pre-registered power analyses are how the literature stops being a parade of forking paths.
 <!-- /block -->

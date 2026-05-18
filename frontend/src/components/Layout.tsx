@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { useThemeStore } from '../stores/themeStore'
 import SearchDropdown from './SearchDropdown'
+import AuthMenu from './AuthMenu'
 import { GraphNode } from '../api/client'
 
 const navItems = [
@@ -123,6 +124,10 @@ export default function Layout() {
         </button>
 
         <CommandSearch />
+
+        {/* M1: sign-in chip / account popover. Lives between search and the
+            mobile hamburger so it shares the right-edge action cluster. */}
+        <AuthMenu />
 
         {/* Mobile hamburger */}
         <button

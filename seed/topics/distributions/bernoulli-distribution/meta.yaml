@@ -1,2 +1,11 @@
+title: "Bernoulli Distribution"
 slug: bernoulli-distribution
+domain: distributions
+difficulty: intro
+summary: The smallest distribution — one trial, two outcomes, one parameter. The atom every binary process is built from.
+prerequisites: [random-variables]
+has_intuition_layer: true
 has_formal_layer: true
+estimated_minutes: 7
+cycle_ported: M
+recall_prompt: "What's the mean and variance of a Bernoulli(p), and why does the variance peak at p = 0.5?"

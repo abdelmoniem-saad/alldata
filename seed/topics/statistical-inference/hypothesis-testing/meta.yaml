@@ -1,8 +1,11 @@
-title: Hypothesis Testing
+title: "Hypothesis Testing"
 slug: hypothesis-testing
 domain: statistical-inference
 difficulty: intermediate
-summary: Making decisions about populations based on sample evidence.
+summary: A procedure for ruling out chance as an explanation for observed data — and a procedure with sharp gotchas every researcher who skips them hits.
 prerequisites: [sampling-distributions]
 has_intuition_layer: true
 has_formal_layer: true
+estimated_minutes: 12
+cycle_ported: M
+recall_prompt: "What does a p-value of 0.03 mean — and what does it *not* mean?"

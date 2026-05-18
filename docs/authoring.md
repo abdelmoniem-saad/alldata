@@ -64,6 +64,47 @@ Pick *one* mechanic for Gear 3 — observational (playground) or commitment (dec
 
 ---
 
+## Immersive tour mode
+
+`tour: true` in `meta.yaml` flips a topic from the standard scrollytelling surface to an immersive tour: the graph fills the viewport behind the prose, and the prose floats over it in a left-aligned column with translucent panels. Each scroll section can carry a `graph_view` block whose `target:` field drives the background camera:
+
+- `target: all` (or `*`) — fits the entire graph; no cluster filter.
+- `target: <domain-slug>` (`probability-foundations`, `distributions`, …) — hides every other cluster (legend-style) and frames the named one.
+- `target: <topic-slug>` — centers on that single node.
+
+The active section is picked by a scroll listener that tracks whichever anchor is topmost above the 30% line — so the camera changes reliably regardless of scroll speed or programmatic jumps (no IntersectionObserver band that can drift between observer creation and first paint).
+
+```yaml
+# seed/topics/_meta/shape-of-statistics/meta.yaml
+slug: shape-of-statistics
+title: "The Shape of Statistics"
+domain: _meta
+tour: true        # <— flips on TourView
+…
+```
+
+```markdown
+<!-- seed/topics/_meta/shape-of-statistics/content.md -->
+
+<!-- block: graph_view, target: all, anchor: tour-start -->
+
+<!-- block: gear, n: 1, label: "Where you are" -->
+You're looking at every concept this platform teaches, all at once…
+
+---
+
+<!-- block: graph_view, target: probability-foundations, anchor: tour-probability -->
+
+<!-- block: gear, n: 2, label: "Probability" -->
+Almost everything we'll do leans on probability…
+```
+
+The `graph_view` block renders nothing in prose flow when the topic is in tour mode — it's pure metadata for the background camera. The prose blocks render in floating panels over the graph.
+
+**Use sparingly.** The tour surface is designed for orientation topics that *show* the graph itself (Shape of Statistics is the canonical example). It's the wrong surface for ordinary content topics — those want the pinned-viz scrollytelling that `ScrollReader` provides.
+
+---
+
 ## Mental model
 
 A topic is a directory: `seed/topics/{domain}/{slug}/` containing `meta.yaml` plus one or more `.md` files. The parser splits each `.md` file into typed **blocks** the frontend renders. There are two block syntaxes:
@@ -142,6 +183,35 @@ print(np.mean([1, 2, 3]))
 ### `simulation`
 
 Same shape as `code_python` but flagged. Gets the teal indicator in the runner header. Use when the code *is* the lesson.
+
+### Paired Python / R blocks (`pair_id:`)
+
+Two adjacent code blocks that share a `pair_id:` value merge into a single rendered surface with a language tab on top. Use this when you want the *same idea* expressed in both languages — the reader picks once, the choice persists across the whole site.
+
+```markdown
+<!-- block: simulation, editable: true, pair_id: bayes-update -->
+```python
+import numpy as np
+prior = 0.5
+…
+```
+
+<!-- block: code_r, editable: true, pair_id: bayes-update -->
+```r
+prior <- 0.5
+…
+```
+```
+
+Rules:
+
+- The blocks must be **adjacent** (no other directives or `\n---\n` separator between them) and they must declare **different languages** (one `code_python` or `simulation`, one `code_r`).
+- The `pair_id` value is just an identifier — make it the topic + concept (`bayes-update`, `binomial-mean-var`) so it's grep-able later.
+- A code block with `pair_id:` but no partner renders as a standalone block (no tab).
+- The reader's language preference (`preferredCodeLang`) is persisted in `progressStore` and is **global**, not per-topic — flipping to R on one topic carries to the next.
+- Each tab's click re-mounts the runner with the new code, so any in-progress edits in one language don't bleed to the other.
+
+The opening fence after the directive can be ```` ```python ```` or ```` ```r ```` — pick whichever matches the directive's language so syntax highlighting in your editor lines up.
 
 ### `plot`
 

@@ -1,2 +1,12 @@
+title: "Simple Linear Regression"
 slug: simple-linear-regression
+domain: regression-modeling
+difficulty: intro
+summary: One predictor, one outcome, one line. Every other regression technique is a small modification of this.
+prerequisites: [correlation]
+has_intuition_layer: true
 has_formal_layer: true
+estimated_minutes: 11
+cycle_ported: M
+recall_prompt: "What's the difference between minimizing squared errors and minimizing absolute errors, and why is squared the standard choice?"
+dataset: heights

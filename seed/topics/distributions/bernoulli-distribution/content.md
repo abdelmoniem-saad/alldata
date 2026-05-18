@@ -1,106 +1,110 @@
-<!-- layer: intuition -->
+<!-- block: state, values: {n: 1, p: 0.5} -->
 
-## The Simplest Distribution
-
-A **Bernoulli distribution** models a single yes/no experiment. Will the coin land heads? Will the customer click the ad? Will the part be defective?
-
-There are only two outcomes:
-- **Success** (1) with probability $p$
-- **Failure** (0) with probability $1-p$
-
-That's it. The entire distribution is described by a single number: $p$.
-
-Despite its simplicity, the Bernoulli is the **building block** of many other distributions. Repeat a Bernoulli trial $n$ times and you get the Binomial. Let $n \to \infty$ with $np$ constant and you get the Poisson. It's the atom of probability.
+<!-- block: plot, spec: binomial_pmf, params: {n: 1, p: 0.5}, binds: [n, p], anchor: bernoulli-feel, mobile_order: 1 -->
 
 ---
 
-## Real-World Bernoulli Trials
+<!-- block: gear, n: 1, label: "TODO — name the spark" -->
 
-Any time you see a binary outcome, you're looking at a Bernoulli:
+# Bernoulli Distribution
 
-- **A/B testing:** Does user click the new button? (p ≈ 0.03 for many ads)
-- **Manufacturing:** Is the product defective? (p ≈ 0.02 for quality lines)
-- **Medicine:** Does the treatment work? (p varies)
-- **Sports:** Does the free throw go in? (p ≈ 0.77 in the NBA)
+One trial. Two outcomes. One number that says everything: $p$. The Bernoulli is the smallest distribution worth naming — and the atom every binary process is built from.
 
-The key assumption is that each trial has the **same probability** $p$. If p changes from trial to trial, you need a more complex model.
+> TODO (N): replace this paragraph with the spark. The "coin / click / defect" framing or a single sentence with a concrete real example both work.
 
 ---
 
-<!-- block: code_python, editable: true -->
-```python
-import numpy as np
-import matplotlib.pyplot as plt
+<!-- block: gear, n: 2, label: "TODO — name the intuition" -->
 
-# Simulate Bernoulli trials with different p values
-np.random.seed(42)
-n_trials = 1000
+## Yes-or-no, parameterized
 
-probabilities = [0.1, 0.3, 0.5, 0.7, 0.9]
-fig, axes = plt.subplots(1, 5, figsize=(12, 3), sharey=True)
+A **Bernoulli** trial has two outcomes: success (1) with probability $p$, failure (0) with probability $1 - p$. The whole distribution is one number.
 
-for ax, p in zip(axes, probabilities):
-    trials = np.random.binomial(1, p, n_trials)
-    counts = [np.sum(trials == 0), np.sum(trials == 1)]
-    ax.bar([0, 1], [c/n_trials for c in counts], color=['#71717a', '#14b8a6'],
-           width=0.5, edgecolor='white')
-    ax.set_title(f'p = {p}', fontsize=11, fontweight='bold')
-    ax.set_xticks([0, 1])
-    ax.set_xticklabels(['Fail', 'Success'])
-    ax.set_ylim(0, 1)
+That's the *point* — the Bernoulli is what you reach for any time the world produces a binary outcome with a stable per-trial probability:
 
-axes[0].set_ylabel('Relative frequency')
-plt.suptitle('Bernoulli Distribution for Various p', fontsize=13, y=1.02)
-plt.tight_layout()
-plt.show()
+- A/B test: does the user click?
+- Manufacturing: is the part defective?
+- Free throw: does the ball go in?
+- Medical screening: does the test return positive?
 
-# Key statistics
-p = 0.3
-print(f"Bernoulli(p={p}):")
-print(f"  E[X] = p = {p}")
-print(f"  Var(X) = p(1-p) = {p*(1-p):.2f}")
-print(f"  Variance is maximized at p=0.5: Var = {0.5*0.5:.2f}")
-```
-<!-- expected_output: E[X] = p = 0.3, Var(X) = p(1-p) = 0.21 -->
+The assumption is that **each trial has the same $p$**. If $p$ shifts between trials — over time, between groups, by context — you need a richer model.
+
+> TODO (N): expand on the "constant $p$" assumption. When does it hold? When does it visibly fail? A short example of each.
+
+---
+
+<!-- block: gear, n: 3, label: "TODO — name the mechanic" -->
+
+<!-- block: state_reset, anchor: bernoulli-feel -->
+
+<!-- block: playground, anchor: bernoulli-feel -->
+binds: [p]
+controls:
+  - param: p
+    label: "Success probability (p)"
+    min: 0.05
+    max: 0.95
+    step: 0.05
+goal:
+  prompt: "Make the bar plot heavily favor success — p = 0.85."
+  target: { p: 0.85 }
+  success_when: "abs(p - 0.85) < 0.05"
+  on_success: |
+    Notice that the bars never *both* become tall — they trade height with each
+    other because they must sum to 1. The variance is $p(1-p)$, which peaks
+    at $p = 0.5$ and shrinks toward the edges.
+<!-- /block -->
+
+> TODO (N): use this Gear 3 to introduce the variance-peaks-at-0.5 intuition. The playground above hints at it; expand on what that means in plain words.
 
 ---
 
 <!-- layer: formal -->
 
-## Formal Definition
+<!-- block: gear, n: 4, label: "TODO — name the formalism" -->
 
-A random variable $X \sim \text{Bernoulli}(p)$ has:
+## PMF, mean, variance
 
-**PMF:**
+A random variable $X \sim \text{Bernoulli}(p)$ has
 
-$$P(X = x) = p^x (1-p)^{1-x}, \quad x \in \{0, 1\}$$
+$$P(X = x) = p^x (1 - p)^{1 - x}, \qquad x \in \{0, 1\}$$
 
-**Mean:** $E[X] = p$
+$$\mathbb{E}[X] = p, \qquad \text{Var}(X) = p(1 - p)$$
 
-**Variance:** $\text{Var}(X) = p(1-p)$
+The variance reaches its maximum $1/4$ at $p = 0.5$ — the point of maximum uncertainty. As $p$ approaches 0 or 1 the outcome becomes nearly deterministic and the variance shrinks toward 0.
 
-**Moment Generating Function:**
+The Bernoulli is the $n = 1$ case of the Binomial: $\text{Bernoulli}(p) = \text{Binomial}(1, p)$. Sum $n$ iid Bernoulli($p$) and you get Binomial($n, p$); that's the next topic.
 
-$$M_X(t) = (1-p) + pe^t$$
-
-The Bernoulli is a special case of the Binomial with $n=1$: $\text{Bernoulli}(p) = \text{Binomial}(1, p)$.
-
----
-
-<!-- block: misconception -->
-**Misconception: "If p = 0.5, the result is completely unpredictable."**
-
-*Wrong belief:* A Bernoulli(0.5) trial gives no information — it's pure chaos.
-
-*Correction:* Even at p=0.5, each individual trial is fully described by the distribution. What's true is that variance is **maximized** at p=0.5 — this is the point of maximum uncertainty. But the distribution still tells you exactly the probabilities. And over many trials, the law of large numbers guarantees the average converges to 0.5.
-
-*Why this is common:* People conflate "hardest to predict a single outcome" with "gives no useful information." But a Bernoulli(0.5) is fully specified — we know everything about it.
+<!-- block: derivation, title: "Why $\text{Var}(X) = p(1-p)$", collapsed: true -->
+> TODO (N): walk through $\mathbb{E}[X^2] - (\mathbb{E}[X])^2 = p - p^2 = p(1-p)$. Add the max-at-$p=0.5$ argument via $\frac{d}{dp}[p(1-p)] = 1 - 2p = 0$.
+<!-- /block -->
 
 ---
 
-<!-- block: quiz -->
-**Micro-challenge:** A website has a 4% click-through rate on ads. If you show the ad to one person, what's E[revenue] if a click is worth $2? What's the variance of revenue per impression?
+<!-- block: gear, n: 5, label: "TODO — name the code" -->
 
-*Hint:* Revenue = $2 × X where X ~ Bernoulli(0.04). Use properties of expectation and variance with scaling.
+<!-- block: simulation, editable: true, auto_run: true, anchor: bernoulli-sim -->
+```python
+import numpy as np
 
-<!-- solution: X ~ Bernoulli(0.04). Revenue R = 2X. E[R] = 2·E[X] = 2·0.04 = $0.08 per impression. Var(R) = 4·Var(X) = 4·0.04·0.96 = $0.1536. SD(R) = $0.39. So on average you earn 8 cents per impression, but with high variability. -->
+# Bernoulli draws for several p values. Compare empirical mean + variance
+# against the closed forms p and p(1-p).
+np.random.seed(42)
+n = 50_000
+for p in [0.1, 0.3, 0.5, 0.7, 0.9]:
+    x = (np.random.random(n) < p).astype(int)
+    print(f"p={p}: mean={x.mean():.4f} (target {p:.4f}), "
+          f"var={x.var():.4f} (target {p*(1-p):.4f})")
+```
+
+> TODO (N): annotate the output. Mention that as `n` grows the empirical numbers converge to the theoretical (a quiet preview of the law of large numbers).
+
+---
+
+<!-- layer: both -->
+
+<!-- block: gear, n: 6, label: "Where it leads" -->
+
+<!-- block: callout, kind: insight -->
+**Where this leads.** Sum $n$ iid Bernoulli($p$) trials and the count is **Binomial**$(n, p)$. Let $n \to \infty$ with $np$ held fixed and the limit is **Poisson**. Every binary-outcome distribution descends from the Bernoulli atom.
+<!-- /block -->

@@ -35,6 +35,8 @@ import {
 import ForceGraph, { ForceGraphHandle } from '../graph/ForceGraph'
 import { api, ContentBlock, GraphEdge, GraphNode, Misconception } from '../../api/client'
 import BlockRenderer from './blocks/BlockRenderer'
+import { groupCodePairs, isCodePair } from './blocks/codePairs'
+import CodePairRenderer from './blocks/CodePairRenderer'
 import { applyBranchFilter, parseMeta } from './blocks/branchFilter'
 import { useProgressStore } from '../../stores/progressStore'
 import { DOMAIN_SLUGS } from '../../lib/domain'
@@ -330,7 +332,25 @@ export default function TourView({
           {anchorBlocks.length > 0 && (
             <Anchor id={anchorBlocks[0].anchor!} />
           )}
-          {visibleBlocks.map(block => {
+          {groupCodePairs(visibleBlocks, metaCache).map(item => {
+            if (isCodePair(item)) {
+              return (
+                <div
+                  key={`pair:${item.pairId}`}
+                  style={{
+                    marginBottom: 24,
+                    padding: '14px 18px',
+                    borderRadius: 'var(--radius-lg)',
+                    background: 'color-mix(in srgb, var(--color-bg-secondary) 82%, transparent)',
+                    border: '1px solid var(--color-border-subtle)',
+                    backdropFilter: 'blur(6px)',
+                  }}
+                >
+                  <CodePairRenderer pair={item} metaCache={metaCache} />
+                </div>
+              )
+            }
+            const block = item
             const meta = metaCache.get(block.id) ?? {}
             const isAnchorBearing = Boolean(block.anchor) && block !== anchorBlocks[0]
             return (

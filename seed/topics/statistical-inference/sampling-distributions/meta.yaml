@@ -1,2 +1,11 @@
+title: "Sampling Distributions"
 slug: sampling-distributions
+domain: statistical-inference
+difficulty: intermediate
+summary: The distribution of a statistic across hypothetical repetitions of the experiment — the bridge from a single sample to claims about the population.
+prerequisites: [central-limit-theorem]
+has_intuition_layer: true
 has_formal_layer: true
+estimated_minutes: 10
+cycle_ported: M
+recall_prompt: "What's the difference between the *sample distribution* and the *sampling distribution of the mean*? Why does the latter narrow as n grows?"

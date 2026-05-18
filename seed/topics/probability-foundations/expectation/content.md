@@ -4,7 +4,7 @@
 
 ---
 
-<!-- block: gear, n: 1, label: "The spark" -->
+<!-- block: gear, n: 1, label: "The number you'll never roll" -->
 
 # Expectation
 
@@ -12,7 +12,7 @@ The expected value $\mathbb{E}[X]$ is the average — but a *long-run* average. 
 
 ---
 
-<!-- block: gear, n: 2, label: "Intuition" -->
+<!-- block: gear, n: 2, label: "Center of mass" -->
 
 ## The balance point
 
@@ -68,7 +68,7 @@ goal:
 
 <!-- layer: formal -->
 
-<!-- block: gear, n: 4, label: "The formalism" -->
+<!-- block: gear, n: 4, label: "Linearity, with or without independence" -->
 
 ## Linearity of expectation
 
@@ -90,7 +90,7 @@ This is why the expected number of heads in $n$ fair flips is $n/2$ even though 
 
 ---
 
-<!-- block: gear, n: 5, label: "Code" -->
+<!-- block: gear, n: 5, label: "A million die rolls" -->
 
 <!-- block: simulation, editable: true, auto_run: true, anchor: expectation-sim -->
 ```python
@@ -110,7 +110,7 @@ for n in [10, 100, 10_000, 1_000_000]:
 
 <!-- layer: both -->
 
-<!-- block: gear, n: 6, label: "Connections" -->
+<!-- block: gear, n: 6, label: "Where it leads" -->
 
 <!-- block: callout, kind: insight -->
 **Where this leads.** **Variance** is $\mathbb{E}[(X - \mathbb{E}[X])^2]$ — the expected squared distance from the balance point. **The law of large numbers** says the sample mean converges to the expectation as $n \to \infty$. **The CLT** tells you the *shape* the sample mean takes around that limit. All three are direct consequences of expectation's mechanics.

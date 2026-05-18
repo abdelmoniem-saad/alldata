@@ -4,7 +4,7 @@
 
 ---
 
-<!-- block: gear, n: 1, label: "The spark" -->
+<!-- block: gear, n: 1, label: "Why more data works" -->
 
 # The Central Limit Theorem
 
@@ -14,7 +14,7 @@ This is the most-used result in statistics. It's why "more data" works.
 
 ---
 
-<!-- block: gear, n: 2, label: "Intuition" -->
+<!-- block: gear, n: 2, label: "Averages forget their shape" -->
 
 ## Averages forget their shape
 
@@ -72,7 +72,7 @@ goal:
 
 <!-- layer: formal -->
 
-<!-- block: gear, n: 4, label: "The formalism" -->
+<!-- block: gear, n: 4, label: "The 1/√n statement" -->
 
 ## Formal statement
 
@@ -103,7 +103,7 @@ That's the characteristic function of $N(0, 1)$. Lévy's continuity theorem turn
 
 ---
 
-<!-- block: gear, n: 5, label: "Code" -->
+<!-- block: gear, n: 5, label: "Watching the bell emerge" -->
 
 <!-- block: simulation, editable: true, auto_run: true, anchor: clt-sim -->
 ```python
@@ -141,7 +141,7 @@ plt.show()
 
 <!-- layer: both -->
 
-<!-- block: gear, n: 6, label: "Connections" -->
+<!-- block: gear, n: 6, label: "Where it leads" -->
 
 <!-- block: callout, kind: insight -->
 **Where this leads.** **Confidence intervals** and **hypothesis tests** lean on the CLT to claim "the sample mean is approximately normal" — that approximation is what makes the math tractable. **Sampling distributions** is the topic that formalizes what the CLT is making claims about. **The law of large numbers** is its weaker companion: same setup, different conclusion (point convergence instead of distributional).

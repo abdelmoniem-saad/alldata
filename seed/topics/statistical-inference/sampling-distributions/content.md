@@ -6,13 +6,21 @@
 
 <!-- layer: intuition -->
 
+<!-- block: gear, n: 1, label: "TODO — name the spark" -->
+
+# Sampling Distributions
+
 ## The distribution of your estimate
 
 Your sample mean is one number from one sample. Pull a different sample, you'd get a different number. Pull a thousand samples and the means form their own distribution — the **sampling distribution**.
 
 The sampling distribution is the answer to "how much would my estimate change if I'd collected a different sample?" It's the bridge between the one dataset you have and any honest claim about the population.
 
+> TODO (N): replace the intro with the spark — make the reader feel the difference between *the data they have* and *the data they could have had*.
+
 ---
+
+<!-- block: gear, n: 2, label: "TODO — name the intuition" -->
 
 ## The shape of $\bar{X}$
 
@@ -28,9 +36,11 @@ Three things to notice:
 
 ---
 
+<!-- block: gear, n: 3, label: "TODO — name the mechanic" -->
+
 ## Feel the standard error
 
-The plot above is showing $N(\mu, \sigma^2 / n)$ — the sampling distribution of the mean from a population with the parameters you set. As you increase $n$, the curve gets narrower; the dashed target shows what "5×-narrower-than-the-population" looks like. Your job: find an $n$ that gets you there.
+The plot above is showing $N(\mu, \sigma^2 / n)$ — the sampling distribution of the mean from a population with the parameters you set. As you increase $n$, the curve gets narrower; your job is to find an $n$ that makes the sampling distribution five times narrower than the population.
 
 <!-- block: state_reset, anchor: sampling-goal -->
 
@@ -72,6 +82,24 @@ goal:
 
 ---
 
+<!-- layer: formal -->
+
+<!-- block: gear, n: 4, label: "TODO — name the formalism" -->
+
+## Formal definition
+
+The **sampling distribution** of a statistic $T(X_1, \ldots, X_n)$ is the probability distribution of $T$ induced by random sampling.
+
+For $X_1, \ldots, X_n$ iid with mean $\mu$ and variance $\sigma^2$:
+
+$$E[\bar{X}] = \mu, \quad \text{Var}(\bar{X}) = \frac{\sigma^2}{n}$$
+
+**Central Limit Theorem.** As $n \to \infty$:
+
+$$\frac{\bar{X} - \mu}{\sigma / \sqrt{n}} \xrightarrow{d} N(0, 1)$$
+
+**Standard error.** $\text{SE}(\bar{X}) = \sigma / \sqrt{n}$, estimated by $s / \sqrt{n}$ when $\sigma$ is unknown.
+
 <!-- block: derivation, title: "Why the standard error scales as 1/√n", collapsed: true -->
 The sample mean of $n$ iid observations is
 
@@ -86,7 +114,9 @@ The standard error is the square root: $\sigma / \sqrt{n}$. The variance shrinks
 
 ---
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: clt-sim -->
+<!-- block: gear, n: 5, label: "TODO — name the code" -->
+
+<!-- block: simulation, editable: true, auto_run: true, anchor: sampling-sim -->
 ```python
 import numpy as np
 import matplotlib.pyplot as plt
@@ -135,28 +165,20 @@ plt.show()
 
 ---
 
-<!-- layer: formal -->
-
-## Formal definition
-
-The **sampling distribution** of a statistic $T(X_1, \ldots, X_n)$ is the probability distribution of $T$ induced by random sampling.
-
-For $X_1, \ldots, X_n$ iid with mean $\mu$ and variance $\sigma^2$:
-
-$$E[\bar{X}] = \mu, \quad \text{Var}(\bar{X}) = \frac{\sigma^2}{n}$$
-
-**Central Limit Theorem.** As $n \to \infty$:
-
-$$\frac{\bar{X} - \mu}{\sigma / \sqrt{n}} \xrightarrow{d} N(0, 1)$$
-
-**Standard error.** $\text{SE}(\bar{X}) = \sigma / \sqrt{n}$, estimated by $s / \sqrt{n}$ when $\sigma$ is unknown.
-
----
-
 <!-- block: misconception, inline: true -->
 **"The CLT says my data becomes normal with large samples."**
 
 *Wrong:* if I collect enough data, my data will follow a normal distribution.
 
 *Correct:* the CLT says the **sample mean** (or sum) becomes normal — not the data itself. If your population is skewed, the data stays skewed no matter how much you collect. It's the *average* of the data that goes normal. The shorthand "everything is normal for large $n$" loses exactly this distinction.
+<!-- /block -->
+
+---
+
+<!-- layer: both -->
+
+<!-- block: gear, n: 6, label: "Where it leads" -->
+
+<!-- block: callout, kind: insight -->
+**Where this leads.** **Confidence intervals** are built directly on the sampling distribution of $\bar{X}$ — the critical values and the standard error both come from here. **Hypothesis testing** uses it to define what "surprising under $H_0$" means. And **point estimation**'s bias-variance question is fundamentally a question about an estimator's *sampling distribution*: where does it center, and how much does it spread?
 <!-- /block -->

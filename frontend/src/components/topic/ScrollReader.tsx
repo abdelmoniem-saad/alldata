@@ -40,6 +40,8 @@ import PlotBlock from './blocks/PlotBlock'
 import GraphFlythrough from './blocks/GraphFlythrough'
 import ConfusionFlag from './blocks/ConfusionFlag'
 import BlockRenderer from './blocks/BlockRenderer'
+import { groupCodePairs, isCodePair } from './blocks/codePairs'
+import CodePairRenderer from './blocks/CodePairRenderer'
 import { applyBranchFilter, parseMeta } from './blocks/branchFilter'
 import {
   useTopicStateStore,
@@ -449,9 +451,23 @@ export default function ScrollReader({
       }}>
         {header}
         <div style={grid}>
-          {/* Prose column */}
+          {/* Prose column. M5: pre-group adjacent code blocks that share a
+              `pair_id` directive field so the two language variants render
+              as one tabbed surface instead of two separate blocks. */}
           <div style={{ minWidth: 0 }}>
-            {visibleBlocks.map(block => {
+            {groupCodePairs(visibleBlocks, metaCache).map(item => {
+              if (isCodePair(item)) {
+                // Pairs don't carry confusion flags or anchors today — the
+                // underlying CodeRunner's per-language re-mount makes both
+                // awkward to support. If the need surfaces, both can be
+                // lifted to the pair level.
+                return (
+                  <div key={`pair:${item.pairId}`} style={{ marginBottom: 24 }}>
+                    <CodePairRenderer pair={item} metaCache={metaCache} />
+                  </div>
+                )
+              }
+              const block = item
               const isAnchorBearing = anchoredBlockIds.has(block.id)
               const meta = metaCache.get(block.id) ?? {}
               return (

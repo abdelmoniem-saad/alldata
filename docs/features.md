@@ -118,6 +118,9 @@ The right column hosts a `PlotBlock` (or `GraphFlythrough` for tour topics) keye
 ### Pinned graph variant
 The `graph_view` directive pins a `GraphFlythrough` (a small mounted graph that pans + zooms imperatively) instead of a plot. Used by the "Shape of Statistics" intro and any future tour topic. *(cycle: K2)* `code: frontend/src/components/topic/blocks/GraphFlythrough.tsx`.
 
+### Immersive tour mode
+When `meta.yaml: tour: true`, the topic is rendered by `TourView` instead of `ScrollReader` / `SlideView`. The graph fills the viewport as the background; the prose floats left in translucent zinc panels; a left-to-right vignette over the prose half keeps the text legible while the graph stays visible on the right. As the reader scrolls, a single scroll listener picks the topmost anchor above the 30% line and maps it to that section's `graph_view` target — narrowing the graph to a single cluster (legend-style hide), centering on a single node, or fitting the whole field. Today only the "Shape of Statistics" intro uses it. *(cycle: M0)* `code: frontend/src/components/topic/TourView.tsx`.
+
 ### Mobile linear fallback
 Below 1024px, plots/graphs render inline at their natural sort_order. The pinned pane is hidden via CSS (not unmounted — that keeps the IntersectionObserver state alive across breakpoint flips). *(cycle: I3, J4 — kept-mounted refactor)* `code: frontend/src/components/topic/ScrollReader.tsx` (search "isWide").
 
@@ -160,6 +163,9 @@ Default body. Plain prose between `\n---\n` separators. KaTeX inline + display m
 ### `code_python` / `code_r` / `simulation`
 Server-executed code blocks. `simulation` flags the runner with a teal indicator. Optional `editable: true` makes the textarea writable. `auto_run: true` runs once on first scroll-into-view (cached afterward). The `load(name)` helper is injected into the Python preamble so code can pull curated datasets. *(cycles: earlier — code; I4 — auto_run; K5 — load() helper)* `code: frontend/src/components/topic/CodeRunner.tsx`, `backend/services/execution_service.py` (search `load`).
 
+### Paired code blocks (`pair_id:`) — Python / R toggle
+Two adjacent code blocks that share a `pair_id:` directive field merge into a single tabbed surface. Clicking the inactive tab swaps the code body in place; the runner re-mounts cleanly with the new language. The reader's language preference (`preferredCodeLang`) is global, persisted in `progressStore`. *(cycle: M5)* `code: frontend/src/components/topic/blocks/codePairs.ts`, `frontend/src/components/topic/blocks/CodePairRenderer.tsx`. See [`authoring.md`](authoring.md#paired-python--r-blocks-pair_id) for the syntax.
+
 ### `plot`
 A reactive D3 plot bound to topic state via `useTopicState`. The `spec` field names a renderer from the plot library; `params` seeds the initial state; `binds` narrows the subscription. Optional `ghost` draws a dashed target overlay (used by playground goals). *(cycle: I4–I5)* `code: frontend/src/components/topic/blocks/PlotBlock.tsx`, `frontend/src/components/topic/blocks/plots/index.tsx`. See [Reactive plot system](#reactive-plot-system).
 
@@ -188,7 +194,7 @@ Authoring-only directives. `state` seeds `useTopicState` defaults at mount. `sta
 See [Gear divider](#gear-divider) above. *(cycles: K1, L1)*
 
 ### `graph_view`
-Pins a `GraphFlythrough` in the right column instead of a `PlotBlock`. `target:` is a node slug or a domain-root slug; the latter pans to the cluster centroid. *(cycles: K2, L3)* `code: frontend/src/components/topic/blocks/GraphFlythrough.tsx`.
+Pins a `GraphFlythrough` in the right column instead of a `PlotBlock`. `target:` is a node slug or a domain-root slug; the latter pans to the cluster centroid. In tour mode (`meta.yaml: tour: true`), the directive drives the *background* graph instead: `target: all` fits every node, a domain slug hides every other cluster and frames the named one (legend-style hide, not dim), and a topic slug centers on that node. The directive renders nothing in prose flow when the topic is in tour mode — it's pure metadata for the background camera. *(cycles: K2, L3, M0 tour semantics)* `code: frontend/src/components/topic/blocks/GraphFlythrough.tsx`, `frontend/src/components/topic/TourView.tsx`.
 
 ### `dataset`
 In-prose attribution chip linking to `/datasets#{name}`. Pairs with the topic-level `meta.yaml: dataset:` field. *(cycle: K5)* `code: frontend/src/components/topic/blocks/BlockRenderer.tsx` (`case 'dataset'`). See [`authoring.md`](authoring.md#dataset).
@@ -223,6 +229,12 @@ Blocks tagged `depends_on: X, branch: Y` (or `branch: a|c`) only render if the u
 
 ### Decision event log
 `progressStore.decisionEvents` keyed by `(slug, anchor)` → `{ optionId, pickedAt }`. The single source of truth for "have they answered this decision?" and "which option?" *(cycle: J4)* `code: frontend/src/stores/progressStore.ts`.
+
+### `ForceGraph.fitNodes(slugs?)`
+Imperative handle on the graph canvas. Computes the AABB of the named slugs (or every visible node if no args) and pan/zooms to fit with 5% padding, clamped to scale `[0.45, 2.0]`. Used by `TourView` to frame a cluster as the reader scrolls into its section. Honors `prefers-reduced-motion` (snaps without easing). *(cycle: M0)* `code: frontend/src/components/graph/ForceGraph.tsx` (search "fitNodes").
+
+### `ForceGraph.visibleDomain`
+Prop that filters the canvas to a single domain. When set, edges whose source or target sits outside the named domain skip drawing; non-matching nodes skip too. Layout simulation still includes everything so positions don't reshuffle between sections. Used by `TourView` for legend-style cluster framing in tour topics. *(cycle: M0)* `code: frontend/src/components/graph/ForceGraph.tsx` (search "visibleDomain").
 
 ### Plot library (7 specs)
 - `gaussian_pdf` — bell curve. Binds `mu, sigma`. Optional `ghost` target overlay.
@@ -268,7 +280,22 @@ LocalStorage-backed under `alldata-progress`. Versioned (currently `v4`) with a 
 - `reviewSchedule: Record<slug, ReviewRecord>` *(cycle: K3)*
 - `confusionFlags: Record<slug, Record<blockId, count>>` *(cycle: K4)*
 
-`code: frontend/src/stores/progressStore.ts`. Server-side sync is the H10 backlog item; until then, every browser is its own progress universe.
+`code: frontend/src/stores/progressStore.ts`. Persist version `5` (M1 added `topicUpdatedAt` per-topic timestamps + `isHydrating` for the sync orchestrator).
+
+### Server-side progress sync (M1)
+Logged-in users have their progress mirrored to the server in real time. The sync orchestrator (`frontend/src/stores/syncOrchestrator.ts`) subscribes to both `authStore` and `progressStore`:
+
+- **Boot pull.** If a token is present at startup, fetch `/api/users/me/progress` and merge into local via per-topic last-write-wins.
+- **Debounced push.** When any topic's `topicUpdatedAt` ticks, queue it for a 1500ms-debounced `PUT /api/users/me/progress/{slug}`. Multiple topics touched in the same window batch into a single round trip.
+- **Focus reconciliation.** On `window.focus`, refetch the bundle (skipped if last pull was <30 s ago). Cheap way to catch other-device writes.
+- **Login merge.** On token appearance, batch-push every local topic with non-trivial state, then adopt the server's post-merge bundle.
+
+Anonymous mode is a no-op: the orchestrator never reaches the network without a token, so logged-out readers stay on localStorage-only with no behavior change.
+
+The K7 public snapshot endpoint (`/u/:username`) now reads the real `UserProgress` table — `synced: true` once the user has touched any topic. `code: backend/api/users.py, backend/api/progress.py, frontend/src/stores/syncOrchestrator.ts`.
+
+### `authStore` + `AuthMenu` (M1)
+Minimal auth surface — register, login, logout, persisted token. The navbar shows a "Sign in" chip when anonymous and a 2-letter initials circle (with a popover) when authenticated. The popover links to the user's `/u/{display_name}` snapshot. `code: frontend/src/stores/authStore.ts, frontend/src/components/AuthMenu.tsx`. The legacy `localStorage.getItem('token')` key the `request()` wrapper reads stays in sync via the store's persist middleware.
 
 ### `useTopicState` (per-topic state)
 See [Reactive plot system](#reactive-plot-system).
@@ -325,7 +352,7 @@ End-to-end importer. Reads `seed/schema.yaml` + every `seed/topics/{domain}/{slu
 Watchdog-based file-watcher. Edit a `.md` or `meta.yaml` under `seed/topics/`; the importer re-runs on save (debounced 200ms per topic dir). Author edits markdown, refreshes the page, sees the change. *(cycle: I6)* `code: seed/watch.py`.
 
 ### `meta.yaml` header schema
-Per-topic header. Documents: `slug`, `title`, `domain`, `difficulty`, `summary`, `prerequisites`, `has_intuition_layer`, `has_formal_layer`, `estimated_minutes`, `cycle_ported`, `recall_prompt`, `dataset`. *(cycles: J3 — schema doc; K3 — recall_prompt; K5 — dataset)* See [`meta-yaml.md`](meta-yaml.md).
+Per-topic header. Documents: `slug`, `title`, `domain`, `difficulty`, `summary`, `prerequisites`, `has_intuition_layer`, `has_formal_layer`, `estimated_minutes`, `cycle_ported`, `recall_prompt`, `dataset`, `tour`. *(cycles: J3 — schema doc; K3 — recall_prompt; K5 — dataset; M0 — tour)* See [`meta-yaml.md`](meta-yaml.md).
 
 ### Self-healing column adds
 `create_tables()` walks every mapped table on every run and ALTERs missing columns. The "no migrations" ergonomic survives every new column the team ships. *(cycle: J3)* `code: seed/import_seed.py` (`_self_heal_columns`).
@@ -373,8 +400,11 @@ Visit any topic with this query string. Blocks the user has flagged with the con
 | `POST /api/execute` | Run Python or R in the sandbox, return stdout / stderr / images. | seed-era |
 | `GET /api/datasets` | Manifest + reverse index of topics-per-dataset. | K5 |
 | `GET /api/datasets/{name}` | Stream the CSV file. | K5 |
-| `GET /api/users/{username}/snapshot` | Public progress snapshot. Currently empty (H10 backlog). | K7 |
-| `POST /api/auth/login` / `POST /api/auth/register` | Account flows (used by H7 readiness; no UI on the public-snapshot path yet). | seed-era |
+| `GET /api/users/{username}/snapshot` | Public progress snapshot. Reads aggregated completed/in-progress slugs from `UserProgress`. | K7; M1 — wired to real data |
+| `GET /api/users/me/progress` | Full snapshot of the authenticated user's progress (bundle of per-topic slices). | M1 |
+| `PUT /api/users/me/progress/{slug}` | Upsert one topic's full progress slice. Last-write-wins on `client_updated_at`. | M1 |
+| `POST /api/users/me/progress/batch` | Batch upsert N topics — used on login when local storage is non-empty. | M1 |
+| `POST /api/auth/login` / `POST /api/auth/register` / `GET /api/auth/me` | Account flows. Login/register wired into the navbar's `AuthMenu` in M1; `/me` returns the JWT-validated current user. | seed-era; M1 — UI wired |
 
 ---
 

@@ -1,17 +1,13 @@
-"""User snapshot routes — K7.
+"""User snapshot routes — K7 (M1: wired to real progress).
 
 Returns a public graph snapshot for a named user: their completed and
 in-progress slug sets, plus public profile metadata (display_name only).
 
-In the K cycle, server-side progress sync isn't yet wired up (H10 backlog),
-so the only "real" data available is from the seed `system` user, which is
-empty by design. The endpoint exists so the `/u/:username` route can hit a
-canonical shape; once H10 lands, only the implementation changes.
-
-For users who haven't synced progress, we return an empty progress payload
-along with the user's display name. The frontend renders the graph as a
-"no progress yet" view rather than 404'ing — the URL still belongs to a
-real user, even if the data isn't there yet.
+K7 shipped this endpoint as a stub returning empty progress because
+server-side sync wasn't yet wired. M1 (progress sync) replaced the stub
+with a real read from `UserProgress`. The endpoint signature is unchanged
+so existing frontend code keeps working; only the body of the response
+changed from "always empty" to "what the user has synced so far."
 """
 
 from fastapi import APIRouter, HTTPException
@@ -19,6 +15,8 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import select, or_, func
 
 from backend.deps import DB
+from backend.models.progress import UserProgress
+from backend.models.topic import Topic
 from backend.models.user import User
 
 router = APIRouter()
@@ -53,13 +51,28 @@ async def get_user_snapshot(username: str, db: DB):
     if not user:
         raise HTTPException(status_code=404, detail=f"user '{username}' not found")
 
-    # K7: progress data is localStorage-only until H10 lands. Return empty
-    # sets so the frontend renders a "no progress yet" view rather than
-    # crashing on the missing fields.
+    # M1: aggregate completed + in-progress slugs from the user's
+    # UserProgress rows. Only the two slug lists are exposed publicly —
+    # decision events, review schedule, and confusion flags stay private to
+    # the owner (and don't make sense in a "look at someone's progress map"
+    # surface anyway).
+    rows = await db.execute(
+        select(UserProgress.status, Topic.slug)
+        .join(Topic, Topic.id == UserProgress.topic_id)
+        .where(UserProgress.user_id == user.id)
+    )
+    completed: list[str] = []
+    in_progress: list[str] = []
+    for status, slug in rows.all():
+        if status == "completed":
+            completed.append(slug)
+        elif status == "in_progress":
+            in_progress.append(slug)
+
     return JSONResponse({
         "username": username,
         "display_name": user.display_name,
-        "completed_slugs": [],
-        "in_progress_slugs": [],
-        "synced": False,
+        "completed_slugs": completed,
+        "in_progress_slugs": in_progress,
+        "synced": True,
     })

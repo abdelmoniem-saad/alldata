@@ -1,2 +1,11 @@
+title: "Binomial Distribution"
 slug: binomial-distribution
+domain: distributions
+difficulty: intro
+summary: Count of successes in $n$ independent yes/no trials with the same probability $p$. The first distribution most readers actually use.
+prerequisites: [bernoulli-distribution]
+has_intuition_layer: true
 has_formal_layer: true
+estimated_minutes: 10
+cycle_ported: M
+recall_prompt: "Why is the binomial distribution symmetric only when p = 0.5, and what does the skew look like for small p with large n?"

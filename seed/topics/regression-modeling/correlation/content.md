@@ -4,7 +4,7 @@
 
 ---
 
-<!-- block: gear, n: 1, label: "The spark" -->
+<!-- block: gear, n: 1, label: "One number between −1 and +1" -->
 
 # Correlation
 
@@ -12,7 +12,7 @@ Two variables move together. By how much? The Pearson correlation $r$ takes that
 
 ---
 
-<!-- block: gear, n: 2, label: "Intuition" -->
+<!-- block: gear, n: 2, label: "The shape on a scatter plot" -->
 
 ## The shape on a scatter plot
 
@@ -61,7 +61,7 @@ goal:
 
 <!-- layer: formal -->
 
-<!-- block: gear, n: 4, label: "The formalism" -->
+<!-- block: gear, n: 4, label: "Standardized covariance" -->
 
 ## Definition
 
@@ -93,7 +93,7 @@ Equality iff $V = a U$ for some constant $a$ — i.e., $Y$ is a perfect linear f
 
 ---
 
-<!-- block: gear, n: 5, label: "Code" -->
+<!-- block: gear, n: 5, label: "Linear, quadratic, no relationship" -->
 
 <!-- block: simulation, editable: true, auto_run: true, anchor: corr-sim -->
 ```python
@@ -124,7 +124,7 @@ print(f"quadratic:        r = {np.corrcoef(x3, y3)[0, 1]:+.4f}  ← perfect rela
 
 <!-- layer: both -->
 
-<!-- block: gear, n: 6, label: "Connections" -->
+<!-- block: gear, n: 6, label: "Where it leads" -->
 
 <!-- block: callout, kind: insight -->
 **Where this leads.** **Simple linear regression** uses correlation as a building block: the OLS slope is $r \cdot (s_y / s_x)$. **Multiple regression** generalizes to multiple predictors and partial correlations. **Causal inference** picks up where correlation gives up — $r$ tells you *that* two variables move together; causal methods try to tell you *why*.

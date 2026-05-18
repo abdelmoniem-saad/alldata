@@ -1,111 +1,115 @@
-<!-- layer: intuition -->
+<!-- block: state, values: {n: 50, p: 0.1} -->
 
-## Counting Rare Events
-
-How many emails do you receive per hour? How many typos per page? How many car accidents at an intersection per month?
-
-The **Poisson distribution** models the number of events occurring in a fixed interval of time or space, when:
-
-- Events occur **independently**
-- Events occur at a **constant average rate** (λ, "lambda")
-- Two events can't happen at exactly the same instant
-
-The entire distribution is described by one number: **λ** (the average rate).
+<!-- block: plot, spec: binomial_pmf, params: {n: 50, p: 0.1}, binds: [n, p], anchor: poisson-feel, mobile_order: 1 -->
 
 ---
 
-## The Poisson in the Wild
+<!-- block: gear, n: 1, label: "TODO — name the spark" -->
 
-λ = 3 means "3 events per interval on average." But you might see 0, 1, 2, 5, or even 8 events in any particular interval. The Poisson tells you the probability of each count.
+# Poisson Distribution
 
-**Real examples:**
-- Customers arriving at a store: λ = 15 per hour
-- Server errors per day: λ = 2.5
-- Goals per soccer match: λ ≈ 2.7
-- Radioactive decay events per second
+How many emails arrive in the next hour? How many car accidents at an intersection this month? How many typos on a page? The count is Poisson when each *instant* has a tiny independent chance of an event, and you tally what actually happened over a fixed window.
 
-**Connection to Binomial:** The Poisson is the limit of Binomial(n, p) when n → ∞ and p → 0 while np → λ. Lots of trials, each with tiny probability, but a steady average rate.
+> TODO (N): replace with the spark — one concrete example with the count and the rate (e.g., "a call center fielding ~12 calls per minute").
 
 ---
 
-<!-- block: simulation, editable: true -->
-```python
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy import stats
+<!-- block: gear, n: 2, label: "TODO — name the intuition" -->
 
-# Simulate a Poisson process: customer arrivals
-np.random.seed(42)
-lam = 4  # average 4 customers per hour
-n_hours = 10000
+## What "rare and independent" buys you
 
-arrivals = np.random.poisson(lam, n_hours)
+The Poisson distribution is what the binomial limits to when:
 
-# Plot simulation vs theoretical
-x = np.arange(0, 15)
-theoretical = stats.poisson.pmf(x, lam)
-simulated = np.array([np.mean(arrivals == k) for k in x])
+- The number of "trials" $n$ is huge (each tiny instant is a trial).
+- The per-trial probability $p$ is tiny.
+- The product $\lambda = np$ stays finite (the *rate* per window).
 
-plt.figure(figsize=(8, 4))
-plt.bar(x - 0.15, simulated, 0.3, color='#a1a1aa', alpha=0.7, label='Simulated')
-plt.bar(x + 0.15, theoretical, 0.3, color='#71717a', alpha=0.7, label='Theoretical')
-plt.xlabel('Number of arrivals per hour')
-plt.ylabel('Probability')
-plt.title(f'Poisson(λ={lam}): Customer Arrivals per Hour')
-plt.legend()
-plt.grid(alpha=0.2)
-plt.tight_layout()
-plt.show()
+A second's worth of customer traffic has $n$ = a billion tiny opportunities, each with vanishingly small probability of producing a click. The total clicks-per-second is well-modeled by Poisson($\lambda$) where $\lambda$ is the average rate.
 
-# Show Binomial → Poisson convergence
-print("Binomial → Poisson convergence (λ = 5):")
-lam = 5
-for n in [10, 50, 100, 1000]:
-    p = lam / n
-    binom_p = stats.binom.pmf(3, n, p)
-    poisson_p = stats.poisson.pmf(3, lam)
-    print(f"  Binom({n}, {p:.4f}): P(X=3) = {binom_p:.6f}  |  Poisson({lam}): P(X=3) = {poisson_p:.6f}")
-```
-<!-- expected_output: Binomial converges to Poisson as n grows -->
+One parameter: $\lambda > 0$. The distribution lives on $\{0, 1, 2, \ldots\}$.
+
+> TODO (N): expand on the independence and constant-rate assumptions. The classic failure mode: clustering (burst arrivals violate Poisson; the right model is then a mixture or negative-binomial).
+
+---
+
+<!-- block: gear, n: 3, label: "TODO — name the mechanic" -->
+
+<!-- block: state_reset, anchor: poisson-feel -->
+
+<!-- block: playground, anchor: poisson-feel -->
+binds: [n, p]
+controls:
+  - param: n
+    label: "Trials (n)"
+    min: 10
+    max: 500
+    step: 10
+  - param: p
+    label: "Per-trial probability (p)"
+    min: 0.01
+    max: 0.5
+    step: 0.01
+goal:
+  prompt: |
+    Find n and p that keep λ = np ≈ 5 but make n large enough that the bars
+    look almost the same regardless of which (n, p) combination you picked.
+    The shape only depends on λ in the limit.
+  target: { n: 200, p: 0.025 }
+  success_when: "n >= 100 and abs(n * p - 5) < 0.6"
+  on_success: |
+    The shape collapses onto the same Poisson($\lambda = 5$) curve for any large
+    enough n. Binomial → Poisson in the limit.
+<!-- /block -->
+
+> TODO (N): explicitly call out that this scaffold uses the binomial plot as a Poisson stand-in until a `poisson_pmf` spec exists. <!-- todo: needs poisson_pmf spec in the plot library -->
 
 ---
 
 <!-- layer: formal -->
 
-## Formal Definition
+<!-- block: gear, n: 4, label: "TODO — name the formalism" -->
 
-A random variable $X \sim \text{Poisson}(\lambda)$ has:
+## PMF, mean, variance
 
-**PMF:**
+$$P(X = k) = \frac{\lambda^k \, e^{-\lambda}}{k!}, \qquad k \in \{0, 1, 2, \ldots\}$$
 
-$$P(X = k) = \frac{\lambda^k e^{-\lambda}}{k!}, \quad k = 0, 1, 2, \ldots$$
+$$\mathbb{E}[X] = \lambda, \qquad \text{Var}(X) = \lambda$$
 
-**Mean:** $E[X] = \lambda$
+The mean and variance are *equal* — a signature of the distribution. If a count's variance is much bigger than its mean, the data is **overdispersed** and Poisson is the wrong model (try negative binomial); much smaller, it's **underdispersed** (regular, scheduled events).
 
-**Variance:** $\text{Var}(X) = \lambda$ (mean equals variance — a key property!)
-
-**Sum property:** If $X \sim \text{Poisson}(\lambda_1)$ and $Y \sim \text{Poisson}(\lambda_2)$ are independent:
-
-$$X + Y \sim \text{Poisson}(\lambda_1 + \lambda_2)$$
-
-**Poisson limit theorem:** $\text{Binomial}(n, \lambda/n) \xrightarrow{n \to \infty} \text{Poisson}(\lambda)$
+<!-- block: derivation, title: "Binomial → Poisson as $n \\to \\infty$, $np \\to \\lambda$", collapsed: true -->
+> TODO (N): write the limit. $\binom{n}{k} p^k (1-p)^{n-k}$ as $n \to \infty, p \to 0, np = \lambda$ goes to $\lambda^k e^{-\lambda} / k!$. The key step: $(1 - \lambda/n)^n \to e^{-\lambda}$.
+<!-- /block -->
 
 ---
 
-<!-- block: misconception -->
-**Misconception: "The Poisson only works for rare events."**
+<!-- block: gear, n: 5, label: "TODO — name the code" -->
 
-*Wrong belief:* You can only use a Poisson when events are very unlikely.
+<!-- block: simulation, editable: true, auto_run: true, anchor: poisson-sim -->
+```python
+import numpy as np
 
-*Correction:* The Poisson works for any count of independent events at a constant rate — λ can be large! A call center receiving λ=200 calls per hour is perfectly Poisson. The "rare events" description comes from its derivation as a Binomial limit (many trials, each with small probability), but the distribution itself applies whenever events arrive independently at a steady rate.
+# Show the binomial → Poisson convergence numerically: fix λ = 5, grow n.
+np.random.seed(42)
+lam = 5
+for n in [50, 500, 5000]:
+    p = lam / n
+    binom = np.random.binomial(n, p, 20_000)
+    poisson = np.random.poisson(lam, 20_000)
+    diff = abs(binom.mean() - poisson.mean()) + abs(binom.var() - poisson.var())
+    print(f"n={n:>5}: binom mean={binom.mean():.3f}, var={binom.var():.3f} | "
+          f"poisson mean={poisson.mean():.3f}, var={poisson.var():.3f} | "
+          f"|Δ| = {diff:.4f}")
+```
 
-*Why this is common:* Every textbook introduces Poisson as "the distribution for rare events," which is technically about its derivation, not its applications.
+> TODO (N): expand. Add a mention of the *equality* mean = variance = λ — that's the diagnostic test for Poisson-ness in real data.
 
 ---
 
-<!-- block: quiz -->
-**Micro-challenge:** A website gets an average of 3 server errors per day. What's the probability of a perfect day (0 errors)? What about a "bad day" with 7+ errors?
+<!-- layer: both -->
 
-*Hint:* X ~ Poisson(3). P(X=0) = e^(-3). For P(X≥7), use the complement with the CDF.
+<!-- block: gear, n: 6, label: "Where it leads" -->
 
-<!-- solution: P(X=0) = e^(-3) · 3^0 / 0! = e^(-3) ≈ 0.0498 (about 5% chance of a perfect day). P(X≥7) = 1 - P(X≤6) = 1 - Σ P(X=k) for k=0..6 ≈ 1 - 0.9665 = 0.0335 (about 3.4% chance of 7+ errors). -->
+<!-- block: callout, kind: insight -->
+**Where this leads.** **Poisson processes** generalize a single count to a stream of arrivals over time. The **exponential distribution** is the time *between* arrivals in a Poisson process — its CDF is $1 - e^{-\lambda t}$. **Poisson regression** uses the distribution as the link function for count outcomes in regression.
+<!-- /block -->

@@ -4,7 +4,7 @@
 
 ---
 
-<!-- block: gear, n: 1, label: "The spark" -->
+<!-- block: gear, n: 1, label: "Coins don't talk to each other" -->
 
 # Independence
 
@@ -12,7 +12,7 @@ Two events are *independent* when learning one tells you nothing about the other
 
 ---
 
-<!-- block: gear, n: 2, label: "Intuition" -->
+<!-- block: gear, n: 2, label: "What 'tells you nothing' means" -->
 
 ## What "tells you nothing" means
 
@@ -32,7 +32,7 @@ Either form works. Pick the one that's easier to check.
 
 ---
 
-<!-- block: gear, n: 3, label: "The decision" -->
+<!-- block: gear, n: 3, label: "Joint, marginals, the trap" -->
 
 <!-- block: decision, anchor: indep-pick -->
 question: |
@@ -83,7 +83,7 @@ The trap was reading the marginals (50/50, 50/50) as "everything's symmetric." S
 
 <!-- layer: formal -->
 
-<!-- block: gear, n: 4, label: "The formalism" -->
+<!-- block: gear, n: 4, label: "Pairwise vs. mutual" -->
 
 ## Formal definition
 
@@ -107,7 +107,7 @@ By symmetry of intersection, the same gives $P(B \mid A) = P(B)$ when $P(A) > 0$
 
 ---
 
-<!-- block: gear, n: 5, label: "Code" -->
+<!-- block: gear, n: 5, label: "Checking joint = product" -->
 
 <!-- block: simulation, editable: true, auto_run: true, anchor: indep-sim -->
 ```python
@@ -140,7 +140,7 @@ else:
 
 <!-- layer: both -->
 
-<!-- block: gear, n: 6, label: "Connections" -->
+<!-- block: gear, n: 6, label: "Where it leads" -->
 
 <!-- block: callout, kind: insight -->
 **Where this leads.** Independence is the assumption that makes the rest of probability tractable — most classical results (CLT, law of large numbers, the binomial distribution itself) assume it. **Conditional probability** measures *how* events depend when they're not independent. **Random variables** lift events into numbers, and independence of random variables generalizes the events case.
