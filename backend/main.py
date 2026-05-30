@@ -3,7 +3,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.api import auth, content, courses, datasets, execute, graph, progress, topics, users
+from backend.api import (
+    auth, content, courses, datasets, execute, forks, graph, merge_back,
+    progress, topics, users,
+)
 from backend.config import settings
 
 
@@ -45,7 +48,13 @@ app.include_router(users.router, prefix="/api/users", tags=["users"])
 # reads `/api/users/me/progress` — `me` is the "current authenticated user"
 # alias matching the same convention as `/api/auth/me`.
 app.include_router(progress.router, prefix="/api/users", tags=["progress"])
-# (M1 wired)
+# (M1 wired; O1 merge-back wired below)
+# N: fork model — anyone-can-fork, content-editable, public-by-default.
+app.include_router(forks.router, prefix="/api/forks", tags=["forks"])
+# O1: merge-back review queue (ADMIN/EDITOR). The fork-owner "suggest"
+# action lives on the forks router so it sits next to other owner-only
+# fork endpoints; the review queue is its own surface.
+app.include_router(merge_back.router, prefix="/api/merge-backs", tags=["merge-backs"])
 
 
 @app.get("/")

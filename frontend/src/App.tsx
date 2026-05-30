@@ -7,6 +7,10 @@ import LearningPath from './pages/LearningPath'
 import Home from './pages/Home'
 import Datasets from './pages/Datasets'
 import UserGraph from './pages/UserGraph'
+import ForkView from './pages/ForkView'
+import ForkEditor from './pages/ForkEditor'
+import UserForks from './pages/UserForks'
+import ReviewQueue from './pages/ReviewQueue'
 import { startSyncOrchestrator, stopSyncOrchestrator } from './stores/syncOrchestrator'
 
 export default function App() {
@@ -27,7 +31,16 @@ export default function App() {
         <Route path="/topic/:slug" element={<TopicView />} />
         <Route path="/path" element={<LearningPath />} />
         <Route path="/datasets" element={<Datasets />} />
+        {/* N: fork routes. More specific paths first so `/u/:username`
+            doesn't shadow the fork sub-routes. */}
+        <Route path="/u/:username/topic/:slug/edit" element={<ForkEditor />} />
+        <Route path="/u/:username/topic/:slug" element={<ForkView />} />
+        <Route path="/u/:username/forks" element={<UserForks />} />
         <Route path="/u/:username" element={<UserGraph />} />
+        {/* O1: merge-back review queue. The component checks role itself
+            and shows a "not authorized" state to non-reviewers, so the
+            route is registered open and self-gates. */}
+        <Route path="/review" element={<ReviewQueue />} />
       </Route>
     </Routes>
   )

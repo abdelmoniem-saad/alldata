@@ -113,6 +113,38 @@ export default function AuthMenu() {
             >
               View my snapshot
             </Link>
+            <Link
+              to="/u/me/forks"
+              onClick={() => setPopoverOpen(false)}
+              style={{
+                display: 'block',
+                padding: '8px 10px',
+                fontSize: 12,
+                color: 'var(--color-text-secondary)',
+                borderRadius: 6,
+              }}
+            >
+              My forks
+            </Link>
+            {/* O1: review queue, ADMIN/EDITOR only. The route also
+                self-gates so a direct visit shows a clear "not authorized"
+                state for non-reviewers; the popover link hides for cleaner
+                UX. */}
+            {(user.role === 'admin' || user.role === 'editor') && (
+              <Link
+                to="/review"
+                onClick={() => setPopoverOpen(false)}
+                style={{
+                  display: 'block',
+                  padding: '8px 10px',
+                  fontSize: 12,
+                  color: 'var(--color-text-secondary)',
+                  borderRadius: 6,
+                }}
+              >
+                Review queue
+              </Link>
+            )}
             <button
               onClick={() => {
                 setPopoverOpen(false)

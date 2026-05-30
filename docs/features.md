@@ -295,7 +295,13 @@ Anonymous mode is a no-op: the orchestrator never reaches the network without a 
 The K7 public snapshot endpoint (`/u/:username`) now reads the real `UserProgress` table — `synced: true` once the user has touched any topic. `code: backend/api/users.py, backend/api/progress.py, frontend/src/stores/syncOrchestrator.ts`.
 
 ### `authStore` + `AuthMenu` (M1)
-Minimal auth surface — register, login, logout, persisted token. The navbar shows a "Sign in" chip when anonymous and a 2-letter initials circle (with a popover) when authenticated. The popover links to the user's `/u/{display_name}` snapshot. `code: frontend/src/stores/authStore.ts, frontend/src/components/AuthMenu.tsx`. The legacy `localStorage.getItem('token')` key the `request()` wrapper reads stays in sync via the store's persist middleware.
+Minimal auth surface — register, login, logout, persisted token. The navbar shows a "Sign in" chip when anonymous and a 2-letter initials circle (with a popover) when authenticated. The popover links to the user's `/u/{display_name}` snapshot and `/u/me/forks`. `code: frontend/src/stores/authStore.ts, frontend/src/components/AuthMenu.tsx`. The legacy `localStorage.getItem('token')` key the `request()` wrapper reads stays in sync via the store's persist middleware.
+
+### `TopicFork` (N — fork model)
+Server-side table holding a user's editable copy of a topic. `markdown_source` is the source of truth (the editable `content.md` text); the blocks a reader sees are produced by re-parsing it on every `GET`. One fork per `(user, topic)`. `course_id` is reserved (always null on N forks). *(cycle: N; O3 — retired the unused `content_snapshot` column)* `code: backend/models/fork.py, backend/services/fork_service.py`. See [`forks.md`](forks.md).
+
+### `MergeBackSuggestion` (O1 — merge-back)
+A fork owner's proposal that their fork's content replace the master topic's. Snapshots `suggested_markdown` at suggest time so later fork edits don't mutate a pending suggestion. One pending suggestion per fork; re-suggesting while pending updates the snapshot in place. Status: `pending` / `accepted` / `rejected`. Accept replaces the master topic's `content_blocks` + `Misconception` rows from the suggestion and rewrites the seed `content.md` on disk. *(cycle: O1)* `code: backend/models/merge_back.py, backend/services/merge_service.py, backend/api/merge_back.py`. See [`forks.md`](forks.md#merge-back--proposing-a-forks-content-as-the-new-master-o1).
 
 ### `useTopicState` (per-topic state)
 See [Reactive plot system](#reactive-plot-system).
@@ -318,6 +324,22 @@ Site-wide CSS — under `prefers-reduced-motion: reduce`, the three motion durat
 
 ### Focus-visible ring
 2px accent outline + 2px offset on `:focus-visible`. Mouse users don't see it; keyboard users always do. Applied at the token level so every interactive element inherits it without per-component wiring. *(cycle: J6)* `code: frontend/src/styles/tokens.css`.
+
+---
+
+## Brand & identity
+
+### `<Logo>` component
+The canonical AllData mark + wordmark — a three-node graph triad on a teal rounded square, beside "AllData" (Inter 800, -0.5px tracking). `size` and `variant` (`full` | `mark`) props; the mark is always `--color-accent` (one-accent rule). The navbar wraps it in the home link; the favicon is derived from the same geometry so they never drift. *(cycle: P1)* `code: frontend/src/components/Logo.tsx`.
+
+### Favicon, meta & social cards
+`index.html` carries the favicon (`/favicon.svg`, the mark), `description`, `theme-color` (teal), and Open Graph + Twitter card tags pointing at `/og.png` (a 1200×630 card: zinc background, mark, wordmark, tagline). Static assets live in `frontend/public/` and serve at the site root with no build wiring. Copy is the canonical identity. *(cycle: P2)* `code: frontend/index.html`, `frontend/public/favicon.svg`, `frontend/public/og.svg` (editable source), `frontend/public/og.png`.
+
+### Identity source-of-truth
+`docs/identity.md` is the one-screen canonical identity: name (always "AllData"), tagline ("Statistics is a graph, not a textbook."), elevator line, the mark, voice-in-brief, and the reconciled is/isn't. `.claude/brand-voice-guidelines.md` is the same voice in the brand-voice tooling format (voice attributes, do/don't, vocabulary, examples) for the `enforce-voice` skill. *(cycle: P0)* See [`identity.md`](identity.md), [`brand.md`](brand.md).
+
+### Home topic counts (live)
+The domain cards and progress bar on `/` derive "topics with content" per domain from `api.getGraph()` on mount, seeded with a static fallback so there's no flash and the page stays honest offline. Replaces the old hardcoded counts that had gone stale. *(cycle: P3)* `code: frontend/src/pages/Home.tsx` (search `topicCounts`).
 
 ---
 
@@ -344,6 +366,9 @@ Backend endpoint. Postgres path uses `pg_trgm.similarity()` for trigram fuzzy ra
 
 ### `python -m seed.import_seed`
 End-to-end importer. Reads `seed/schema.yaml` + every `seed/topics/{domain}/{slug}/{meta.yaml,content.md}` and upserts. Self-healing: tables that don't exist get created; columns the model declares but the live DB lacks get added via `ALTER TABLE`. Idempotent — repeat runs are safe. *(cycle: seed-era; J3 self-heal; K2 additive schema-merge)* `code: seed/import_seed.py`.
+
+### `parse_content_md(text)`
+The directive parser, decoupled from the filesystem. `parse_content_file(path)` is now a one-line shim that reads the file and calls `parse_content_md`. The text-taking variant lets over-the-wire markdown be parsed without a file on disk — the N fork save / preview endpoints reuse it verbatim, so a fork renders through the exact pipeline the seed import uses. *(cycle: N — extracted from `parse_content_file`)* `code: seed/import_seed.py` (`parse_content_md`).
 
 ### `--strict` flag
 `python -m seed.import_seed --strict`. Warnings become errors. Catches: unknown plot specs, undeclared state keys referenced in playground `binds:` or decision `writes:`, dangling `depends_on` references, branch ids that don't match any option, YAML body parse failures. *(cycle: J3)* `code: seed/import_seed.py` (search `_validate_topic_blocks`).
@@ -373,6 +398,26 @@ Read-only graph rendered with someone else's progress. Routes:
 - `/u/{display_name}` — fetches `/api/users/{name}/snapshot`. Returns empty progress today (server-side sync is H10 backlog); the route exists so the URL contract is in place when sync lands.
 
 Below the graph: per-cluster depth bars (proportional fill, no numbers — "depth signal, not a grade"). *(cycle: K7)* `code: frontend/src/pages/UserGraph.tsx`, `backend/api/users.py`.
+
+### Forks — read surface (`/u/:username/topic/:slug`)
+A user's editable copy of a topic, rendered through the same `ScrollReader` the master topic uses. A lineage banner ("Fork of {master} by {username}") sits above the prose; the master title links back. The owner sees an "Edit" affordance. Fork reading is namespaced under `fork:{username}:{slug}` so it never touches master-topic progress. *(cycle: N)* `code: frontend/src/pages/ForkView.tsx`.
+
+### Forks — editor (`/u/me/topic/:slug/edit`)
+Two-pane editor for a fork you own: a monospace textarea on the left bound to the fork's `markdown_source`, a live `ScrollReader` preview on the right. Edits debounce 400ms then re-parse via `POST /api/forks/preview`; Save (button or Cmd/Ctrl-S) persists via `PUT`. Parser warnings surface in a strip above the preview. *(cycle: N)* `code: frontend/src/pages/ForkEditor.tsx`.
+
+### Forks — listing (`/u/:username/forks`)
+Card grid of a user's forks. `/u/me/forks` shows your own with edit/delete; another user's listing is read-only. Linked from the navbar account popover. *(cycle: N)* `code: frontend/src/pages/UserForks.tsx`.
+
+### "Fork this topic" chip
+Bottom-chrome chip on `/topic/:slug`, left of LEARNED. Hidden for anonymous viewers and tour topics. Reads "Fork this topic" (creates a fork, opens the editor) or "Open my fork" when one already exists. *(cycle: N)* `code: frontend/src/components/topic/ZenChrome.tsx` (search `canFork`), `frontend/src/pages/TopicView.tsx` (`handleForkClick`).
+
+### Merge-back: "Suggest to master" + status chips
+Fork owners propose their fork's content as the new master via a "Suggest to master" button in the fork editor's top bar (disabled while there are unsaved changes — the suggestion snapshots the *saved* `markdown_source`). The fork's lineage banner (`ForkView`) and editor (`ForkEditor`) carry a small status chip: **In review** / **Merged** / **Declined** based on the latest suggestion. Owners can re-suggest after a rejection or merge to propose a new change. *(cycle: O1)* `code: frontend/src/pages/ForkEditor.tsx` (search `handleSuggest`), `frontend/src/pages/ForkView.tsx` (`ForkStatusChip`).
+
+### Merge-back review queue (`/review`)
+ADMIN/EDITOR-only surface. Two panes: a list of suggestions (pending first) on the left, a per-suggestion detail with a unified line diff on the right. Accept applies the suggestion to the master topic (DB + seed `content.md` file). Reject closes the suggestion with an optional note that surfaces to the owner via the status chip. A LEARNER hitting `/review` sees a clear "not authorized" state. *(cycle: O1)* `code: frontend/src/pages/ReviewQueue.tsx`, `frontend/src/components/MergeDiff.tsx`, `frontend/src/lib/lineDiff.ts`, `backend/api/merge_back.py`, `backend/services/merge_service.py`. See [`forks.md`](forks.md#merge-back--proposing-a-forks-content-as-the-new-master-o1) for the lifecycle.
+
+See [`forks.md`](forks.md) for the full fork model — what a fork is, the lifecycle, merge-back, and what's deferred.
 
 ---
 
@@ -405,6 +450,18 @@ Visit any topic with this query string. Blocks the user has flagged with the con
 | `PUT /api/users/me/progress/{slug}` | Upsert one topic's full progress slice. Last-write-wins on `client_updated_at`. | M1 |
 | `POST /api/users/me/progress/batch` | Batch upsert N topics — used on login when local storage is non-empty. | M1 |
 | `POST /api/auth/login` / `POST /api/auth/register` / `GET /api/auth/me` | Account flows. Login/register wired into the navbar's `AuthMenu` in M1; `/me` returns the JWT-validated current user. | seed-era; M1 — UI wired |
+| `POST /api/forks` | Create a fork of a topic, seeded from its `content.md`. 409 if the caller already forked it. | N |
+| `GET /api/forks/me` | The caller's forks. | N |
+| `GET /api/forks/{username}` | A user's public fork listing. | N |
+| `GET /api/forks/{username}/{slug}` | Read one fork — parsed into renderable blocks. | N |
+| `PUT /api/forks/{username}/{slug}` | Overwrite a fork's `markdown_source` (owner-only). | N |
+| `DELETE /api/forks/{username}/{slug}` | Delete a fork (owner-only). | N |
+| `POST /api/forks/preview` | Parse markdown without persisting — the editor's live preview. | N |
+| `POST /api/forks/{username}/{slug}/suggest` | Owner-only. Create / refresh the fork's pending merge-back suggestion; snapshots `markdown_source`. | O1 |
+| `GET /api/merge-backs` | ADMIN/EDITOR. Review queue — pending suggestions first, then resolved. | O1 |
+| `GET /api/merge-backs/{id}` | ADMIN/EDITOR. One suggestion + `master_markdown` (current) + `suggested_markdown` for the diff. | O1 |
+| `POST /api/merge-backs/{id}/accept` | ADMIN/EDITOR. Replace master topic's blocks + rewrite seed `content.md`. | O1 |
+| `POST /api/merge-backs/{id}/reject` | ADMIN/EDITOR. Close the suggestion with an optional note. | O1 |
 
 ---
 
@@ -417,6 +474,10 @@ Visit any topic with this query string. Blocks the user has flagged with the con
 | `/topic/:slug` | `TopicView` | Zen surface; ScrollReader by default, `?mode=slides` flips to SlideView | I3 default; J4 stickiness fixes |
 | `/path` | `LearningPath` | "Find a path from X to Y" pair-pick UI | seed-era |
 | `/datasets` | `Datasets` | Dataset catalog with reverse-index | K5 |
+| `/u/:username/topic/:slug/edit` | `ForkEditor` | Two-pane fork editor (owner-only) | N |
+| `/u/:username/topic/:slug` | `ForkView` | Read a user's fork of a topic | N |
+| `/u/:username/forks` | `UserForks` | A user's fork listing | N |
 | `/u/:username` | `UserGraph` | Public read-only snapshot | K7 |
+| `/review` | `ReviewQueue` | Merge-back review surface (ADMIN/EDITOR). Self-gates with a "not authorized" state for everyone else. | O1 |
 
-`code: frontend/src/App.tsx`.
+Route order matters: the fork sub-routes are registered before `/u/:username` so the snapshot route doesn't shadow them. `code: frontend/src/App.tsx`.

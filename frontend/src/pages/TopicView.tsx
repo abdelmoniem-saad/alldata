@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
-import { useParams, Link, useSearchParams } from 'react-router-dom'
-import { api, TopicDetail, PrerequisiteEntry } from '../api/client'
+import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom'
+import { api, ApiError, TopicDetail, PrerequisiteEntry } from '../api/client'
 import ScrollReader from '../components/topic/ScrollReader'
 import SlideView from '../components/topic/SlideView'
 import TourView from '../components/topic/TourView'
 import ZenChrome from '../components/topic/ZenChrome'
 import RecallPrompt from '../components/topic/RecallPrompt'
 import { useProgressStore } from '../stores/progressStore'
+import { useAuthStore } from '../stores/authStore'
 import { domainVar } from '../lib/domain'
 
 export default function TopicView() {
@@ -32,6 +33,13 @@ export default function TopicView() {
   const [readProgress, setReadProgress] = useState(0)
   const [justCompleted, setJustCompleted] = useState(false)
   const { markCompleted, unmarkCompleted, isCompleted, markInProgress, completedSlugs } = useProgressStore()
+
+  // N: fork affordance. `token` gates the chip (anonymous can't fork);
+  // `hasFork` flips the chip from "Fork this topic" to "Open my fork".
+  const navigate = useNavigate()
+  const { token, user } = useAuthStore()
+  const [hasFork, setHasFork] = useState(false)
+  const [forkBusy, setForkBusy] = useState(false)
 
   // K3: surface a recall prompt when this topic is due-for-review and we
   // haven't reviewed it yet in this page's lifetime. The prompt itself comes
@@ -85,6 +93,52 @@ export default function TopicView() {
   useEffect(() => {
     setSlideIdx(0)
   }, [activeLayer, slug])
+
+  // N: does the signed-in user already have a fork of this topic? Drives the
+  // chrome chip between "Fork this topic" and "Open my fork". Anonymous
+  // viewers skip the check entirely.
+  useEffect(() => {
+    setHasFork(false)
+    if (!slug || !token) return
+    let cancelled = false
+    api.listMyForks()
+      .then(forks => {
+        if (!cancelled) setHasFork(forks.some(f => f.topic_slug === slug))
+      })
+      .catch(() => { /* non-fatal — the chip just stays on "Fork this topic" */ })
+    return () => { cancelled = true }
+  }, [slug, token])
+
+  // N: fork action. Existing fork → open it. No fork → create, then open
+  // the editor. A 409 (race: forked in another tab) falls through to the
+  // editor too.
+  //
+  // O0: for the "open existing fork" path, navigate directly to the
+  // canonical `/u/{display_name}/...` URL rather than `/u/me/...`. That
+  // sidesteps a redirect flash and puts the shareable URL in the address
+  // bar on first hit. The create branch keeps `/u/me/...` because
+  // ForkEditor already resolves the `me` alias internally.
+  const handleForkClick = useCallback(async () => {
+    if (!slug || forkBusy) return
+    if (hasFork) {
+      const target = user?.display_name
+        ? `/u/${encodeURIComponent(user.display_name)}/topic/${slug}`
+        : `/u/me/topic/${slug}`
+      navigate(target)
+      return
+    }
+    setForkBusy(true)
+    try {
+      await api.createFork(slug)
+      navigate(`/u/me/topic/${slug}/edit`)
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        navigate(`/u/me/topic/${slug}/edit`)
+      } else {
+        setForkBusy(false)
+      }
+    }
+  }, [slug, hasFork, forkBusy, navigate, user])
 
   // Smart "next topic" — prefer has-content, not-completed, lowest difficulty.
   // G8: leadsTo entries are now {node, why}; we sort by node fields and then
@@ -303,6 +357,13 @@ export default function TopicView() {
         // is true. Tell ZenChrome so it can hide the scroll/slides toggle
         // and the slide-nav UI (both would be inert in tour mode).
         isTour={!!topic.tour}
+        // N: fork chip. `canFork` gates visibility (signed in, not a tour
+        // topic); `hasFork` flips the label between "Fork this topic" and
+        // "Open my fork".
+        canFork={!!token && !topic.tour}
+        hasFork={hasFork}
+        forkBusy={forkBusy}
+        onForkClick={handleForkClick}
         showSlideNav={viewMode === 'slides' && hasContent}
         slideIdx={slideIdx}
         slideTotal={slideTotal}

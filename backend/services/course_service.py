@@ -1,6 +1,5 @@
 """Course service — course creation, forking, and topic management."""
 
-import json
 import uuid
 
 from sqlalchemy import select
@@ -114,24 +113,14 @@ async def fork_topic_in_course(
     if not topic:
         raise ValueError("Topic not found")
 
-    # Snapshot content blocks as JSON
-    snapshot = [
-        {
-            "block_type": b.block_type,
-            "content": b.content,
-            "sort_order": b.sort_order,
-            "layer": b.layer,
-            "expected_output": b.expected_output,
-            "is_editable": b.is_editable,
-        }
-        for b in topic.content_blocks
-    ]
-
+    # O3: `content_snapshot` retired. This legacy course-fork path doesn't
+    # have a frontend caller; if it ever needs the master's markdown, read
+    # it via `fork_service._read_topic_source(topic)` instead. Until then
+    # we just record the fork's identity.
     fork = TopicFork(
         original_topic_id=topic_id,
         forked_by=user_id,
         course_id=course_id,
-        content_snapshot=json.dumps(snapshot),
     )
     db.add(fork)
     return fork

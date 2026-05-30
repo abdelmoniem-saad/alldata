@@ -259,6 +259,15 @@ interface ScrollReaderProps {
   /** Topic slug — drives `useTopicState` namespace for I5 reactive plots. */
   slug: string
   header?: ReactNode
+  /**
+   * O2: collapse to single-column linear flow regardless of viewport
+   * width. The fork editor's right preview pane is ~640px wide on a
+   * 1280px window, which is too narrow for the desktop two-column
+   * pinned-viz layout — prose wraps to a few words per line and plots
+   * are unreadable. Forcing linear here mirrors the natural mobile
+   * fallback. Master topic pages and `ForkView` leave it false.
+   */
+  forceLinear?: boolean
 }
 
 export default function ScrollReader({
@@ -268,8 +277,12 @@ export default function ScrollReader({
   scrollRef,
   slug,
   header,
+  forceLinear = false,
 }: ScrollReaderProps) {
-  const isWide = useIsWide(1024)
+  const viewportIsWide = useIsWide(1024)
+  // O2: `isWide` drives the two-column pinned layout. If the caller forces
+  // linear we treat the surface as narrow even on a wide viewport.
+  const isWide = forceLinear ? false : viewportIsWide
   const reducedMotion = usePrefersReducedMotion()
 
   // Pre-parse meta once per block. Several effects + branch filter want it.

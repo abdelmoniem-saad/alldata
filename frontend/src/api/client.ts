@@ -2,6 +2,23 @@
 
 const BASE = '/api'
 
+/**
+ * An API error carrying the HTTP status and the server's `detail` payload.
+ * `detail` can be a plain string or a structured object (e.g. the fork
+ * 409 conflict carries `{message, existing_fork_id, ...}`) — callers that
+ * need the structured form read `err.detail`.
+ */
+export class ApiError extends Error {
+  status: number
+  detail: unknown
+  constructor(status: number, detail: unknown) {
+    super(typeof detail === 'string' ? detail : `HTTP ${status}`)
+    this.name = 'ApiError'
+    this.status = status
+    this.detail = detail
+  }
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const token = localStorage.getItem('token')
   const headers: Record<string, string> = {
@@ -12,8 +29,10 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, { ...options, headers })
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
-    throw new Error(body.detail || `HTTP ${res.status}`)
+    throw new ApiError(res.status, body.detail ?? `HTTP ${res.status}`)
   }
+  // 204 No Content (and any empty body) — nothing to parse.
+  if (res.status === 204) return undefined as T
   return res.json()
 }
 
@@ -162,6 +181,88 @@ export interface ProgressBundle {
   topics: TopicProgressOut[]
 }
 
+/**
+ * N: fork model. A fork is a user's editable copy of one topic. `ForkDetail`
+ * carries the parsed `content_blocks` so the frontend renders forks through
+ * the same `ScrollReader` the master topic page uses.
+ */
+/**
+ * O1: lifecycle status of a fork's latest merge-back suggestion. Used to
+ * render the status chip on fork surfaces.
+ */
+export type MergeBackStatus = 'pending' | 'accepted' | 'rejected'
+
+export interface ForkSummary {
+  id: string
+  username: string
+  topic_slug: string
+  topic_title: string
+  topic_domain: string | null
+  topic_difficulty: string | null
+  updated_at: string
+  suggestion_status: MergeBackStatus | null
+}
+
+export interface ForkOut {
+  id: string
+  username: string
+  topic_slug: string
+  topic_title: string
+  created_at: string
+  updated_at: string
+  markdown_source: string
+}
+
+export interface ForkDetail extends ForkOut {
+  owner_display_name: string
+  content_blocks: ContentBlock[]
+  misconceptions: Misconception[]
+  original_topic: {
+    id: string
+    slug: string
+    title: string
+    summary: string | null
+    difficulty: string | null
+    domain: string | null
+    status: string
+    depth: number
+  }
+  suggestion_status: MergeBackStatus | null
+}
+
+/**
+ * O1: merge-back review queue. A fork owner's suggestion proposes that
+ * their fork's content replace the master topic's. An ADMIN/EDITOR
+ * accepts or rejects via the queue.
+ */
+export interface MergeBackSummary {
+  id: string
+  fork_id: string
+  topic_id: string
+  topic_slug: string
+  topic_title: string
+  suggested_by: string
+  suggester_display_name: string
+  status: MergeBackStatus
+  created_at: string
+  updated_at: string
+}
+
+export interface MergeBackDetail extends MergeBackSummary {
+  master_markdown: string
+  suggested_markdown: string
+  review_note: string | null
+  reviewed_by: string | null
+  reviewer_display_name: string | null
+  reviewed_at: string | null
+}
+
+export interface ForkPreviewResult {
+  content_blocks: ContentBlock[]
+  misconceptions: Misconception[]
+  warnings: string[]
+}
+
 // API functions
 export const api = {
   // Graph
@@ -264,4 +365,71 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payloads),
     }),
+
+  // N: fork model
+  //
+  // `createFork` seeds a fork from the master topic's content.md. A 409
+  // (already forked) surfaces as a thrown Error whose message carries the
+  // server detail — callers that want the redirect target catch and parse.
+  // `getFork` / `listForks` are public (no auth). `updateFork` / `deleteFork`
+  // are owner-only (the bearer token is attached by `request`).
+  createFork: (topicSlug: string) =>
+    request<ForkOut>('/forks', {
+      method: 'POST',
+      body: JSON.stringify({ topic_slug: topicSlug }),
+    }),
+
+  listMyForks: () => request<ForkSummary[]>('/forks/me'),
+
+  listForks: (username: string) =>
+    request<ForkSummary[]>(`/forks/${encodeURIComponent(username)}`),
+
+  getFork: (username: string, slug: string) =>
+    request<ForkDetail>(
+      `/forks/${encodeURIComponent(username)}/${encodeURIComponent(slug)}`,
+    ),
+
+  updateFork: (username: string, slug: string, markdownSource: string) =>
+    request<ForkDetail>(
+      `/forks/${encodeURIComponent(username)}/${encodeURIComponent(slug)}`,
+      { method: 'PUT', body: JSON.stringify({ markdown_source: markdownSource }) },
+    ),
+
+  deleteFork: (username: string, slug: string) =>
+    request<void>(
+      `/forks/${encodeURIComponent(username)}/${encodeURIComponent(slug)}`,
+      { method: 'DELETE' },
+    ),
+
+  previewFork: (markdownSource: string) =>
+    request<ForkPreviewResult>('/forks/preview', {
+      method: 'POST',
+      body: JSON.stringify({ markdown_source: markdownSource }),
+    }),
+
+  // O1: merge-back. The fork owner's suggest action lives under
+  // /api/forks/{username}/{slug}/suggest; the review queue (admin/editor)
+  // lives under /api/merge-backs.
+  suggestMergeBack: (username: string, slug: string) =>
+    request<MergeBackSummary>(
+      `/forks/${encodeURIComponent(username)}/${encodeURIComponent(slug)}/suggest`,
+      { method: 'POST' },
+    ),
+
+  listMergeBacks: () => request<MergeBackSummary[]>('/merge-backs'),
+
+  getMergeBack: (id: string) =>
+    request<MergeBackDetail>(`/merge-backs/${encodeURIComponent(id)}`),
+
+  acceptMergeBack: (id: string) =>
+    request<MergeBackDetail>(
+      `/merge-backs/${encodeURIComponent(id)}/accept`,
+      { method: 'POST' },
+    ),
+
+  rejectMergeBack: (id: string, note: string | null) =>
+    request<MergeBackDetail>(
+      `/merge-backs/${encodeURIComponent(id)}/reject`,
+      { method: 'POST', body: JSON.stringify({ note }) },
+    ),
 }

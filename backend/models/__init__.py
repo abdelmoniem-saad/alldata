@@ -2,6 +2,7 @@ from backend.models.content_block import ContentBlock
 from backend.models.course import Course, CourseTopicMapping
 from backend.models.edge import TopicEdge
 from backend.models.fork import TopicFork
+from backend.models.merge_back import MergeBackSuggestion
 from backend.models.misconception import Misconception
 from backend.models.progress import UserProgress
 from backend.models.topic import Topic
@@ -15,6 +16,7 @@ __all__ = [
     "Course",
     "CourseTopicMapping",
     "TopicFork",
+    "MergeBackSuggestion",
     "Misconception",
     "UserProgress",
 ]

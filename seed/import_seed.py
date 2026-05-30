@@ -579,6 +579,7 @@ async def create_tables():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         await conn.run_sync(_self_heal_columns)
+        await conn.run_sync(_O3_drop_retired_columns)
 
 
 def _self_heal_columns(conn) -> None:
@@ -664,16 +665,66 @@ async def get_or_create_system_user(db: AsyncSession) -> User:
     return user
 
 
+# O3: narrow one-off retirement pass for columns the model no longer
+# declares but the live DB may still carry. Inverse of `_self_heal_columns`
+# (which only ADDs). Idempotent — no-ops once the column is gone, and
+# silently falls back to "leave it" on SQLite versions too old to support
+# `ALTER TABLE DROP COLUMN` (added in SQLite 3.35, 2021). Don't expand this
+# into a general drop-sync — each entry is a deliberate, audited removal.
+_O3_DROP_COLUMNS: tuple[tuple[str, str], ...] = (
+    ("topic_forks", "content_snapshot"),
+)
+
+
+def _O3_drop_retired_columns(conn) -> None:
+    from sqlalchemy import inspect, text
+
+    inspector = inspect(conn)
+    for table_name, col_name in _O3_DROP_COLUMNS:
+        if not inspector.has_table(table_name):
+            continue
+        live_cols = {col["name"] for col in inspector.get_columns(table_name)}
+        if col_name not in live_cols:
+            continue
+        try:
+            conn.execute(text(f'ALTER TABLE {table_name} DROP COLUMN {col_name}'))
+            print(f"  Self-heal: dropped retired column {table_name}.{col_name}")
+        except Exception as exc:  # noqa: BLE001
+            # Older SQLite (<3.35) doesn't support DROP COLUMN — leave it.
+            print(
+                f"  Self-heal: could not drop {table_name}.{col_name} "
+                f"(harmless; column is unused): {type(exc).__name__}: {exc}"
+            )
+
+
 def parse_content_file(content_path: Path) -> list[dict]:
     """Parse a content markdown file into content blocks.
 
-    Runs the I-cycle directive parser and the J3 cross-check validator. Any
-    issues surface via `_warn(...)` and become failures under `--strict`.
+    Thin shim over `parse_content_md` — reads the file, then runs the
+    directive parser. Missing files return an empty block list (a shell
+    topic with no content.md).
     """
     if not content_path.exists():
         return []
+    return parse_content_md(
+        content_path.read_text(encoding="utf-8"),
+        topic_name=content_path.parent.name,
+    )
 
-    text = content_path.read_text(encoding="utf-8")
+
+def parse_content_md(text: str, topic_name: str = "content") -> list[dict]:
+    """Parse content.md *text* into a list of block dicts.
+
+    The full I-cycle directive pipeline — multi-line block extraction, layer
+    markers, code-block detection, the J3 cross-check validator — identical
+    to what `parse_content_file` ran historically. This text-taking variant
+    exists so over-the-wire markdown (the N fork editor's save / preview
+    path) can be parsed without a file on disk.
+
+    `topic_name` only feeds `_warn(...)` messages — pass the topic slug or
+    dir name for legible warnings; the default is fine for ad-hoc parses.
+    Any issues surface via `_warn(...)` and become failures under `--strict`.
+    """
     blocks = []
     current_layer = ExplanationLayer.BOTH.value
 
@@ -876,7 +927,7 @@ def parse_content_file(content_path: Path) -> list[dict]:
 
     # J3 cross-check pass — surfaces typos that the per-block parser doesn't
     # have enough context to catch.
-    _validate_topic_blocks(blocks, str(content_path.parent.name))
+    _validate_topic_blocks(blocks, topic_name)
 
     return blocks
 

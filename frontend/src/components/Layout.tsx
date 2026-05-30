@@ -3,6 +3,7 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { useThemeStore } from '../stores/themeStore'
 import SearchDropdown from './SearchDropdown'
 import AuthMenu from './AuthMenu'
+import Logo from './Logo'
 import { GraphNode } from '../api/client'
 
 const navItems = [
@@ -41,32 +42,10 @@ export default function Layout() {
       transition: 'background var(--transition-smooth)',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
-        {/* Logo */}
-        <Link to="/" style={{
-          fontSize: 18,
-          fontWeight: 800,
-          color: 'var(--color-text)',
-          letterSpacing: '-0.5px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-        }}>
-          <span style={{
-            width: 24, height: 24,
-            borderRadius: 7,
-            background: 'var(--color-accent)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <circle cx="7" cy="3" r="2" fill="white" fillOpacity="0.9"/>
-              <circle cx="3" cy="10" r="2" fill="white" fillOpacity="0.9"/>
-              <circle cx="11" cy="10" r="2" fill="white" fillOpacity="0.9"/>
-              <line x1="7" y1="5" x2="3.5" y2="8.5" stroke="white" strokeOpacity="0.5" strokeWidth="1"/>
-              <line x1="7" y1="5" x2="10.5" y2="8.5" stroke="white" strokeOpacity="0.5" strokeWidth="1"/>
-              <line x1="4.5" y1="10" x2="9.5" y2="10" stroke="white" strokeOpacity="0.3" strokeWidth="1"/>
-            </svg>
-          </span>
-          AllData
+        {/* Logo — P: the mark + wordmark live in <Logo/>; the navbar just
+            wraps it in the home link. */}
+        <Link to="/" aria-label="AllData — home" style={{ display: 'flex', alignItems: 'center' }}>
+          <Logo size={24} />
         </Link>
 
         {/* Desktop Nav */}

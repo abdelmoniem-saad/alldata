@@ -50,6 +50,18 @@ interface Props {
    * what it claims.
    */
   isTour?: boolean
+
+  /**
+   * N: fork chip. `canFork` is false for anonymous viewers and tour topics
+   * — the chip is hidden entirely. When true, the chip reads "Fork this
+   * topic" (no existing fork) or "Open my fork" (`hasFork`). `onForkClick`
+   * owns the create-or-navigate logic; `forkBusy` disables the chip during
+   * the create round trip.
+   */
+  canFork?: boolean
+  hasFork?: boolean
+  forkBusy?: boolean
+  onForkClick?: () => void
 }
 
 export default function ZenChrome(props: Props) {
@@ -98,7 +110,7 @@ function BottomBar(props: Props) {
     viewMode, setViewMode, hasFormalLayer, activeLayer, setActiveLayer,
     showSlideNav, slideIdx, slideTotal, onSlidePrev, onSlideNext, onSlideGoto,
     slug, isCompleted, justCompleted, onMarkCompleted, onUnmark,
-    isTour,
+    isTour, canFork, hasFork, forkBusy, onForkClick,
   } = props
 
   const canPrev = slideIdx > 0
@@ -273,12 +285,52 @@ function BottomBar(props: Props) {
         </div>
       )}
 
+      {/* N: fork chip — sits just left of the LEARNED chip. Hidden for
+          anonymous viewers and tour topics (`canFork` is false). Reads
+          "Open my fork" when the viewer already has one. */}
+      {canFork && (
+        <div style={{
+          marginLeft: !isTour && showSlideNav ? 0 : 'auto',
+          flexShrink: 0,
+        }}>
+          <button
+            onClick={onForkClick}
+            disabled={forkBusy}
+            style={{
+              padding: '6px 14px',
+              borderRadius: 8,
+              fontSize: 11,
+              fontFamily: 'var(--font-mono)',
+              fontWeight: 600,
+              letterSpacing: '0.5px',
+              textTransform: 'uppercase',
+              color: 'var(--color-text-secondary)',
+              border: '1px solid var(--color-border)',
+              background: 'transparent',
+              cursor: forkBusy ? 'wait' : 'pointer',
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              transition: 'all var(--transition-fast)',
+            }}
+            title={hasFork ? 'Open your fork of this topic' : 'Make an editable copy of this topic'}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="6" r="3"/>
+              <path d="M6 9v6M18 9a6 6 0 0 1-6 6H6"/>
+            </svg>
+            {forkBusy ? 'Forking…' : hasFork ? 'Open my fork' : 'Fork this topic'}
+          </button>
+        </div>
+      )}
+
       {/* Mark as Learned — right side. Push to right with margin-left:auto
-          unless the (visible) slide-nav already sits in the center via its
-          own margin. In tour mode the toggle + slide-nav are both hidden,
-          so the LEARNED chip should still float right. */}
+          unless the (visible) slide-nav already sits in the center, OR the
+          fork chip already consumed the auto-margin to its left. */}
       {slug && (
-        <div style={{ marginLeft: !isTour && showSlideNav ? 0 : 'auto', flexShrink: 0 }}>
+        <div style={{
+          marginLeft: (!isTour && showSlideNav) || canFork ? 0 : 'auto',
+          marginInlineStart: canFork ? 8 : undefined,
+          flexShrink: 0,
+        }}>
           {isCompleted && !justCompleted ? (
             <button
               onClick={onUnmark}
