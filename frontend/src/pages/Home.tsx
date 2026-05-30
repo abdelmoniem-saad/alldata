@@ -1,34 +1,61 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { api } from '../api/client'
 import { useProgressStore } from '../stores/progressStore'
 import { useThemeStore } from '../stores/themeStore'
 import { DOMAIN_SLUGS, DOMAIN_LABEL, DOMAIN_DESC, domainColorHex, cssVarHex } from '../lib/domain'
 import SearchDropdown from '../components/SearchDropdown'
 
-// Domain metadata lives here; colors are resolved at render time from CSS vars
-// so the theme toggle owns the palette.
-const TOPIC_COUNTS: Record<string, number> = {
-  'probability-foundations': 10,
-  'distributions': 8,
-  'statistical-inference': 12,
-  'regression-modeling': 6,
-  'data-science-practice': 6,
+// P: per-domain "topics with content" counts. These are a *fallback* — the
+// component derives the live numbers from `api.getGraph()` on mount and only
+// falls back to this snapshot if the fetch fails (so the cards never flash 0
+// and stay honest even offline). Snapshot taken at P; the live fetch keeps it
+// from going stale the way the old hardcoded counts did.
+const FALLBACK_TOPIC_COUNTS: Record<string, number> = {
+  'probability-foundations': 8,
+  'distributions': 5,
+  'statistical-inference': 5,
+  'regression-modeling': 2,
+  'data-science-practice': 1,
 }
 
 const domains = DOMAIN_SLUGS.map(slug => ({
   slug,
   title: DOMAIN_LABEL[slug],
   desc:  DOMAIN_DESC[slug],
-  topics: TOPIC_COUNTS[slug] ?? 0,
 }))
-
-const TOTAL_CONTENT_TOPICS = 20  // Topics with actual content
 
 export default function Home() {
   const { completedSlugs } = useProgressStore()
   const { theme } = useThemeStore()
 
   const isLight = theme === 'light'
+
+  // P: derive "topics with content" per domain from the live graph, falling
+  // back to the static snapshot. One fetch, no loading flash (seeded with the
+  // fallback), resilient to failure.
+  const [topicCounts, setTopicCounts] = useState<Record<string, number>>(FALLBACK_TOPIC_COUNTS)
+  useEffect(() => {
+    let cancelled = false
+    api.getGraph()
+      .then(g => {
+        if (cancelled) return
+        const counts: Record<string, number> = {}
+        for (const n of g.nodes) {
+          if (n.depth === 0 || !n.has_content || !n.domain) continue
+          counts[n.domain] = (counts[n.domain] || 0) + 1
+        }
+        // Only adopt if we actually got content nodes back (guards against an
+        // empty/partial payload blanking the cards).
+        if (Object.keys(counts).length > 0) setTopicCounts(counts)
+      })
+      .catch(() => { /* keep the fallback snapshot */ })
+    return () => { cancelled = true }
+  }, [])
+  const totalContentTopics = useMemo(
+    () => Object.values(topicCounts).reduce((a, b) => a + b, 0),
+    [topicCounts],
+  )
 
   // Resolve CSS var tokens → hex once per render so we can use alpha composition
   // (e.g. `${color}20`). Dependency on `theme` means this rebuilds on toggle.
@@ -209,7 +236,7 @@ export default function Home() {
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px',
               }}>
-                {d.topics} topics
+                {topicCounts[d.slug] ?? 0} {(topicCounts[d.slug] ?? 0) === 1 ? 'topic' : 'topics'}
               </div>
             </Link>
           )
@@ -240,7 +267,7 @@ export default function Home() {
               <span style={{
                 fontSize: 13, fontWeight: 600, color: 'var(--color-accent)',
               }}>
-                {completedSlugs.length} / {TOTAL_CONTENT_TOPICS} topics
+                {completedSlugs.length} / {totalContentTopics} topics
               </span>
             </div>
 
@@ -251,7 +278,7 @@ export default function Home() {
               overflow: 'hidden', marginBottom: 16,
             }}>
               <div style={{
-                width: `${Math.min((completedSlugs.length / TOTAL_CONTENT_TOPICS) * 100, 100)}%`,
+                width: `${Math.min((completedSlugs.length / totalContentTopics) * 100, 100)}%`,
                 height: '100%',
                 borderRadius: 100,
                 background: 'var(--color-accent)',

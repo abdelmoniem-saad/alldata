@@ -14,10 +14,12 @@ Specifically: working programmers, researchers in adjacent fields, and students 
 
 ## What it explicitly is not
 
-- **Not a quiz site.** Decisions exist to make the reader commit before reading; they aren't graded, scored, or aggregated.
-- **Not a flashcard app.** No spaced repetition, no streak counter, no "review queue." The graph and the topic are the only navigation.
+- **Not a quiz site.** Decisions exist to make the reader commit before reading; they aren't graded, scored, or aggregated into a result.
+- **Not gamified.** Spaced-repetition recall exists (K3) — it surfaces a quiet prompt when a topic is worth revisiting — but there are no streaks, points, badges, or leaderboards. The cue helps the reader; it never becomes a score.
 - **Not a reference manual.** Topics are lessons with an arc — prior, decision, consequence, formula, derivation — not lookup pages.
-- **Not a credentialing platform.** No certificates, no badges, no shareable progress. Progress lives in localStorage and exists to help the reader, not to signal to anyone else.
+- **Not a credentialing platform.** Progress can sync across a reader's devices (M) and be shared as a read-only graph snapshot at `/u/{username}` (K7) — but it is never a grade, a certificate, or a signal to anyone but the reader. No badges, no shareable score.
+
+*(This list is kept in sync with [`identity.md`](identity.md)'s "What it is not" — change both together.)*
 
 ## The loop
 
@@ -35,4 +37,4 @@ A reader finishes a topic and the felt understanding sticks. They could explain 
 
 ---
 
-For the inventory of what's been built so far — every user-visible feature, no matter how small — see [`features.md`](features.md).
+For the inventory of what's been built so far — every user-visible feature, no matter how small — see [`features.md`](features.md). For how AllData presents itself — name, mark, tagline, voice — see [`identity.md`](identity.md).

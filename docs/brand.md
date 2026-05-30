@@ -2,6 +2,8 @@
 
 The surface aims for a working scientist's notebook: zinc, hairline, deliberate. Everything in this doc is already enforced in code; the doc exists so contributors don't have to read CSS comments to find it.
 
+For the *identity* layer — name, mark, tagline, voice-in-brief, and what AllData is / isn't — see [`identity.md`](identity.md). This doc is the *visual system* (color, type, spacing, motion, components) it sits on.
+
 Token references throughout cite vars defined in `frontend/src/styles/tokens.css` (typography, spacing, motion) and `frontend/src/styles/global.css` (color, theme, radius). The achromatopsia and reduced-motion rules in `docs/principles.md` apply across this whole doc.
 
 ---
