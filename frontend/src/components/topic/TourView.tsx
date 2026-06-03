@@ -264,7 +264,19 @@ export default function TourView({
     }
   }, [activeTarget, nodes])
 
-  const visibleDomain = activeTarget.kind === 'domain' ? activeTarget.slug ?? null : null
+  // Q1: which domain the background filters to. A `domain` target filters to
+  // that cluster; a `node` target filters to *that node's* domain so a family
+  // overview keeps its cluster on screen while the camera spotlights one
+  // member (rather than revealing the whole graph). `all` → no filter. The
+  // Shape-of-Statistics intro only uses `all`/`domain` targets, so it's
+  // unaffected.
+  const visibleDomain = useMemo(() => {
+    if (activeTarget.kind === 'domain') return activeTarget.slug ?? null
+    if (activeTarget.kind === 'node' && activeTarget.slug) {
+      return nodes.find(n => n.slug === activeTarget.slug)?.domain ?? null
+    }
+    return null
+  }, [activeTarget, nodes])
 
   return (
     <>

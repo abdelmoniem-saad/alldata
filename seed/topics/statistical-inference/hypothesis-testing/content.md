@@ -1,196 +1,122 @@
-<!-- block: state, values: {prior: 0.5, sensitivity: 0.95, specificity: 0.95, treatment_strategy: "none"} -->
+<!-- block: state, values: {mu: 0, sigma: 1} -->
 
-<!-- block: plot, spec: population_dot_grid, params: {prior: 0.5, sensitivity: 0.95, specificity: 0.95, treatment_strategy: "none"}, anchor: testing-population, mobile_order: 1 -->
-
----
-
-<!-- layer: intuition -->
-
-<!-- block: gear, n: 1, label: "TODO — name the spark" -->
-
-# Hypothesis Testing
-
-## The core question
-
-You have data. You have a claim. Is the data consistent with that claim, or does it provide evidence against it?
-
-The logic of hypothesis testing is proof by contradiction:
-
-1. Assume the boring explanation — the **null hypothesis $H_0$**.
-2. Ask: how surprising is the data under that assumption?
-3. If the data is very surprising, reject the boring explanation.
-
-The pinned plot is showing 1,000 *experiments* — half where the null is actually true, half where the alternative is. As you read on, you'll set the test's two error rates and watch which experiments get caught.
-
-> TODO (N): replace this gear's intro paragraph with the spark — pick a concrete study (a drug trial, an A/B test) where the reader feels what's at stake.
+<!-- block: plot, spec: gaussian_pdf, params: {mu: 0, sigma: 1}, binds: [mu, sigma], anchor: ht-null, mobile_order: 1 -->
 
 ---
 
-<!-- block: gear, n: 2, label: "TODO — name the intuition" -->
+<!-- block: gear, n: 1, label: "Ruling out chance" -->
 
-## The two errors
+# Hypothesis testing
 
-A test gives you a binary verdict: reject $H_0$ or don't. Reality also has two states: $H_0$ is true or it isn't. Cross those and you get four cells, two of which are mistakes:
+You ran an experiment and saw an effect. But could that effect just be noise — the kind of pattern that shows up by luck even when nothing is going on? A hypothesis test is a disciplined way to answer that one question: *is what I saw surprising enough, under the assumption of "nothing going on," to rule chance out?*
 
-- **Type I error.** $H_0$ is true, the test rejects anyway. False alarm. Probability: $\alpha$ (the significance level).
-- **Type II error.** $H_0$ is false, the test fails to reject. Missed effect. Probability: $\beta$. Power is $1 - \beta$.
-
-You want both error rates low. You can't have both without help — either more data, or accepting that they trade against each other.
+The curve on the right is that "nothing going on" world — the **null distribution** of your test statistic.
 
 ---
 
-<!-- block: gear, n: 3, label: "TODO — name the mechanic" -->
+<!-- block: gear, n: 2, label: "Null, alternative, and two ways to be wrong" -->
 
-<!-- block: decision, anchor: testing-decision -->
+A test pits two hypotheses against each other:
+
+- the **null** $H_0$ — the boring explanation: no effect, no difference, just noise;
+- the **alternative** $H_1$ — there's a real effect.
+
+You compute a **test statistic** from your data and ask how extreme it is *if $H_0$ were true*. If it's extreme enough — past a threshold set by your chosen significance level $\alpha$ — you reject $H_0$.
+
+Two ways to be wrong: a **Type I error** is rejecting a true null (a false alarm; its rate is $\alpha$), and a **Type II error** is failing to detect a real effect (a miss; its rate is $\beta$). You can't drive both to zero at once — tightening one loosens the other unless you collect more data.
+
+---
+
+<!-- block: gear, n: 3, label: "Two worlds, one cutoff" -->
+
+Under the null, the statistic centers at 0. If the alternative is true and the effect is real, the *same* statistic is drawn from a shifted world. Picking the right shift is the key to seeing what "power" means.
+
+<!-- block: decision, anchor: ht-shift -->
 question: |
-  You're designing a study. You can pre-set the significance level $\alpha$
-  (the Type I error rate). You don't get to set $\beta$ directly — it's a
-  consequence of $\alpha$, sample size, and effect size. What's the right
-  default for $\alpha$?
+  Under $H_0$, your standardized test statistic is centered at 0. Now suppose
+  the alternative is true — there *is* a real effect. Where is the statistic's
+  distribution centered now?
 options:
-  - id: tight
-    label: "α = 0.001 (only reject when very, very surprised)"
-    writes: { sensitivity: 0.999, specificity: 0.999, treatment_strategy: "treat_all" }
+  - id: zero
+    label: "Still at 0 — the statistic doesn't know which hypothesis is true"
+    writes: { mu: 0 }
     response: |
-      A tiny α makes false alarms vanishingly rare — the plot shows almost no
-      false rejections. The cost is power: you'll miss real effects unless
-      they're huge or your sample is big. For exploratory work this is too
-      strict; for high-stakes confirmatory work it's reasonable.
-  - id: standard
-    label: "α = 0.05 (the textbook default)"
-    writes: { sensitivity: 0.8, specificity: 0.95, treatment_strategy: "treat_all" }
+      Not quite. A real effect systematically pushes the statistic away from 0
+      — that's what "an effect" means. If the alternative left the distribution
+      centered at 0, no test could ever detect anything.
+  - id: shifted
+    label: "Shifted away from 0 — say, centered near 2.5"
+    writes: { mu: 2.5 }
     response: |
-      The conventional default — 5% false-positive rate. The plot shows the
-      tradeoff: roughly 5% of true-null experiments still get rejected, and
-      power lands at maybe 80% for a typical effect size. It's a defensible
-      anchor, not a sacred number. Pre-register your $\alpha$, don't pick it
-      after seeing the data.
-  - id: loose
-    label: "α = 0.20 (be willing to reject more often)"
-    writes: { sensitivity: 0.95, specificity: 0.80, treatment_strategy: "treat_all" }
+      Right — watch the curve slide right. Under a real effect the statistic is
+      drawn from a shifted distribution. The fraction of *that* shifted curve
+      lying past your rejection cutoff is the test's **power** ($1 - \beta$).
+      A bigger effect or a larger sample pushes it further right and lifts the
+      power.
+  - id: pvalue
+    label: "At the p-value of the result"
+    writes: { mu: 0 }
     response: |
-      Loose $\alpha$ trades false alarms for power. You'll catch more real
-      effects — but the plot is also showing more false rejections in the
-      "null is true" half. Acceptable for screening or hypothesis-generation;
-      not appropriate for a confirmatory study where false positives have
-      real cost.
-correct: standard
+      That mixes up two different things. The p-value is a number computed from
+      one dataset; the alternative hypothesis is a whole distribution the
+      statistic could follow. Under a real effect, that distribution is shifted
+      away from 0 — it isn't located "at the p-value."
+correct: shifted
 <!-- /block -->
 
----
-
-<!-- block: callout, kind: insight, depends_on: testing-decision, branch: standard -->
-$\alpha = 0.05$ is a Fisher-era convention, not a law of nature. Whether it's the right choice depends on the cost of a false positive versus the cost of a missed effect. Pre-register the choice; defending it after the fact is post-hoc reasoning.
-<!-- /block -->
-
-<!-- block: callout, kind: insight, depends_on: testing-decision, branch: tight|loose -->
-You're right that $\alpha$ should match the cost structure of the decision. The textbook 0.05 is a default, not a target. The trap is choosing $\alpha$ *after* you've seen the data — which converts a hypothesis test into a story about the data you got.
-<!-- /block -->
-
----
-
-<!-- block: step_through, anchor: testing-walk -->
-1. State $H_0$ — the boring explanation. ($\theta = \theta_0$.)
-2. State $H_1$ — what you'd believe if $H_0$ falls. (Two-sided $\theta \ne \theta_0$, or one-sided.)
-3. Choose $\alpha$ before looking at the data. This is your false-alarm rate.
-4. Compute a test statistic — a number summarizing how far the data is from $H_0$.
-5. Compute the **p-value** — $P(\text{statistic this extreme or more} \mid H_0)$.
-6. Reject $H_0$ if $p < \alpha$. Otherwise, fail to reject.
+<!-- block: callout, kind: insight, depends_on: ht-shift, branch: shifted -->
+Now both worlds are on the table: the null centered at 0 and the alternative shifted right. Your cutoff slices both. The null mass beyond it is $\alpha$ (false alarms); the alternative mass beyond it is power. Designing a good study is really just pushing these two distributions apart — more data, a cleaner measurement, a bigger true effect.
 <!-- /block -->
 
 ---
 
 <!-- layer: formal -->
 
-<!-- block: gear, n: 4, label: "TODO — name the formalism" -->
+<!-- block: gear, n: 4, label: "The procedure" -->
 
-## Formal framework
+The standard recipe:
 
-**Hypotheses.**
-- $H_0: \theta = \theta_0$
-- $H_1: \theta \ne \theta_0$ (two-sided), or $H_1: \theta > \theta_0$ (one-sided)
+1. State $H_0$ and $H_1$.
+2. Choose a significance level $\alpha$ (commonly 0.05) **before** seeing the data.
+3. Compute a test statistic, e.g. $z = \dfrac{\bar{x} - \mu_0}{\sigma/\sqrt{n}}$.
+4. Find the **p-value**: the probability, *if $H_0$ were true*, of a statistic at least as extreme as the one observed.
+5. Reject $H_0$ if $p < \alpha$; otherwise fail to reject.
 
-**Test statistic.** $T = T(X_1, \ldots, X_n)$ — a function of the sample.
-
-**P-value.** $p = P(|T| \ge |t_\text{obs}| \mid H_0)$ for a two-sided test.
-
-**Decision rule.** Reject $H_0$ if $p < \alpha$, where $\alpha$ is pre-specified.
-
-**Type I error ($\alpha$).** Rejecting $H_0$ when it's true.
-**Type II error ($\beta$).** Failing to reject $H_0$ when $H_1$ is true.
-**Power.** $1 - \beta$.
-
-**Neyman–Pearson lemma.** Among all tests of size $\alpha$ for testing simple $H_0$ vs simple $H_1$, the likelihood-ratio test maximizes power.
-
-<!-- block: derivation, title: "What the p-value is and isn't", collapsed: true -->
-The p-value is
-
-$$p = P(\,|T| \ge |t_\text{obs}|\, \mid H_0\,)$$
-
-It is **not** $P(H_0 \mid \text{data})$. The conditioning runs the other way. To go from a p-value to a posterior probability of $H_0$ you need a prior — Bayes' rule again — and the answer often differs by an order of magnitude. A p-value of 0.04 corresponds to roughly $P(H_0 \mid \text{data}) \approx 0.30$ under a 50/50 prior with reasonable power. The p-value alone does not tell you the probability that $H_0$ is true.
-
-This is the **Lindley paradox**: with very large samples, even tiny deviations from $H_0$ produce small p-values, but the posterior probability of $H_0$ can stay high. Frequentist and Bayesian conclusions diverge precisely when the sample is large.
-<!-- /block -->
+The whole edifice rests on the **sampling distribution** of the statistic under $H_0$ — that's the curve you measure "extreme" against, and why this topic depends on it.
 
 ---
 
-<!-- block: gear, n: 5, label: "TODO — name the code" -->
+<!-- block: gear, n: 5, label: "Calibrate the false-alarm rate" -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: testing-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: ht-sim -->
 ```python
 import numpy as np
-import matplotlib.pyplot as plt
-from scipy import stats
 
-# Coin-fairness test. Generate one experiment under each of two worlds
-# (fair coin and biased coin) and run a two-sided z-test for both.
-np.random.seed(42)
-n_flips = 100
-
-for label, true_p in [('Fair coin', 0.5), ('Biased coin', 0.65)]:
-    heads = np.random.binomial(n_flips, true_p)
-    null_mean = n_flips * 0.5
-    null_std = np.sqrt(n_flips * 0.5 * 0.5)
-    z = (heads - null_mean) / null_std
-    p_value = 2 * (1 - stats.norm.cdf(abs(z)))
-    decision = "Reject H₀" if p_value < 0.05 else "Fail to reject H₀"
-    print(f"{label}: heads={heads}, z={z:+.2f}, p={p_value:.4f}  →  {decision}")
-
-# Calibration check: run 1,000 fair-coin experiments. Roughly 5% should
-# wrongly reject H₀ — the false-positive rate is α by construction.
-n_sims = 1000
-rejections = 0
-for _ in range(n_sims):
-    heads = np.random.binomial(n_flips, 0.5)
-    z = (heads - 50) / 5
-    p = 2 * (1 - stats.norm.cdf(abs(z)))
-    if p < 0.05: rejections += 1
-print(f"\nFalse-positive rate over {n_sims} fair-coin runs: {rejections/n_sims:.1%}")
-
-# Plot the null distribution + the rejection region.
-fig, ax = plt.subplots(figsize=(8, 3.5))
-x = np.linspace(30, 70, 200)
-y = stats.norm.pdf(x, 50, 5)
-crit = stats.norm.ppf(0.975, 50, 5)
-ax.plot(x, y, color='#71717a', linewidth=1.5, label='Null distribution')
-ax.fill_between(x, y, where=(x >= crit) | (x <= 100 - crit),
-                color='#c98b8b', alpha=0.3, label='Rejection region (α=0.05)')
-ax.axvline(50, color='#14b8a6', linestyle=':', linewidth=1)
-ax.set_xlabel('Number of heads')
-ax.set_ylabel('Density')
-ax.legend(fontsize=9)
-plt.tight_layout()
-plt.show()
+# When H0 is TRUE, a level-0.05 test should wrongly reject about 5% of the
+# time — no more. Simulate 50,000 experiments under the null and check.
+rng = np.random.default_rng(0)
+n, alpha = 30, 0.05
+z_crit = 1.96                      # two-sided 5% cutoff for a z-test
+reject = 0
+trials = 50_000
+for _ in range(trials):
+    sample = rng.normal(0, 1, n)   # H0 true: mean really is 0
+    z = sample.mean() / (1 / np.sqrt(n))
+    if abs(z) > z_crit:
+        reject += 1
+print(f"False-positive rate under H0: {reject/trials:.4f}  (target ~ {alpha})")
 ```
+
+The test rejects a true null right around 5% of the time — that's $\alpha$ doing exactly its job. Set $\alpha$ smaller and false alarms fall, but so does power.
 
 ---
 
 <!-- block: misconception, inline: true -->
-**"Failing to reject $H_0$ means $H_0$ is true."**
+**"A p-value is the probability that the null hypothesis is true."**
 
-*Wrong:* if the p-value is above 0.05, the null hypothesis has been confirmed.
+*Wrong:* $p = 0.03$ means there's a 3% chance the null is true.
 
-*Correct:* "fail to reject" is **not** "accept." It means the data isn't surprising enough to rule out $H_0$ — but the study may simply lack the power to detect a real effect. Absence of evidence isn't evidence of absence. The binary reject / fail-to-reject framing encourages black-and-white thinking; in reality $p = 0.04$ and $p = 0.06$ represent nearly identical evidence.
+*Correct:* the p-value is computed *assuming the null is true* — it's the chance of data this extreme **given $H_0$**, not the chance of $H_0$ given the data. Those are different conditional directions (flipping them is the same error Bayes' theorem exists to fix). A small p-value says "this data would be surprising if nothing were going on," nothing more — and it says nothing about whether the effect is large or important.
 <!-- /block -->
 
 ---
@@ -200,5 +126,5 @@ plt.show()
 <!-- block: gear, n: 6, label: "Where it leads" -->
 
 <!-- block: callout, kind: insight -->
-**Where this leads.** **P-values** is the next stop — what the number really measures and what it doesn't. **Confidence intervals** are the dual: a CI that excludes the null value corresponds to rejecting it at the same level. **Statistical power** is the orthogonal question: given my design, what's $\beta$? Underpowered studies are how false negatives proliferate; pre-registered power analyses are how the literature stops being a parade of forking paths.
+**Where this leads.** The number in step 4 is the subject of [**p-values**](/topic/p-values), and the miss-rate $\beta$ is the subject of **statistical power**. **Confidence intervals** are the dual view — the values you *wouldn't* reject. And **t-tests** are this procedure with the t-distribution standing in for the normal when $\sigma$ is unknown.
 <!-- /block -->

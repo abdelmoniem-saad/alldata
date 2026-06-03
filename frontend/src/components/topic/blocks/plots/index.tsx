@@ -47,6 +47,36 @@ function gaussianPdf(x: number, mu: number, sigma: number): number {
 }
 
 /**
+ * Log-gamma (Lanczos). Module-level so the discrete/continuous specs that
+ * need factorials or the gamma function — binomial (inline, historical),
+ * poisson_pmf, student_t_pdf — share one implementation. `lgamma(k+1) = ln(k!)`.
+ */
+function lgamma(z: number): number {
+  const c = [76.18009172947146, -86.50532032941677, 24.01409824083091,
+    -1.231739572450155, 0.001208650973866179, -0.000005395239384953]
+  const x = z
+  let y = z
+  let tmp = x + 5.5
+  tmp -= (x + 0.5) * Math.log(tmp)
+  let ser = 1.000000000190015
+  for (const v of c) { y += 1; ser += v / y }
+  return -tmp + Math.log(2.5066282746310005 * ser / x)
+}
+
+/** Poisson PMF P(X=k) = λ^k e^−λ / k!, via logs for stability. */
+function poissonPmf(k: number, lambda: number): number {
+  if (k < 0 || lambda <= 0) return 0
+  return Math.exp(k * Math.log(lambda) - lambda - lgamma(k + 1))
+}
+
+/** Student's t PDF with ν degrees of freedom. */
+function studentTPdf(t: number, df: number): number {
+  const v = Math.max(1, df)
+  const logNorm = lgamma((v + 1) / 2) - lgamma(v / 2) - 0.5 * Math.log(v * Math.PI)
+  return Math.exp(logNorm) * Math.pow(1 + (t * t) / v, -(v + 1) / 2)
+}
+
+/**
  * Theme colors used by every plot. J5: memoized at module scope and
  * invalidated only when `document.documentElement`'s theme attribute or class
  * changes. Pre-J5 this called `getComputedStyle` once per useEffect on every
@@ -122,6 +152,12 @@ const GaussianPdf: Spec = ({ state, ghost, width = 420, height = 280 }) => {
   const ref = useRef<SVGSVGElement | null>(null)
   const mu = num(state, 'mu', 0)
   const sigma = num(state, 'sigma', 1)
+  // Q3: optional `n` — when present (and > 1) the curve drawn is the
+  // *sampling distribution of the mean*, N(mu, sigma/√n). Sampling-
+  // distributions binds [mu, sigma, n] to show the standard error shrink.
+  // Topics that bind only [mu, sigma] leave n absent → n=1 → no change.
+  const n = Math.max(1, num(state, 'n', 1))
+  const sigmaEff = sigma / Math.sqrt(n)
   useColors() // J5: subscribe to theme flips (cache invalidation re-renders).
 
   useEffect(() => {
@@ -133,8 +169,13 @@ const GaussianPdf: Spec = ({ state, ghost, width = 420, height = 280 }) => {
     const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`)
     const colors = readColors()
 
+    // Adaptive y-domain so a narrow/tall curve (small σ, or σ/√n at large n)
+    // doesn't clip against a fixed ceiling. Peak of an N(μ, s²) density is
+    // 1/(s√(2π)); pad 10%, floor at 0.45 so the standard curve still looks
+    // familiar.
+    const peak = 1 / (sigmaEff * Math.sqrt(2 * Math.PI))
     const x = d3.scaleLinear().domain([-5, 5]).range([0, w])
-    const y = d3.scaleLinear().domain([0, 0.6]).range([h, 0])
+    const y = d3.scaleLinear().domain([0, Math.max(0.45, peak * 1.1)]).range([h, 0])
 
     g.append('g').attr('transform', `translate(0,${h})`)
       .call(d3.axisBottom(x).ticks(6))
@@ -147,12 +188,13 @@ const GaussianPdf: Spec = ({ state, ghost, width = 420, height = 280 }) => {
     const samples = d3.range(-5, 5.05, 0.05)
     const line = d3.line<number>()
       .x(d => x(d))
-      .y(d => y(gaussianPdf(d, mu, sigma)))
+      .y(d => y(gaussianPdf(d, mu, sigmaEff)))
       .curve(d3.curveMonotoneX)
 
     if (ghost) {
       const gMu = num(ghost, 'mu', 0)
-      const gSigma = num(ghost, 'sigma', 1)
+      const gN = Math.max(1, num(ghost, 'n', 1))
+      const gSigma = num(ghost, 'sigma', 1) / Math.sqrt(gN)
       const ghostLine = d3.line<number>()
         .x(d => x(d))
         .y(d => y(gaussianPdf(d, gMu, gSigma)))
@@ -165,7 +207,7 @@ const GaussianPdf: Spec = ({ state, ghost, width = 420, height = 280 }) => {
 
     g.append('path').datum(samples).attr('d', line)
       .attr('fill', 'none').attr('stroke', colors.accent).attr('stroke-width', 2)
-  }, [mu, sigma, ghost, width, height])
+  }, [mu, sigma, sigmaEff, ghost, width, height])
 
   return <svg ref={ref} width={width} height={height} />
 }
@@ -622,12 +664,113 @@ const PosteriorUpdate: Spec = ({ state, width = 420, height = 280 }) => {
   return <svg ref={ref} width={width} height={height} />
 }
 
+/**
+ * poisson_pmf — Q0. Bars of P(X=k) for a Poisson(λ). Binds `lambda`.
+ * x-range grows with λ so the right tail stays visible: k = 0…max(10,
+ * ⌈λ + 4√λ⌉). Visual vocabulary matches binomial_pmf (accent bars).
+ */
+const PoissonPmf: Spec = ({ state, width = 420, height = 280 }) => {
+  const ref = useRef<SVGSVGElement | null>(null)
+  const lambda = Math.max(0.1, num(state, 'lambda', 4))
+  useColors()
+
+  useEffect(() => {
+    const svg = d3.select(ref.current!)
+    svg.selectAll('*').remove()
+    const m = { top: 16, right: 16, bottom: 28, left: 36 }
+    const w = width - m.left - m.right
+    const h = height - m.top - m.bottom
+    const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`)
+    const colors = readColors()
+
+    const kMax = Math.max(10, Math.ceil(lambda + 4 * Math.sqrt(lambda)))
+    const probs: number[] = []
+    for (let k = 0; k <= kMax; k++) probs.push(poissonPmf(k, lambda))
+
+    const x = d3.scaleBand<number>().domain(d3.range(kMax + 1)).range([0, w]).padding(0.1)
+    const y = d3.scaleLinear().domain([0, Math.max(...probs) * 1.15 || 1]).range([h, 0])
+
+    g.append('g').attr('transform', `translate(0,${h})`)
+      .call(d3.axisBottom(x).tickValues(x.domain().filter((_, i) => i % Math.max(1, Math.floor((kMax + 1) / 8)) === 0)))
+      .call(sel => sel.selectAll('line, path').attr('stroke', colors.muted))
+      .call(sel => sel.selectAll('text').attr('fill', colors.muted))
+    g.append('g').call(d3.axisLeft(y).ticks(4))
+      .call(sel => sel.selectAll('line, path').attr('stroke', colors.muted))
+      .call(sel => sel.selectAll('text').attr('fill', colors.muted))
+
+    g.selectAll('rect').data(probs).enter().append('rect')
+      .attr('x', (_, i) => x(i) ?? 0)
+      .attr('y', d => y(d))
+      .attr('width', x.bandwidth())
+      .attr('height', d => h - y(d))
+      .attr('fill', colors.accent)
+      .attr('opacity', 0.85)
+  }, [lambda, width, height])
+
+  return <svg ref={ref} width={width} height={height} />
+}
+
+/**
+ * student_t_pdf — Q0. Student's t density over t ∈ [−5, 5]. Binds `df`.
+ * Heavy tails at df=1 (Cauchy-ish), converging onto the standard normal as
+ * df grows. A faint dashed N(0,1) reference shows the convergence.
+ */
+const StudentTPdf: Spec = ({ state, ghost, width = 420, height = 280 }) => {
+  const ref = useRef<SVGSVGElement | null>(null)
+  const df = Math.max(1, num(state, 'df', 5))
+  useColors()
+
+  useEffect(() => {
+    const svg = d3.select(ref.current!)
+    svg.selectAll('*').remove()
+    const m = { top: 16, right: 16, bottom: 28, left: 36 }
+    const w = width - m.left - m.right
+    const h = height - m.top - m.bottom
+    const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`)
+    const colors = readColors()
+
+    const x = d3.scaleLinear().domain([-5, 5]).range([0, w])
+    const y = d3.scaleLinear().domain([0, 0.45]).range([h, 0])
+
+    g.append('g').attr('transform', `translate(0,${h})`).call(d3.axisBottom(x).ticks(6))
+      .call(sel => sel.selectAll('line, path').attr('stroke', colors.muted))
+      .call(sel => sel.selectAll('text').attr('fill', colors.muted))
+    g.append('g').call(d3.axisLeft(y).ticks(4))
+      .call(sel => sel.selectAll('line, path').attr('stroke', colors.muted))
+      .call(sel => sel.selectAll('text').attr('fill', colors.muted))
+
+    const samples = d3.range(-5, 5.05, 0.05)
+
+    // Dashed N(0,1) reference — the limit the t-curve approaches as df → ∞.
+    const refLine = d3.line<number>().x(d => x(d)).y(d => y(gaussianPdf(d, 0, 1))).curve(d3.curveMonotoneX)
+    g.append('path').datum(samples).attr('d', refLine)
+      .attr('fill', 'none').attr('stroke', colors.muted)
+      .attr('stroke-width', 1.5).attr('stroke-dasharray', '4 4').attr('opacity', 0.6)
+
+    if (ghost) {
+      const gDf = num(ghost, 'df', 5)
+      const ghostLine = d3.line<number>().x(d => x(d)).y(d => y(studentTPdf(d, gDf))).curve(d3.curveMonotoneX)
+      g.append('path').datum(samples).attr('d', ghostLine)
+        .attr('fill', 'none').attr('stroke', colors.muted)
+        .attr('stroke-width', 1.5).attr('stroke-dasharray', '2 3').attr('opacity', 0.5)
+    }
+
+    const line = d3.line<number>().x(d => x(d)).y(d => y(studentTPdf(d, df))).curve(d3.curveMonotoneX)
+    g.append('path').datum(samples).attr('d', line)
+      .attr('fill', 'none').attr('stroke', colors.accent).attr('stroke-width', 2)
+  }, [df, ghost, width, height])
+
+  return <svg ref={ref} width={width} height={height} />
+}
+
 // ─── Registry ──────────────────────────────────────────────────────────────
 
 export const PLOT_SPECS: Record<string, Spec> = {
   gaussian_pdf: GaussianPdf,
   gaussian_cdf: GaussianCdf,
   binomial_pmf: BinomialPmf,
+  poisson_pmf: PoissonPmf,
+  student_t_pdf: StudentTPdf,
   empirical_histogram: EmpiricalHistogram,
   scatter_with_fit: ScatterWithFit,
   posterior_update: PosteriorUpdate,

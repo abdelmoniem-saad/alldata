@@ -1,0 +1,8 @@
+slug: probability-foundations
+title: Probability Foundations
+domain: probability-foundations
+summary: The language the rest of statistics is written in — sample spaces, conditioning, expectation, and the limit theorems everything leans on.
+prerequisites: []
+# Q1: immersive family overview — the graph is the background, filtered to
+# this cluster, and the camera spotlights each member topic as you scroll.
+tour: true

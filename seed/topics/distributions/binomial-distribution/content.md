@@ -1,120 +1,120 @@
 <!-- block: state, values: {n: 10, p: 0.5} -->
 
-<!-- block: plot, spec: binomial_pmf, params: {n: 10, p: 0.5}, binds: [n, p], anchor: binomial-feel, mobile_order: 1 -->
+<!-- block: plot, spec: binomial_pmf, params: {n: 10, p: 0.5}, binds: [n, p], anchor: binomial-bars, mobile_order: 1 -->
 
 ---
 
-<!-- block: gear, n: 1, label: "TODO — name the spark" -->
+<!-- block: gear, n: 1, label: "Counting the yeses" -->
 
-# Binomial Distribution
+# Binomial distribution
 
-Flip a coin ten times. How many heads do you get? The count is a random variable, and the *distribution* of that count is binomial.
+Flip a coin ten times and count the heads. Show an ad to a thousand people and count the clicks. Inspect twenty parts and count the defects. Whenever you run the *same* yes/no trial a fixed number of times and add up the successes, the count follows a **binomial distribution**.
 
-> TODO (N): replace this paragraph with the spark. The "ten coin flips" framing or a more concrete example (clicks, defects, free throws) both work — pick one that grounds the rest of the topic.
-
----
-
-<!-- block: gear, n: 2, label: "TODO — name the intuition" -->
-
-## Sum of Bernoullis
-
-A **Binomial** count $X \sim \text{Binomial}(n, p)$ is the sum of $n$ independent Bernoulli($p$) trials. Two parameters: $n$ (how many trials) and $p$ (per-trial success probability).
-
-The shape changes with both:
-
-- Small $p$, any $n$ → right-skewed (most weight on small counts).
-- Large $p$, any $n$ → left-skewed (most weight on large counts).
-- $p = 0.5$ → symmetric.
-- Large $n$ → looks like a bell curve regardless of $p$ (a preview of the CLT).
-
-> TODO (N): expand on what "independent, same $p$" means in practice. The classic example failures: order effects, learning effects, varying conditions.
+It has two dials: $n$, how many trials, and $p$, the success probability of each one.
 
 ---
 
-<!-- block: gear, n: 3, label: "TODO — name the mechanic" -->
+<!-- block: gear, n: 2, label: "A stack of Bernoullis" -->
 
-<!-- block: state_reset, anchor: binomial-feel -->
+A binomial is nothing more than $n$ independent Bernoulli($p$) trials, summed. That "independent, identical" assumption is the whole contract: every trial has the same $p$, and no trial's outcome nudges another's. Break it — a coin that warms up, a sample drawn without replacement — and the count is no longer binomial.
 
-<!-- block: playground, anchor: binomial-feel -->
-binds: [n, p]
-controls:
-  - param: n
-    label: "Trials (n)"
-    min: 1
-    max: 60
-    step: 1
-  - param: p
-    label: "Per-trial probability (p)"
-    min: 0.05
-    max: 0.95
-    step: 0.05
-goal:
-  prompt: |
-    Find an n, p combination where the distribution looks roughly bell-shaped
-    and centered around 8. (Hint: $np = 8$ and $n$ large enough that the CLT
-    starts to bite.)
-  target: { n: 40, p: 0.2 }
-  success_when: "n >= 30 and abs(n * p - 8) < 1.5"
-  on_success: |
-    Two things happened: the *center* sits at $np$ (where the mass concentrates),
-    and the *shape* becomes bell-like once $n$ is large enough — Binomial is
-    the discrete cousin of the normal, with $\mu = np$ and $\sigma^2 = np(1-p)$.
+The plot on the right shows $n = 10$, $p = 0.5$: the familiar symmetric mound centered on 5. The center sits at $np$, and the spread comes from $np(1-p)$.
+
+---
+
+<!-- block: gear, n: 3, label: "Find the center" -->
+
+<!-- block: decision, anchor: binomial-mode -->
+question: |
+  A production line runs 5% defective. You pull a box of 20 parts. What's the
+  *most likely* number of defective parts in the box?
+options:
+  - id: zero
+    label: "0 — defects are rare, so probably none"
+    writes: { n: 20, p: 0.05 }
+    response: |
+      Close, and 0 is genuinely common here (about a 36% chance) — but it's not
+      the center. The distribution's mass concentrates around the *expected*
+      count $np = 20 \times 0.05 = 1$. Zero and one are nearly tied, with one
+      edging it; both dwarf everything to their right.
+  - id: one
+    label: "1 — about np = 20 × 0.05"
+    writes: { n: 20, p: 0.05 }
+    response: |
+      Right. The binomial centers on its mean $np = 1$. The plot is now
+      right-skewed — most boxes have 0, 1, or 2 defectives and a long thin
+      tail beyond. The 5% rate doesn't mean "5 per 100 exactly"; it means the
+      count clusters around $np$.
+  - id: five
+    label: "5 — that's what 5% of 20... no, wait"
+    writes: { n: 20, p: 0.05 }
+    response: |
+      That's $25\%$ of 20, not $5\%$ — a slipped decimal. $5\%$ of 20 is 1, and
+      that's where the distribution peaks. Watch the plot: there's essentially
+      no mass out at 5.
+correct: one
 <!-- /block -->
 
-> TODO (N): use this gear to introduce the rule-of-thumb that binomial looks normal-ish when $np$ and $n(1-p)$ are both ≥ 10.
+<!-- block: callout, kind: insight, depends_on: binomial-mode, branch: one -->
+The mean $np$ tells you where the mass sits; the standard deviation $\sqrt{np(1-p)}$ tells you how wide. For the box of 20 at 5%, that's a mean of 1 and an SD of about $0.97$ — so "1, give or take 1" captures most boxes.
+<!-- /block -->
 
 ---
 
 <!-- layer: formal -->
 
-<!-- block: gear, n: 4, label: "TODO — name the formalism" -->
+<!-- block: gear, n: 4, label: "The formula" -->
 
-## PMF, mean, variance
+For $X \sim \text{Binomial}(n, p)$, the probability of exactly $k$ successes is
 
-$$P(X = k) = \binom{n}{k} p^k (1-p)^{n-k}, \qquad k \in \{0, 1, \ldots, n\}$$
+$$P(X = k) = \binom{n}{k} p^{k} (1-p)^{\,n-k}, \qquad k = 0, 1, \ldots, n$$
 
-$$\mathbb{E}[X] = np, \qquad \text{Var}(X) = np(1-p)$$
+The $\binom{n}{k}$ counts the *orders* in which $k$ successes can land among $n$ trials; $p^k (1-p)^{n-k}$ is the probability of any one such order. Mean and variance follow from the Bernoulli pieces:
 
-The mean and variance both grow linearly in $n$. The *standard deviation* — the spread you actually see — grows like $\sqrt{n}$.
+$$\mathbb{E}[X] = np \qquad \text{Var}(X) = np(1-p)$$
 
-<!-- block: derivation, title: "Why $\mathbb{E}[X] = np$ (in one line)", collapsed: true -->
-> TODO (N): write the linearity-of-expectation argument: $X = \sum_{i=1}^n X_i$ where each $X_i \sim \text{Bernoulli}(p)$, so $\mathbb{E}[X] = \sum_i \mathbb{E}[X_i] = np$. Same one-liner for variance, but variance needs independence.
+<!-- block: derivation, title: "Why E[X] = np without touching the binomial coefficient", collapsed: true -->
+Write $X = X_1 + X_2 + \cdots + X_n$, where each $X_i \sim \text{Bernoulli}(p)$ is one trial. Expectation is linear — it passes through a sum regardless of dependence — so
+
+$$\mathbb{E}[X] = \sum_{i=1}^{n} \mathbb{E}[X_i] = \sum_{i=1}^{n} p = np.$$
+
+Variance needs the trials to be *independent*; with that, variances add too:
+
+$$\text{Var}(X) = \sum_{i=1}^{n} \text{Var}(X_i) = \sum_{i=1}^{n} p(1-p) = np(1-p).$$
 <!-- /block -->
 
 ---
 
-<!-- block: gear, n: 5, label: "TODO — name the code" -->
+<!-- block: gear, n: 5, label: "Exactly, versus at least" -->
 
-<!-- block: dataset, name: coin-flips-1000, source: synthetic -->
-
-<!-- block: simulation, editable: true, auto_run: true, anchor: binomial-sim, pair_id: binomial-mean-var -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: binomial-sim -->
 ```python
 import numpy as np
+from math import comb
 
-# Draw 5,000 binomial counts at three (n, p) combinations and compare the
-# empirical mean / variance to the closed forms np and np(1-p).
-np.random.seed(42)
-for n, p in [(10, 0.5), (40, 0.2), (100, 0.05)]:
-    x = np.random.binomial(n, p, 5_000)
-    print(f"Binomial(n={n}, p={p}): "
-          f"mean={x.mean():.3f} (target {n*p:.3f}), "
-          f"var={x.var():.3f} (target {n*p*(1-p):.3f}), "
-          f"max observed={x.max()}")
+# 10 fair flips. The single value k=5 is the mode — but it's still only
+# about 1 chance in 4. "Most likely" is not "likely".
+n, p = 10, 0.5
+p_exactly_5 = comb(n, 5) * p**5 * (1 - p)**(n - 5)
+print(f"P(exactly 5 heads) = {p_exactly_5:.4f}")
+
+# Empirical check + P(at least 5), which is much larger than P(exactly 5).
+rng = np.random.default_rng(0)
+draws = rng.binomial(n, p, 200_000)
+print(f"empirical P(exactly 5) = {(draws == 5).mean():.4f}")
+print(f"empirical P(5 or more) = {(draws >= 5).mean():.4f}")
+print(f"mean = {draws.mean():.3f} (= np {n*p})   var = {draws.var():.3f} (= np(1-p) {n*p*(1-p)})")
 ```
 
-<!-- block: code_r, editable: true, pair_id: binomial-mean-var -->
-```r
-# Same demo in R. Tab above to switch back to Python.
-set.seed(42)
-for (params in list(c(10, 0.5), c(40, 0.2), c(100, 0.05))) {
-  n <- params[1]; p <- params[2]
-  x <- rbinom(5000, n, p)
-  cat(sprintf("Binomial(n=%g, p=%g): mean=%.3f (target %.3f), var=%.3f (target %.3f), max observed=%d\n",
-              n, p, mean(x), n*p, var(x), n*p*(1-p), max(x)))
-}
-```
+---
 
-> TODO (N): expand the prose intro. Mention the `coin-flips-1000` dataset chip above — link to an exercise using `load("coin-flips-1000")` to compute the empirical PMF. The Python/R pair above is the M5 demo — tabs at the top of the code surface swap between languages without leaving the section.
+<!-- block: misconception, inline: true -->
+**"The most likely outcome is the likely outcome."**
+
+*Wrong:* if 5 heads out of 10 is the most probable count, then 5 heads is what you should expect to see.
+
+*Correct:* exactly 5 heads happens only about $25\%$ of the time. It's the *single tallest bar*, but the other 75% of the mass is spread across the neighbors. With many possible counts, even the mode can be uncommon — which is why "P(exactly $k$)" and "P(at least $k$)" are very different questions.
+<!-- /block -->
 
 ---
 
@@ -123,5 +123,5 @@ for (params in list(c(10, 0.5), c(40, 0.2), c(100, 0.05))) {
 <!-- block: gear, n: 6, label: "Where it leads" -->
 
 <!-- block: callout, kind: insight -->
-**Where this leads.** As $n \to \infty$ with $np$ held fixed, the binomial limits to the **Poisson** distribution. As $n \to \infty$ with $p$ held fixed, the standardized binomial limits to the **Normal** (the **CLT** in its earliest form). And every **hypothesis test** for proportions and every **confidence interval** for a rate is binomial machinery in disguise.
+**Where this leads.** Hold $np$ fixed and let $n \to \infty$ with $p \to 0$ and the binomial limits to the **Poisson distribution** — the model for rare-event counts. Hold $p$ fixed and let $n$ grow and the standardized count limits to the **normal distribution** (the central limit theorem in its oldest form). And every test or interval for a **proportion** is binomial machinery underneath.
 <!-- /block -->

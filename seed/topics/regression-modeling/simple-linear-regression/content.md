@@ -1,41 +1,30 @@
-<!-- block: state, values: {slope: 1.0, intercept: 0} -->
+<!-- block: state, values: {slope: 0, intercept: 0} -->
 
-<!-- block: plot, spec: scatter_with_fit, params: {slope: 1.0, intercept: 0}, binds: [slope, intercept], anchor: slr-feel, mobile_order: 1 -->
-
----
-
-<!-- block: gear, n: 1, label: "TODO — name the spark" -->
-
-# Simple Linear Regression
-
-You have pairs $(x_i, y_i)$. You want a rule that turns any $x$ into a prediction $\hat{y}$. The simplest such rule is a line, and the most-used way to *pick* the line is "minimize the sum of squared errors." Regression is the answer to the line; OLS is the recipe.
-
-> TODO (N): replace with the spark. The "predicting height from age" or "demand from price" framing both work — pick one that grounds the rest.
+<!-- block: plot, spec: scatter_with_fit, params: {slope: 0, intercept: 0}, binds: [slope, intercept], anchor: slr-scatter, mobile_order: 1 -->
 
 ---
 
-<!-- block: gear, n: 2, label: "TODO — name the intuition" -->
+<!-- block: gear, n: 1, label: "A line through the cloud" -->
 
-## A line through a cloud of points
+# Simple linear regression
 
-A linear regression fits
+Correlation tells you *that* two variables move together. Regression goes one step further: it draws the line that lets you **predict** one from the other. Given $x$, what should you expect $y$ to be? One predictor, one outcome, one straight line — and every fancier model in this family is a variation on it.
 
-$$\hat{y} = \beta_0 + \beta_1 x$$
-
-The $\beta_1$ is the slope — how much $y$ changes per unit change in $x$. The $\beta_0$ is the intercept — what $\hat{y}$ predicts when $x = 0$. Two parameters, one line, one prediction rule.
-
-Two flavors of line you could pick:
-
-- **Eyeballed.** Draw a line that "looks right." Reproducible only if you trust your eye.
-- **Optimized.** Pick the line that minimizes some honest error criterion. The standard choice is *squared* errors: $\sum_i (y_i - \hat{y}_i)^2$.
-
-> TODO (N): expand. Why squared and not absolute? Squared errors penalize big misses disproportionately and produce a closed-form solution (the normal equations). Absolute errors give the median regression — robust but no closed form.
+The points on the right are fixed data. The line is yours to place.
 
 ---
 
-<!-- block: gear, n: 3, label: "TODO — name the mechanic" -->
+<!-- block: gear, n: 2, label: "Slope, intercept, residuals" -->
 
-## Drag a line, watch the residuals
+The model is $\hat{y} = \beta_0 + \beta_1 x$. The **intercept** $\beta_0$ is the predicted $y$ when $x = 0$; the **slope** $\beta_1$ is the rate — how much $\hat{y}$ moves per unit of $x$. For each data point, the gap between the actual $y$ and the line's prediction $\hat{y}$ is a **residual**. A good line makes those residuals small.
+
+But small *how*? You could minimize their absolute sizes, or their squares, or their worst case — each gives a different line. The standard choice squares them.
+
+---
+
+<!-- block: gear, n: 3, label: "Find the best line by hand" -->
+
+Drag the slope and intercept until the line threads the cloud — until the points sit as close to it as you can get them, above and below in balance.
 
 <!-- block: state_reset, anchor: slr-feel -->
 
@@ -44,78 +33,79 @@ binds: [slope, intercept]
 controls:
   - param: slope
     label: "Slope (β₁)"
-    min: -2
+    min: -1
     max: 2
-    step: 0.1
+    step: 0.05
   - param: intercept
     label: "Intercept (β₀)"
     min: -2
     max: 2
-    step: 0.1
+    step: 0.05
 goal:
-  prompt: "Match the cloud — find slope and intercept that minimize the visible misses."
+  prompt: "Thread the line through the cloud — find the slope and intercept that minimize the residuals."
   target: { slope: 0.7, intercept: 0.3 }
-  success_when: "abs(slope - 0.7) < 0.15 and abs(intercept - 0.3) < 0.2"
+  success_when: "abs(slope - 0.7) < 0.1 and abs(intercept - 0.3) < 0.15"
   on_success: |
-    The slope you found is approximately $r \cdot (s_y / s_x)$ — the OLS
-    closed-form. The intercept makes the line pass through $(\bar{x}, \bar{y})$.
-    Both are mechanical consequences of "minimize the sum of squared residuals."
+    That's essentially the least-squares fit. You balanced the points above and
+    below the line — which is exactly what minimizing the *sum of squared
+    residuals* does, just by eye. The line you found also passes through the
+    mean point $(\bar{x}, \bar{y})$; every least-squares line does.
 <!-- /block -->
-
-> TODO (N): use this Gear 3 to name what a *residual* is and to lead into the formal derivation.
 
 ---
 
 <!-- layer: formal -->
 
-<!-- block: gear, n: 4, label: "TODO — name the formalism" -->
+<!-- block: gear, n: 4, label: "Ordinary least squares" -->
 
-## OLS, closed-form
+Ordinary least squares (OLS) chooses $\beta_0, \beta_1$ to minimize the sum of squared residuals $\sum_i (y_i - \beta_0 - \beta_1 x_i)^2$. Setting the derivatives to zero gives a clean closed form:
 
-For data $(x_i, y_i)$, the OLS estimators are
+$$\hat{\beta}_1 = r \, \frac{s_y}{s_x}, \qquad \hat{\beta}_0 = \bar{y} - \hat{\beta}_1 \bar{x}$$
 
-$$\hat{\beta}_1 = \frac{\sum_i (x_i - \bar{x})(y_i - \bar{y})}{\sum_i (x_i - \bar{x})^2} = r \cdot \frac{s_y}{s_x}$$
+The slope is the **correlation** $r$ rescaled by the ratio of spreads — the direct link back to the previous topic. And because of the intercept formula, the line always passes through $(\bar{x}, \bar{y})$.
 
-$$\hat{\beta}_0 = \bar{y} - \hat{\beta}_1 \, \bar{x}$$
+Why *squared* errors? Squaring makes the objective smooth and gives this unique closed-form solution; it also corresponds to maximum likelihood when the noise is normal. Minimizing *absolute* errors gives the median-like, outlier-resistant fit — sometimes what you want, but with no tidy formula and not unique.
 
-The fitted line passes through $(\bar{x}, \bar{y})$ by construction. The slope is the sample correlation $r$ scaled by the ratio of marginal standard deviations.
+<!-- block: derivation, title: "Where β̂₁ = r·(s_y/s_x) comes from", collapsed: true -->
+Minimizing $\sum_i (y_i - \beta_0 - \beta_1 x_i)^2$, take $\partial/\partial\beta_0 = 0$ first: it forces $\beta_0 = \bar{y} - \beta_1\bar{x}$ (the line goes through the means). Substitute back and take $\partial/\partial\beta_1 = 0$:
 
-<!-- block: derivation, title: "Where the normal equations come from", collapsed: true -->
-> TODO (N): write the derivation. Minimize $L(\beta_0, \beta_1) = \sum_i (y_i - \beta_0 - \beta_1 x_i)^2$ by setting $\partial L / \partial \beta_0 = 0$ and $\partial L / \partial \beta_1 = 0$. The two equations are the *normal equations*; solving them gives the closed forms above.
+$$\hat{\beta}_1 = \frac{\sum_i (x_i - \bar{x})(y_i - \bar{y})}{\sum_i (x_i - \bar{x})^2} = \frac{\text{Cov}(x, y)}{\text{Var}(x)} = r\,\frac{s_y}{s_x}.$$
+
+The middle form is covariance over variance; the right form rewrites it with the correlation $r = \text{Cov}/(s_x s_y)$.
 <!-- /block -->
 
 ---
 
-<!-- block: gear, n: 5, label: "TODO — name the code" -->
-
-<!-- block: dataset, name: heights, source: synthetic -->
+<!-- block: gear, n: 5, label: "Fit it in code" -->
 
 <!-- block: simulation, editable: true, auto_run: true, anchor: slr-sim -->
 ```python
 import numpy as np
 
-# Fit a line by hand using the closed-form OLS estimators, then verify
-# against a library fit. The `heights` dataset is synthetic adult heights.
-df = load("heights")
-# Predict height_cm from the synthetic 'age_years' column if present; else
-# fall back to a generated x for the scaffold.
-if "age_years" in df.columns:
-    x = df["age_years"].to_numpy()
-else:
-    x = np.arange(len(df))
-y = df["height_cm"].to_numpy()
+# Data generated from y = 0.7x + 0.3 + noise (the same cloud you fit by hand).
+# Recover the slope and intercept by least squares and confirm the formulas.
+rng = np.random.default_rng(0)
+x = rng.uniform(-3, 3, 200)
+y = 0.7 * x + 0.3 + rng.normal(0, 0.75, x.size)
 
-# Closed-form OLS
-beta1 = np.cov(x, y, ddof=0)[0, 1] / np.var(x, ddof=0)
-beta0 = y.mean() - beta1 * x.mean()
-print(f"Closed-form OLS: ŷ = {beta0:.3f} + {beta1:.3f} · x")
-
-# np.polyfit cross-check
-p1, p0 = np.polyfit(x, y, 1)
-print(f"np.polyfit:        ŷ = {p0:.3f} + {p1:.3f} · x")
+# Closed form: slope = cov(x,y)/var(x), intercept through the means.
+slope = np.cov(x, y, bias=True)[0, 1] / np.var(x)
+intercept = y.mean() - slope * x.mean()
+r = np.corrcoef(x, y)[0, 1]
+print(f"slope     = {slope:.3f}   (true 0.7)")
+print(f"intercept = {intercept:.3f}   (true 0.3)")
+print(f"check: r * (sy/sx) = {r * y.std() / x.std():.3f}  == slope")
 ```
 
-> TODO (N): annotate. Mention what makes a fit *good* (low residual variance, well-behaved residuals) vs. *trustworthy* (assumptions hold).
+---
+
+<!-- block: misconception, inline: true -->
+**"A line that fits the data can be trusted outside the data's range."**
+
+*Wrong:* the regression line is valid everywhere, so plug in any $x$ and read off the prediction.
+
+*Correct:* the line is only evidence about the range of $x$ you actually observed. **Extrapolating** beyond it assumes the linear relationship keeps holding where you have no data — a leap that has launched countless bad forecasts. A fit that's excellent from $x = 0$ to $10$ says nothing reliable about $x = 100$.
+<!-- /block -->
 
 ---
 
@@ -124,5 +114,5 @@ print(f"np.polyfit:        ŷ = {p0:.3f} + {p1:.3f} · x")
 <!-- block: gear, n: 6, label: "Where it leads" -->
 
 <!-- block: callout, kind: insight -->
-**Where this leads.** **Multiple regression** adds more predictors and the math becomes matrix algebra — but the "minimize squared errors" recipe is identical. **Logistic regression** swaps the linear link for a logit when the outcome is binary. **Regularization** (ridge, lasso) shrinks $\hat{\beta}$ toward zero to trade bias for lower variance. **Model diagnostics** — residual plots, leverage, Cook's distance — check whether the OLS assumptions actually hold on your data.
+**Where this leads.** Its slope is built from [**correlation**](/topic/correlation). Add more predictors and it becomes **multiple regression**; swap the straight line for an S-curve and it's **logistic regression** for yes/no outcomes. Checking whether the fit can be trusted — residual plots, leverage — is **model diagnostics**.
 <!-- /block -->

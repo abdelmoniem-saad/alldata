@@ -50,6 +50,8 @@ _KNOWN_PLOT_SPECS = {
     "gaussian_pdf",
     "gaussian_cdf",
     "binomial_pmf",
+    "poisson_pmf",       # Q0
+    "student_t_pdf",     # Q0
     "empirical_histogram",
     "scatter_with_fit",
     "posterior_update",
@@ -556,6 +558,25 @@ def _validate_topic_blocks(blocks: list[dict], topic_name: str) -> None:
                             f"or seeded by a plot params:"
                         )
 
+        # Q5: placeholder/scaffold guard. M3 shipped topic skeletons with
+        # `TODO` gear labels and `> TODO (...)` prose, and they imported as
+        # real content (has_content=true) — so readers saw "TODO — name the
+        # spark" dividers on live pages. Fail `--strict` if any survive, so a
+        # stub can never again ship as a finished lesson. Patterns are kept
+        # specific (the exact M3 shapes + a TODO-prefixed gear label) so a
+        # legitimate `# TODO` inside a code block doesn't trip the check.
+        if bt == "gear" and str(meta.get("label", "")).strip().upper().startswith("TODO"):
+            _warn(
+                f"{topic_name}: gear block (sort_order={b.get('sort_order')}) has "
+                f"placeholder label {meta.get('label')!r} — fill before import (--strict)"
+            )
+        body = b.get("content") or ""
+        if "> TODO (" in body or "TODO — name" in body or "TODO (N)" in body:
+            _warn(
+                f"{topic_name}: block (type={bt}, sort_order={b.get('sort_order')}) "
+                f"contains placeholder scaffold text — fill before import (--strict)"
+            )
+
 
 SEED_DIR = Path(__file__).parent
 
@@ -1047,6 +1068,14 @@ async def import_schema(db: AsyncSession, user: User):
             )
             db.add(topic)
             topic_map[topic_data["slug"]] = topic
+
+        # Q1: register depth-0 domain roots in topic_map too, so a domain-root
+        # content dir (seed/topics/{domain}/{domain}/, e.g. the immersive
+        # family overview) attaches its content + tour flag to the root. The
+        # re-import branch already includes roots (it maps every Topic row);
+        # this keeps fresh-seed consistent.
+        for _ds, _dt in domain_topics.items():
+            topic_map.setdefault(_ds, _dt)
 
         await db.flush()
 

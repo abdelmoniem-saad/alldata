@@ -182,7 +182,7 @@ export default function GraphSidebar({
             letterSpacing: '0.5px'
           }}
         >
-          Open Topic
+          {node.depth === 0 ? 'Open overview' : 'Open Topic'}
         </Link>
       </div>
 

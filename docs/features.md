@@ -119,7 +119,10 @@ The right column hosts a `PlotBlock` (or `GraphFlythrough` for tour topics) keye
 The `graph_view` directive pins a `GraphFlythrough` (a small mounted graph that pans + zooms imperatively) instead of a plot. Used by the "Shape of Statistics" intro and any future tour topic. *(cycle: K2)* `code: frontend/src/components/topic/blocks/GraphFlythrough.tsx`.
 
 ### Immersive tour mode
-When `meta.yaml: tour: true`, the topic is rendered by `TourView` instead of `ScrollReader` / `SlideView`. The graph fills the viewport as the background; the prose floats left in translucent zinc panels; a left-to-right vignette over the prose half keeps the text legible while the graph stays visible on the right. As the reader scrolls, a single scroll listener picks the topmost anchor above the 30% line and maps it to that section's `graph_view` target — narrowing the graph to a single cluster (legend-style hide), centering on a single node, or fitting the whole field. Today only the "Shape of Statistics" intro uses it. *(cycle: M0)* `code: frontend/src/components/topic/TourView.tsx`.
+When `meta.yaml: tour: true`, the topic is rendered by `TourView` instead of `ScrollReader` / `SlideView`. The graph fills the viewport as the background; the prose floats left in translucent zinc panels; a left-to-right vignette over the prose half keeps the text legible while the graph stays visible on the right. As the reader scrolls, a single scroll listener picks the topmost anchor above the 30% line and maps it to that section's `graph_view` target — narrowing the graph to a single cluster (legend-style hide), centering on a single node, or fitting the whole field. A node-target now keeps that node's *domain* as the visible background (rather than revealing the whole graph), so a tour can spotlight members of a family one at a time without the rest of the field flashing in. Used by the "Shape of Statistics" intro and the five family overviews (below). *(cycle: M0; Q1 node→domain filter)* `code: frontend/src/components/topic/TourView.tsx`.
+
+### Family overviews
+Each of the five domain roots (`probability-foundations`, `distributions`, `statistical-inference`, `regression-modeling`, `data-science-practice`) is a `tour: true` topic at `/topic/{domain}` that reuses `TourView` to give the family a front door. The overview opens framed on the whole family cluster, spotlights each member topic in turn as the prose introduces it (camera centers on the node while the cluster stays the visible background), then pulls back and hands off with links into the real lessons — orientation, not a lesson. Reachable from the Home domain cards (primary link; a secondary "explore the cluster →" still reaches `/explore?domain=`) and by opening a big family node in the graph (double-click, or the sidebar "Open overview" CTA). The roots stay out of Home's per-domain lesson counts via the `depth > 0` gate, but now render at full alpha in the graph instead of as empty shells. *(cycle: Q1)* `code: seed/topics/{domain}/{domain}/, frontend/src/pages/{Home,GraphExplorer}.tsx, frontend/src/components/graph/GraphSidebar.tsx`.
 
 ### Mobile linear fallback
 Below 1024px, plots/graphs render inline at their natural sort_order. The pinned pane is hidden via CSS (not unmounted — that keeps the IntersectionObserver state alive across breakpoint flips). *(cycle: I3, J4 — kept-mounted refactor)* `code: frontend/src/components/topic/ScrollReader.tsx` (search "isWide").
@@ -236,10 +239,12 @@ Imperative handle on the graph canvas. Computes the AABB of the named slugs (or 
 ### `ForceGraph.visibleDomain`
 Prop that filters the canvas to a single domain. When set, edges whose source or target sits outside the named domain skip drawing; non-matching nodes skip too. Layout simulation still includes everything so positions don't reshuffle between sections. Used by `TourView` for legend-style cluster framing in tour topics. *(cycle: M0)* `code: frontend/src/components/graph/ForceGraph.tsx` (search "visibleDomain").
 
-### Plot library (7 specs)
-- `gaussian_pdf` — bell curve. Binds `mu, sigma`. Optional `ghost` target overlay.
+### Plot library (9 specs)
+- `gaussian_pdf` — bell curve. Binds `mu, sigma`, and optional `n` — when `n` is bound the curve becomes the sampling distribution of the mean (effective spread σ/√n) and the y-axis auto-rescales so a narrow spike never clips. Optional `ghost` target overlay.
 - `gaussian_cdf` — cumulative normal. Binds `mu, sigma`.
+- `student_t_pdf` — Student's t density over t ∈ [−5, 5] with a dashed N(0,1) reference. Binds `df`. Lanczos lgamma in the normalizing constant; heavy tails at `df=1`, visually onto the normal by `df≈30`. *(cycle: Q0)*
 - `binomial_pmf` — discrete bars. Binds `n, p`. Lanczos lgamma for stability at large `n`.
+- `poisson_pmf` — discrete bars over k = 0…⌈λ+4√λ⌉. Binds `lambda`. Lanczos lgamma in the PMF; right-skewed at small λ, ~symmetric at large λ. *(cycle: Q0)*
 - `empirical_histogram` — bins a sample array. Binds `samples` or synthesizes from `mu, sigma`.
 - `scatter_with_fit` — points + least-squares fit. Binds `points` (+ optional `slope, intercept` overrides).
 - `posterior_update` — three-bar P(H) / P(H|+) / P(H|−). Binds `prior, sensitivity, specificity, observed_result`.
@@ -371,7 +376,7 @@ End-to-end importer. Reads `seed/schema.yaml` + every `seed/topics/{domain}/{slu
 The directive parser, decoupled from the filesystem. `parse_content_file(path)` is now a one-line shim that reads the file and calls `parse_content_md`. The text-taking variant lets over-the-wire markdown be parsed without a file on disk — the N fork save / preview endpoints reuse it verbatim, so a fork renders through the exact pipeline the seed import uses. *(cycle: N — extracted from `parse_content_file`)* `code: seed/import_seed.py` (`parse_content_md`).
 
 ### `--strict` flag
-`python -m seed.import_seed --strict`. Warnings become errors. Catches: unknown plot specs, undeclared state keys referenced in playground `binds:` or decision `writes:`, dangling `depends_on` references, branch ids that don't match any option, YAML body parse failures. *(cycle: J3)* `code: seed/import_seed.py` (search `_validate_topic_blocks`).
+`python -m seed.import_seed --strict`. Warnings become errors. Catches: unknown plot specs, undeclared state keys referenced in playground `binds:` or decision `writes:`, dangling `depends_on` references, branch ids that don't match any option, YAML body parse failures, and **placeholder scaffold text** — a `gear` whose `label` starts with `TODO`, or any body carrying an M3 stub marker (`> TODO (`, `TODO — name the`, `TODO (N):`). The last guard stops a scaffold stub from ever importing as real content again; the pattern is scoped narrowly so a legitimate `# TODO` inside a code block doesn't trip it. *(cycle: J3; Q5 placeholder guard)* `code: seed/import_seed.py` (search `_validate_topic_blocks`).
 
 ### `python -m seed.watch`
 Watchdog-based file-watcher. Edit a `.md` or `meta.yaml` under `seed/topics/`; the importer re-runs on save (debounced 200ms per topic dir). Author edits markdown, refreshes the page, sees the change. *(cycle: I6)* `code: seed/watch.py`.

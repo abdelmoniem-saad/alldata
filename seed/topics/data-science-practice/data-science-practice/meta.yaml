@@ -1,0 +1,7 @@
+slug: data-science-practice
+title: Data Science Practice
+domain: data-science-practice
+summary: The judgment the math doesn't capture — exploring real data, running honest experiments, and not fooling yourself about how well a model works.
+prerequisites: []
+# Q1: immersive family overview.
+tour: true

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import { useProgressStore } from '../stores/progressStore'
 import { useThemeStore } from '../stores/themeStore'
@@ -11,8 +11,10 @@ import SearchDropdown from '../components/SearchDropdown'
 // falls back to this snapshot if the fetch fails (so the cards never flash 0
 // and stay honest even offline). Snapshot taken at P; the live fetch keeps it
 // from going stale the way the old hardcoded counts did.
+// Offline fallback only — live counts derive from the graph (depth>0, has_content).
+// Kept honest to post-Q reality: probability 10, total 23 across the five domains.
 const FALLBACK_TOPIC_COUNTS: Record<string, number> = {
-  'probability-foundations': 8,
+  'probability-foundations': 10,
   'distributions': 5,
   'statistical-inference': 5,
   'regression-modeling': 2,
@@ -28,6 +30,7 @@ const domains = DOMAIN_SLUGS.map(slug => ({
 export default function Home() {
   const { completedSlugs } = useProgressStore()
   const { theme } = useThemeStore()
+  const navigate = useNavigate()
 
   const isLight = theme === 'light'
 
@@ -188,7 +191,10 @@ export default function Home() {
           return (
             <Link
               key={d.slug}
-              to={`/explore?domain=${d.slug}`}
+              // Q1: the card opens the family's immersive overview. A
+              // secondary "explore the cluster" button (below) still reaches
+              // the raw filtered graph at /explore?domain=.
+              to={`/topic/${d.slug}`}
               className="animate-fade-in-up"
               style={{
                 padding: 20,
@@ -198,6 +204,7 @@ export default function Home() {
                 textAlign: 'center',
                 transition: 'all var(--transition-smooth)',
                 cursor: 'pointer',
+                display: 'block',
               }}
               onMouseEnter={e => {
                 const el = e.currentTarget as HTMLElement
@@ -238,6 +245,28 @@ export default function Home() {
               }}>
                 {topicCounts[d.slug] ?? 0} {(topicCounts[d.slug] ?? 0) === 1 ? 'topic' : 'topics'}
               </div>
+              <button
+                onClick={e => {
+                  // Secondary affordance: jump straight to the raw filtered
+                  // graph instead of the overview. Stop the click from also
+                  // triggering the card's overview navigation.
+                  e.preventDefault()
+                  e.stopPropagation()
+                  navigate(`/explore?domain=${d.slug}`)
+                }}
+                style={{
+                  marginTop: 10,
+                  fontSize: 10,
+                  fontWeight: 600,
+                  color: dColor,
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  letterSpacing: '0.3px',
+                }}
+              >
+                Explore the cluster →
+              </button>
             </Link>
           )
         })}

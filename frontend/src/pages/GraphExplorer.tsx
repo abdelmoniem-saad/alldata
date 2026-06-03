@@ -112,7 +112,10 @@ export default function GraphExplorer() {
   }, [edges, selectedNode])
 
   const handleNodeDoubleClick = useCallback((node: GraphNode) => {
-    if (node.depth > 0) navigate(`/topic/${node.slug}`)
+    // Q1: domain roots (depth 0) now navigate too — to their immersive
+    // family overview. Member topics go to their lesson. Both live at
+    // /topic/{slug}.
+    navigate(`/topic/${node.slug}`)
   }, [navigate])
 
   // H6: search-chip selection. If the chosen node is outside the active

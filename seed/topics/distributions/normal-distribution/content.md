@@ -1,37 +1,28 @@
 <!-- block: state, values: {mu: 0, sigma: 1} -->
 
-<!-- block: plot, spec: gaussian_pdf, params: {mu: 0, sigma: 1}, binds: [mu, sigma], anchor: normal-feel, mobile_order: 1 -->
+<!-- block: plot, spec: gaussian_pdf, params: {mu: 0, sigma: 1}, binds: [mu, sigma], anchor: normal-curve, mobile_order: 1 -->
 
 ---
 
-<!-- block: gear, n: 1, label: "TODO — name the spark" -->
+<!-- block: gear, n: 1, label: "The one curve to know" -->
 
-# Normal (Gaussian) Distribution
+# Normal (Gaussian) distribution
 
-The bell curve shows up everywhere — heights, exam scores, measurement errors, stock returns, sample means. That ubiquity isn't a coincidence; it's mechanical.
-
-> TODO (N): replace with the spark. Pick a single concrete example (adult heights, lab measurements) and lead with what surprises about it.
+If you learn one distribution by feel, make it this one. The bell curve shows up in heights, measurement errors, test scores, and — crucially — in the averages of almost everything else. Two numbers describe it completely: where it's centered ($\mu$) and how wide it is ($\sigma$).
 
 ---
 
-<!-- block: gear, n: 2, label: "TODO — name the intuition" -->
+<!-- block: gear, n: 2, label: "Center and width, nothing else" -->
 
-## Two parameters, everything
+The normal is fully pinned down by its mean $\mu$ and standard deviation $\sigma$. $\mu$ slides the whole curve left or right without changing its shape; $\sigma$ stretches or squeezes it without moving the center. There's no third knob — no skew, no extra bump. That two-parameter simplicity is a big part of why it's the default model for "noise."
 
-Two numbers determine a normal distribution completely:
-
-- $\mu$ (mean) — where the bell is centered.
-- $\sigma$ (standard deviation) — how spread out it is.
-
-That's all you need. No third parameter, no skew, no extra mass anywhere. If you can quote $\mu$ and $\sigma$, you can answer any probability question about the distribution.
-
-The plot on the right is $N(\mu, \sigma^2)$ — drag the sliders below and you'll move the bell or change its width independently. **Mean is location; standard deviation is scale.** They never trade.
-
-> TODO (N): expand. Optional: hint at why the normal shows up so often (preview of CLT) without giving the full argument away — that comes in Gear 6.
+A useful rule of thumb lives in $\sigma$: about **68%** of the mass falls within one $\sigma$ of the mean, **95%** within two, and **99.7%** within three. Quote someone "two standard deviations out" and you've said "in the outer 5%."
 
 ---
 
-<!-- block: gear, n: 3, label: "TODO — name the mechanic" -->
+<!-- block: gear, n: 3, label: "Match the target" -->
+
+The dashed curve on the right is a target. Slide $\mu$ and $\sigma$ until your solid curve sits on top of it — you'll feel that center and width move independently.
 
 <!-- block: state_reset, anchor: normal-feel -->
 
@@ -44,68 +35,72 @@ controls:
     max: 3
     step: 0.1
   - param: sigma
-    label: "Std dev (σ)"
-    min: 0.3
+    label: "Standard deviation (σ)"
+    min: 0.4
     max: 3
     step: 0.1
 goal:
-  prompt: "Make a tall, narrow bell centered at μ = 1.5 (σ ≈ 0.4)."
-  target: { mu: 1.5, sigma: 0.4 }
-  success_when: "abs(mu - 1.5) < 0.1 and abs(sigma - 0.4) < 0.1"
+  prompt: "Match the dashed target: a curve centered near 1.5 and noticeably narrower than the standard one."
+  target: { mu: 1.5, sigma: 0.8 }
+  success_when: "abs(mu - 1.5) < 0.1 and abs(sigma - 0.8) < 0.1"
   on_success: |
-    Centering and spreading are independent levers. The bell *integrates* to 1
-    no matter what — when σ shrinks the peak grows; when σ grows the peak
-    falls. The total area is fixed.
+    Center and width are independent levers: you found $\mu$ by sliding and
+    $\sigma$ by squeezing, in either order. The total area under the curve is
+    always 1 — so a smaller $\sigma$ doesn't lose mass, it concentrates it
+    tightly around the mean.
 <!-- /block -->
-
-> TODO (N): use this gear to name the 68-95-99.7 rule. The empirical-rule prose fits naturally as a follow-up to the playground above.
 
 ---
 
 <!-- layer: formal -->
 
-<!-- block: gear, n: 4, label: "TODO — name the formalism" -->
+<!-- block: gear, n: 4, label: "The density and the z-score" -->
 
-## PDF and the standard normal
+The probability density of $X \sim N(\mu, \sigma^2)$ is
 
-The probability density function is
+$$f(x) = \frac{1}{\sigma \sqrt{2\pi}} \, \exp\!\left( -\frac{(x - \mu)^2}{2\sigma^2} \right)$$
 
-$$f(x) = \frac{1}{\sigma\sqrt{2\pi}} \, \exp\!\left(-\frac{(x - \mu)^2}{2\sigma^2}\right)$$
+The exponent is a parabola in $x$, which is what makes the curve fall off symmetrically; the $\frac{1}{\sigma\sqrt{2\pi}}$ out front is exactly the constant that makes the total area equal 1.
 
-The **standard normal** $Z \sim N(0, 1)$ is the special case $\mu = 0, \sigma = 1$. Every normal random variable transforms back to a standard normal:
+Any normal becomes the **standard normal** $N(0,1)$ by the **z-score** transform:
 
-$$Z = \frac{X - \mu}{\sigma}$$
+$$z = \frac{x - \mu}{\sigma}$$
 
-That's why z-tables work — once you can answer a question about $Z$, you can answer it for any normal.
+which measures "how many standard deviations from the mean." That single rescaling is why one table — or one function — answers questions about *every* normal.
 
-<!-- block: derivation, title: "Why the $\\sqrt{2\\pi}$ in the denominator", collapsed: true -->
-> TODO (N): walk through the Gaussian integral $\int_{-\infty}^{\infty} e^{-x^2/2} \, dx = \sqrt{2\pi}$. The polar-coordinates trick is the classic move.
+<!-- block: derivation, title: "Why the √(2π) makes the area 1", collapsed: true -->
+The total area is $\int_{-\infty}^{\infty} \frac{1}{\sigma\sqrt{2\pi}} e^{-(x-\mu)^2 / 2\sigma^2}\,dx$. Substituting $z = (x-\mu)/\sigma$ reduces it to $\frac{1}{\sqrt{2\pi}} \int_{-\infty}^{\infty} e^{-z^2/2}\,dz$. The Gaussian integral $\int_{-\infty}^{\infty} e^{-z^2/2}\,dz = \sqrt{2\pi}$ (the classic trick: square it, switch to polar coordinates), so the whole thing is $\frac{\sqrt{2\pi}}{\sqrt{2\pi}} = 1$.
 <!-- /block -->
 
 ---
 
-<!-- block: gear, n: 5, label: "TODO — name the code" -->
-
-<!-- block: dataset, name: heights, source: synthetic -->
+<!-- block: gear, n: 5, label: "The empirical rule, checked" -->
 
 <!-- block: simulation, editable: true, auto_run: true, anchor: normal-sim -->
 ```python
 import numpy as np
 
-# The `heights` dataset is synthetic adult heights drawn from sex-conditional
-# normals. Check that the empirical mean / std match the normal fit and that
-# the 68% rule holds within rounding.
-heights = load("heights")          # pandas DataFrame, column 'height_cm'
-h = heights["height_cm"].to_numpy()
-mu, sigma = h.mean(), h.std()
-print(f"n = {len(h)}, mean = {mu:.2f} cm, sd = {sigma:.2f} cm")
-
-# Empirical 68% rule: fraction of data within ±1 sd of the mean
-within_1sd = ((h > mu - sigma) & (h < mu + sigma)).mean()
-print(f"Fraction within ±1 sd: {within_1sd:.4f} (normal target: 0.6827)")
+# Draw from N(0,1) and confirm the 68–95–99.7 rule directly.
+rng = np.random.default_rng(0)
+x = rng.normal(0, 1, 1_000_000)
+for k in (1, 2, 3):
+    frac = np.mean(np.abs(x) < k)
+    print(f"within {k} sigma: {frac*100:.2f}%")
+# z-score: standardizing any normal lands on N(0,1).
+y = rng.normal(50, 8, 1_000_000)          # N(mu=50, sigma=8)
+z = (y - 50) / 8
+print(f"standardized mean={z.mean():.3f}, sd={z.std():.3f}  (≈ 0, 1)")
 ```
 
-> TODO (N): expand the prose intro. The `heights` chip above is the K5 dataset attribution; mention the source explicitly in your prose so readers know what they're working with.
+---
+
+<!-- block: misconception, inline: true -->
+**"Any bell-shaped or symmetric data is normal."**
+
+*Wrong:* if a histogram looks like a symmetric mound, it's a normal distribution.
+
+*Correct:* "normal" is one *specific* curve, not a synonym for "symmetric and humped." Student's t is symmetric and bell-shaped but has heavier tails; a sum of two uniforms is humped but not normal. Symmetry is necessary, not sufficient — which is why we test normality rather than eyeball it.
+<!-- /block -->
 
 ---
 
@@ -114,5 +109,5 @@ print(f"Fraction within ±1 sd: {within_1sd:.4f} (normal target: 0.6827)")
 <!-- block: gear, n: 6, label: "Where it leads" -->
 
 <!-- block: callout, kind: insight -->
-**Where this leads.** The **Central Limit Theorem** explains *why* the normal is everywhere — it's the limit shape of the sample mean. **Confidence intervals** and **hypothesis tests** lean on normal critical values almost everywhere. The **t-distribution** is the normal's "I don't know σ" cousin. And the **standard normal table** is the lookup that turns any normal question into an integral against $N(0, 1)$.
+**Where this leads.** The **central limit theorem** explains *why* the normal is everywhere: averages of independent things converge to it. **Confidence intervals** and **hypothesis tests** lean on normal critical values (the $z$ in $\bar{x} \pm z \cdot \text{SE}$). And **Student's t** is the normal's small-sample cousin, for when you must estimate $\sigma$ instead of knowing it.
 <!-- /block -->

@@ -1,0 +1,7 @@
+slug: regression-modeling
+title: Regression & Modeling
+domain: regression-modeling
+summary: How statistics answers "given X, what should I expect Y to be?" — from correlation to the line to its many generalizations.
+prerequisites: []
+# Q1: immersive family overview.
+tour: true

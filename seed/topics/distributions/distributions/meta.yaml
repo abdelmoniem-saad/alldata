@@ -1,0 +1,7 @@
+slug: distributions
+title: Distributions
+domain: distributions
+summary: The handful of recurring shapes uncertainty takes — Bernoulli, binomial, Poisson, normal, t — and when each one is the right model.
+prerequisites: []
+# Q1: immersive family overview.
+tour: true

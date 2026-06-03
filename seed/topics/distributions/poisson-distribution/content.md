@@ -1,108 +1,102 @@
-<!-- block: state, values: {n: 50, p: 0.1} -->
+<!-- block: state, values: {lambda: 4} -->
 
-<!-- block: plot, spec: binomial_pmf, params: {n: 50, p: 0.1}, binds: [n, p], anchor: poisson-feel, mobile_order: 1 -->
-
----
-
-<!-- block: gear, n: 1, label: "TODO — name the spark" -->
-
-# Poisson Distribution
-
-How many emails arrive in the next hour? How many car accidents at an intersection this month? How many typos on a page? The count is Poisson when each *instant* has a tiny independent chance of an event, and you tally what actually happened over a fixed window.
-
-> TODO (N): replace with the spark — one concrete example with the count and the rate (e.g., "a call center fielding ~12 calls per minute").
+<!-- block: plot, spec: poisson_pmf, params: {lambda: 4}, binds: [lambda], anchor: poisson-bars, mobile_order: 1 -->
 
 ---
 
-<!-- block: gear, n: 2, label: "TODO — name the intuition" -->
+<!-- block: gear, n: 1, label: "Counting rare events" -->
 
-## What "rare and independent" buys you
+# Poisson distribution
 
-The Poisson distribution is what the binomial limits to when:
-
-- The number of "trials" $n$ is huge (each tiny instant is a trial).
-- The per-trial probability $p$ is tiny.
-- The product $\lambda = np$ stays finite (the *rate* per window).
-
-A second's worth of customer traffic has $n$ = a billion tiny opportunities, each with vanishingly small probability of producing a click. The total clicks-per-second is well-modeled by Poisson($\lambda$) where $\lambda$ is the average rate.
-
-One parameter: $\lambda > 0$. The distribution lives on $\{0, 1, 2, \ldots\}$.
-
-> TODO (N): expand on the independence and constant-rate assumptions. The classic failure mode: clustering (burst arrivals violate Poisson; the right model is then a mixture or negative-binomial).
+How many emails land in the next hour? How many cars pass a sensor in a minute? How many typos are on this page? When you count events that happen at some steady average rate — each one rare, but many chances for one to occur — the count follows a **Poisson distribution**. It has a single dial: $\lambda$, the average number of events per window.
 
 ---
 
-<!-- block: gear, n: 3, label: "TODO — name the mechanic" -->
+<!-- block: gear, n: 2, label: "One rate sets everything" -->
+
+The Poisson's one parameter $\lambda$ is both its mean *and* its variance. Set the rate and you've set the center and the spread at once — there's no second knob.
+
+It arises whenever events are independent and the rate is roughly constant over the window. Think of a long interval chopped into tiny slices: each slice is a near-Bernoulli trial with a tiny chance of an event, and there are a huge number of slices. The total count of events is Poisson. That's not a coincidence — it's exactly the limit the binomial approaches when $n$ is large and $p$ is small.
+
+---
+
+<!-- block: gear, n: 3, label: "Tune the rate" -->
+
+Drag $\lambda$ and watch the bars. At small $\lambda$ the distribution is bunched against zero and right-skewed; as $\lambda$ grows it slides right and rounds into a near-symmetric mound.
 
 <!-- block: state_reset, anchor: poisson-feel -->
 
 <!-- block: playground, anchor: poisson-feel -->
-binds: [n, p]
+binds: [lambda]
 controls:
-  - param: n
-    label: "Trials (n)"
-    min: 10
-    max: 500
-    step: 10
-  - param: p
-    label: "Per-trial probability (p)"
-    min: 0.01
-    max: 0.5
-    step: 0.01
+  - param: lambda
+    label: "Rate (λ — events per window)"
+    min: 0.5
+    max: 12
+    step: 0.5
 goal:
-  prompt: |
-    Find n and p that keep λ = np ≈ 5 but make n large enough that the bars
-    look almost the same regardless of which (n, p) combination you picked.
-    The shape only depends on λ in the limit.
-  target: { n: 200, p: 0.025 }
-  success_when: "n >= 100 and abs(n * p - 5) < 0.6"
+  prompt: "Turn the rate up until seeing *zero* events becomes unlikely — find a λ where P(0) drops below about 5%."
+  target: { lambda: 3 }
+  success_when: "lambda >= 3"
   on_success: |
-    The shape collapses onto the same Poisson($\lambda = 5$) curve for any large
-    enough n. Binomial → Poisson in the limit.
+    The probability of zero events is $P(0) = e^{-\lambda}$, so it falls fast:
+    $e^{-3} \approx 0.05$. By $\lambda = 3$ you'll almost always see at least
+    one event in the window. Notice the whole distribution has shifted right
+    and started to look symmetric — at large $\lambda$ the Poisson approaches
+    a normal.
 <!-- /block -->
-
-> TODO (N): explicitly call out that this scaffold uses the binomial plot as a Poisson stand-in until a `poisson_pmf` spec exists. <!-- todo: needs poisson_pmf spec in the plot library -->
 
 ---
 
 <!-- layer: formal -->
 
-<!-- block: gear, n: 4, label: "TODO — name the formalism" -->
+<!-- block: gear, n: 4, label: "The formula, mean, variance" -->
 
-## PMF, mean, variance
+For $X \sim \text{Poisson}(\lambda)$, the probability of exactly $k$ events is
 
-$$P(X = k) = \frac{\lambda^k \, e^{-\lambda}}{k!}, \qquad k \in \{0, 1, 2, \ldots\}$$
+$$P(X = k) = \frac{\lambda^{k} e^{-\lambda}}{k!}, \qquad k = 0, 1, 2, \ldots$$
 
-$$\mathbb{E}[X] = \lambda, \qquad \text{Var}(X) = \lambda$$
+Unlike the binomial there's no upper limit on $k$ — any count is possible, just increasingly unlikely. Its defining signature:
 
-The mean and variance are *equal* — a signature of the distribution. If a count's variance is much bigger than its mean, the data is **overdispersed** and Poisson is the wrong model (try negative binomial); much smaller, it's **underdispersed** (regular, scheduled events).
+$$\mathbb{E}[X] = \lambda \qquad \text{Var}(X) = \lambda$$
 
-<!-- block: derivation, title: "Binomial → Poisson as $n \\to \\infty$, $np \\to \\lambda$", collapsed: true -->
-> TODO (N): write the limit. $\binom{n}{k} p^k (1-p)^{n-k}$ as $n \to \infty, p \to 0, np = \lambda$ goes to $\lambda^k e^{-\lambda} / k!$. The key step: $(1 - \lambda/n)^n \to e^{-\lambda}$.
+Mean equals variance. That **equidispersion** is the property to remember — and the thing to check before trusting a Poisson model on real data.
+
+<!-- block: derivation, title: "Binomial → Poisson as n → ∞, p → 0, np → λ", collapsed: true -->
+Start from $\text{Binomial}(n, p)$ with $p = \lambda / n$ and let $n \to \infty$:
+
+$$\binom{n}{k} p^k (1-p)^{n-k} = \frac{n!}{k!\,(n-k)!} \left(\frac{\lambda}{n}\right)^k \left(1 - \frac{\lambda}{n}\right)^{n-k}.$$
+
+The falling factorial $\frac{n!}{(n-k)!} \approx n^k$ cancels the $n^k$ in the denominator; $\left(1 - \frac{\lambda}{n}\right)^{n} \to e^{-\lambda}$; and $\left(1 - \frac{\lambda}{n}\right)^{-k} \to 1$. What's left is $\frac{\lambda^k e^{-\lambda}}{k!}$ — the Poisson PMF.
 <!-- /block -->
 
 ---
 
-<!-- block: gear, n: 5, label: "TODO — name the code" -->
+<!-- block: gear, n: 5, label: "Mean equals variance, checked" -->
 
 <!-- block: simulation, editable: true, auto_run: true, anchor: poisson-sim -->
 ```python
 import numpy as np
 
-# Show the binomial → Poisson convergence numerically: fix λ = 5, grow n.
-np.random.seed(42)
-lam = 5
-for n in [50, 500, 5000]:
-    p = lam / n
-    binom = np.random.binomial(n, p, 20_000)
-    poisson = np.random.poisson(lam, 20_000)
-    diff = abs(binom.mean() - poisson.mean()) + abs(binom.var() - poisson.var())
-    print(f"n={n:>5}: binom mean={binom.mean():.3f}, var={binom.var():.3f} | "
-          f"poisson mean={poisson.mean():.3f}, var={poisson.var():.3f} | "
-          f"|Δ| = {diff:.4f}")
+# Draw Poisson counts and confirm mean ≈ variance ≈ lambda, and P(0) = e^-lambda.
+rng = np.random.default_rng(0)
+for lam in [1, 4, 9]:
+    x = rng.poisson(lam, 500_000)
+    print(f"lambda={lam}:  mean={x.mean():.3f}  var={x.var():.3f}  "
+          f"P(0)={np.mean(x == 0):.4f} (=e^-lambda {np.exp(-lam):.4f})")
 ```
 
-> TODO (N): expand. Add a mention of the *equality* mean = variance = λ — that's the diagnostic test for Poisson-ness in real data.
+Mean and variance both land on $\lambda$ — the equidispersion signature.
+
+---
+
+<!-- block: misconception, inline: true -->
+**"Any count data is Poisson."**
+
+*Wrong:* the data are counts, so model them as Poisson.
+
+*Correct:* the Poisson forces variance to equal the mean. Real counts are often **overdispersed** — clustered or bursty, with variance well above the mean (think website traffic with spikes). When that happens, Poisson understates the spread and a different model (negative binomial) is needed. Check mean-versus-variance before assuming Poisson.
+<!-- /block -->
 
 ---
 
@@ -111,5 +105,5 @@ for n in [50, 500, 5000]:
 <!-- block: gear, n: 6, label: "Where it leads" -->
 
 <!-- block: callout, kind: insight -->
-**Where this leads.** **Poisson processes** generalize a single count to a stream of arrivals over time. The **exponential distribution** is the time *between* arrivals in a Poisson process — its CDF is $1 - e^{-\lambda t}$. **Poisson regression** uses the distribution as the link function for count outcomes in regression.
+**Where this leads.** The Poisson is the rare-event limit of the **binomial**. The *waiting time between* Poisson events follows the **exponential distribution**. And at large $\lambda$ the Poisson is well-approximated by the **normal** — another face of the central limit theorem.
 <!-- /block -->

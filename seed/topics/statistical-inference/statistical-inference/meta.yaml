@@ -1,0 +1,7 @@
+slug: statistical-inference
+title: Statistical Inference
+domain: statistical-inference
+summary: The move from a sample to a claim about the world it came from — estimates, sampling distributions, intervals, and tests.
+prerequisites: []
+# Q1: immersive family overview.
+tour: true

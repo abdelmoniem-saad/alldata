@@ -1,0 +1,11 @@
+title: "Variance and Standard Deviation"
+slug: variance
+domain: probability-foundations
+difficulty: intro
+summary: Measuring spread — how far values typically deviate from the mean, and why we square those deviations.
+prerequisites: [expectation]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 9
+cycle_ported: Q
+recall_prompt: "Why is variance measured in squared units, and what does taking its square root (the standard deviation) buy you?"

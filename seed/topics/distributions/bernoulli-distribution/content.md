@@ -1,39 +1,28 @@
 <!-- block: state, values: {n: 1, p: 0.5} -->
 
-<!-- block: plot, spec: binomial_pmf, params: {n: 1, p: 0.5}, binds: [n, p], anchor: bernoulli-feel, mobile_order: 1 -->
+<!-- block: plot, spec: binomial_pmf, params: {n: 1, p: 0.5}, binds: [n, p], anchor: bernoulli-bars, mobile_order: 1 -->
 
 ---
 
-<!-- block: gear, n: 1, label: "TODO — name the spark" -->
+<!-- block: gear, n: 1, label: "One trial, one number" -->
 
-# Bernoulli Distribution
+# Bernoulli distribution
 
-One trial. Two outcomes. One number that says everything: $p$. The Bernoulli is the smallest distribution worth naming — and the atom every binary process is built from.
-
-> TODO (N): replace this paragraph with the spark. The "coin / click / defect" framing or a single sentence with a concrete real example both work.
+A single yes/no trial. The coin lands heads or tails; the click happens or it doesn't; the part is defective or it isn't. One outcome out of two, with probability $p$ of "success." That's the whole distribution — and almost every count you'll ever model is built by stacking copies of it.
 
 ---
 
-<!-- block: gear, n: 2, label: "TODO — name the intuition" -->
+<!-- block: gear, n: 2, label: "What p buys you" -->
 
-## Yes-or-no, parameterized
+The Bernoulli has exactly one parameter, $p$ — the probability of a 1 (success). The probability of a 0 (failure) is whatever is left over, $1 - p$. Nothing else is free to vary.
 
-A **Bernoulli** trial has two outcomes: success (1) with probability $p$, failure (0) with probability $1 - p$. The whole distribution is one number.
-
-That's the *point* — the Bernoulli is what you reach for any time the world produces a binary outcome with a stable per-trial probability:
-
-- A/B test: does the user click?
-- Manufacturing: is the part defective?
-- Free throw: does the ball go in?
-- Medical screening: does the test return positive?
-
-The assumption is that **each trial has the same $p$**. If $p$ shifts between trials — over time, between groups, by context — you need a richer model.
-
-> TODO (N): expand on the "constant $p$" assumption. When does it hold? When does it visibly fail? A short example of each.
+It's worth holding onto how little structure that is. "Will this email get a click?" ($p \approx 0.02$), "will this treated patient recover?" ($p$ depends on the treatment), "will this fair coin land heads?" ($p = 0.5$) — same distribution, different dial setting. The model doesn't care what the trial *is*; it only cares about $p$.
 
 ---
 
-<!-- block: gear, n: 3, label: "TODO — name the mechanic" -->
+<!-- block: gear, n: 3, label: "Where uncertainty peaks" -->
+
+The two bars on the right are the whole distribution: the height at 0 is $1-p$, the height at 1 is $p$. Drag $p$ and watch them trade height — they always sum to 1.
 
 <!-- block: state_reset, anchor: bernoulli-feel -->
 
@@ -46,58 +35,71 @@ controls:
     max: 0.95
     step: 0.05
 goal:
-  prompt: "Make the bar plot heavily favor success — p = 0.85."
-  target: { p: 0.85 }
-  success_when: "abs(p - 0.85) < 0.05"
+  prompt: "Find the value of p where the outcome is hardest to predict — where the two bars are equal."
+  target: { p: 0.5 }
+  success_when: "abs(p - 0.5) < 0.03"
   on_success: |
-    Notice that the bars never *both* become tall — they trade height with each
-    other because they must sum to 1. The variance is $p(1-p)$, which peaks
-    at $p = 0.5$ and shrinks toward the edges.
+    That's the point of maximum uncertainty. The variance of a Bernoulli is
+    $p(1-p)$, which is largest exactly at $p = 0.5$ (variance $0.25$) and
+    shrinks to $0$ as $p$ approaches either edge — a trial that almost always
+    does the same thing carries almost no surprise.
 <!-- /block -->
-
-> TODO (N): use this Gear 3 to introduce the variance-peaks-at-0.5 intuition. The playground above hints at it; expand on what that means in plain words.
 
 ---
 
 <!-- layer: formal -->
 
-<!-- block: gear, n: 4, label: "TODO — name the formalism" -->
+<!-- block: gear, n: 4, label: "The whole thing in three lines" -->
 
-## PMF, mean, variance
+A random variable $X \sim \text{Bernoulli}(p)$ takes the value 1 with probability $p$ and 0 with probability $1-p$. Its probability mass function packs both cases into one expression:
 
-A random variable $X \sim \text{Bernoulli}(p)$ has
+$$P(X = x) = p^x (1-p)^{1-x}, \qquad x \in \{0, 1\}$$
 
-$$P(X = x) = p^x (1 - p)^{1 - x}, \qquad x \in \{0, 1\}$$
+$$\mathbb{E}[X] = p \qquad \text{Var}(X) = p(1-p)$$
 
-$$\mathbb{E}[X] = p, \qquad \text{Var}(X) = p(1 - p)$$
+The mean is just $p$ because $X$ is 0 or 1: averaging it gives the fraction of 1s, which is $p$. The variance peaks at $p = 0.5$ and vanishes at the edges.
 
-The variance reaches its maximum $1/4$ at $p = 0.5$ — the point of maximum uncertainty. As $p$ approaches 0 or 1 the outcome becomes nearly deterministic and the variance shrinks toward 0.
+<!-- block: derivation, title: "Why the mean is p and the variance is p(1−p)", collapsed: true -->
+For a variable that is only ever 0 or 1, $X^2 = X$, which makes both moments easy.
 
-The Bernoulli is the $n = 1$ case of the Binomial: $\text{Bernoulli}(p) = \text{Binomial}(1, p)$. Sum $n$ iid Bernoulli($p$) and you get Binomial($n, p$); that's the next topic.
+$$\mathbb{E}[X] = 0 \cdot (1-p) + 1 \cdot p = p$$
 
-<!-- block: derivation, title: "Why $\text{Var}(X) = p(1-p)$", collapsed: true -->
-> TODO (N): walk through $\mathbb{E}[X^2] - (\mathbb{E}[X])^2 = p - p^2 = p(1-p)$. Add the max-at-$p=0.5$ argument via $\frac{d}{dp}[p(1-p)] = 1 - 2p = 0$.
+$$\mathbb{E}[X^2] = 0^2 \cdot (1-p) + 1^2 \cdot p = p$$
+
+$$\text{Var}(X) = \mathbb{E}[X^2] - (\mathbb{E}[X])^2 = p - p^2 = p(1-p)$$
+
+Differentiating $p(1-p)$ and setting it to zero gives $1 - 2p = 0$, so the variance is maximized at $p = 0.5$.
 <!-- /block -->
 
 ---
 
-<!-- block: gear, n: 5, label: "TODO — name the code" -->
+<!-- block: gear, n: 5, label: "Check it against draws" -->
 
 <!-- block: simulation, editable: true, auto_run: true, anchor: bernoulli-sim -->
 ```python
 import numpy as np
 
-# Bernoulli draws for several p values. Compare empirical mean + variance
-# against the closed forms p and p(1-p).
-np.random.seed(42)
-n = 50_000
-for p in [0.1, 0.3, 0.5, 0.7, 0.9]:
-    x = (np.random.random(n) < p).astype(int)
-    print(f"p={p}: mean={x.mean():.4f} (target {p:.4f}), "
-          f"var={x.var():.4f} (target {p*(1-p):.4f})")
+# Draw 100,000 Bernoulli trials at several p and compare the empirical
+# mean and variance to the closed forms p and p(1-p).
+rng = np.random.default_rng(0)
+n = 100_000
+for p in [0.1, 0.3, 0.5, 0.8]:
+    x = (rng.random(n) < p).astype(int)
+    print(f"p={p}:  mean={x.mean():.4f} (=p {p})   "
+          f"var={x.var():.4f} (=p(1-p) {p*(1-p):.4f})")
 ```
 
-> TODO (N): annotate the output. Mention that as `n` grows the empirical numbers converge to the theoretical (a quiet preview of the law of large numbers).
+The empirical mean tracks $p$ and the variance tracks $p(1-p)$, peaking at $p = 0.5$.
+
+---
+
+<!-- block: misconception, inline: true -->
+**"A Bernoulli trial means a fifty-fifty coin flip."**
+
+*Wrong:* the Bernoulli is the model for a fair coin, so $p = 0.5$.
+
+*Correct:* $p$ can be any value in $[0, 1]$. A 2%-click-rate ad and a 99%-reliable sensor are both Bernoulli trials — just with very lopsided $p$. The fair coin is the *one* special case where uncertainty is maximal, not the definition.
+<!-- /block -->
 
 ---
 
@@ -106,5 +108,5 @@ for p in [0.1, 0.3, 0.5, 0.7, 0.9]:
 <!-- block: gear, n: 6, label: "Where it leads" -->
 
 <!-- block: callout, kind: insight -->
-**Where this leads.** Sum $n$ iid Bernoulli($p$) trials and the count is **Binomial**$(n, p)$. Let $n \to \infty$ with $np$ held fixed and the limit is **Poisson**. Every binary-outcome distribution descends from the Bernoulli atom.
+**Where this leads.** Add up $n$ independent Bernoulli($p$) trials and the count of successes is the **binomial distribution** — the next topic. Let the trials become many and rare and the count limits to the **Poisson**. And estimating $p$ from observed trials is the simplest case of **maximum likelihood estimation**.
 <!-- /block -->

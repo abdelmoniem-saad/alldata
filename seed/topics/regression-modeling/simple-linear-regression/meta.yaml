@@ -9,4 +9,3 @@ has_formal_layer: true
 estimated_minutes: 11
 cycle_ported: M
 recall_prompt: "What's the difference between minimizing squared errors and minimizing absolute errors, and why is squared the standard choice?"
-dataset: heights

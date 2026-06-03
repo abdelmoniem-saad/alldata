@@ -70,7 +70,7 @@ Pick *one* mechanic for Gear 3 — observational (playground) or commitment (dec
 
 - `target: all` (or `*`) — fits the entire graph; no cluster filter.
 - `target: <domain-slug>` (`probability-foundations`, `distributions`, …) — hides every other cluster (legend-style) and frames the named one.
-- `target: <topic-slug>` — centers on that single node.
+- `target: <topic-slug>` — centers on that single node. The background stays filtered to *that node's domain* (not the whole graph), so spotlighting a member topic keeps its family cluster as the visible context. This is what lets a family-overview tour pan across its members one at a time without the rest of the graph flashing back in.
 
 The active section is picked by a scroll listener that tracks whichever anchor is topmost above the 30% line — so the camera changes reliably regardless of scroll speed or programmatic jumps (no IntersectionObserver band that can drift between observer creation and first paint).
 
@@ -101,7 +101,7 @@ Almost everything we'll do leans on probability…
 
 The `graph_view` block renders nothing in prose flow when the topic is in tour mode — it's pure metadata for the background camera. The prose blocks render in floating panels over the graph.
 
-**Use sparingly.** The tour surface is designed for orientation topics that *show* the graph itself (Shape of Statistics is the canonical example). It's the wrong surface for ordinary content topics — those want the pinned-viz scrollytelling that `ScrollReader` provides.
+**Use sparingly.** The tour surface is designed for orientation topics that *show* the graph itself. Two sanctioned uses: the **Shape of Statistics** new-user intro (targets `all` / domain slugs), and the five **family overviews** — one per domain root (`probability-foundations`, `distributions`, `statistical-inference`, `regression-modeling`, `data-science-practice`), which open with `target: <domain>`, spotlight each member topic with `target: <member-slug>`, then pull back to the family and hand off with links into the real lessons. It's the wrong surface for ordinary content topics — those want the pinned-viz scrollytelling that `ScrollReader` provides.
 
 ---
 
@@ -144,8 +144,10 @@ The plot library reserves a small set of names. Use these when binding to existi
 |---|---|---|
 | `mu` | number | Mean of a normal distribution |
 | `sigma` | number | Standard deviation of a normal distribution |
-| `n` | number | Sample size or trial count (binomial) |
+| `n` | number | Sample size or trial count. Binomial trials; also narrows `gaussian_pdf` by σ/√n (sampling-error mode) |
 | `p` | number | Success probability (binomial) |
+| `lambda` | number ≥ 0 | Rate / mean of a Poisson distribution (`poisson_pmf`) |
+| `df` | number ≥ 1 | Degrees of freedom of a Student's t distribution (`student_t_pdf`) |
 | `prior` | number ∈ [0,1] | Bayesian prior |
 | `sensitivity` | number ∈ [0,1] | P(+ \| condition) |
 | `specificity` | number ∈ [0,1] | P(− \| ¬condition) |
@@ -231,9 +233,11 @@ Pinned right-column visual on desktop. Inline on mobile.
 
 **Available plot specs** (extend by adding a file under `frontend/src/components/topic/blocks/plots/`):
 
-- `gaussian_pdf` — bell curve. Binds `mu`, `sigma`. Optional ghost for playground targets.
+- `gaussian_pdf` — bell curve. Binds `mu`, `sigma`, and optional `n` (when bound, the curve is the sampling distribution of the mean: effective spread σ/√n, y-axis auto-rescales). Optional ghost for playground targets.
 - `gaussian_cdf` — cumulative normal. Binds `mu`, `sigma`.
+- `student_t_pdf` — Student's t density over t ∈ [−5, 5], with a dashed N(0,1) reference. Binds `df`; heavy tails at `df=1`, converges onto the normal by `df≈30`.
 - `binomial_pmf` — discrete bars. Binds `n`, `p`.
+- `poisson_pmf` — discrete bars over k = 0…⌈λ+4√λ⌉. Binds `lambda`; right-skewed at small λ, ~symmetric at large λ.
 - `empirical_histogram` — bins a sample array. Binds `samples` (or synthesizes from `mu`, `sigma`).
 - `scatter_with_fit` — points + least-squares line. Binds `points`, optional `slope`, `intercept`.
 - `posterior_update` — three-bar P(H), P(H \| +), P(H \| −). Binds `prior`, `sensitivity`, `specificity`, `observed_result`.

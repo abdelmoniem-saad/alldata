@@ -1,176 +1,99 @@
 <!-- block: state, values: {mu: 0, sigma: 1, n: 1} -->
 
-<!-- block: plot, spec: gaussian_pdf, params: {mu: 0, sigma: 1}, binds: [mu, sigma], anchor: sampling-feel, mobile_order: 1 -->
+<!-- block: plot, spec: gaussian_pdf, params: {mu: 0, sigma: 1, n: 1}, binds: [mu, sigma, n], anchor: sd-curve, mobile_order: 1 -->
 
 ---
 
-<!-- layer: intuition -->
+<!-- block: gear, n: 1, label: "Your estimate is itself random" -->
 
-<!-- block: gear, n: 1, label: "TODO — name the spark" -->
+# Sampling distributions
 
-# Sampling Distributions
-
-## The distribution of your estimate
-
-Your sample mean is one number from one sample. Pull a different sample, you'd get a different number. Pull a thousand samples and the means form their own distribution — the **sampling distribution**.
-
-The sampling distribution is the answer to "how much would my estimate change if I'd collected a different sample?" It's the bridge between the one dataset you have and any honest claim about the population.
-
-> TODO (N): replace the intro with the spark — make the reader feel the difference between *the data they have* and *the data they could have had*.
+You collect one sample, compute one average, and report it. But that average is just one draw from a lottery: a different sample would have given a different number. The **sampling distribution** is the distribution of your statistic across all the samples you *could* have drawn. It's the idea that makes inference possible — it's how you attach uncertainty to a single estimate.
 
 ---
 
-<!-- block: gear, n: 2, label: "TODO — name the intuition" -->
+<!-- block: gear, n: 2, label: "Two distributions, don't confuse them" -->
 
-## The shape of $\bar{X}$
+There are two distributions in play, and keeping them apart is most of the battle:
 
-The Central Limit Theorem says: regardless of the population's shape, the sampling distribution of the mean is approximately normal for large enough samples.
+- The **distribution of the data** — what individual observations look like. Heights, incomes, dice rolls. Its spread is the population $\sigma$, and collecting more data does *not* shrink it.
+- The **sampling distribution of the mean** — what the *average* of $n$ observations looks like across repeated samples. It's centered at the same $\mu$, but its spread is the **standard error** $\sigma/\sqrt{n}$, which *does* shrink as $n$ grows.
 
-$$\bar{X} \sim N\!\left(\mu,\, \frac{\sigma^2}{n}\right) \text{ approximately}$$
-
-Three things to notice:
-
-- The mean of sample means equals the population mean. Estimates of $\mu$ are unbiased on average.
-- The spread shrinks by a factor of $1/\sqrt{n}$. Doubling your sample size doesn't halve the spread; it shrinks it by about 30%.
-- The shape goes to normal even if the population is skewed, uniform, or bimodal.
+The curve on the right is the second one. Right now $n = 1$, so it matches the data. Raise $n$ and watch it pull in toward the mean.
 
 ---
 
-<!-- block: gear, n: 3, label: "TODO — name the mechanic" -->
+<!-- block: gear, n: 3, label: "Shrink the standard error" -->
 
-## Feel the standard error
+<!-- block: state_reset, anchor: sd-feel -->
 
-The plot above is showing $N(\mu, \sigma^2 / n)$ — the sampling distribution of the mean from a population with the parameters you set. As you increase $n$, the curve gets narrower; your job is to find an $n$ that makes the sampling distribution five times narrower than the population.
-
-<!-- block: state_reset, anchor: sampling-goal -->
-
-<!-- block: playground, anchor: sampling-goal -->
-binds: [mu, sigma, n]
+<!-- block: playground, anchor: sd-feel -->
+binds: [n]
 controls:
-  - param: mu
-    label: "Population mean (μ)"
-    min: -2
-    max: 2
-    step: 0.1
-  - param: sigma
-    label: "Population SD (σ)"
-    min: 0.5
-    max: 3
-    step: 0.1
   - param: n
     label: "Sample size (n)"
     min: 1
     max: 100
     step: 1
 goal:
-  prompt: |
-    Make the sampling distribution five times narrower than the population
-    standard deviation — i.e. find an $n$ where $\sigma/\sqrt{n} \le \sigma/5$.
-  target: { mu: 0, sigma: 1, n: 25 }
+  prompt: "Make the sampling distribution five times narrower than the population — get the standard error σ/√n down to about 0.2."
+  target: { n: 25 }
   success_when: "n >= 25"
   on_success: |
-    There it is. To shrink the standard error by a factor of 5, you need
-    $n = 25$. By a factor of 10? $n = 100$. By a factor of 100? $n = 10{,}000$.
-    That square-root scaling is why "more data" gets expensive fast — and why
-    sample sizes in the low hundreds are the sweet spot for most applied work.
-  hints:
-    - after_seconds: 25
-      text: "The standard error is σ/√n. You want σ/√n = σ/5."
-    - after_seconds: 50
-      text: "Solve √n = 5. So n = 25."
+    There it is: at $n = 25$ the standard error is $1/\sqrt{25} = 0.2$, five
+    times tighter than the population's $\sigma = 1$. Note the *square root*:
+    cutting the standard error in half takes **four times** the data, not
+    twice. That diminishing return is the central fact of sample-size planning.
 <!-- /block -->
 
 ---
 
 <!-- layer: formal -->
 
-<!-- block: gear, n: 4, label: "TODO — name the formalism" -->
+<!-- block: gear, n: 4, label: "Mean, standard error, and the CLT" -->
 
-## Formal definition
+For a sample of $n$ independent observations with population mean $\mu$ and standard deviation $\sigma$, the sample mean $\bar{X}$ has
 
-The **sampling distribution** of a statistic $T(X_1, \ldots, X_n)$ is the probability distribution of $T$ induced by random sampling.
+$$\mathbb{E}[\bar{X}] = \mu \qquad \text{SE}(\bar{X}) = \frac{\sigma}{\sqrt{n}}.$$
 
-For $X_1, \ldots, X_n$ iid with mean $\mu$ and variance $\sigma^2$:
+The mean is unbiased — centered on the truth. The standard error is the spread of the sampling distribution, and it shrinks like $1/\sqrt{n}$. The **central limit theorem** adds the shape: for large enough $n$, $\bar{X}$ is approximately normal *regardless of the data's shape*. That's why the normal curve, not the data's histogram, governs inference about the mean.
 
-$$E[\bar{X}] = \mu, \quad \text{Var}(\bar{X}) = \frac{\sigma^2}{n}$$
+<!-- block: derivation, title: "Why the standard error is σ/√n", collapsed: true -->
+With independent observations, variances add. The sample mean is $\bar{X} = \frac{1}{n}\sum_i X_i$, so
 
-**Central Limit Theorem.** As $n \to \infty$:
+$$\text{Var}(\bar{X}) = \frac{1}{n^2}\sum_{i=1}^{n}\text{Var}(X_i) = \frac{1}{n^2}\cdot n\sigma^2 = \frac{\sigma^2}{n}.$$
 
-$$\frac{\bar{X} - \mu}{\sigma / \sqrt{n}} \xrightarrow{d} N(0, 1)$$
-
-**Standard error.** $\text{SE}(\bar{X}) = \sigma / \sqrt{n}$, estimated by $s / \sqrt{n}$ when $\sigma$ is unknown.
-
-<!-- block: derivation, title: "Why the standard error scales as 1/√n", collapsed: true -->
-The sample mean of $n$ iid observations is
-
-$$\bar{X} = \frac{1}{n}\sum_{i=1}^{n} X_i$$
-
-If each $X_i$ has variance $\sigma^2$, then by linearity of variance for independent terms:
-
-$$\text{Var}(\bar{X}) = \frac{1}{n^2}\sum_{i=1}^{n} \text{Var}(X_i) = \frac{n \sigma^2}{n^2} = \frac{\sigma^2}{n}$$
-
-The standard error is the square root: $\sigma / \sqrt{n}$. The variance shrinks linearly in $n$; the standard error shrinks as the square root. That's the law of large numbers in numerical form.
+Take the square root to get the standard deviation of $\bar{X}$: $\text{SE} = \sigma/\sqrt{n}$.
 <!-- /block -->
 
 ---
 
-<!-- block: gear, n: 5, label: "TODO — name the code" -->
+<!-- block: gear, n: 5, label: "Build one by resampling" -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: sampling-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: sd-sim -->
 ```python
 import numpy as np
-import matplotlib.pyplot as plt
-from scipy import stats
 
-# Pick a heavily non-normal population — exponential — and watch the sample
-# means of size n approach normality as n grows.
-np.random.seed(42)
-n_samples = 5000
-pop_mean = 2.0
-
-fig, axes = plt.subplots(2, 3, figsize=(11, 6))
-
-# Row 1: exponential population
-axes[0, 0].hist(np.random.exponential(pop_mean, 10000), bins=50,
-                color='#71717a', alpha=0.7, density=True)
-axes[0, 0].set_title('Population: Exponential')
-axes[0, 0].axvline(pop_mean, color='#14b8a6', linestyle='--')
-
-for idx, n in enumerate([5, 30]):
-    means = [np.random.exponential(pop_mean, n).mean() for _ in range(n_samples)]
-    axes[0, idx + 1].hist(means, bins=50, color='#d4d4d8', alpha=0.7, density=True)
-    x = np.linspace(min(means), max(means), 200)
-    axes[0, idx + 1].plot(x, stats.norm.pdf(x, pop_mean, pop_mean / np.sqrt(n)),
-                          color='#14b8a6', linewidth=2, label='N(μ, σ²/n)')
-    axes[0, idx + 1].set_title(f'Sample means, n={n}')
-    axes[0, idx + 1].legend(fontsize=9)
-    axes[0, idx + 1].axvline(pop_mean, color='#14b8a6', linestyle='--')
-
-# Row 2: uniform population
-pop = np.random.uniform(0, 10, 1000000)
-axes[1, 0].hist(pop[:10000], bins=50, color='#71717a', alpha=0.7, density=True)
-axes[1, 0].set_title('Population: Uniform')
-axes[1, 0].axvline(5, color='#14b8a6', linestyle='--')
-
-for idx, n in enumerate([5, 30]):
-    means = [np.random.uniform(0, 10, n).mean() for _ in range(n_samples)]
-    axes[1, idx + 1].hist(means, bins=50, color='#d4d4d8', alpha=0.7, density=True)
-    axes[1, idx + 1].set_title(f'Sample means, n={n}')
-    axes[1, idx + 1].axvline(5, color='#14b8a6', linestyle='--')
-
-plt.suptitle('CLT: any population → normal sample means', fontsize=12, y=1.0)
-plt.tight_layout()
-plt.show()
+# Draw many samples; each gives one sample mean. The spread of those means
+# is the sampling distribution — and it tracks sigma/sqrt(n), not sigma.
+rng = np.random.default_rng(0)
+sigma = 1.0
+for n in [1, 4, 25, 100]:
+    means = rng.normal(0, sigma, size=(100_000, n)).mean(axis=1)
+    print(f"n={n:>3}:  SD of sample means = {means.std():.4f}   "
+          f"(sigma/sqrt(n) = {sigma/np.sqrt(n):.4f})")
 ```
+
+The observed spread of the sample means matches $\sigma/\sqrt{n}$ at every $n$ — the data's own spread stays $\sigma$ throughout.
 
 ---
 
 <!-- block: misconception, inline: true -->
-**"The CLT says my data becomes normal with large samples."**
+**"More data makes the data less spread out."**
 
-*Wrong:* if I collect enough data, my data will follow a normal distribution.
+*Wrong:* collecting a bigger sample shrinks the variability.
 
-*Correct:* the CLT says the **sample mean** (or sum) becomes normal — not the data itself. If your population is skewed, the data stays skewed no matter how much you collect. It's the *average* of the data that goes normal. The shorthand "everything is normal for large $n$" loses exactly this distinction.
+*Correct:* a bigger sample shrinks the spread of your *estimate* (the standard error $\sigma/\sqrt{n}$), not the spread of the *data* (the population $\sigma$, which is a fact about the world and doesn't budge). Adding observations doesn't make people's heights more similar — it makes your estimate of the *average* height more precise. Conflating the two is the most common sampling-distribution mistake.
 <!-- /block -->
 
 ---
@@ -180,5 +103,5 @@ plt.show()
 <!-- block: gear, n: 6, label: "Where it leads" -->
 
 <!-- block: callout, kind: insight -->
-**Where this leads.** **Confidence intervals** are built directly on the sampling distribution of $\bar{X}$ — the critical values and the standard error both come from here. **Hypothesis testing** uses it to define what "surprising under $H_0$" means. And **point estimation**'s bias-variance question is fundamentally a question about an estimator's *sampling distribution*: where does it center, and how much does it spread?
+**Where this leads.** The standard error is the engine of **confidence intervals** ($\bar{x} \pm z \cdot \text{SE}$) and the denominator of the test statistic in **hypothesis testing**. The normal shape comes from the **central limit theorem**. And when $\sigma$ must be estimated from a small sample, the **t-distribution** replaces the normal here.
 <!-- /block -->
