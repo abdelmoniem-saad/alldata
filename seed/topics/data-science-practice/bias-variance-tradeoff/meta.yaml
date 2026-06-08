@@ -1,0 +1,11 @@
+title: "Bias-Variance Tradeoff"
+slug: bias-variance-tradeoff
+domain: data-science-practice
+difficulty: intermediate
+summary: The fundamental tension in modeling — too simple underfits, too flexible overfits, and total error is a U.
+prerequisites: [variance, cross-validation]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 10
+cycle_ported: R
+recall_prompt: "What three components make up expected prediction error, and how do bias and variance move as model complexity increases?"

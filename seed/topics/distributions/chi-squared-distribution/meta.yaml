@@ -1,0 +1,11 @@
+title: "Chi-Squared Distribution"
+slug: chi-squared-distribution
+domain: distributions
+difficulty: intermediate
+summary: What you get when you square and sum standard normals — the distribution behind variance estimates and goodness-of-fit tests.
+prerequisites: [normal-distribution]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 9
+cycle_ported: R
+recall_prompt: "How is a chi-squared variable built from normals, and why is it sharply right-skewed for small degrees of freedom but nearly symmetric for large ones?"

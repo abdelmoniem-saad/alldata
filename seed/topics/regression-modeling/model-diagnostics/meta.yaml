@@ -1,0 +1,11 @@
+title: "Model Diagnostics"
+slug: model-diagnostics
+domain: regression-modeling
+difficulty: intermediate
+summary: Checking whether a regression's assumptions actually hold — mostly by reading the residuals.
+prerequisites: [simple-linear-regression, normal-distribution]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 10
+cycle_ported: R
+recall_prompt: "What does a residuals-vs-fitted plot reveal, and which assumption does each pattern — a funnel, a U-shaped curve — signal is broken?"

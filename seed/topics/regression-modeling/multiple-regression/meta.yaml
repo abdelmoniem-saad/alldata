@@ -1,0 +1,11 @@
+title: "Multiple Linear Regression"
+slug: multiple-regression
+domain: regression-modeling
+difficulty: intermediate
+summary: Predicting an outcome from several predictors at once — and the subtle art of "holding everything else constant."
+prerequisites: [simple-linear-regression]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 11
+cycle_ported: R
+recall_prompt: "What does a coefficient in multiple regression mean, and why can it differ in sign from the simple regression of the same predictor?"

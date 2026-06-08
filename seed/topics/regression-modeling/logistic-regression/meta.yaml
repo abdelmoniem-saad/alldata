@@ -1,0 +1,11 @@
+title: "Logistic Regression"
+slug: logistic-regression
+domain: regression-modeling
+difficulty: intermediate
+summary: Predicting a yes/no outcome by fitting an S-curve of probability — linear regression's classifier cousin.
+prerequisites: [multiple-regression, maximum-likelihood-estimation]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 11
+cycle_ported: R
+recall_prompt: "Why can't you use ordinary linear regression for a binary outcome, and what does the logistic function guarantee about the output?"

@@ -1,0 +1,11 @@
+title: "Likelihood"
+slug: likelihood
+domain: statistical-inference
+difficulty: intermediate
+summary: How well each candidate parameter explains the data you actually saw — probability read backwards.
+prerequisites: [conditional-probability, random-variables]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 9
+cycle_ported: R
+recall_prompt: "Why is the likelihood a function of the parameter rather than the data, and why doesn't it integrate to 1 over the parameter?"

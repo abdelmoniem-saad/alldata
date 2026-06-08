@@ -1,0 +1,11 @@
+title: "T-Tests"
+slug: t-tests
+domain: statistical-inference
+difficulty: intermediate
+summary: Comparing means when the population variance is unknown and the sample is small — the most-used test in practice.
+prerequisites: [hypothesis-testing, t-distribution]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 10
+cycle_ported: R
+recall_prompt: "Why does a t-test use the t-distribution instead of the normal, and what distinguishes a one-sample, two-sample, and paired t-test?"

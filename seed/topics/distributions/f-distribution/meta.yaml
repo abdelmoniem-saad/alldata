@@ -1,0 +1,11 @@
+title: "F-Distribution"
+slug: f-distribution
+domain: distributions
+difficulty: intermediate
+summary: The ratio of two variance estimates — the distribution that decides whether one source of variation is genuinely bigger than another, in ANOVA and regression.
+prerequisites: [chi-squared-distribution]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 10
+cycle_ported: R
+recall_prompt: "What two quantities does an F statistic compare, and why is the F-distribution centered near 1 when there is no real effect?"

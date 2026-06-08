@@ -1,0 +1,11 @@
+title: "Maximum Likelihood Estimation"
+slug: maximum-likelihood-estimation
+domain: statistical-inference
+difficulty: advanced
+summary: Pick the parameter that makes the data you saw most probable — the engine behind most of modern statistics.
+prerequisites: [likelihood]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 10
+cycle_ported: R
+recall_prompt: "What does maximum likelihood estimation optimize, and why do we maximize the log-likelihood instead of the likelihood itself?"

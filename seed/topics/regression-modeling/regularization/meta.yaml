@@ -1,0 +1,11 @@
+title: "Regularization (Ridge & Lasso)"
+slug: regularization
+domain: regression-modeling
+difficulty: advanced
+summary: Deliberately shrinking coefficients to trade a little bias for a lot less variance — and to tame too many predictors.
+prerequisites: [multiple-regression]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 11
+cycle_ported: R
+recall_prompt: "What problem do ridge and lasso solve, and how does lasso's penalty produce exactly-zero coefficients while ridge's does not?"

@@ -239,12 +239,26 @@ Imperative handle on the graph canvas. Computes the AABB of the named slugs (or 
 ### `ForceGraph.visibleDomain`
 Prop that filters the canvas to a single domain. When set, edges whose source or target sits outside the named domain skip drawing; non-matching nodes skip too. Layout simulation still includes everything so positions don't reshuffle between sections. Used by `TourView` for legend-style cluster framing in tour topics. *(cycle: M0)* `code: frontend/src/components/graph/ForceGraph.tsx` (search "visibleDomain").
 
-### Plot library (9 specs)
+### Plot library (23 specs)
 - `gaussian_pdf` — bell curve. Binds `mu, sigma`, and optional `n` — when `n` is bound the curve becomes the sampling distribution of the mean (effective spread σ/√n) and the y-axis auto-rescales so a narrow spike never clips. Optional `ghost` target overlay.
 - `gaussian_cdf` — cumulative normal. Binds `mu, sigma`.
 - `student_t_pdf` — Student's t density over t ∈ [−5, 5] with a dashed N(0,1) reference. Binds `df`. Lanczos lgamma in the normalizing constant; heavy tails at `df=1`, visually onto the normal by `df≈30`. *(cycle: Q0)*
 - `binomial_pmf` — discrete bars. Binds `n, p`. Lanczos lgamma for stability at large `n`.
 - `poisson_pmf` — discrete bars over k = 0…⌈λ+4√λ⌉. Binds `lambda`. Lanczos lgamma in the PMF; right-skewed at small λ, ~symmetric at large λ. *(cycle: Q0)*
+- `exponential_pdf` — λe^−λx over x ≥ 0, mean-1/λ marker. Binds `rate`. *(cycle: R0)*
+- `chi_squared_pdf` — chi-squared density (sum of k squared normals). Binds `df`. *(cycle: R0)*
+- `f_pdf` — F density, ratio of two scaled chi-squareds. Binds `df1, df2`. *(cycle: R0)*
+- `likelihood_curve` — normalized binomial likelihood with the MLE `p̂=k/n` marked; optional `loglik` log-scale. Binds `successes, trials`. *(cycle: R2)*
+- `power_curves` — null vs alternative normals with shaded Type-I / power regions. Binds `effect, alpha, n`. Uses the `normCdf`/`invNorm` helpers. *(cycle: R2)*
+- `beta_posterior` — Beta prior, scaled likelihood, Beta posterior for a proportion. Binds `prior_a, prior_b, successes, trials`. *(cycle: R2)*
+- `added_variable_plot` — marginal vs partial scatter; `controlled` toggles the confounding sign-flip. *(cycle: R4)*
+- `residual_plot` — residuals vs fitted with a y=0 line. Binds `pattern` (random/funnel/curve). *(cycle: R4)*
+- `logistic_curve` — sigmoid over 0/1 points with the p=0.5 boundary. Binds `beta0, beta1`. *(cycle: R4)*
+- `coefficient_path` — ridge/lasso shrinkage paths as λ grows. Binds `lambda, penalty`. *(cycle: R4)*
+- `proportion_test` — two conversion bars + a two-proportion z verdict. Binds `p_a, p_b, n_a, n_b`. *(cycle: R6)*
+- `cv_error_curve` — training vs validation error (U) over complexity, with the validation min. Binds `complexity`. *(cycle: R6)*
+- `bias_variance_curve` — bias², variance, and U-shaped total error. Binds `complexity`. *(cycle: R6)*
+- `missingness_grid` — data grid with MCAR/MAR/MNAR missingness footprints. Binds `mechanism, missing_frac`. *(cycle: R6)*
 - `empirical_histogram` — bins a sample array. Binds `samples` or synthesizes from `mu, sigma`.
 - `scatter_with_fit` — points + least-squares fit. Binds `points` (+ optional `slope, intercept` overrides).
 - `posterior_update` — three-bar P(H) / P(H|+) / P(H|−). Binds `prior, sensitivity, specificity, observed_result`.

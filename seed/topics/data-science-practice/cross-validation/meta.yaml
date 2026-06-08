@@ -1,0 +1,11 @@
+title: "Cross-Validation"
+slug: cross-validation
+domain: data-science-practice
+difficulty: intermediate
+summary: Estimating how well a model will perform on unseen data — by systematically holding parts of it out.
+prerequisites: [simple-linear-regression]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 10
+cycle_ported: R
+recall_prompt: "Why is training error an optimistic estimate of performance, and what is the cardinal rule about the test set in cross-validation?"

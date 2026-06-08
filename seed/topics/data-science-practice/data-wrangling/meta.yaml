@@ -1,0 +1,11 @@
+title: "Data Wrangling"
+slug: data-wrangling
+domain: data-science-practice
+difficulty: intro
+summary: Cleaning, reshaping, and preparing messy real-world data — the unglamorous 80% of every project.
+prerequisites: [random-variables]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 10
+cycle_ported: R
+recall_prompt: "What is a sentinel value, why is it dangerous for summary statistics, and what are the principles of tidy data?"

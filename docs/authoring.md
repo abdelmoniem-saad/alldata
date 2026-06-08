@@ -146,8 +146,8 @@ The plot library reserves a small set of names. Use these when binding to existi
 | `sigma` | number | Standard deviation of a normal distribution |
 | `n` | number | Sample size or trial count. Binomial trials; also narrows `gaussian_pdf` by σ/√n (sampling-error mode) |
 | `p` | number | Success probability (binomial) |
-| `lambda` | number ≥ 0 | Rate / mean of a Poisson distribution (`poisson_pmf`) |
-| `df` | number ≥ 1 | Degrees of freedom of a Student's t distribution (`student_t_pdf`) |
+| `lambda` | number ≥ 0 | Poisson rate/mean (`poisson_pmf`); also the penalty strength in `coefficient_path` |
+| `df` | number ≥ 1 | Degrees of freedom — `student_t_pdf` and `chi_squared_pdf` |
 | `prior` | number ∈ [0,1] | Bayesian prior |
 | `sensitivity` | number ∈ [0,1] | P(+ \| condition) |
 | `specificity` | number ∈ [0,1] | P(− \| ¬condition) |
@@ -156,6 +156,20 @@ The plot library reserves a small set of names. Use these when binding to existi
 | `samples` | number[] | Sample array for `empirical_histogram` |
 | `points` | [x, y][] or {x, y}[] | Points for `scatter_with_fit` |
 | `slope` / `intercept` | number | Optional fit-line override for `scatter_with_fit` |
+| `rate` | number > 0 | Rate λ of an exponential distribution (`exponential_pdf`) |
+| `df1` / `df2` | number ≥ 1 | Numerator / denominator degrees of freedom (`f_pdf`) |
+| `successes` / `trials` | number | Binomial data k, n for `likelihood_curve` / `beta_posterior` |
+| `loglik` | number (0/1) | `likelihood_curve` flag: > 0 draws the log-likelihood |
+| `effect` / `alpha` | number | Standardized effect size and significance level (`power_curves`) |
+| `prior_a` / `prior_b` | number > 0 | Beta prior parameters (`beta_posterior`) |
+| `controlled` | number (0/1) | `added_variable_plot`: 0 = marginal view, 1 = partial (residualized) |
+| `pattern` | "random" \| "funnel" \| "curve" | Residual diagnostic shape (`residual_plot`) |
+| `beta0` / `beta1` | number | Logistic intercept / slope (`logistic_curve`) |
+| `penalty` | "ridge" \| "lasso" | Regularization type (`coefficient_path`) |
+| `p_a` / `p_b` / `n_a` / `n_b` | number | Two-proportion test rates and sample sizes (`proportion_test`) |
+| `complexity` | number | Model-complexity axis (`cv_error_curve`, `bias_variance_curve`) |
+| `mechanism` | "mcar" \| "mar" \| "mnar" | Missingness mechanism (`missingness_grid`) |
+| `missing_frac` | number ∈ [0,1] | Fraction of cells missing (`missingness_grid`) |
 
 New keys are free-form but must be declared in `<!-- block: state -->` so the parser's strict-mode check catches typos.
 
@@ -238,6 +252,20 @@ Pinned right-column visual on desktop. Inline on mobile.
 - `student_t_pdf` — Student's t density over t ∈ [−5, 5], with a dashed N(0,1) reference. Binds `df`; heavy tails at `df=1`, converges onto the normal by `df≈30`.
 - `binomial_pmf` — discrete bars. Binds `n`, `p`.
 - `poisson_pmf` — discrete bars over k = 0…⌈λ+4√λ⌉. Binds `lambda`; right-skewed at small λ, ~symmetric at large λ.
+- `exponential_pdf` — exponential density λe^−λx over x ≥ 0, with a dashed marker at the mean 1/λ. Binds `rate`. *(R0)*
+- `chi_squared_pdf` — chi-squared density; right-skewed at small `df`, → symmetric at large. Binds `df`. *(R0)*
+- `f_pdf` — F density (ratio of two scaled chi-squareds). Binds `df1`, `df2`. *(R0)*
+- `likelihood_curve` — binomial likelihood `p^k(1−p)^(n−k)`, normalized, MLE `p̂=k/n` marked. Binds `successes`, `trials`; optional `loglik` (> 0 → log-likelihood). *(R2)*
+- `power_curves` — null N(0,1) vs alternative N(d,1) with shaded Type-I / power regions; `z*` from `alpha`. Binds `effect`, `alpha`, optional `n`. *(R2)*
+- `beta_posterior` — Beta prior, scaled likelihood, and Beta posterior for a proportion. Binds `prior_a`, `prior_b`, `successes`, `trials`. *(R2)*
+- `added_variable_plot` — marginal vs partial (residualized) scatter; `controlled` toggles the confounding sign-flip. *(R4)*
+- `residual_plot` — residuals vs fitted with a y=0 reference. Binds `pattern` (`random` \| `funnel` \| `curve`). *(R4)*
+- `logistic_curve` — sigmoid σ(β₀+β₁x) over 0/1 points, with the p=0.5 decision boundary. Binds `beta0`, `beta1`. *(R4)*
+- `coefficient_path` — ridge/lasso coefficient shrinkage as the penalty grows. Binds `lambda`, `penalty` (`ridge` \| `lasso`). *(R4)*
+- `proportion_test` — two conversion bars with 95% error bars + a two-proportion z verdict. Binds `p_a`, `p_b`, `n_a`, `n_b`. *(R6)*
+- `cv_error_curve` — training error (falling) vs validation error (U) over complexity, validation min marked. Binds `complexity`. *(R6)*
+- `bias_variance_curve` — bias², variance, and U-shaped total error over complexity. Binds `complexity`. *(R6)*
+- `missingness_grid` — a data grid whose missing cells follow `mechanism` (`mcar` \| `mar` \| `mnar`) at `missing_frac`. *(R6)*
 - `empirical_histogram` — bins a sample array. Binds `samples` (or synthesizes from `mu`, `sigma`).
 - `scatter_with_fit` — points + least-squares line. Binds `points`, optional `slope`, `intercept`.
 - `posterior_update` — three-bar P(H), P(H \| +), P(H \| −). Binds `prior`, `sensitivity`, `specificity`, `observed_result`.

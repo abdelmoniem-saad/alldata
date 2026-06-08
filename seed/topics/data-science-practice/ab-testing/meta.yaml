@@ -1,0 +1,11 @@
+title: "A/B Testing"
+slug: ab-testing
+domain: data-science-practice
+difficulty: intermediate
+summary: Designing and analyzing randomized experiments in practice — and resisting the temptation to peek.
+prerequisites: [hypothesis-testing, p-values, confidence-intervals]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 11
+cycle_ported: R
+recall_prompt: "Why does stopping an A/B test the moment it hits p < 0.05 inflate the false-positive rate, and what should you fix in advance instead?"

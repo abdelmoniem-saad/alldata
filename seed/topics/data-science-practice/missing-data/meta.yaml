@@ -1,0 +1,11 @@
+title: "Missing Data"
+slug: missing-data
+domain: data-science-practice
+difficulty: intermediate
+summary: Handling incomplete datasets — why values are absent decides everything about how to fill (or not fill) the gaps.
+prerequisites: [exploratory-data-analysis, point-estimation]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 11
+cycle_ported: R
+recall_prompt: "What are MCAR, MAR, and MNAR, and why is mean-imputation rarely a safe default?"

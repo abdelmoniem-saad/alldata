@@ -1,0 +1,11 @@
+title: "Statistical Power"
+slug: statistical-power
+domain: statistical-inference
+difficulty: intermediate
+summary: The probability your test detects a real effect — and the lever, sample size, that controls it.
+prerequisites: [hypothesis-testing, p-values]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 10
+cycle_ported: R
+recall_prompt: "What is statistical power, which factors raise it, and why does a non-significant result not prove there is no effect?"

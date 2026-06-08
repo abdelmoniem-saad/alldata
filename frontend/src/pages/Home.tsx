@@ -12,13 +12,13 @@ import SearchDropdown from '../components/SearchDropdown'
 // and stay honest even offline). Snapshot taken at P; the live fetch keeps it
 // from going stale the way the old hardcoded counts did.
 // Offline fallback only — live counts derive from the graph (depth>0, has_content).
-// Kept honest to post-Q reality: probability 10, total 23 across the five domains.
+// Post-R: the curriculum is complete — all 40 topics across the five domains.
 const FALLBACK_TOPIC_COUNTS: Record<string, number> = {
   'probability-foundations': 10,
-  'distributions': 5,
-  'statistical-inference': 5,
-  'regression-modeling': 2,
-  'data-science-practice': 1,
+  'distributions': 8,
+  'statistical-inference': 10,
+  'regression-modeling': 6,
+  'data-science-practice': 6,
 }
 
 const domains = DOMAIN_SLUGS.map(slug => ({

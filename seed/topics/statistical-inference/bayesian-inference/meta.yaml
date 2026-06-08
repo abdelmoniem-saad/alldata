@@ -1,0 +1,11 @@
+title: "Bayesian Inference"
+slug: bayesian-inference
+domain: statistical-inference
+difficulty: advanced
+summary: Updating beliefs with data — priors, likelihoods, and posteriors, with uncertainty carried all the way through.
+prerequisites: [bayes-theorem, likelihood]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 11
+cycle_ported: R
+recall_prompt: "How does Bayesian inference combine prior and likelihood into a posterior, and what happens to the prior's influence as data accumulate?"

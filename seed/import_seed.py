@@ -52,6 +52,20 @@ _KNOWN_PLOT_SPECS = {
     "binomial_pmf",
     "poisson_pmf",       # Q0
     "student_t_pdf",     # Q0
+    "exponential_pdf",   # R0
+    "chi_squared_pdf",   # R0
+    "f_pdf",             # R0
+    "likelihood_curve",  # R2
+    "power_curves",      # R2
+    "beta_posterior",    # R2
+    "added_variable_plot",  # R4
+    "residual_plot",        # R4
+    "logistic_curve",       # R4
+    "coefficient_path",     # R4
+    "proportion_test",      # R6
+    "cv_error_curve",       # R6
+    "bias_variance_curve",  # R6
+    "missingness_grid",     # R6
     "empirical_histogram",
     "scatter_with_fit",
     "posterior_update",

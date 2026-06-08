@@ -1,0 +1,11 @@
+title: "Exponential Distribution"
+slug: exponential-distribution
+domain: distributions
+difficulty: intermediate
+summary: The waiting time until the next event — the continuous twin of the Poisson, set by one rate and defined by a strange lack of memory.
+prerequisites: [poisson-distribution]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 9
+cycle_ported: R
+recall_prompt: "What does the memorylessness of the exponential distribution mean, and why does having already waited a long time not make the next event any more 'due'?"
