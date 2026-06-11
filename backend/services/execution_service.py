@@ -21,6 +21,23 @@ from backend.config import settings
 MAX_OUTPUT_LENGTH = 50_000  # Characters
 
 
+def _fallback_refused() -> dict:
+    """S1: the Docker sandbox is unavailable and unsandboxed local execution
+    is disabled (`SANDBOX_ALLOW_LOCAL_FALLBACK=false`). Refuse loudly rather
+    than run untrusted code on the host."""
+    return {
+        "stdout": "",
+        "stderr": (
+            "Code execution is unavailable: the sandbox isn't running and "
+            "local fallback is disabled on this server."
+        ),
+        "exit_code": -1,
+        "execution_time_ms": 0,
+        "images": [],
+        "truncated": False,
+    }
+
+
 async def execute_code(
     code: str,
     language: str = "python",
@@ -99,6 +116,8 @@ async def _execute_python(code: str, timeout: int, theme: str = "dark") -> dict:
 
         except (FileNotFoundError, NotImplementedError, OSError):
             # Docker not available or asyncio subprocess not supported (Windows)
+            if not settings.sandbox_allow_local_fallback:
+                return _fallback_refused()
             return await _execute_local_python(code, timeout, theme)
 
         elapsed_ms = int((time.monotonic() - start_time) * 1000)
@@ -246,6 +265,8 @@ async def _execute_r(code: str, timeout: int, theme: str = "dark") -> dict:
 
         except (FileNotFoundError, NotImplementedError, OSError):
             # Docker not available or no R image — fall back to local Rscript
+            if not settings.sandbox_allow_local_fallback:
+                return _fallback_refused()
             return await _execute_local_r(code, timeout, theme)
 
         elapsed_ms = int((time.monotonic() - start_time) * 1000)

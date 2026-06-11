@@ -36,6 +36,7 @@ import {
   ReactNode,
 } from 'react'
 import { ContentBlock, Misconception } from '../../api/client'
+import ErrorBoundary from '../ErrorBoundary'
 import PlotBlock from './blocks/PlotBlock'
 import GraphFlythrough from './blocks/GraphFlythrough'
 import ConfusionFlag from './blocks/ConfusionFlag'
@@ -565,17 +566,21 @@ export default function ScrollReader({
               }}
             >
               {pinnedPlot ? (
-                pinnedPlot.block_type === 'graph_view' ? (
-                  <GraphFlythrough
-                    target={String(pinnedMeta.target ?? '')}
-                  />
-                ) : (
-                  <PlotBlock
-                    slug={slug}
-                    meta={pinnedMeta}
-                    ghostOverride={ghostOverride}
-                  />
-                )
+                // S2: a throwing spec degrades to a panel; resetKey gives the
+                // next pinned visual (different anchor) a fresh mount.
+                <ErrorBoundary variant="block" resetKey={pinnedPlot.anchor ?? String(pinnedPlot.id)}>
+                  {pinnedPlot.block_type === 'graph_view' ? (
+                    <GraphFlythrough
+                      target={String(pinnedMeta.target ?? '')}
+                    />
+                  ) : (
+                    <PlotBlock
+                      slug={slug}
+                      meta={pinnedMeta}
+                      ghostOverride={ghostOverride}
+                    />
+                  )}
+                </ErrorBoundary>
               ) : (
                 <div style={{
                   color: 'var(--color-text-muted)', fontSize: 13,

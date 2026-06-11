@@ -1,156 +1,139 @@
-<!-- layer: intuition -->
+<!-- block: state, values: {mu: 450, sigma: 120} -->
 
-## Look Before You Leap
-
-Before building any model, you need to **look at your data**. Exploratory Data Analysis (EDA) is the art of summarizing, visualizing, and understanding a dataset before making assumptions.
-
-EDA answers questions like:
-- What do the distributions look like? Skewed? Bimodal? Outliers?
-- Are there missing values? How many?
-- How are variables related to each other?
-- What patterns or anomalies stand out?
-
-John Tukey, who coined the term, said: *"Far better an approximate answer to the right question than an exact answer to the wrong question."* EDA helps you find the right question.
+<!-- block: plot, spec: empirical_histogram, params: {mu: 450, sigma: 120}, binds: [mu, sigma], anchor: eda-hist, mobile_order: 1 -->
 
 ---
 
-## The EDA Workflow
+<!-- block: gear, n: 1, label: "Look before you model" -->
 
-1. **Summary statistics:** mean, median, standard deviation, min/max, quartiles
-2. **Univariate plots:** histograms, box plots — what does each variable look like?
-3. **Bivariate plots:** scatter plots, correlation matrices — how do variables relate?
-4. **Missing data audit:** where are the gaps?
-5. **Outlier detection:** what points seem unusual?
+# Exploratory data analysis
 
-The golden rule: **plot everything before you compute anything.** Anscombe's quartet proves that summary statistics alone can be deeply misleading.
+Before any model is fit, look at the data. **EDA** is the discipline of summarizing, plotting, and interrogating a dataset *before* making assumptions: What shape are the distributions? Where are the gaps and outliers? Which variables move together? Tukey, who named the practice, put the stakes plainly — an approximate answer to the right question beats an exact answer to the wrong one. EDA is how you find the right question.
 
 ---
 
-<!-- block: code_python, editable: true -->
-```python
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy import stats
+<!-- block: gear, n: 2, label: "The workflow" -->
 
-# Generate a realistic dataset: student performance
-np.random.seed(42)
-n = 200
+A reliable EDA pass runs the same five stations every time:
 
-hours_studied = np.random.exponential(3, n) + 1  # Right-skewed
-hours_studied = np.clip(hours_studied, 0.5, 15)
+1. **Summary statistics** — mean, median, SD, min/max, quartiles. Cheap, and the mean-vs-median gap alone diagnoses skew.
+2. **Univariate plots** — a histogram per variable. Shape first: skewed? bimodal? truncated?
+3. **Bivariate plots** — scatters and a correlation matrix. How do variables relate?
+4. **Missing-data audit** — where are the holes, and do they cluster?
+5. **Outlier check** — which points are extreme, and are they errors or signal?
 
-sleep_hours = np.random.normal(7, 1.5, n)
-sleep_hours = np.clip(sleep_hours, 3, 12)
+The golden rule: **plot before you compute.** Anscombe's quartet — four datasets with identical summary statistics and wildly different shapes — is the standing proof that numbers alone mislead.
 
-# Score depends on study hours, sleep, and noise
-score = 40 + 3 * hours_studied + 2 * sleep_hours + np.random.normal(0, 8, n)
-score = np.clip(score, 0, 100)
+---
 
-# Add some missing values
-missing_idx = np.random.choice(n, 10, replace=False)
-sleep_with_missing = sleep_hours.copy()
-sleep_with_missing[missing_idx] = np.nan
+<!-- block: gear, n: 3, label: "Mean 450, median 320 — now what?" -->
 
-# EDA Dashboard
-fig, axes = plt.subplots(2, 3, figsize=(14, 8))
+The histogram shows a sample of house prices (in $k). Your summary table says **mean = \$450k** but **median = \$320k** — a huge gap.
 
-# 1. Histogram of scores
-axes[0,0].hist(score, bins=25, color='#14b8a6', alpha=0.7, edgecolor='white')
-axes[0,0].axvline(np.mean(score), color='red', linestyle='--', label=f'Mean={np.mean(score):.1f}')
-axes[0,0].axvline(np.median(score), color='green', linestyle='--', label=f'Median={np.median(score):.1f}')
-axes[0,0].set_title('Score Distribution', fontweight='bold')
-axes[0,0].legend(fontsize=8)
+<!-- block: decision, anchor: eda-center -->
+question: |
+  The mean is far above the median. What does that tell you about the shape,
+  and which number should headline your report?
+options:
+  - id: symmetric
+    label: "Nothing special — report the mean, it uses all the data"
+    writes: { mu: 450, sigma: 120 }
+    response: |
+      The gap *is* the signal. In a symmetric distribution mean ≈ median; a
+      mean 40% above the median means something is dragging it up. Reporting
+      the mean as "the typical house" would mislead — most houses cost well
+      under $450k.
+  - id: skewed
+    label: "Right-skewed — a few expensive houses drag the mean up; report the median"
+    writes: { mu: 320, sigma: 90 }
+    response: |
+      Exactly — and the view recenters on the typical home. A long right tail
+      of mansions pulls the mean far above where most houses actually sit.
+      The median resists outliers, so it's the honest "typical" here. First
+      plot to make: this histogram; likely transform for modeling: a log.
+  - id: error
+    label: "The data must be corrupted — investigate before summarizing"
+    writes: { mu: 450, sigma: 120 }
+    response: |
+      Healthy instinct, wrong conclusion. Mean ≫ median is the *expected*
+      signature of prices, incomes, and most bounded-below quantities — a
+      legitimate right skew, not corruption. (Checking a few extreme rows
+      never hurts, but this pattern alone isn't an alarm.)
+correct: skewed
+<!-- /block -->
 
-# 2. Box plots
-axes[0,1].boxplot([hours_studied, sleep_hours, score/10],
-                   labels=['Study hrs', 'Sleep hrs', 'Score/10'],
-                   patch_artist=True,
-                   boxprops=dict(facecolor='#a1a1aa', alpha=0.5))
-axes[0,1].set_title('Variable Distributions', fontweight='bold')
-
-# 3. Study hours (skewed!)
-axes[0,2].hist(hours_studied, bins=25, color='#71717a', alpha=0.7, edgecolor='white')
-axes[0,2].set_title('Study Hours (right-skewed!)', fontweight='bold')
-skew = stats.skew(hours_studied)
-axes[0,2].text(0.7, 0.85, f'Skewness: {skew:.2f}', transform=axes[0,2].transAxes,
-               fontsize=10, bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
-
-# 4. Scatter: study vs score
-axes[1,0].scatter(hours_studied, score, alpha=0.5, color='#14b8a6', s=20)
-r = np.corrcoef(hours_studied, score)[0,1]
-axes[1,0].set_xlabel('Hours Studied')
-axes[1,0].set_ylabel('Score')
-axes[1,0].set_title(f'Study vs Score (r={r:.2f})', fontweight='bold')
-
-# 5. Scatter: sleep vs score
-valid = ~np.isnan(sleep_with_missing)
-axes[1,1].scatter(sleep_hours[valid], score[valid], alpha=0.5, color='#52525b', s=20)
-r2 = np.corrcoef(sleep_hours[valid], score[valid])[0,1]
-axes[1,1].set_xlabel('Sleep Hours')
-axes[1,1].set_ylabel('Score')
-axes[1,1].set_title(f'Sleep vs Score (r={r2:.2f})', fontweight='bold')
-
-# 6. Correlation heatmap
-data = np.column_stack([hours_studied, sleep_hours, score])
-corr = np.corrcoef(data.T)
-im = axes[1,2].imshow(corr, cmap='RdBu_r', vmin=-1, vmax=1)
-axes[1,2].set_xticks([0,1,2])
-axes[1,2].set_yticks([0,1,2])
-axes[1,2].set_xticklabels(['Study', 'Sleep', 'Score'], fontsize=9)
-axes[1,2].set_yticklabels(['Study', 'Sleep', 'Score'], fontsize=9)
-for i in range(3):
-    for j in range(3):
-        axes[1,2].text(j, i, f'{corr[i,j]:.2f}', ha='center', va='center', fontsize=11)
-axes[1,2].set_title('Correlation Matrix', fontweight='bold')
-
-plt.suptitle('EDA Dashboard: Student Performance Data', fontsize=14, y=1.02)
-plt.tight_layout()
-plt.show()
-
-print(f"Dataset: {n} students, {np.sum(np.isnan(sleep_with_missing))} missing sleep values")
-print(f"Score: mean={np.mean(score):.1f}, std={np.std(score):.1f}, range=[{np.min(score):.1f}, {np.max(score):.1f}]")
-print(f"Study hours is right-skewed (skew={skew:.2f}) — consider log transform")
-```
-<!-- expected_output: EDA dashboard with 6 plots -->
+<!-- block: callout, kind: insight, depends_on: eda-center, branch: skewed -->
+This one comparison — mean against median — is the highest-value 10 seconds in EDA. It costs nothing, runs on any numeric column, and immediately tells you whether the "average" you're about to report describes the typical case or a tail.
+<!-- /block -->
 
 ---
 
 <!-- layer: formal -->
 
-## Key EDA Concepts
+<!-- block: gear, n: 4, label: "The numbers behind the look" -->
 
-**Five-number summary:** $(\min, Q_1, \text{median}, Q_3, \max)$
+- **Five-number summary:** $(\min, Q_1, \text{median}, Q_3, \max)$; the box plot is its picture. **IQR** $= Q_3 - Q_1$.
+- **Tukey's fences:** flag $x < Q_1 - 1.5\,\text{IQR}$ or $x > Q_3 + 1.5\,\text{IQR}$ as outliers — a screening rule, not a verdict.
+- **Skewness** $\gamma_1 = \mathbb{E}\big[\big(\tfrac{X-\mu}{\sigma}\big)^3\big]$: positive → long right tail (and mean > median); negative → the reverse.
 
-**Interquartile range:** $\text{IQR} = Q_3 - Q_1$
-
-**Outlier detection (Tukey's fences):**
-- Outlier if $x < Q_1 - 1.5 \cdot \text{IQR}$ or $x > Q_3 + 1.5 \cdot \text{IQR}$
-
-**Skewness:** $\gamma_1 = E\left[\left(\frac{X-\mu}{\sigma}\right)^3\right]$
-- $\gamma_1 > 0$: right-skewed (long right tail)
-- $\gamma_1 < 0$: left-skewed
-- $\gamma_1 = 0$: symmetric
-
-**Kurtosis:** $\gamma_2 = E\left[\left(\frac{X-\mu}{\sigma}\right)^4\right] - 3$
-- $\gamma_2 > 0$: heavier tails than Normal
-- $\gamma_2 < 0$: lighter tails than Normal
+<!-- block: derivation, title: "Why the mean chases the tail", collapsed: true -->
+The mean minimizes squared distance to the data, so each point pulls on it with leverage proportional to its *distance* — a \$3M mansion tugs the mean 10× harder than a \$300k overestimate tugs back. The median minimizes *absolute* distance: every point pulls equally hard regardless of how far it sits. That's the whole robustness story — squared loss chases tails, absolute loss doesn't.
+<!-- /block -->
 
 ---
 
-<!-- block: misconception -->
-**Misconception: "EDA is just making pretty charts."**
+<!-- block: gear, n: 5, label: "Run a first-look pass" -->
 
-*Wrong belief:* EDA is a preliminary step that doesn't produce real findings — the real work is modeling.
+<!-- block: code_python, editable: true, auto_run: true, anchor: eda-code -->
+```python
+import numpy as np
+import matplotlib.pyplot as plt
 
-*Correction:* EDA often reveals the most important insights: unexpected patterns, data quality issues, violated assumptions, and entirely new questions. Many of the most impactful discoveries in data science come from looking at the data carefully, not from fitting complex models. If your EDA is sloppy, your model will inherit all the problems you didn't catch.
+rng = np.random.default_rng(42)
+# A realistic student dataset: skewed study hours, normal-ish sleep, a score
+# driven by both — plus a few missing sleep values, as real data always has.
+n = 200
+study = np.clip(rng.exponential(3, n) + 1, 0.5, 15)          # right-skewed
+sleep = np.clip(rng.normal(7, 1.5, n), 3, 12)
+score = np.clip(40 + 3 * study + 2 * sleep + rng.normal(0, 8, n), 0, 100)
+sleep[rng.choice(n, 10, replace=False)] = np.nan              # missing values
 
-*Why this is common:* Machine learning culture emphasizes model accuracy metrics over understanding the data. Students want to jump straight to "the cool stuff." But the best data scientists spend 60-80% of their time on data understanding and preparation.
+fig, ax = plt.subplots(2, 2, figsize=(11, 7))
+ax[0, 0].hist(score, bins=25, color="#14b8a6", alpha=0.8)
+ax[0, 0].axvline(score.mean(), ls="--", c="tomato", label=f"mean {score.mean():.0f}")
+ax[0, 0].axvline(np.median(score), ls="--", c="seagreen", label=f"median {np.median(score):.0f}")
+ax[0, 0].set_title("Scores"); ax[0, 0].legend(fontsize=8)
+ax[0, 1].hist(study, bins=25, color="#71717a", alpha=0.8)
+ax[0, 1].set_title("Study hours — right-skewed")
+ax[1, 0].scatter(study, score, s=14, alpha=0.5, color="#14b8a6")
+ax[1, 0].set_title(f"Study vs score  (r = {np.corrcoef(study, score)[0,1]:.2f})")
+ok = ~np.isnan(sleep)
+ax[1, 1].scatter(sleep[ok], score[ok], s=14, alpha=0.5, color="#71717a")
+ax[1, 1].set_title(f"Sleep vs score  (r = {np.corrcoef(sleep[ok], score[ok])[0,1]:.2f})")
+plt.tight_layout(); plt.show()
+
+print(f"{n} rows; missing sleep: {int(np.isnan(sleep).sum())}")
+print(f"study hours: mean {study.mean():.2f} vs median {np.median(study):.2f}  -> right skew, consider log")
+```
+
+Four plots and three printed lines already surface the skew, the relationships, and the missing values — everything a model would otherwise trip over silently.
 
 ---
 
-<!-- block: quiz -->
-**Micro-challenge:** You receive a dataset of house prices. The mean price is $450,000 but the median is $320,000. What does this tell you about the distribution? Which measure of center is more appropriate? What plot would you make first?
+<!-- block: misconception, inline: true -->
+**"EDA is just making pretty charts before the real work."**
 
-*Hint:* When mean >> median, the distribution has a specific shape. Think about what pulls the mean up.
+*Wrong:* exploration is a warm-up; modeling is the analysis.
 
-<!-- solution: Mean >> median indicates a RIGHT-SKEWED distribution — a few very expensive houses pull the mean up while most houses are below the mean. The median ($320K) is more appropriate here because it's resistant to outliers and better represents the "typical" house. You'd first make a histogram of prices to see the distribution shape, then possibly a box plot to identify outliers. You might also consider a log transformation to make the data more symmetric for modeling. -->
+*Correct:* EDA routinely produces the most important findings — data-entry errors, leaking variables, violated assumptions, the wrong question being asked. A model inherits every problem the EDA pass didn't catch; sloppy looking guarantees sloppy modeling. Practitioners spend most of their time here precisely because it's where analyses are won or lost.
+<!-- /block -->
+
+---
+
+<!-- layer: both -->
+
+<!-- block: gear, n: 6, label: "Where it leads" -->
+
+<!-- block: callout, kind: insight -->
+**Where this leads.** EDA consumes what [**data wrangling**](/topic/data-wrangling) cleans, and the gaps it surfaces are handled in [**missing data**](/topic/missing-data). The shapes you eyeball here are the **distributions** cluster made precise; the pairwise relationships are [**correlation**](/topic/correlation) and the doorway to **regression**.
+<!-- /block -->

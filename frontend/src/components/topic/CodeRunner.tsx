@@ -41,9 +41,13 @@ export default function CodeRunner({
       setResult(res)
       setShowOutput(true)
     } catch (err: any) {
+      // S1: /api/execute requires auth. Translate the bare 401 into a hint.
+      const stderr = err?.status === 401
+        ? 'Sign in to run code — executions are rate-limited per account.'
+        : err.message || 'Execution failed'
       setResult({
         stdout: '',
-        stderr: err.message || 'Execution failed',
+        stderr,
         exit_code: 1,
         execution_time_ms: 0,
         images: [],
@@ -66,6 +70,9 @@ export default function CodeRunner({
   // user input is the point) and once the user has explicitly clicked Run.
   useEffect(() => {
     if (!autoRun || autoRan || isEditable) return
+    // S1: execution requires auth — don't fire doomed auto-runs for
+    // anonymous readers (manual Run still explains itself via the 401 hint).
+    if (!localStorage.getItem('token')) return
     const el = containerRef.current
     if (!el) return
     const obs = new IntersectionObserver(entries => {

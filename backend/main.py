@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -9,10 +10,28 @@ from backend.api import (
 )
 from backend.config import settings
 
+logger = logging.getLogger("alldata")
+
+_DEV_SECRET = "dev-secret-key-change-in-production"
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
+    # Startup — S1 posture checks.
+    # Local-fallback ON means /api/execute can run code unsandboxed on this
+    # host when Docker is absent. Fine on a dev laptop; never in production.
+    if settings.sandbox_allow_local_fallback:
+        logger.warning(
+            "SANDBOX_ALLOW_LOCAL_FALLBACK is on: without Docker, /api/execute "
+            "runs submitted code directly on this host. Disable in production."
+        )
+    elif settings.secret_key == _DEV_SECRET:
+        # Fallback disabled reads as production posture — refuse to sign
+        # tokens with the published dev secret.
+        raise RuntimeError(
+            "secret_key is still the dev default but the deployment looks "
+            "production-like (local sandbox fallback disabled). Set SECRET_KEY."
+        )
     yield
     # Shutdown
     from backend.database import engine

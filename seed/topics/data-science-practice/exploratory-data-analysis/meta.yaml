@@ -1,2 +1,11 @@
+title: "Exploratory Data Analysis (EDA)"
 slug: exploratory-data-analysis
+domain: data-science-practice
+difficulty: intro
+summary: Looking at your data before modeling — summaries, plots, and the patterns and problems they expose.
+prerequisites: [expectation, variance]
+has_intuition_layer: true
 has_formal_layer: true
+estimated_minutes: 10
+cycle_ported: S
+recall_prompt: "When the mean is far above the median, what does that say about the distribution's shape, and which summary should you report?"

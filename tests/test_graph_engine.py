@@ -141,7 +141,8 @@ class TestLeadsTo:
         await _create_edge(db, a, c)
 
         leads = await graph_engine.get_leads_to(db, "prereq")
-        slugs = {n.slug for n in leads}
+        # G8: get_leads_to returns PrerequisiteEntry (node + why), not bare nodes.
+        slugs = {e.node.slug for e in leads}
         assert slugs == {"unlocked-1", "unlocked-2"}
 
     async def test_empty_for_leaf_topic(self, db: AsyncSession, test_user):

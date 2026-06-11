@@ -35,7 +35,7 @@ import { useEffect, useMemo, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
-import { useTopicStateStore, StateValue } from '../../../stores/topicState'
+import { useTopicStateStore, StateValue, EMPTY_STATE } from '../../../stores/topicState'
 import { safeBool } from '../../../lib/safeExpr'
 
 interface ControlSpec {
@@ -75,8 +75,10 @@ export default function PlaygroundBlock({ slug, anchor, meta }: Props) {
   const controls = meta.controls ?? []
   const goal = meta.goal
 
-  const state = useTopicStateStore(s => s.byTopic[slug]?.state ?? {})
-  const defaults = useTopicStateStore(s => s.byTopic[slug]?.defaults ?? {})
+  // S3: EMPTY_STATE keeps the uninitialized-topic snapshot referentially
+  // stable — a fresh `{}` here trips React's getSnapshot caching check.
+  const state = useTopicStateStore(s => s.byTopic[slug]?.state ?? EMPTY_STATE)
+  const defaults = useTopicStateStore(s => s.byTopic[slug]?.defaults ?? EMPTY_STATE)
   const patchState = useTopicStateStore(s => s.patchState)
   const markSuccess = useTopicStateStore(s => s.markSuccess)
   const clearSuccess = useTopicStateStore(s => s.clearSuccess)

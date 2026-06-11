@@ -926,6 +926,16 @@ def parse_content_md(text: str, topic_name: str = "content") -> list[dict]:
 
         # Check for quiz block
         if "<!-- block: quiz -->" in section:
+            # S4: deprecated. The renderer has no quiz case — the block falls
+            # to the default markdown dump and its solution/hint meta is
+            # silently lost. Author a `decision` (graded, branchable) or an
+            # inline `misconception` instead. Warn (→ hard error under
+            # --strict) so a quiz can't quietly reappear in seed content.
+            _warn(
+                "deprecated `quiz` block — the reader renders it as plain "
+                "markdown and drops its solution/hints. Use a `decision` or "
+                "`misconception` instead."
+            )
             section = section.replace("<!-- block: quiz -->", "").strip()
 
             # Extract solution if present

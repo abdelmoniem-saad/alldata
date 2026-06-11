@@ -3,6 +3,7 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { useThemeStore } from '../stores/themeStore'
 import SearchDropdown from './SearchDropdown'
 import AuthMenu from './AuthMenu'
+import ErrorBoundary from './ErrorBoundary'
 import Logo from './Logo'
 import { GraphNode } from '../api/client'
 
@@ -182,7 +183,11 @@ export default function Layout() {
       )}
 
       <main style={{ flex: 1, overflow: isTopicPage ? 'visible' : 'auto' }}>
-        <Outlet />
+        {/* S2: a page crash keeps the navbar + routing alive; navigating
+            away (pathname change) clears the held error. */}
+        <ErrorBoundary variant="page" resetKey={location.pathname}>
+          <Outlet />
+        </ErrorBoundary>
       </main>
     </div>
   )

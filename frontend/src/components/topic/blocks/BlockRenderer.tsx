@@ -29,6 +29,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
 import { ContentBlock } from '../../../api/client'
+import ErrorBoundary from '../../ErrorBoundary'
 import CodeRunner from '../CodeRunner'
 import PlotBlock from './PlotBlock'
 import DecisionBlock from './DecisionBlock'
@@ -89,20 +90,25 @@ export default function BlockRenderer({
       // 720–800px after the slide padding clamp; matching it makes plots
       // legible at the slide's typography scale.
       if (mode === 'scroll' && !inlinePlots) return null
+      // S2: a throwing plot spec degrades to a panel instead of white-screening.
       return mode === 'slides'
         ? <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <PlotBlock slug={slug} meta={meta} width={720} height={520} />
+            <ErrorBoundary variant="block">
+              <PlotBlock slug={slug} meta={meta} width={720} height={520} />
+            </ErrorBoundary>
           </div>
-        : <PlotBlock slug={slug} meta={meta} />
+        : <ErrorBoundary variant="block"><PlotBlock slug={slug} meta={meta} /></ErrorBoundary>
 
     case 'graph_view':
       // Same rule as `plot` — pinned in scroll mode, full-bleed in slides.
       if (mode === 'scroll' && !inlinePlots) return null
       return mode === 'slides'
         ? <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <GraphFlythrough target={String(meta.target ?? '')} width={720} height={520} />
+            <ErrorBoundary variant="block">
+              <GraphFlythrough target={String(meta.target ?? '')} width={720} height={520} />
+            </ErrorBoundary>
           </div>
-        : <GraphFlythrough target={String(meta.target ?? '')} />
+        : <ErrorBoundary variant="block"><GraphFlythrough target={String(meta.target ?? '')} /></ErrorBoundary>
 
     case 'callout': {
       const kind = String(meta.kind ?? 'insight')

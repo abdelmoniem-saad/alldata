@@ -24,6 +24,11 @@ class Settings(BaseSettings):
     sandbox_timeout_seconds: int = 20
     sandbox_memory_limit: str = "256m"
     sandbox_cpu_limit: float = 0.5
+    # S1: when Docker isn't available, the executor can fall back to running
+    # code directly on the host interpreter — fine on a dev laptop, never in
+    # production. Set SANDBOX_ALLOW_LOCAL_FALLBACK=false to refuse instead;
+    # main.py logs a prominent startup warning while this is on.
+    sandbox_allow_local_fallback: bool = True
     execution_rate_limit_learner: int = 10  # per minute
     execution_rate_limit_professor: int = 60  # per minute
 

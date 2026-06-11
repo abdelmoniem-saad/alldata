@@ -157,6 +157,15 @@ export const useTopicStateStore = create<Store>()(
 )
 
 /**
+ * S3: shared fallback for "topic not initialized yet". A selector that
+ * returns a fresh `{}` literal produces a new reference on every call,
+ * which React's useSyncExternalStore flags ("getSnapshot should be cached")
+ * and treats as a potential infinite re-render. One frozen module-level
+ * object keeps the empty snapshot referentially stable.
+ */
+export const EMPTY_STATE: Record<string, StateValue> = Object.freeze({})
+
+/**
  * Hook: subscribe to one topic's `state` slice.
  *
  * Returns a stable `[state, patch]` tuple. Plots use `state` keys directly
@@ -166,7 +175,7 @@ export function useTopicState(slug: string): [
   Record<string, StateValue>,
   (patch: Record<string, StateValue>) => void,
 ] {
-  const state = useTopicStateStore(s => s.byTopic[slug]?.state ?? {})
+  const state = useTopicStateStore(s => s.byTopic[slug]?.state ?? EMPTY_STATE)
   const patch = useTopicStateStore(s => s.patchState)
   return [state, (p) => patch(slug, p)]
 }
