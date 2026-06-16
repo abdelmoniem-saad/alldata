@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { useThemeStore } from '../stores/themeStore'
 import SearchDropdown from './SearchDropdown'
 import AuthMenu from './AuthMenu'
 import ErrorBoundary from './ErrorBoundary'
+import RouteFallback from './RouteFallback'
 import Logo from './Logo'
 import { GraphNode } from '../api/client'
 
@@ -184,9 +185,13 @@ export default function Layout() {
 
       <main style={{ flex: 1, overflow: isTopicPage ? 'visible' : 'auto' }}>
         {/* S2: a page crash keeps the navbar + routing alive; navigating
-            away (pathname change) clears the held error. */}
+            away (pathname change) clears the held error. T0: Suspense nests
+            inside the boundary so a lazy chunk that fails to load still
+            degrades to the themed panel rather than hanging on the spinner. */}
         <ErrorBoundary variant="page" resetKey={location.pathname}>
-          <Outlet />
+          <Suspense fallback={<RouteFallback />}>
+            <Outlet />
+          </Suspense>
         </ErrorBoundary>
       </main>
     </div>

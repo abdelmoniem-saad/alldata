@@ -116,6 +116,25 @@
   --color-hero-grad: linear-gradient(135deg, #09090b 0%, #52525b 50%, #09090b 100%);
 }
 
+/* ─── High contrast ─────────────────────────────────────────────────────────
+ * T3: the muted/secondary text steps sit below WCAG AA on their backgrounds
+ * (dark muted #52525b on #050505; light muted #a1a1aa on #fdfdfd). When the
+ * OS asks for more contrast, lift them one zinc step toward the foreground.
+ * Token-only overrides — every consumer inherits it, fully reversible.
+ */
+@media (prefers-contrast: more) {
+  :root {
+    --color-text-secondary: #d4d4d8; /* zinc-300 */
+    --color-text-muted: #a1a1aa;     /* zinc-400 — was zinc-600 */
+    --color-border-subtle: #52525b;
+  }
+  [data-theme='light'] {
+    --color-text-secondary: #3f3f46; /* zinc-700 */
+    --color-text-muted: #52525b;     /* zinc-600 — was zinc-400 */
+    --color-border-subtle: #d4d4d8;
+  }
+}
+
 * {
   margin: 0;
   padding: 0;

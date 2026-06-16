@@ -350,6 +350,21 @@ Site-wide CSS — under `prefers-reduced-motion: reduce`, the three motion durat
 ### Focus-visible ring
 2px accent outline + 2px offset on `:focus-visible`. Mouse users don't see it; keyboard users always do. Applied at the token level so every interactive element inherits it without per-component wiring. *(cycle: J6)* `code: frontend/src/styles/tokens.css`.
 
+### High-contrast (`prefers-contrast`)
+The muted/secondary text steps sit below WCAG AA on their backgrounds (dark `--color-text-muted` #52525b on #050505; light #a1a1aa on #fdfdfd). Under `@media (prefers-contrast: more)` they lift one zinc step toward the foreground (and `--color-border-subtle` strengthens) in both themes — token-only overrides, so every consumer inherits it and it's fully reversible. *(cycle: T3)* `code: frontend/src/styles/global.css`.
+
+### Accessibility semantics
+Plot SVGs are presented as a single labeled image: `PlotBlock` wraps the d3 mount in `role="img"` with a per-spec `aria-label` (the `SPEC_LABELS` map — e.g. "Normal distribution bell curve"), which collapses the meaningless d3 internals out of the a11y tree; `GraphFlythrough` is labeled likewise. Playground sliders carry `aria-label` (the control's name) + a live `aria-valuetext`. Decision options were already native `<button>`s with `aria-pressed`. *(cycle: T3)* `code: frontend/src/components/topic/blocks/PlotBlock.tsx`, `PlaygroundBlock.tsx`, `GraphFlythrough.tsx`.
+
+---
+
+## Performance
+
+### Route-level code-splitting
+`App.tsx` lazy-loads every route except the shell (`Layout`) and landing (`Home`) via `React.lazy` + a `<Suspense>` (nested inside the S2 page `ErrorBoundary`, so a failed chunk load degrades to the themed panel rather than hanging). This moves d3 (force graph + 23 plot specs), katex's JS, and react-markdown out of the initial download into per-route async chunks. **Initial entry chunk: 871 KB → 214 KB raw (262 → 68 KB gzip), a 75% cut; the >500 KB Rollup warning is gone.** The heavy lesson surface (`ScrollReader` + plots + katex, ~492 KB) loads only on first `/topic` or fork visit; the force graph (~76 KB) on first `/explore`; both cached after. *(cycle: T0)* `code: frontend/src/App.tsx`, `frontend/src/components/{Layout,RouteFallback}.tsx`.
+
+> **Why `plots/index.tsx` was *not* split into per-family files** (a roadmap candidate): `PlotBlock` imports the `PLOT_SPECS` registry, which eagerly references all 23 spec components, so Rollup emits them in one chunk regardless of file layout — splitting buys **zero bytes** while breaking up shared helpers (`lgamma`, `normCdf`, `betaPdf`, the LCG) and cross-family specs (`gaussian_pdf` spans ~6 topics; `student_t_pdf` → t-distribution + t-tests; `empirical_histogram` → EDA + data-wrangling). It stays one file, sectioned by cycle banners. The on-demand `ScrollReader` chunk's weight is dominated by katex (non-optional), not d3, so d3-submodule slimming was also skipped.
+
 ---
 
 ## Brand & identity

@@ -121,7 +121,11 @@ export default function GraphFlythrough({ target, width = 420, height = 360 }: P
   }
 
   return (
-    <div style={{ width, height, position: 'relative' }}>
+    <div
+      role="img"
+      aria-label="Knowledge graph of statistics topics and their prerequisites"
+      style={{ width, height, position: 'relative' }}
+    >
       <ForceGraph
         ref={handleRef}
         nodes={nodes}

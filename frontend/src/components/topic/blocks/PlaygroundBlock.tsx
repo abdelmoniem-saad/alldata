@@ -200,6 +200,10 @@ export default function PlaygroundBlock({ slug, anchor, meta }: Props) {
                 step={c.step ?? 0.1}
                 value={cur}
                 onChange={e => patchState(slug, { [c.param]: parseFloat(e.target.value) })}
+                // T3: the label span above is visual-only; associate it
+                // programmatically and announce the live value to AT.
+                aria-label={c.label ?? c.param}
+                aria-valuetext={cur.toFixed(2)}
                 style={{ width: '100%', accentColor: 'var(--color-accent)' }}
               />
             </div>

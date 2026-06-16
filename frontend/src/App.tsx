@@ -1,17 +1,22 @@
-import { useEffect } from 'react'
+import { useEffect, lazy } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
-import GraphExplorer from './pages/GraphExplorer'
-import TopicView from './pages/TopicView'
-import LearningPath from './pages/LearningPath'
 import Home from './pages/Home'
-import Datasets from './pages/Datasets'
-import UserGraph from './pages/UserGraph'
-import ForkView from './pages/ForkView'
-import ForkEditor from './pages/ForkEditor'
-import UserForks from './pages/UserForks'
-import ReviewQueue from './pages/ReviewQueue'
 import { startSyncOrchestrator, stopSyncOrchestrator } from './stores/syncOrchestrator'
+
+// T0: route-level code-splitting. `Layout` + `Home` stay eager — the shell
+// and landing page, so first paint never flashes. Everything heavier or
+// rarer is lazy, so d3 (force graph + plots), katex's JS, and the 23 plot
+// specs download only when a graph / topic / fork route is first visited.
+const GraphExplorer = lazy(() => import('./pages/GraphExplorer'))
+const TopicView = lazy(() => import('./pages/TopicView'))
+const LearningPath = lazy(() => import('./pages/LearningPath'))
+const Datasets = lazy(() => import('./pages/Datasets'))
+const UserGraph = lazy(() => import('./pages/UserGraph'))
+const ForkView = lazy(() => import('./pages/ForkView'))
+const ForkEditor = lazy(() => import('./pages/ForkEditor'))
+const UserForks = lazy(() => import('./pages/UserForks'))
+const ReviewQueue = lazy(() => import('./pages/ReviewQueue'))
 
 export default function App() {
   // M1: bootstrap the progress-sync orchestrator once on mount. It owns the
