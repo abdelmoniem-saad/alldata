@@ -29,6 +29,12 @@ interface AuthState {
   token: string | null
   user: AuthUser | null
 
+  /** U0: the sign-in modal's open flag, lifted out of AuthMenu so any
+   *  component (e.g. CodeRunner's run-gate nudge) can summon sign-in. */
+  authModalOpen: boolean
+  requestSignIn: () => void
+  dismissSignIn: () => void
+
   login: (email: string, password: string) => Promise<void>
   register: (email: string, display_name: string, password: string) => Promise<void>
   logout: () => void
@@ -39,19 +45,23 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       token: null,
       user: null,
+      authModalOpen: false,
+
+      requestSignIn: () => set({ authModalOpen: true }),
+      dismissSignIn: () => set({ authModalOpen: false }),
 
       login: async (email, password) => {
         const r = await api.login(email, password)
         // Keep the legacy `token` localStorage key in sync — request()
         // reads from it directly without going through the store.
         localStorage.setItem('token', r.access_token)
-        set({ token: r.access_token, user: r.user })
+        set({ token: r.access_token, user: r.user, authModalOpen: false })
       },
 
       register: async (email, display_name, password) => {
         const r = await api.register(email, display_name, password)
         localStorage.setItem('token', r.access_token)
-        set({ token: r.access_token, user: r.user })
+        set({ token: r.access_token, user: r.user, authModalOpen: false })
       },
 
       logout: () => {
@@ -61,6 +71,9 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'alldata-auth',
+      // U0: persist only identity — never the transient modal flag (else the
+      // sign-in modal would spring open on every refresh).
+      partialize: (s) => ({ token: s.token, user: s.user }),
       // On rehydrate, mirror the persisted token back into the legacy
       // `token` localStorage key. Belt-and-suspenders: the persist
       // middleware writes `alldata-auth`, but `request()` reads `token`.

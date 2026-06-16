@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { api, ExecutionResult } from '../../api/client'
+import { useAuthStore } from '../../stores/authStore'
 
 interface Props {
   code: string
@@ -21,6 +22,14 @@ export default function CodeRunner({
   const [showOutput, setShowOutput] = useState(!!expectedOutput)
   const [isFocused, setIsFocused] = useState(false)
   const [autoRan, setAutoRan] = useState(false)
+  // U1: when an anonymous reader tries to run, show a gentle sign-in card in
+  // the output area instead of a bare 401 (or, for auto-run sims, nothing).
+  const [needsSignIn, setNeedsSignIn] = useState(false)
+  const token = useAuthStore(s => s.token)
+  const requestSignIn = useAuthStore(s => s.requestSignIn)
+  // U2: set when the reader clicks the card's sign-in button, so the run they
+  // wanted fires once auth lands.
+  const pendingRunRef = useRef(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
 
@@ -33,6 +42,14 @@ export default function CodeRunner({
   }, [code])
 
   const run = async () => {
+    // U1: anonymous → show the gentle sign-in card instead of firing a doomed
+    // request. (Server execution requires auth since S1.)
+    if (!token) {
+      setNeedsSignIn(true)
+      setShowOutput(true)
+      return
+    }
+    setNeedsSignIn(false)
     setRunning(true)
     setResult(null)
     const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark'
@@ -41,13 +58,15 @@ export default function CodeRunner({
       setResult(res)
       setShowOutput(true)
     } catch (err: any) {
-      // S1: /api/execute requires auth. Translate the bare 401 into a hint.
-      const stderr = err?.status === 401
-        ? 'Sign in to run code — executions are rate-limited per account.'
-        : err.message || 'Execution failed'
+      // A stale/expired token still 401s — fall back to the same sign-in card.
+      if (err?.status === 401) {
+        setNeedsSignIn(true)
+        setShowOutput(true)
+        return
+      }
       setResult({
         stdout: '',
-        stderr,
+        stderr: err.message || 'Execution failed',
         exit_code: 1,
         execution_time_ms: 0,
         images: [],
@@ -58,6 +77,21 @@ export default function CodeRunner({
       setRunning(false)
     }
   }
+
+  // U2: clicking the card's button summons the global sign-in modal and marks
+  // a pending run; the effect below fires it once auth lands.
+  const handleSignInToRun = () => {
+    pendingRunRef.current = true
+    requestSignIn()
+  }
+  useEffect(() => {
+    if (token && pendingRunRef.current) {
+      pendingRunRef.current = false
+      setNeedsSignIn(false)
+      run()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token])
 
   const reset = () => {
     setCode(initialCode)
@@ -70,16 +104,20 @@ export default function CodeRunner({
   // user input is the point) and once the user has explicitly clicked Run.
   useEffect(() => {
     if (!autoRun || autoRan || isEditable) return
-    // S1: execution requires auth — don't fire doomed auto-runs for
-    // anonymous readers (manual Run still explains itself via the 401 hint).
-    if (!localStorage.getItem('token')) return
     const el = containerRef.current
     if (!el) return
     const obs = new IntersectionObserver(entries => {
       for (const entry of entries) {
         if (entry.isIntersecting && !autoRan) {
           setAutoRan(true)
-          run()
+          // U1: anonymous auto-run shows the sign-in card in the output area
+          // rather than leaving an empty space where a simulation should be.
+          if (!token) {
+            setNeedsSignIn(true)
+            setShowOutput(true)
+          } else {
+            run()
+          }
           obs.disconnect()
           break
         }
@@ -88,7 +126,7 @@ export default function CodeRunner({
     obs.observe(el)
     return () => obs.disconnect()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoRun, autoRan, isEditable])
+  }, [autoRun, autoRan, isEditable, token])
 
   // Both code blocks and simulation blocks use the teal accent (principle 2:
   // one accent only). The branch was a vestige of an earlier per-mode color.
@@ -316,8 +354,42 @@ export default function CodeRunner({
         )}
       </div>
 
+      {/* U1: anonymous run-gate nudge — a gentle conversion card, not a red
+          error, shown where output would be. */}
+      {showOutput && needsSignIn && (
+        <div style={{
+          borderTop: '1px solid var(--color-border-subtle)',
+          background: 'var(--color-bg)',
+          padding: 14,
+        }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            gap: 12, flexWrap: 'wrap',
+            padding: '12px 14px',
+            borderRadius: 'var(--radius)',
+            background: 'var(--color-bg-secondary)',
+            border: '1px solid var(--color-border-subtle)',
+            borderLeft: '3px solid var(--color-accent)',
+          }}>
+            <div style={{ fontSize: 13, color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
+              <strong style={{ color: 'var(--color-text)' }}>
+                Sign in to {isSimulation ? 'run this simulation' : 'run this code'}
+              </strong>
+              {" — it's free, and it saves your progress."}
+            </div>
+            <button
+              onClick={handleSignInToRun}
+              className="btn btn-sm btn-primary"
+              style={{ fontSize: 12, padding: '5px 14px', whiteSpace: 'nowrap' }}
+            >
+              Sign in
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Output */}
-      {showOutput && (
+      {showOutput && !needsSignIn && (
         <div style={{
           borderTop: '1px solid var(--color-border-subtle)',
           background: 'var(--color-bg)',

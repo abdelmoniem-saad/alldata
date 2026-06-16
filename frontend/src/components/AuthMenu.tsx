@@ -20,8 +20,9 @@ import { Link } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 
 export default function AuthMenu() {
-  const { token, user, logout } = useAuthStore()
-  const [open, setOpen] = useState(false)
+  // U0: modal open-state lives in the store now, so CodeRunner's run-gate
+  // nudge (and anything else) can summon sign-in.
+  const { token, user, logout, authModalOpen, requestSignIn, dismissSignIn } = useAuthStore()
   const [popoverOpen, setPopoverOpen] = useState(false)
   const popoverRef = useRef<HTMLDivElement | null>(null)
 
@@ -174,7 +175,7 @@ export default function AuthMenu() {
   return (
     <>
       <button
-        onClick={() => setOpen(true)}
+        onClick={requestSignIn}
         style={{
           padding: '5px 12px',
           borderRadius: 8,
@@ -189,7 +190,7 @@ export default function AuthMenu() {
       >
         Sign in
       </button>
-      {open && <AuthModal onClose={() => setOpen(false)} />}
+      {authModalOpen && <AuthModal onClose={dismissSignIn} />}
     </>
   )
 }

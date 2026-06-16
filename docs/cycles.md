@@ -460,3 +460,27 @@ What existed: a `TopicFork` table scaffolded in an earlier cycle as a professor-
 - **`role="img"` is the right altitude for a d3 plot.** Rather than annotate 23 specs (or every `<path>`), one wrapper in `PlotBlock` labels the whole mount as a single image and hides the meaningless SVG internals from assistive tech — one file covers every spec and the pinned-pane path. Label-at-the-boundary beat label-at-the-leaf.
 
 **Deferred (carry-forward).** d3-submodule slimming (only if a future chunk becomes d3-dominated). The optional gear retrofit (S). vitest harness. Then **U — Pyodide** (in-browser Python execution; retires the server round-trip and the unsandboxed-host concern for readers) and **V — product features** (about/PWA/OG, fork chains, coverage dashboard, full high-contrast theme + WCAG audit, schema expansion).
+
+## U — Run-gate conversion polish  (Pyodide evaluated & declined)
+
+**Intent.** The roadmap's U was "Pyodide — in-browser Python." Before building it, the cycle's first job was to *decide whether to build it at all*, against the project's stated values (simplicity, smoothness, no third-party reliance, low maintenance). The answer was no — and the cycle pivoted to the lighter win the owner actually pointed at: the sign-in-to-run gate as a gentle account nudge.
+
+**The Pyodide decision (declined, recorded so it isn't re-proposed).** Four reasons, each tied to a project fact:
+1. **It conflicts with a feature the owner wants to keep.** Client-side Python needs no server, so the "sign in to run" nudge — which the owner values as a soft, non-pushy account driver — would have nothing to gate, or would have to fake-gate a purely local computation.
+2. **"No third party" forces self-hosting ~10 MB+** of WASM + numpy/pandas/matplotlib wheels into the repo and every deploy, with a multi-second "loading Python…" stall on first run. The opposite of simple and smooth, and there's no lightweight Pyodide.
+3. **Its headline benefits don't apply here.** "Works on static deploys" is moot (the app has a FastAPI backend for auth/progress/graph/forks); "retires the unsandboxed-host risk" was already handled in S1 (auth + rate-limit + `SANDBOX_ALLOW_LOCAL_FALLBACK`).
+4. **It's a permanent parallel execution engine** (worker + loader + a duplicated matplotlib-capture preamble + a `load()` FS shim + numpy/pandas/matplotlib version parity between two runtimes) for a modest "instant re-run" gain on sims that already run server-side in a few hundred ms.
+
+**Shipped instead (the nudge).**
+- **U0 — sign-in made globally invocable.** Lifted the modal's open-state out of `AuthMenu` into `authStore` (`authModalOpen` + `requestSignIn`/`dismissSignIn`, `partialize`d out of persistence so it never reopens on refresh). The navbar modal is reused as-is; now anything can summon it.
+- **U1 — the `SignInToRun` card.** S1 dumped a bare red 401 into the output box on manual Run and *silently skipped* anonymous auto-run sims (a reader saw nothing where a simulation should be). Both paths now render a quiet themed card — "Sign in to run … — it's free, and it saves your progress" — where the output would go.
+- **U2 — resume-after-sign-in.** Clicking the card sets a pending-run flag and opens the modal; when the auth token lands, the run the reader wanted fires on its own. Scroll → card → sign in → the simulation just runs.
+- **U3 — CI housekeeping.** Bumped `checkout`/`setup-node`/`setup-python` to `@v6` (current Node-24-native majors) and the build Node to 22, clearing the imminent Node-20 deprecation.
+
+**Retrospective.**
+- **"Should we build it?" is a legitimate first phase.** The most valuable output of U was *not building Pyodide.* Evaluating the roadmap item against the project's actual values + architecture — before writing any code — turned a heavy, maintenance-bearing feature into a tiny, aligned one. A roadmap is a hypothesis, not a contract; the owner's two clarifying answers (keep the sign-in nudge; no third party; simplicity is core) were enough to falsify it.
+- **The feature the owner already liked was the cheapest win available.** They'd said the sign-in gate gently drives accounts "without pushing too hard." U just made that gate *good* — a conversion card with auto-resume instead of a red error and a silent dead-spot. Listen for the thing the user already values and polish it.
+- **A frontend-only cycle with a hard "no backend changes" boundary keeps verification trivial.** Because U touched no backend, the 53 tests were green by construction; the whole risk surface was three frontend files, verified live in the browser (anonymous → card → sign in → sim auto-runs).
+- **Catching the CI-broke-on-Linux issue first mattered.** This cycle opened with `main` red (the `lib/` files were gitignored by the Python template's bare `lib/` — invisible on Windows, fatal on the first Linux CI run). Fixed and pushed before any U work; a reminder that the *first* Linux CI run will surface every case/tracking assumption a Windows dev never hit.
+
+**Deferred (carry-forward).** Pyodide is **off the roadmap** (decision above). Remaining: d3-submodule slimming (gated), the optional gear retrofit, a vitest harness, Redis-backed limiting if multi-process. Next is **V — product features**: `/about` + PWA manifest + maskable icons, per-topic dynamic OG images, fork chains + merge-back signal aggregation, a content-coverage author view, a full high-contrast theme + WCAG audit, and eventually schema expansion into new domains.
