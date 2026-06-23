@@ -1,0 +1,22 @@
+# W0 — R sandbox image. The executor (`backend/services/execution_service.py`
+# `_execute_r`) expects an image named `settings.sandbox_r_image`
+# (default `alldata-sandbox-r:latest`). Build it, then run the API with
+# SANDBOX_R_ENABLED=true so the UI's R toggle lights up:
+#
+#   docker build -f infra/Dockerfile.sandbox-r -t alldata-sandbox-r:latest .
+#   SANDBOX_R_ENABLED=true uvicorn backend.main:app
+#
+# Mirrors infra/Dockerfile.sandbox (the Python image): a small, pinned stats
+# package set and a non-root user; containers are spawned with `Rscript`.
+FROM r-base:4.4.1
+
+# Core stats / tidyverse-lite set for lesson R snippets. Kept small on purpose
+# (matching the Python image's restraint) — extend only when R content needs it.
+RUN R -e "install.packages(c('ggplot2','dplyr','tidyr'), repos='https://cloud.r-project.org')"
+
+# Non-root execution user, mirroring the Python sandbox.
+RUN useradd -m -s /bin/bash sandbox
+USER sandbox
+WORKDIR /home/sandbox
+
+# No CMD — containers are spawned with `Rscript /home/sandbox/script.R`.

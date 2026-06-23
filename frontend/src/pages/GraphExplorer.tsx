@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import ForceGraph, { ForceGraphHandle } from '../components/graph/ForceGraph'
 import GraphSidebar from '../components/graph/GraphSidebar'
 import { useGraphStore } from '../stores/graphStore'
@@ -228,6 +228,23 @@ export default function GraphExplorer() {
 
   return (
     <div style={{ display: 'flex', height: '100%' }}>
+      {/* V3: keyboard/screen-reader fallback for the mouse-driven force graph.
+          Visually hidden (clip) but in the tab order and read by AT, so the
+          same topics the graph shows are reachable without a pointer. */}
+      <nav
+        aria-label="All topics — list view"
+        style={{
+          position: 'absolute', width: 1, height: 1, padding: 0, margin: -1,
+          overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap', border: 0,
+        }}
+      >
+        <ul>
+          {nodes.filter(n => n.depth > 0).map(n => (
+            <li key={n.slug}><Link to={`/topic/${n.slug}`}>{n.title}</Link></li>
+          ))}
+        </ul>
+      </nav>
+
       {/* Graph canvas */}
       <div style={{ flex: 1, position: 'relative' }}>
         <ForceGraph

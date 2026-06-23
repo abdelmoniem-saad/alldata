@@ -16,6 +16,15 @@ router = APIRouter()
 _PROFESSOR_TIER = {UserRole.PROFESSOR.value, UserRole.EDITOR.value, UserRole.ADMIN.value}
 
 
+@router.get("/capabilities")
+async def capabilities():
+    """V0: which execution languages are runnable here ({"python": bool,
+    "r": bool}). No auth — pure capability discovery the UI uses to gate the
+    R language toggle so readers never hit an "R is not installed" dead end.
+    """
+    return execution_service.runtime_capabilities()
+
+
 @router.post("", response_model=ExecutionResponse)
 async def execute_code(data: ExecutionRequest, user: CurrentUser):
     """Execute code in a sandboxed environment.

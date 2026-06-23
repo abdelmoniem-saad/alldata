@@ -7,6 +7,26 @@ live here.
 """
 
 from backend.services.rate_limit import SlidingWindowLimiter
+from backend.services.execution_service import runtime_capabilities
+from backend.config import settings
+
+
+class TestRuntimeCapabilities:
+    """W0: R is reported runnable only with a real R runtime."""
+
+    def test_python_always_available(self):
+        assert runtime_capabilities()["python"] is True
+
+    def test_r_enabled_flag_forces_true(self):
+        original = settings.sandbox_r_enabled
+        try:
+            settings.sandbox_r_enabled = True
+            assert runtime_capabilities()["r"] is True
+        finally:
+            settings.sandbox_r_enabled = original
+
+    def test_r_is_bool(self):
+        assert isinstance(runtime_capabilities()["r"], bool)
 
 
 class TestSlidingWindow:

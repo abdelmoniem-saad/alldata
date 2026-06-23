@@ -146,3 +146,14 @@ class TestGraph:
         })
         assert resp.status_code == 201
         assert resp.json()["edge_type"] == "prerequisite"
+
+
+class TestExecuteCapabilities:
+    """V0: capability discovery the UI uses to gate the R language toggle."""
+
+    async def test_capabilities_no_auth(self, client: AsyncClient):
+        resp = await client.get("/api/execute/capabilities")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["python"] is True
+        assert isinstance(data["r"], bool)

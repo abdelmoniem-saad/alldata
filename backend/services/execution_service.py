@@ -11,6 +11,7 @@ Architecture:
 import asyncio
 import base64
 import os
+import shutil
 import tempfile
 import time
 from pathlib import Path
@@ -19,6 +20,20 @@ from backend.config import settings
 
 
 MAX_OUTPUT_LENGTH = 50_000  # Characters
+
+
+def runtime_capabilities() -> dict:
+    """V0: which languages can actually run in this deployment.
+
+    Python is always available (the sandbox/host has numpy/pandas/matplotlib).
+    R is reported runnable only when there's a *real* R runtime: `Rscript` on
+    PATH (local fallback), or `SANDBOX_R_ENABLED` set by a deployment that has
+    built the sandbox-r image (W0). Docker being present is *not* sufficient —
+    the base sandbox image ships no R, so probing for `docker` alone would
+    re-create the "R is not installed" dead end the UI is trying to avoid.
+    """
+    r_available = bool(shutil.which("Rscript")) or settings.sandbox_r_enabled
+    return {"python": True, "r": r_available}
 
 
 def _fallback_refused() -> dict:

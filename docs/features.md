@@ -172,6 +172,10 @@ Server-executed code blocks. `simulation` flags the runner with a teal indicator
 ### Run-gate nudge
 The S1 sign-in requirement is presented as a gentle conversion moment rather than friction. An anonymous reader who hits Run — or scrolls to an `auto_run` simulation — sees an inline card in the output area ("Sign in to run … — it's free, and it saves your progress") instead of a bare red 401 or (for auto-run) an empty space. The card's button summons the global sign-in modal (its open-state lives in `authStore` so any component can trigger it — `requestSignIn()`), and on success the run the reader wanted **fires automatically** (a pending-run flag resolved when the auth token lands). Server execution itself is unchanged from S1. *(cycle: U; Pyodide/client-side execution was evaluated and declined — see cycles.md)* `code: frontend/src/components/topic/CodeRunner.tsx`, `frontend/src/stores/authStore.ts`, `frontend/src/components/AuthMenu.tsx`.
 
+**V0 follow-ups.** (a) The modal now renders via `createPortal(…, document.body)` — on topic pages it's inside the auto-hide navbar, whose `transform` made the `position:fixed` modal a descendant of a transformed containing block and hid it until hover; the portal fixes that. (b) The **R** language toggle only appears when R can actually run: `GET /api/execute/capabilities` reports R's availability and the toggle hides R otherwise, so readers never hit the "R is not installed" dead end. (c) The pinned-viz aside drops from `top: header+32px` to `header+14vh` so it rests between the top and the vertical center. *(cycle: V0)*
+
+**R runtime — honest by default (W0).** R is supported by the executor (`_execute_r`) but **unprovisioned by default**: the base sandbox image ships no R and most hosts lack `Rscript`, so there's no authored R content yet. `runtime_capabilities()` reports `r: true` only with a *real* R runtime — `Rscript` on PATH (local fallback) **or** `SANDBOX_R_ENABLED=true` — so Docker merely being present no longer lights up a toggle that would dead-end (the base image has no R). To enable R: install R locally, or in a deployment build `infra/Dockerfile.sandbox-r` (→ `alldata-sandbox-r:latest`) and set `SANDBOX_R_ENABLED=true`. *(cycle: W0)* `code: backend/config.py (sandbox_r_enabled), backend/services/execution_service.py (runtime_capabilities), infra/Dockerfile.sandbox-r`.
+
 ### Crash isolation (ErrorBoundary)
 Two altitudes of containment. **Block-level:** every plot / graph-flythrough mount (BlockRenderer's `plot`/`graph_view` cases and ScrollReader's pinned pane) is wrapped — a throwing D3 spec degrades to a quiet themed panel and the lesson keeps reading; the pinned pane's boundary resets per anchor so the next visual gets a fresh mount. **Page-level:** `Layout` wraps the routed `<Outlet/>` — a page crash keeps the navbar alive and clears on navigation. The only class component in the codebase, by necessity. *(cycle: S2)* `code: frontend/src/components/ErrorBoundary.tsx`, `Layout.tsx`, `blocks/BlockRenderer.tsx`, `topic/ScrollReader.tsx`.
 
@@ -356,8 +360,11 @@ Site-wide CSS — under `prefers-reduced-motion: reduce`, the three motion durat
 ### High-contrast (`prefers-contrast`)
 The muted/secondary text steps sit below WCAG AA on their backgrounds (dark `--color-text-muted` #52525b on #050505; light #a1a1aa on #fdfdfd). Under `@media (prefers-contrast: more)` they lift one zinc step toward the foreground (and `--color-border-subtle` strengthens) in both themes — token-only overrides, so every consumer inherits it and it's fully reversible. *(cycle: T3)* `code: frontend/src/styles/global.css`.
 
+### High-contrast theme (selectable)
+A third, user-selectable theme beyond the OS-driven `prefers-contrast` bump. `themeStore` is now `'dark' | 'light' | 'high-contrast'` and the navbar control cycles all three (icon = current theme; persisted in `alldata-theme`). The `[data-theme='high-contrast']` token block is dark-based: pure-black ground, near-white text at every step, strong always-visible borders (`#7a7a7a`), a brighter accent, and domain hues both brightened and spread across luminance so they stay separable at node scale. (Full non-hue/pattern domain encoding remains in the deferred full-WCAG track.) *(cycle: V2)* `code: frontend/src/stores/themeStore.ts`, `frontend/src/styles/global.css`, `Layout.tsx`.
+
 ### Accessibility semantics
-Plot SVGs are presented as a single labeled image: `PlotBlock` wraps the d3 mount in `role="img"` with a per-spec `aria-label` (the `SPEC_LABELS` map — e.g. "Normal distribution bell curve"), which collapses the meaningless d3 internals out of the a11y tree; `GraphFlythrough` is labeled likewise. Playground sliders carry `aria-label` (the control's name) + a live `aria-valuetext`. Decision options were already native `<button>`s with `aria-pressed`. *(cycle: T3)* `code: frontend/src/components/topic/blocks/PlotBlock.tsx`, `PlaygroundBlock.tsx`, `GraphFlythrough.tsx`.
+Plot SVGs are presented as a single labeled image: `PlotBlock` wraps the d3 mount in `role="img"` with a per-spec `aria-label` (the `SPEC_LABELS` map — e.g. "Normal distribution bell curve"), which collapses the meaningless d3 internals out of the a11y tree; `GraphFlythrough` is labeled likewise. Playground sliders carry `aria-label` (the control's name) + a live `aria-valuetext`. Decision options were already native `<button>`s with `aria-pressed`. **V3 adds:** the CodeRunner output is an `aria-live="polite"` region (results are announced when a run finishes), and `/explore` carries a visually-hidden but tab-order/AT-reachable "All topics — list view" `<nav>` of topic links so the mouse-driven force graph isn't a keyboard dead end. *(cycles: T3; V3)* `code: frontend/src/components/topic/blocks/PlotBlock.tsx`, `PlaygroundBlock.tsx`, `GraphFlythrough.tsx`, `topic/CodeRunner.tsx`, `pages/GraphExplorer.tsx`.
 
 ---
 
@@ -435,6 +442,9 @@ Domains prefixed with `_` are hidden navigation surfaces — filtered from `/exp
 
 ## Public surfaces
 
+### `/about`
+The public "why" — a short, on-brand page (lazy route) drawn from the canonical identity sources (`docs/identity.md` + `docs/vision.md`): the tagline, the ask → act → explain loop, the one-graph thesis, and the what-it-is / what-it-isn't lists, with links into the graph. Linked from the navbar. *(cycle: V1)* `code: frontend/src/pages/About.tsx`.
+
 ### `/u/:username` — public graph snapshot
 Read-only graph rendered with someone else's progress. Routes:
 - `/u/me` — reads local `progressStore`. Shareable URL for the *viewer*'s own progress.
@@ -447,6 +457,12 @@ A user's editable copy of a topic, rendered through the same `ScrollReader` the 
 
 ### Forks — editor (`/u/me/topic/:slug/edit`)
 Two-pane editor for a fork you own: a monospace textarea on the left bound to the fork's `markdown_source`, a live `ScrollReader` preview on the right. Edits debounce 400ms then re-parse via `POST /api/forks/preview`; Save (button or Cmd/Ctrl-S) persists via `PUT`. Parser warnings surface in a strip above the preview. *(cycle: N)* `code: frontend/src/pages/ForkEditor.tsx`.
+
+### Forks — authoring toolbar (W1)
+A toolbar above the source textarea drops *canonical* directive scaffolds at the cursor so a contributor needn't memorize the `<!-- block: … -->` vocabulary: **H2 / Bold / Italic** (inline, wrap-selection), **Section / Callout / Misconception**, **Decision / Playground / Simulation**, **State**, and **Plot…**. Block buttons frame the insert with blank lines so it parses cleanly and leave the caret after it; inline buttons wrap the current selection. A trailing **? reference** affordance hovers the directive cheat-sheet (mirrors `authoring.md`) and an "edits render live →" hint points at the preview. Pure text transforms — the substrate stays plain `content.md`, which the merge-back diff depends on. *(cycle: W1, W3)* `code: frontend/src/components/topic/ForkEditorToolbar.tsx`.
+
+### Forks — plot picker (W2)
+The **Plot…** toolbar button opens a modal listing the whole plot library — all 23 specs grouped (Distributions, Inference & testing, Bayesian, Regression, Model & data) with each spec's label and bound state keys, plus a `graph_view` tour-step insert. Picking one inserts a matched `state` + `plot` directive pair seeded with the spec's default params and a generated anchor, so the visualization renders in the preview immediately and reacts to its binds. The label/params/binds metadata lives in a shared catalog (`lib/plotSpecs.ts`) that the picker and `PlotBlock`'s a11y labels both read — one source of truth, mirroring the `PLOT_SPECS` / `_KNOWN_PLOT_SPECS` discipline. Rendered through a portal to `document.body` (like the auth modal) so the editor's layout can't clip it. *(cycle: W2)* `code: frontend/src/components/topic/PlotPicker.tsx, frontend/src/lib/plotSpecs.ts`.
 
 ### Forks — listing (`/u/:username/forks`)
 Card grid of a user's forks. `/u/me/forks` shows your own with edit/delete; another user's listing is read-only. Linked from the navbar account popover. *(cycle: N)* `code: frontend/src/pages/UserForks.tsx`.
@@ -486,6 +502,7 @@ Visit any topic with this query string. Blocks the user has flagged with the con
 | `GET /api/topics/{slug}` | Single topic + all content blocks + misconceptions. | seed-era |
 | `GET /api/topics/search?q=` | Alt-search (keyword-literal). | seed-era |
 | `POST /api/execute` | Run Python or R in the sandbox, return stdout / stderr / images. Auth-required + per-user rate limit. | seed-era; S1 — hardened |
+| `GET /api/execute/capabilities` | `{python, r}` — which languages are runnable here; gates the R toggle. No auth. | V0 |
 | `GET /api/datasets` | Manifest + reverse index of topics-per-dataset. | K5 |
 | `GET /api/datasets/{name}` | Stream the CSV file. | K5 |
 | `GET /api/users/{username}/snapshot` | Public progress snapshot. Reads aggregated completed/in-progress slugs from `UserProgress`. | K7; M1 — wired to real data |

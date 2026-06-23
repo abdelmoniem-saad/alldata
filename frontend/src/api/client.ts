@@ -324,6 +324,11 @@ export const api = {
       body: JSON.stringify({ code, language, theme }),
     }),
 
+  // V0: which languages can actually run here — the UI gates the R toggle on
+  // this so readers never hit an "R is not installed" dead end.
+  getExecuteCapabilities: () =>
+    request<{ python: boolean; r: boolean }>('/execute/capabilities'),
+
   // Auth
   login: (email: string, password: string) =>
     request<{ access_token: string; user: any }>('/auth/login', {

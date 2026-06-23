@@ -15,6 +15,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 
 import { useAuthStore } from '../stores/authStore'
@@ -190,7 +191,11 @@ export default function AuthMenu() {
       >
         Sign in
       </button>
-      {authModalOpen && <AuthModal onClose={dismissSignIn} />}
+      {/* V0: portal to document.body so the fixed-position modal escapes the
+          topic-page auto-hide navbar's `transform` (a transformed ancestor
+          becomes the containing block for position:fixed, which otherwise
+          hid the modal until the navbar was hovered). */}
+      {authModalOpen && createPortal(<AuthModal onClose={dismissSignIn} />, document.body)}
     </>
   )
 }

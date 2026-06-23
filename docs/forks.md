@@ -64,6 +64,23 @@ as spaces) — the same lookup the K7 public-snapshot route uses.
   `decision`, `playground`, `callout`, `derivation`, `code_*`, `graph_view`,
   `dataset`, paired `pair_id` code blocks, everything. See
   [`authoring.md`](authoring.md).
+- **You don't have to memorize the directive vocabulary (W).** A toolbar
+  above the source pane inserts ready-to-fill scaffolds at the cursor —
+  headings and inline **bold**/*italic*, plus `Section`, `Callout`,
+  `Misconception`, `Decision`, `Playground`, `Simulation`, and `State`. Block
+  inserts are framed with blank lines so they parse cleanly; inline buttons
+  wrap the current selection. A **? reference** affordance hovers a directive
+  cheat-sheet. *(`frontend/src/components/topic/ForkEditorToolbar.tsx`)*
+- **The `Plot…` button opens the plot picker (W).** It lists the whole plot
+  library — all 23 specs grouped by family, each with its label and bound
+  state keys, plus a `graph_view` tour-step. Picking one inserts a matched
+  `state` + `plot` pair seeded with sensible defaults and a generated anchor,
+  so the visualization renders in the preview immediately and reacts to its
+  binds. The shared catalog is `frontend/src/lib/plotSpecs.ts`.
+  *(`frontend/src/components/topic/PlotPicker.tsx`)*
+- The source stays plain `content.md` — the toolbar and picker only insert
+  text. (The merge-back diff is computed on that markdown, so a rich-text
+  substrate would break it; this is insert-assist, deliberately not WYSIWYG.)
 - `--strict` validation is **not** enforced on fork content — a fork can be
   a work in progress. When a directive's YAML body fails to parse, the J3
   parse-error fallback renders the offending block visibly inline (in a

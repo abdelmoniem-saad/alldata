@@ -8,6 +8,7 @@ import { startSyncOrchestrator, stopSyncOrchestrator } from './stores/syncOrches
 // and landing page, so first paint never flashes. Everything heavier or
 // rarer is lazy, so d3 (force graph + plots), katex's JS, and the 23 plot
 // specs download only when a graph / topic / fork route is first visited.
+const About = lazy(() => import('./pages/About'))
 const GraphExplorer = lazy(() => import('./pages/GraphExplorer'))
 const TopicView = lazy(() => import('./pages/TopicView'))
 const LearningPath = lazy(() => import('./pages/LearningPath'))
@@ -32,6 +33,7 @@ export default function App() {
     <Routes>
       <Route element={<Layout />}>
         <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
         <Route path="/explore" element={<GraphExplorer />} />
         <Route path="/topic/:slug" element={<TopicView />} />
         <Route path="/path" element={<LearningPath />} />

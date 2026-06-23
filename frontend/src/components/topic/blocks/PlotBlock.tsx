@@ -20,6 +20,7 @@
 import { useMemo } from 'react'
 import { useShallow } from 'zustand/shallow'
 import { getPlotSpec } from './plots'
+import { SPEC_LABELS } from '../../../lib/plotSpecs'
 import { useTopicStateStore, StateValue } from '../../../stores/topicState'
 
 interface Props {
@@ -31,38 +32,9 @@ interface Props {
   height?: number
 }
 
-/**
- * T3: a11y labels for the SVG plots. Each spec renders a bare `<svg>` that's
- * meaningless to a screen reader; wrapping the mount in `role="img"` with one
- * of these labels presents the whole plot as a single described image (the
- * role hides the SVG's d3 internals from the a11y tree). Keyed by spec name —
- * mirror new entries here when `PLOT_SPECS` grows.
- */
-const SPEC_LABELS: Record<string, string> = {
-  gaussian_pdf: 'Normal distribution bell curve',
-  gaussian_cdf: 'Normal distribution cumulative curve',
-  binomial_pmf: 'Binomial distribution bar chart',
-  poisson_pmf: 'Poisson distribution bar chart',
-  student_t_pdf: "Student's t distribution curve with a normal reference",
-  exponential_pdf: 'Exponential distribution density curve',
-  chi_squared_pdf: 'Chi-squared distribution density curve',
-  f_pdf: 'F-distribution density curve',
-  likelihood_curve: 'Likelihood curve over a parameter',
-  power_curves: 'Null and alternative distributions with shaded power regions',
-  beta_posterior: 'Bayesian prior, likelihood, and posterior curves',
-  added_variable_plot: 'Added-variable (partial regression) scatter plot',
-  residual_plot: 'Residuals versus fitted values scatter plot',
-  logistic_curve: 'Logistic regression S-curve over binary outcomes',
-  coefficient_path: 'Regularization coefficient shrinkage paths',
-  proportion_test: 'Two-proportion comparison bars with confidence intervals',
-  cv_error_curve: 'Training versus validation error curve over complexity',
-  bias_variance_curve: 'Bias-variance decomposition curve',
-  missingness_grid: 'Data grid showing the missing-value pattern',
-  empirical_histogram: 'Histogram of a sample',
-  scatter_with_fit: 'Scatter plot with a least-squares fit line',
-  posterior_update: 'Bayesian posterior probability bars',
-  population_dot_grid: 'Population dot grid',
-}
+// T3: a11y labels live in `lib/plotSpecs` (`SPEC_LABELS`) so the plot picker
+// and this renderer share one map. `role="img"` + the label presents each SVG
+// as a single described image, hiding the d3 internals from the a11y tree.
 
 export default function PlotBlock({ slug, meta, ghostOverride, width, height }: Props) {
   const spec = String(meta.spec ?? '')

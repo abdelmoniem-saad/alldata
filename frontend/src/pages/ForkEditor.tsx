@@ -20,6 +20,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { api, ContentBlock, Misconception } from '../api/client'
 import ScrollReader from '../components/topic/ScrollReader'
+import ForkEditorToolbar from '../components/topic/ForkEditorToolbar'
+import PlotPicker from '../components/topic/PlotPicker'
 import { useAuthStore } from '../stores/authStore'
 import '../styles/editor.css'
 
@@ -50,11 +52,48 @@ export default function ForkEditor() {
   // the ForkDetail response; refreshed when the owner suggests.
   const [suggestionStatus, setSuggestionStatus] = useState<'pending' | 'accepted' | 'rejected' | null>(null)
   const [suggesting, setSuggesting] = useState(false)
+  // W2: the plot/graph picker modal.
+  const [pickerOpen, setPickerOpen] = useState(false)
 
   const scrollRef = useRef<HTMLDivElement | null>(null)
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const previewTimer = useRef<number | null>(null)
 
   const dirty = source !== savedSource
+
+  // W1: insert a directive scaffold at the cursor, framed with blank lines so
+  // it parses cleanly; leave the caret just after it.
+  const insertBlock = (snippet: string) => {
+    const ta = textareaRef.current
+    const start = ta?.selectionStart ?? source.length
+    const end = ta?.selectionEnd ?? source.length
+    const before = source.slice(0, start)
+    const after = source.slice(end)
+    const lead = before === '' || before.endsWith('\n\n') ? '' : before.endsWith('\n') ? '\n' : '\n\n'
+    const trail = after === '' || after.startsWith('\n\n') ? '' : after.startsWith('\n') ? '\n' : '\n\n'
+    const inserted = lead + snippet + trail
+    setSource(before + inserted + after)
+    requestAnimationFrame(() => {
+      if (!ta) return
+      ta.focus()
+      ta.selectionStart = ta.selectionEnd = start + inserted.length
+    })
+  }
+
+  // W1: wrap the selection (or a "text" placeholder) for inline marks.
+  const wrapSelection = (b: string, a: string) => {
+    const ta = textareaRef.current
+    const start = ta?.selectionStart ?? source.length
+    const end = ta?.selectionEnd ?? source.length
+    const selected = source.slice(start, end) || 'text'
+    setSource(source.slice(0, start) + b + selected + a + source.slice(end))
+    requestAnimationFrame(() => {
+      if (!ta) return
+      ta.focus()
+      ta.selectionStart = start + b.length
+      ta.selectionEnd = start + b.length + selected.length
+    })
+  }
 
   // Load the fork.
   useEffect(() => {
@@ -276,7 +315,13 @@ export default function ForkEditor() {
       {/* Two panes */}
       <div className="fork-editor__panes">
         <div className="fork-editor__source">
+          <ForkEditorToolbar
+            onInsertBlock={insertBlock}
+            onWrap={wrapSelection}
+            onInsertPlot={() => setPickerOpen(true)}
+          />
           <textarea
+            ref={textareaRef}
             className="fork-editor__textarea"
             value={source}
             onChange={e => setSource(e.target.value)}
@@ -302,6 +347,9 @@ export default function ForkEditor() {
           />
         </div>
       </div>
+      {pickerOpen && (
+        <PlotPicker onPick={insertBlock} onClose={() => setPickerOpen(false)} />
+      )}
     </div>
   )
 }

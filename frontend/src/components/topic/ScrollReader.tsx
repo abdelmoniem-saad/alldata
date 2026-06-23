@@ -541,10 +541,11 @@ export default function ScrollReader({
           <aside
             style={{
               position: 'sticky',
-              // `--header-h` (tokens.css) + a small breathing offset replaces
-              // the prior viewport-relative clamp, which produced a near-zero
-              // sticky region on iOS Safari at small heights.
-              top: 'calc(var(--header-h) + 32px)',
+              // V0: rest the pinned visual lower — between the top and the
+              // vertical center — rather than hugging the header. `--header-h`
+              // keeps it clear of the navbar; the `vh` term drops it into the
+              // upper-middle of the viewport.
+              top: 'calc(var(--header-h) + 14vh)',
               alignSelf: 'start',
               height: 'fit-content',
               display: isWide ? 'block' : 'none',

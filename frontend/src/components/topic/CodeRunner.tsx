@@ -2,6 +2,18 @@ import { useState, useRef, useEffect } from 'react'
 import { api, ExecutionResult } from '../../api/client'
 import { useAuthStore } from '../../stores/authStore'
 
+// V0: probe execution capabilities once per session. The R language toggle is
+// hidden unless R can actually run here (Docker R image or local Rscript), so
+// readers never select R and hit the "R is not installed" dead end. On a probe
+// failure, default to hiding R (conservative — don't offer an unconfirmed lang).
+let _capsPromise: Promise<{ python: boolean; r: boolean }> | null = null
+function execCapabilities() {
+  if (!_capsPromise) {
+    _capsPromise = api.getExecuteCapabilities().catch(() => ({ python: true, r: false }))
+  }
+  return _capsPromise
+}
+
 interface Props {
   code: string
   language: 'python' | 'r'
@@ -27,6 +39,9 @@ export default function CodeRunner({
   const [needsSignIn, setNeedsSignIn] = useState(false)
   const token = useAuthStore(s => s.token)
   const requestSignIn = useAuthStore(s => s.requestSignIn)
+  // V0: gate the R language toggle on real availability.
+  const [rAvailable, setRAvailable] = useState(false)
+  useEffect(() => { execCapabilities().then(c => setRAvailable(c.r)) }, [])
   // U2: set when the reader clicks the card's sign-in button, so the run they
   // wanted fires once auth lands.
   const pendingRunRef = useRef(false)
@@ -175,10 +190,11 @@ export default function CodeRunner({
             {isSimulation ? 'SIMULATION' : lang.toUpperCase()}
           </span>
 
-          {/* Language switcher — editable blocks only, so users can try R against a Python playground */}
+          {/* Language switcher — editable blocks only, so users can try R against a Python playground.
+              V0: the R option appears only when R can actually run here. */}
           {isEditable && (
             <div style={{ display: 'flex', gap: 2, marginLeft: 2 }}>
-              {(['python', 'r'] as const).map(l => {
+              {(['python', 'r'] as const).filter(l => l !== 'r' || rAvailable).map(l => {
                 const active = lang === l
                 return (
                   <button
@@ -390,10 +406,14 @@ export default function CodeRunner({
 
       {/* Output */}
       {showOutput && !needsSignIn && (
-        <div style={{
-          borderTop: '1px solid var(--color-border-subtle)',
-          background: 'var(--color-bg)',
-        }}>
+        <div
+          // V3: announce results to screen readers when a run completes.
+          aria-live="polite"
+          style={{
+            borderTop: '1px solid var(--color-border-subtle)',
+            background: 'var(--color-bg)',
+          }}
+        >
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             padding: '6px 14px',

@@ -116,6 +116,55 @@
   --color-hero-grad: linear-gradient(135deg, #09090b 0%, #52525b 50%, #09090b 100%);
 }
 
+/* V2: user-selectable high-contrast theme (a deliberate choice, beyond T3's
+ * OS `prefers-contrast` bump). Dark-based — pure black ground, near-white text
+ * at every step, strong always-visible borders, a brighter accent, and domain
+ * hues both brightened and spread across luminance so they stay separable at
+ * the 11–28px node scale and for low-vision/color-blind readers. (Full
+ * non-hue/pattern encoding remains part of the deferred full-WCAG track.) */
+[data-theme='high-contrast'] {
+  --color-bg: #000000;
+  --color-bg-secondary: #0a0a0a;
+  --color-bg-tertiary: #161616;
+  --color-surface: #1e1e1e;
+  --color-surface-hover: #2e2e2e;
+  --color-border: #7a7a7a;        /* strong, always visible */
+  --color-border-subtle: #4d4d4d;
+
+  --color-text: #ffffff;
+  --color-text-secondary: #ededed;
+  --color-text-muted: #c7c7c7;    /* AA+ on black */
+
+  --color-accent: #2ee6cf;        /* brighter teal */
+  --color-accent-hover: #5ff5e3;
+  --color-accent-subtle: rgba(46, 230, 207, 0.18);
+  --color-accent-glow: rgba(46, 230, 207, 0.4);
+
+  --color-probability: #6cb6ff;   /* bright blue */
+  --color-distributions: #c79bff; /* bright violet */
+  --color-inference: #ffd166;     /* bright amber */
+  --color-regression: #5fe3a1;    /* bright green */
+  --color-practice: #ff9aa2;      /* bright coral */
+
+  --color-intro: #4ade80;
+  --color-intermediate: #facc15;
+  --color-advanced: #ff6b6b;
+  --color-hero-grad: linear-gradient(135deg, #ffffff 0%, #c7c7c7 50%, #ffffff 100%);
+
+  --color-success-bg: rgba(74, 222, 128, 0.16);
+  --color-success-border: rgba(74, 222, 128, 0.5);
+  --color-warning-bg: rgba(250, 204, 21, 0.16);
+  --color-warning-border: rgba(250, 204, 21, 0.5);
+  --color-error-bg: rgba(255, 107, 107, 0.16);
+  --color-error-border: rgba(255, 107, 107, 0.5);
+
+  --glass-bg: rgba(0, 0, 0, 0.92);
+  --glass-bg-opaque: rgba(0, 0, 0, 0.98);
+  --glass-border: rgba(255, 255, 255, 0.32);
+  --color-overlay: rgba(0, 0, 0, 0.8);
+  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.7);
+}
+
 /* ─── High contrast ─────────────────────────────────────────────────────────
  * T3: the muted/secondary text steps sit below WCAG AA on their backgrounds
  * (dark muted #52525b on #050505; light muted #a1a1aa on #fdfdfd). When the
