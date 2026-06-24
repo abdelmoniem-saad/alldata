@@ -1,10 +1,16 @@
 /* ForkEditor — N (fork model). Two-pane editor styling. */
 
 .fork-editor {
-  position: fixed;
-  inset: 0;
+  /* In-flow, not `position: fixed` — fills <main> (which is `flex: 1` below
+     the sticky header), so the editor sits *with* the page chrome instead of
+     overlaying the viewport. `min-height: 0` lets the inner panes own the
+     scroll; `100%` resolves against main's flex height, staying dynamic as the
+     header or viewport changes. */
   display: flex;
   flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
   background: var(--color-bg);
 }
 
