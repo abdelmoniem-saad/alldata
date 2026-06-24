@@ -60,27 +60,47 @@ as spaces) — the same lookup the K7 public-snapshot route uses.
 
 ## Authoring inside a fork
 
-- Same directive surface as the seed authoring loop — `gear`, `plot`,
-  `decision`, `playground`, `callout`, `derivation`, `code_*`, `graph_view`,
-  `dataset`, paired `pair_id` code blocks, everything. See
-  [`authoring.md`](authoring.md).
-- **You don't have to memorize the directive vocabulary (W).** A toolbar
-  above the source pane inserts ready-to-fill scaffolds at the cursor —
-  headings and inline **bold**/*italic*, plus `Section`, `Callout`,
-  `Misconception`, `Decision`, `Playground`, `Simulation`, and `State`. Block
-  inserts are framed with blank lines so they parse cleanly; inline buttons
-  wrap the current selection. A **? reference** affordance hovers a directive
-  cheat-sheet. *(`frontend/src/components/topic/ForkEditorToolbar.tsx`)*
-- **The `Plot…` button opens the plot picker (W).** It lists the whole plot
-  library — all 23 specs grouped by family, each with its label and bound
-  state keys, plus a `graph_view` tour-step. Picking one inserts a matched
-  `state` + `plot` pair seeded with sensible defaults and a generated anchor,
-  so the visualization renders in the preview immediately and reacts to its
-  binds. The shared catalog is `frontend/src/lib/plotSpecs.ts`.
-  *(`frontend/src/components/topic/PlotPicker.tsx`)*
-- The source stays plain `content.md` — the toolbar and picker only insert
-  text. (The merge-back diff is computed on that markdown, so a rich-text
-  substrate would break it; this is insert-assist, deliberately not WYSIWYG.)
+The editor has two modes, toggled in the top bar — **Visual** (default) and
+**Source** — both editing the same `content.md`.
+
+### Visual mode — the block editor (X)
+
+You never see the raw directive syntax. The fork is shown as an ordered list:
+
+- **Prose** runs are plain editable markdown fields (headings, **bold**,
+  `$\sigma$` — normal writing, not plumbing).
+- **Directives** are friendly **cards** — `SECTION`, `PLOT`, `CALLOUT`,
+  `DECISION`, … — each with a one-line summary, **↑/↓ reorder**, **delete**,
+  and an **Edit** button. Edit opens a small form (a Section's label + gear,
+  a Callout's kind + text, a State's key/value rows, a Plot's parameters, a
+  Code block's language + flags, …) — no YAML, no `<!-- block -->`. The
+  heavier `decision` / `playground` blocks open a raw "edit source" hatch
+  instead, which is also the universal fallback for any block.
+- The toolbar inserts a new block after the active one; **Plot…** opens the
+  W plot picker (all 23 specs grouped by family). `<!-- layer: … -->` markers
+  show as a compact `LAYER` chip rather than raw text.
+- *Code:* `frontend/src/components/topic/BlockListEditor.tsx`,
+  `BlockCard.tsx`, `blockForms/*`, `frontend/src/lib/contentDoc.ts`,
+  `directiveMeta.ts`.
+
+**It's a pure editing layer over the string.** A frontend tokenizer
+(`contentDoc.parseDoc`) partitions `markdown_source` into segments whose `raw`
+text concatenates back **byte-for-byte** (`serializeDoc(parseDoc(x)) === x`).
+Editing one block rewrites only that segment, so the backend parser, the live
+preview, and the **merge-back diff** are unchanged and an edit yields a
+minimal diff. The backend never sees the block model.
+
+### Source mode — the raw escape hatch
+
+Today's monospace `content.md` textarea, with the W insert toolbar + plot
+picker. The source stays plain markdown — the merge-back diff is computed on
+it, so the editor only ever produces the same text a human would type
+(deliberately not WYSIWYG). Same directive surface as the seed authoring loop
+(`gear`, `plot`, `decision`, `playground`, `callout`, `derivation`, `code_*`,
+`graph_view`, `dataset`, paired `pair_id` blocks). See [`authoring.md`](authoring.md).
+
+### Both modes
+
 - `--strict` validation is **not** enforced on fork content — a fork can be
   a work in progress. When a directive's YAML body fails to parse, the J3
   parse-error fallback renders the offending block visibly inline (in a

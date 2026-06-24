@@ -22,6 +22,7 @@ import { api, ContentBlock, Misconception } from '../api/client'
 import ScrollReader from '../components/topic/ScrollReader'
 import ForkEditorToolbar from '../components/topic/ForkEditorToolbar'
 import PlotPicker from '../components/topic/PlotPicker'
+import BlockListEditor from '../components/topic/BlockListEditor'
 import { useAuthStore } from '../stores/authStore'
 import '../styles/editor.css'
 
@@ -52,8 +53,11 @@ export default function ForkEditor() {
   // the ForkDetail response; refreshed when the owner suggests.
   const [suggestionStatus, setSuggestionStatus] = useState<'pending' | 'accepted' | 'rejected' | null>(null)
   const [suggesting, setSuggesting] = useState(false)
-  // W2: the plot/graph picker modal.
+  // W2: the plot/graph picker modal (Source mode).
   const [pickerOpen, setPickerOpen] = useState(false)
+  // X3: Visual (block editor) vs Source (raw markdown). Visual hides the
+  // directive plumbing; Source is the escape hatch. Both edit `source`.
+  const [mode, setMode] = useState<'visual' | 'source'>('visual')
 
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
@@ -261,7 +265,27 @@ export default function ForkEditor() {
         )}
         {/* O1: merge-back status chip (when present) + the Suggest button. */}
         {suggestionStatus && <SuggestionChip status={suggestionStatus} />}
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div className="fork-mode" role="group" aria-label="Editor mode">
+            <button
+              type="button"
+              className={`fork-mode__btn${mode === 'visual' ? ' fork-mode__btn--on' : ''}`}
+              onClick={() => setMode('visual')}
+              aria-pressed={mode === 'visual'}
+              title="Visual — edit blocks without the raw directive syntax"
+            >
+              Visual
+            </button>
+            <button
+              type="button"
+              className={`fork-mode__btn${mode === 'source' ? ' fork-mode__btn--on' : ''}`}
+              onClick={() => setMode('source')}
+              aria-pressed={mode === 'source'}
+              title="Source — edit the raw content.md markdown"
+            >
+              Source
+            </button>
+          </div>
           <button
             onClick={handleSuggest}
             disabled={suggesting || dirty}
@@ -315,21 +339,27 @@ export default function ForkEditor() {
       {/* Two panes */}
       <div className="fork-editor__panes">
         <div className="fork-editor__source">
-          <ForkEditorToolbar
-            onInsertBlock={insertBlock}
-            onWrap={wrapSelection}
-            onInsertPlot={() => setPickerOpen(true)}
-          />
-          <textarea
-            ref={textareaRef}
-            className="fork-editor__textarea"
-            value={source}
-            onChange={e => setSource(e.target.value)}
-            onKeyDown={handleKeyDown}
-            spellCheck={false}
-            placeholder="This fork has no content yet — start writing the topic's content.md here."
-            aria-label="Fork markdown source"
-          />
+          {mode === 'visual' ? (
+            <BlockListEditor value={source} onChange={setSource} />
+          ) : (
+            <>
+              <ForkEditorToolbar
+                onInsertBlock={insertBlock}
+                onWrap={wrapSelection}
+                onInsertPlot={() => setPickerOpen(true)}
+              />
+              <textarea
+                ref={textareaRef}
+                className="fork-editor__textarea"
+                value={source}
+                onChange={e => setSource(e.target.value)}
+                onKeyDown={handleKeyDown}
+                spellCheck={false}
+                placeholder="This fork has no content yet — start writing the topic's content.md here."
+                aria-label="Fork markdown source"
+              />
+            </>
+          )}
         </div>
         <div className="fork-editor__preview" ref={scrollRef}>
           {warnings.length > 0 && (

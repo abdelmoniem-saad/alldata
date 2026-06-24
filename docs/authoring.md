@@ -2,6 +2,8 @@
 
 The directive reference. This is the spec for everyone writing topic content. Pair with [`meta-yaml.md`](meta-yaml.md) for the per-topic header and [`principles.md`](principles.md) for the hard constraints. For the rendered behavior of each directive — what the reader actually sees on the page — see [`features.md`](features.md).
 
+> These directives are the on-disk format. Contributors editing a **fork** don't have to write them by hand — the fork editor's Visual mode (cycle X) presents each directive as a friendly card + form and emits exactly the canonical text documented here. This page remains the source of truth for that emitted form. See [`forks.md`](forks.md#authoring-inside-a-fork).
+
 The authoring loop is short:
 
 ```sh

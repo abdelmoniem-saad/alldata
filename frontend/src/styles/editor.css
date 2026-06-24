@@ -134,6 +134,193 @@
   .fork-tb__hint { display: none; }
 }
 
+/* ── X3: Visual ⇄ Source segmented toggle ─────────────────────────────────── */
+.fork-mode {
+  display: inline-flex;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius, 6px);
+  overflow: hidden;
+}
+.fork-mode__btn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 5px 10px;
+  border: none;
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+.fork-mode__btn--on {
+  background: var(--color-accent);
+  color: #08110f;
+}
+.fork-mode__btn:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -2px; }
+
+/* ── X1: block list (Visual mode) ─────────────────────────────────────────── */
+.block-list {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+.block-list__items {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 16px 40vh;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.block-list__empty {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  padding: 24px 4px;
+}
+.block-list__prose {
+  width: 100%;
+  resize: vertical;
+  border: 1px solid transparent;
+  border-radius: var(--radius, 6px);
+  padding: 8px 10px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.7;
+  tab-size: 2;
+}
+.block-list__prose:hover { border-color: var(--color-border-subtle); }
+.block-list__prose:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  background: var(--color-bg-secondary);
+}
+/* Structural separators: shown as a faint rule / small gap, never an empty box. */
+.block-list__rule {
+  height: 0;
+  border-top: 1px dashed var(--color-border-subtle);
+  margin: 4px 8px;
+}
+.block-list__gap { height: 2px; }
+
+/* ── X1: directive cards ──────────────────────────────────────────────────── */
+.block-card {
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius, 6px);
+  background: var(--color-bg-secondary);
+}
+.block-card__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+}
+.block-card__tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 40%, transparent);
+  border-radius: 4px;
+  padding: 2px 6px;
+  white-space: nowrap;
+}
+.block-card__summary {
+  font-size: 12.5px;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.block-card__spacer { flex: 1 1 auto; }
+.block-card__actions { display: flex; gap: 4px; }
+.block-card__btn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  min-width: 24px;
+  padding: 3px 7px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 4px;
+  background: var(--color-bg);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+.block-card__btn:hover:not(:disabled) { border-color: var(--color-accent); color: var(--color-accent); }
+.block-card__btn:disabled { opacity: 0.35; cursor: default; }
+.block-card__btn--danger:hover:not(:disabled) {
+  border-color: var(--color-advanced, #ef4444);
+  color: var(--color-advanced, #ef4444);
+}
+.block-card__btn:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 1px; }
+.block-card__body {
+  padding: 0 10px 10px;
+  border-top: 1px solid var(--color-border-subtle);
+}
+/* Layer markers are tiny structural hints — render compact and dimmed. */
+.block-card[data-type='layer'] {
+  background: transparent;
+  border-style: dashed;
+}
+.block-card[data-type='layer'] .block-card__head { padding: 3px 10px; }
+.block-card[data-type='layer'] .block-card__summary { color: var(--color-text-muted); font-size: 11.5px; }
+.block-card__raw,
+.block-form textarea,
+.block-form input,
+.block-form select {
+  width: 100%;
+  margin-top: 8px;
+  resize: vertical;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius, 6px);
+  padding: 8px 10px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.block-card__raw:focus,
+.block-form textarea:focus,
+.block-form input:focus,
+.block-form select:focus { outline: none; border-color: var(--color-accent); }
+
+/* ── X2: directive forms ──────────────────────────────────────────────────── */
+.block-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+}
+.block-form__field { display: flex; flex-direction: column; gap: 3px; }
+.block-form__label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+.block-form__hint { margin: 0; font-size: 11.5px; color: var(--color-text-muted); }
+.block-form__hint code { font-family: var(--font-mono); color: var(--color-accent); }
+.block-form__field input,
+.block-form__field select,
+.block-form input,
+.block-form select { margin-top: 0; }
+.block-form__check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+.block-form__check input { width: auto; margin: 0; }
+.block-form__kv {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 6px;
+  align-items: center;
+}
+.block-form__kv input { margin: 0; }
+
 /* ── W2: plot picker modal ─────────────────────────────────────────────────
    Portal-rendered over the editor; lists the plot library to choose from. */
 .plot-picker__overlay {
