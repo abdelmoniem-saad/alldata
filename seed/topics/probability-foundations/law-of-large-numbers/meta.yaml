@@ -2,7 +2,7 @@ title: "Law of Large Numbers"
 slug: law-of-large-numbers
 domain: probability-foundations
 difficulty: intermediate
-summary: Why sample averages converge to the true mean as the sample grows — and why that is not the gambler's "things evening out."
+summary: Why sample averages converge to the true mean as the sample grows, and why that is not the gambler's "things evening out."
 prerequisites: [expectation, variance]
 has_intuition_layer: true
 has_formal_layer: true

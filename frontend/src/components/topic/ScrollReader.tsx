@@ -1,5 +1,5 @@
 /**
- * ScrollReader — I3 / I4 / I5
+ * ScrollReader, I3 / I4 / I5
  *
  * The default reading surface for topic pages. Two-column scrollytelling on
  * desktop (≥1024px), linear on mobile.
@@ -49,6 +49,7 @@ import {
   StateValue,
 } from '../../stores/topicState'
 import { useProgressStore } from '../../stores/progressStore'
+import { useSearchParams } from 'react-router-dom'
 
 // ─── Context ────────────────────────────────────────────────────────────────
 
@@ -127,7 +128,7 @@ function Anchor({ id, onActive, rootRef }: AnchorProps) {
     obs.observe(el)
     return () => obs.disconnect()
   }, [id, onActive, rootRef])
-  // J6: sentinels are pure layout markers — never focus targets, never read
+  // J6: sentinels are pure layout markers, never focus targets, never read
   // by screen readers. `tabIndex={-1}` keeps them out of the keyboard tab
   // order; `aria-hidden` and `role="presentation"` keep them out of the AT
   // tree.
@@ -145,14 +146,14 @@ function Anchor({ id, onActive, rootRef }: AnchorProps) {
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-// K2: `graph_view` shares the pinned-pane treatment with `plot` — it owns
+// K2: `graph_view` shares the pinned-pane treatment with `plot`, it owns
 // the right column when its anchor is active. The pinned plot becomes a
 // pinned graph for "Shape of Statistics" and any future tour topic.
 const PINNED_BLOCK_TYPES = new Set(['plot', 'graph_view'])
 
 // K4: block types eligible for the "I want to revisit this" confusion flag.
 // Excludes purely structural / metadata blocks (state, state_reset, gear,
-// graph_view) — flagging those carries no signal an author can act on.
+// graph_view), flagging those carries no signal an author can act on.
 // `plot` is also excluded since it renders inline-only on mobile and pinned
 // elsewhere on desktop, so the flag would attach to the wrong surface.
 const CONFUSION_FLAGGABLE_TYPES = new Set([
@@ -161,11 +162,13 @@ const CONFUSION_FLAGGABLE_TYPES = new Set([
   'decision', 'playground', 'quiz',
 ])
 
-/** Stable reference for "no decisions for this topic" — see selector below. */
+/** Stable reference for "no decisions for this topic", see selector below. */
 const EMPTY_EVENTS: Record<string, import('../../stores/progressStore').DecisionEvent> = {}
+// Y: stable empty for the per-topic confusion-flag map (selector identity).
+const EMPTY_FLAGS: Record<string, number> = {}
 
 /**
- * BlockShell — K4. Wraps a single block in the prose column. Adds:
+ * BlockShell, K4. Wraps a single block in the prose column. Adds:
  *   - A hairline left-border + tint when flagged for revisit.
  *   - A `ConfusionFlag` button at the bottom (when the block type warrants).
  *   - `?debug=confusion` heatmap tint scaled to the flag count.
@@ -181,7 +184,7 @@ function BlockShell({
   showConfusionFlag: boolean
   children: ReactNode
 }) {
-  // L5: collapse two parallel selectors into one — both used to subscribe
+  // L5: collapse two parallel selectors into one, both used to subscribe
   // to the same `(slug, blockId)` cell. The primitive `Object.is` equality
   // Zustand uses already prevents re-renders when an unrelated cell
   // changes, but the duplicate subscription was wasteful in dev tools.
@@ -194,6 +197,7 @@ function BlockShell({
 
   return (
     <div
+      id={`block-${block.id}`}
       style={{
         marginBottom: 24,
         position: 'relative',
@@ -257,14 +261,14 @@ interface ScrollReaderProps {
   misconceptions: Misconception[]
   activeLayer: 'intuition' | 'formal' | 'both'
   scrollRef: React.RefObject<HTMLDivElement | null>
-  /** Topic slug — drives `useTopicState` namespace for I5 reactive plots. */
+  /** Topic slug, drives `useTopicState` namespace for I5 reactive plots. */
   slug: string
   header?: ReactNode
   /**
    * O2: collapse to single-column linear flow regardless of viewport
    * width. The fork editor's right preview pane is ~640px wide on a
    * 1280px window, which is too narrow for the desktop two-column
-   * pinned-viz layout — prose wraps to a few words per line and plots
+   * pinned-viz layout, prose wraps to a few words per line and plots
    * are unreadable. Forcing linear here mirrors the natural mobile
    * fallback. Master topic pages and `ForkView` leave it false.
    */
@@ -295,7 +299,7 @@ export default function ScrollReader({
 
   // ─── State seeding (I5) ────────────────────────────────────────────────────
   // The topic's `<!-- block: state -->` directive supplies defaults. We merge
-  // any per-plot `params` into those defaults too — that way a topic without
+  // any per-plot `params` into those defaults too, that way a topic without
   // an explicit state block still gets sane initial values for its plots.
   const initTopic = useTopicStateStore(s => s.initTopic)
   useEffect(() => {
@@ -315,7 +319,7 @@ export default function ScrollReader({
     initTopic(slug, defaults)
   }, [slug, blocks, metaCache, initTopic])
 
-  // J4: branch filter reads decision *events* from progressStore — the
+  // J4: branch filter reads decision *events* from progressStore, the
   // single source of truth for "which option did the user pick on this
   // anchor?" `useTopicState.decisions` is still updated by DecisionBlock
   // (legacy reads), but new code routes through progressStore.
@@ -364,7 +368,36 @@ export default function ScrollReader({
     return map
   }, [visibleBlocks])
 
-  // Playground-by-anchor — tracks ghost overlays for the active anchor.
+  // Y: "jump to revisit". Arriving with `?revisit` (from the graph sidebar
+  // or the in-topic chip) scrolls to the first block this reader flagged and
+  // flashes it, so a mark is no longer a dead end. `flaggedIds` also feeds the
+  // in-topic count chip below.
+  const [searchParams] = useSearchParams()
+  const flaggedMap = useProgressStore(
+    s => (slug ? s.confusionFlags?.[slug] : undefined) ?? EMPTY_FLAGS,
+  )
+  const flaggedFirst = useMemo(() => {
+    const ids = new Set(Object.keys(flaggedMap))
+    return ids.size ? visibleBlocks.find(b => ids.has(b.id)) ?? null : null
+  }, [flaggedMap, visibleBlocks])
+  const flaggedCount = Object.keys(flaggedMap).length
+
+  const jumpToRevisit = useCallback(() => {
+    if (!flaggedFirst) return
+    const el = document.getElementById(`block-${flaggedFirst.id}`)
+    if (!el) return
+    el.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'center' })
+    el.classList.add('block-flash')
+    window.setTimeout(() => el.classList.remove('block-flash'), 1700)
+  }, [flaggedFirst, reducedMotion])
+
+  useEffect(() => {
+    if (searchParams.get('revisit') == null) return
+    const t = window.setTimeout(jumpToRevisit, 350) // let blocks paint first
+    return () => window.clearTimeout(t)
+  }, [searchParams, jumpToRevisit])
+
+  // Playground-by-anchor, tracks ghost overlays for the active anchor.
   const playgroundByAnchor = useMemo(() => {
     const map = new Map<string, Record<string, unknown>>()
     for (const b of visibleBlocks) {
@@ -390,7 +423,7 @@ export default function ScrollReader({
     setActiveAnchor(id)
   }, [])
 
-  // Pin the latest plot anchor — but if the active anchor is a *playground*
+  // Pin the latest plot anchor, but if the active anchor is a *playground*
   // we leave the pinned plot as-is. The playground reads the same state so
   // the same plot is the right viz to keep showing.
   useEffect(() => {
@@ -425,7 +458,7 @@ export default function ScrollReader({
     resetState(slug)
   }, [activeAnchor, slug, visibleBlocks, resetState])
 
-  // Ghost overlay — when the active anchor is a playground with goal.target,
+  // Ghost overlay, when the active anchor is a playground with goal.target,
   // pass that to the pinned plot so it draws a dashed target curve.
   const ghostOverride = useMemo<Record<string, StateValue> | null>(() => {
     if (!activeAnchor) return null
@@ -463,6 +496,28 @@ export default function ScrollReader({
       <div style={{
         padding: 'clamp(88px, 12vh, 160px) clamp(32px, 8vw, 120px) clamp(120px, 16vh, 200px)',
       }}>
+        {/* Y: in-topic revisit jump. Shown when this reader flagged ≥1 block
+            here, so a mark made earlier is reachable without the graph. */}
+        {!forceLinear && flaggedCount > 0 && (
+          <button
+            type="button"
+            onClick={jumpToRevisit}
+            title="Jump to a block you marked to revisit"
+            style={{
+              position: 'fixed', left: 20, bottom: 20, zIndex: 40,
+              display: 'inline-flex', alignItems: 'center', gap: 7,
+              padding: '7px 12px', borderRadius: 999,
+              border: '1px solid var(--color-border)',
+              background: 'var(--color-bg-secondary)',
+              color: 'var(--color-text-secondary)',
+              fontSize: 12, fontFamily: 'var(--font-mono)', cursor: 'pointer',
+              boxShadow: 'var(--shadow-lg)',
+            }}
+          >
+            <span style={{ color: 'var(--color-accent)' }} aria-hidden>●</span>
+            {flaggedCount} to revisit
+          </button>
+        )}
         {header}
         <div style={grid}>
           {/* Prose column. M5: pre-group adjacent code blocks that share a
@@ -471,7 +526,7 @@ export default function ScrollReader({
           <div style={{ minWidth: 0 }}>
             {groupCodePairs(visibleBlocks, metaCache).map(item => {
               if (isCodePair(item)) {
-                // Pairs don't carry confusion flags or anchors today — the
+                // Pairs don't carry confusion flags or anchors today, the
                 // underlying CodeRunner's per-language re-mount makes both
                 // awkward to support. If the need surfaces, both can be
                 // lifted to the pair level.
@@ -535,14 +590,14 @@ export default function ScrollReader({
             )}
           </div>
 
-          {/* Pinned viz pane. Mounted regardless of viewport — display
+          {/* Pinned viz pane. Mounted regardless of viewport, display
               flips via CSS so the breakpoint flip doesn't unmount the
               IntersectionObserver state. */}
           <aside
             style={{
               position: 'sticky',
-              // V0: rest the pinned visual lower — between the top and the
-              // vertical center — rather than hugging the header. `--header-h`
+              // V0: rest the pinned visual lower, between the top and the
+              // vertical center, rather than hugging the header. `--header-h`
               // keeps it clear of the navbar; the `vh` term drops it into the
               // upper-middle of the viewport.
               top: 'calc(var(--header-h) + 14vh)',

@@ -1,5 +1,5 @@
 /**
- * BlockRenderer — L2.
+ * BlockRenderer, L2.
  *
  * Single dispatch surface for every content-block type. Both ScrollReader
  * (scrollytelling) and SlideView (crossfade deck) route through here so a
@@ -48,7 +48,7 @@ export interface BlockRendererProps {
    * Scroll-mode only. When true, plot blocks render inline (mobile or when
    * the topic doesn't have a pinned-pane surface). When false, they're
    * skipped in flow because the pinned pane is rendering them. SlideView
-   * ignores this flag — plots in slides always render full-bleed.
+   * ignores this flag, plots in slides always render full-bleed.
    */
   inlinePlots?: boolean
 }
@@ -100,7 +100,7 @@ export default function BlockRenderer({
         : <ErrorBoundary variant="block"><PlotBlock slug={slug} meta={meta} /></ErrorBoundary>
 
     case 'graph_view':
-      // Same rule as `plot` — pinned in scroll mode, full-bleed in slides.
+      // Same rule as `plot`, pinned in scroll mode, full-bleed in slides.
       if (mode === 'scroll' && !inlinePlots) return null
       return mode === 'slides'
         ? <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -203,7 +203,7 @@ export default function BlockRenderer({
 
     case 'state':
     case 'state_reset':
-      // Authoring-only directives — invisible in both modes.
+      // Authoring-only directives, invisible in both modes.
       return null
 
     case 'gear': {

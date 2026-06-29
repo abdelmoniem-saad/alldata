@@ -8,7 +8,7 @@
 
 # Statistical power
 
-A test can fail two ways: cry wolf when nothing is there (a Type I error, rate $\alpha$) or miss a real effect (a Type II error, rate $\beta$). **Power** is $1 - \beta$ — if the effect is genuinely there, how often does your test actually catch it? A study with low power is a coin flip dressed up as science: it cannot reliably find what it's looking for.
+A test can fail two ways: cry wolf when nothing is there (a Type I error, rate $\alpha$) or miss a real effect (a Type II error, rate $\beta$). **Power** is $1 - \beta$, if the effect is genuinely there, how often does your test actually catch it? A study with low power is a coin flip dressed up as science: it cannot reliably find what it's looking for.
 
 ---
 
@@ -20,7 +20,7 @@ The picture shows both worlds at once: the **null** (no effect, gray) centered a
 
 <!-- block: gear, n: 3, label: "Buy power with sample size" -->
 
-The effect here is fixed and modest. Raise the sample size and watch the alternative slide right until most of it clears the cutoff — that growing teal area is power climbing.
+The effect here is fixed and modest. Raise the sample size and watch the alternative slide right until most of it clears the cutoff, that growing teal area is power climbing.
 
 <!-- block: state_reset, anchor: power-feel -->
 
@@ -33,7 +33,7 @@ controls:
     max: 40
     step: 1
 goal:
-  prompt: "Raise the sample size until the test would catch this effect about 80% of the time — get the power label up near 0.80."
+  prompt: "Raise the sample size until the test would catch this effect about 80% of the time, get the power label up near 0.80."
   target: { n: 25 }
   success_when: "n >= 25"
   on_success: |
@@ -53,7 +53,7 @@ Power is $P(\text{reject } H_0 \mid H_1 \text{ true}) = 1 - \beta$. For a one-si
 
 $$\text{power} = 1 - \Phi\!\big(z_\alpha - \delta\sqrt{n}\big), \qquad z_\alpha = \Phi^{-1}(1 - \alpha).$$
 
-Four levers raise it: larger effect $\delta$, larger sample $n$, more lenient $\alpha$, or lower noise $\sigma$ (which raises $\delta$). **Power analysis** runs this backwards: fix a target power — say $0.80$ — and solve for the $n$ you need, *before* collecting any data.
+Four levers raise it: larger effect $\delta$, larger sample $n$, more lenient $\alpha$, or lower noise $\sigma$ (which raises $\delta$). **Power analysis** runs this backwards: fix a target power, say $0.80$, and solve for the $n$ you need, *before* collecting any data.
 
 <!-- block: derivation, title: "Solving for the required sample size", collapsed: true -->
 Set power $= 0.80$, so $z_\alpha - \delta\sqrt{n} = \Phi^{-1}(0.20) = -z_{0.80}$. Then $\sqrt{n} = (z_\alpha + z_{0.80})/\delta$, i.e. $n = \big((z_\alpha + z_{0.80})/\delta\big)^2$. For one-sided $\alpha = 0.05$ ($z_\alpha = 1.645$) and power $0.80$ ($z_{0.80} = 0.842$): $n \approx (2.49/\delta)^2$. Smaller effects need quadratically more data.
@@ -79,7 +79,7 @@ for n in [10, 25, 60]:
     print(f"n={n:>3}:  estimated power = {detect/20_000:.3f}")
 ```
 
-Power climbs with $n$, crossing $\sim 0.80$ near $n = 25$ for this effect — exactly what the formula predicts.
+Power climbs with $n$, crossing $\sim 0.80$ near $n = 25$ for this effect, exactly what the formula predicts.
 
 ---
 
@@ -88,7 +88,7 @@ Power climbs with $n$, crossing $\sim 0.80$ near $n = 25$ for this effect — ex
 
 *Wrong:* $p > 0.05$, so the effect must be zero.
 
-*Correct:* failing to reject $H_0$ could mean there's no effect — *or* that the study lacked the power to see one. An underpowered study misses real effects routinely: absence of evidence is not evidence of absence. Before believing a null result, ask what effect size the study had 80% power to detect; anything smaller than that could easily be hiding in plain sight.
+*Correct:* failing to reject $H_0$ could mean there's no effect, *or* that the study lacked the power to see one. An underpowered study misses real effects routinely: absence of evidence is not evidence of absence. Before believing a null result, ask what effect size the study had 80% power to detect; anything smaller than that could easily be hiding in plain sight.
 <!-- /block -->
 
 ---
@@ -98,5 +98,5 @@ Power climbs with $n$, crossing $\sim 0.80$ near $n = 25$ for this effect — ex
 <!-- block: gear, n: 6, label: "Where it leads" -->
 
 <!-- block: callout, kind: insight -->
-**Where this leads.** Power is the complement of the Type II rate $\beta$ from [**hypothesis testing**](/topic/hypothesis-testing), and it's why [**p-values**](/topic/p-values) alone never settle a question. Planning $n$ in advance is **power analysis** — the backbone of honest experiment design and of **A/B testing**, where it fixes the minimum detectable effect. Chronically underpowered studies are a leading driver of the replication crisis.
+**Where this leads.** Power is the complement of the Type II rate $\beta$ from [**hypothesis testing**](/topic/hypothesis-testing), and it's why [**p-values**](/topic/p-values) alone never settle a question. Planning $n$ in advance is **power analysis**, the backbone of honest experiment design and of **A/B testing**, where it fixes the minimum detectable effect. Chronically underpowered studies are a leading driver of the replication crisis.
 <!-- /block -->

@@ -24,7 +24,7 @@ class TopicEdge(Base):
     edge_type: Mapped[str] = mapped_column(String(30))
     weight: Mapped[float] = mapped_column(default=1.0)
 
-    # "Why do I need this?" — concrete reason for the relationship
+    # "Why do I need this?", concrete reason for the relationship
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Relationships

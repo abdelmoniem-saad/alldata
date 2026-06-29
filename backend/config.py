@@ -19,22 +19,22 @@ class Settings(BaseSettings):
     # Code execution
     sandbox_image: str = "alldata-sandbox-python:latest"
     sandbox_r_image: str = "alldata-sandbox-r:latest"
-    # 20s default — educational simulations (Monte Carlo, matplotlib) routinely
+    # 20s default, educational simulations (Monte Carlo, matplotlib) routinely
     # need more than the old 5s cap. Override via SANDBOX_TIMEOUT_SECONDS env var.
     sandbox_timeout_seconds: int = 20
     sandbox_memory_limit: str = "256m"
     sandbox_cpu_limit: float = 0.5
     # S1: when Docker isn't available, the executor can fall back to running
-    # code directly on the host interpreter — fine on a dev laptop, never in
+    # code directly on the host interpreter, fine on a dev laptop, never in
     # production. Set SANDBOX_ALLOW_LOCAL_FALLBACK=false to refuse instead;
     # main.py logs a prominent startup warning while this is on.
     sandbox_allow_local_fallback: bool = True
-    # W0: R is supported by the executor but unprovisioned by default — no R is
+    # W0: R is supported by the executor but unprovisioned by default, no R is
     # installed in the base sandbox image, and most dev hosts lack `Rscript`.
     # The capabilities probe reports R as runnable when `Rscript` is on PATH OR
     # this flag is set; a deployment that builds the sandbox-r image
     # (infra/Dockerfile.sandbox-r) sets SANDBOX_R_ENABLED=true. Keeps the UI's
-    # R toggle honest — offered only where R can actually run.
+    # R toggle honest, offered only where R can actually run.
     sandbox_r_enabled: bool = False
     execution_rate_limit_learner: int = 10  # per minute
     execution_rate_limit_professor: int = 60  # per minute

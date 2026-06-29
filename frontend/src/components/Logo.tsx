@@ -1,8 +1,8 @@
 /**
- * Logo — P (brand identity).
+ * Logo, P (brand identity).
  *
  * The canonical AllData mark + wordmark. The mark is a three-node graph
- * triad inside a rounded square in the one accent teal — the product's
+ * triad inside a rounded square in the one accent teal, the product's
  * thesis ("statistics is a graph") rendered at logo scale. Extracted from
  * the inline navbar SVG so the mark has a single source of truth; the
  * favicon (`public/favicon.svg`) is derived from the same geometry.

@@ -1,4 +1,4 @@
-"""Test configuration — in-memory SQLite for fast tests."""
+"""Test configuration, in-memory SQLite for fast tests."""
 
 import asyncio
 import uuid

@@ -1,5 +1,5 @@
 /**
- * forms — X2. Friendly per-directive editors.
+ * forms, X2. Friendly per-directive editors.
  *
  * Each form holds local field state seeded from the segment, and on every
  * change recomputes the directive's raw text (via `emit`) and reports it up.
@@ -160,7 +160,7 @@ export function MisconceptionForm({ segment, onChange, onBlur }: FormProps) {
 export function StateForm({ segment, onChange, onBlur }: FormProps) {
   const anchor = attrStr(segment, 'anchor') || undefined
   if (segment.type === 'state_reset') {
-    return <p className="block-form__hint">Resets topic state to its declared defaults — no fields to edit.</p>
+    return <p className="block-form__hint">Resets topic state to its declared defaults, no fields to edit.</p>
   }
   const [s, update] = useForm(
     { rows: parseInlineObj(segment.attrs.values) },
@@ -263,7 +263,7 @@ export function PlotForm({ segment, onChange, onBlur }: FormProps) {
   return (
     <div className="block-form" onBlur={onBlur}>
       <p className="block-form__hint">
-        Plot <code>{spec || '—'}</code>. Adjust its starting values; to change the plot type,
+        Plot <code>{spec || ', '}</code>. Adjust its starting values; to change the plot type,
         delete this block and insert a new one.
       </p>
       {s.rows.map((r, i) => (

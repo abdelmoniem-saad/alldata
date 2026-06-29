@@ -1,8 +1,8 @@
 /**
- * directiveMeta — X1. Human-facing labels for directive cards.
+ * directiveMeta, X1. Human-facing labels for directive cards.
  *
  * Maps a directive `type` to a short uppercase tag and a one-line summary, so
- * the block editor shows "PLOT — Poisson distribution bar chart" instead of
+ * the block editor shows "PLOT, Poisson distribution bar chart" instead of
  * `<!-- block: plot, spec: poisson_pmf, … -->`. Display-only; reads the
  * best-effort `attrs` from `contentDoc.parseAttrs`.
  */
@@ -64,7 +64,7 @@ export function directiveSummary(seg: DirectiveSegment): string {
     case 'misconception':
       return 'wrong belief → correction'
     case 'layer':
-      return `${str(a.value) || 'both'} — which explanation layer follows`
+      return `${str(a.value) || 'both'}, which explanation layer follows`
     case 'step_through':
       return 'walkthrough steps'
     default:

@@ -1,4 +1,4 @@
-"""Tests for the graph engine — the intellectual core of AllData."""
+"""Tests for the graph engine, the intellectual core of AllData."""
 
 import uuid
 

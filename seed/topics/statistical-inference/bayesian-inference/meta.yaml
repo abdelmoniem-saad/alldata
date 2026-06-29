@@ -2,7 +2,7 @@ title: "Bayesian Inference"
 slug: bayesian-inference
 domain: statistical-inference
 difficulty: advanced
-summary: Updating beliefs with data — priors, likelihoods, and posteriors, with uncertainty carried all the way through.
+summary: Updating beliefs with data, priors, likelihoods, and posteriors, with uncertainty carried all the way through.
 prerequisites: [bayes-theorem, likelihood]
 has_intuition_layer: true
 has_formal_layer: true

@@ -1,18 +1,18 @@
 /**
- * /u/:username — K7.
+ * /u/:username, K7.
  *
  * Public, read-only graph snapshot. Renders the full graph using the named
  * user's progress instead of the viewer's, plus a per-cluster depth indicator
  * showing what fraction of each domain they've completed.
  *
  * Two paths:
- *   - `/u/me` — reads the viewer's local `progressStore`. The shareable
+ *   - `/u/me`, reads the viewer's local `progressStore`. The shareable
  *     "look at my graph" surface for someone using one browser.
- *   - `/u/:other` — fetches `/api/users/{other}/snapshot`. Server-side sync
+ *   - `/u/:other`, fetches `/api/users/{other}/snapshot`. Server-side sync
  *     isn't yet wired (H10 backlog), so for now this returns an empty set
  *     and the graph renders as "this user hasn't synced yet."
  *
- * The cluster-depth bars never show numbers — only proportional fill. The
+ * The cluster-depth bars never show numbers, only proportional fill. The
  * vision doc's framing: "depth signal, not a grade."
  */
 
@@ -35,7 +35,7 @@ export default function UserGraph() {
   const { username = '' } = useParams<{ username: string }>()
   const isMe = username === 'me'
 
-  // Local progress (for /u/me) — always read so hook order is stable; only
+  // Local progress (for /u/me), always read so hook order is stable; only
   // used when isMe.
   const localCompleted = useProgressStore(s => s.completedSlugs)
   const localInProgress = useProgressStore(s => s.inProgressSlugs)
@@ -49,7 +49,7 @@ export default function UserGraph() {
   const containerRef = useRef<HTMLDivElement>(null)
   const graphRef = useRef<ForceGraphHandle>(null)
 
-  // Resize observer — keep the canvas filling its container as the window
+  // Resize observer, keep the canvas filling its container as the window
   // changes width.
   useEffect(() => {
     const el = containerRef.current
@@ -102,7 +102,7 @@ export default function UserGraph() {
         .catch(err => !cancelled && setError(err.message))
     }
     return () => { cancelled = true }
-    // localCompleted / localInProgress intentionally omitted — only run on
+    // localCompleted / localInProgress intentionally omitted, only run on
     // username change. The /u/me snapshot stays in sync via the store
     // selector reads above (see useMemo for `progressOverride` below).
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -126,7 +126,7 @@ export default function UserGraph() {
   const progressOverride = useMemo(() => {
     if (!snapshot) return null
     if (isMe) {
-      // Live-tracking the viewer's store — reuse the latest values.
+      // Live-tracking the viewer's store, reuse the latest values.
       return {
         completedSlugs: localCompleted,
         inProgressSlugs: localInProgress,
@@ -180,7 +180,7 @@ export default function UserGraph() {
           The graph below is what {isMe ? 'you have' : `${snapshot?.display_name ?? 'this user'} has`} visited. Completed nodes glow domain-hued; gaps are honest.
           {!isMe && snapshot && !snapshot.synced && (
             <span style={{ color: 'var(--color-text-muted)' }}>
-              {' '}This account hasn't synced progress yet — the platform's progress sync arrives in a future cycle.
+              {' '}This account hasn't synced progress yet, the platform's progress sync arrives in a future cycle.
             </span>
           )}
         </p>
@@ -206,7 +206,7 @@ export default function UserGraph() {
         )}
       </div>
 
-      {/* Cluster-depth bars — proportional fill, no numbers. */}
+      {/* Cluster-depth bars, proportional fill, no numbers. */}
       <section>
         <div style={{
           fontSize: 10, fontWeight: 700, letterSpacing: '1.5px',

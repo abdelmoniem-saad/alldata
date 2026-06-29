@@ -59,7 +59,7 @@ class TopicProgressUpsert(BaseModel):
 
 
 class TopicProgressOut(TopicProgressUpsert):
-    """Server response shape — same as the upsert plus the server's
+    """Server response shape, same as the upsert plus the server's
     canonical `server_updated_at` timestamp. The client stores this so the
     next push can decide whether to overwrite.
     """

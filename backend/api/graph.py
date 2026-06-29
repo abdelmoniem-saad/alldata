@@ -1,4 +1,4 @@
-"""Graph routes — visualization, paths, prerequisites, edges."""
+"""Graph routes, visualization, paths, prerequisites, edges."""
 
 import uuid
 
@@ -71,7 +71,7 @@ async def get_learning_path(
 async def get_prerequisites(slug: str, db: DB):
     """Get all transitive prerequisites for a topic in topological order.
 
-    G8: Each entry is `{ node, why }` — mirroring LearningPathStep so the
+    G8: Each entry is `{ node, why }`, mirroring LearningPathStep so the
     Zen drawers can show the same "because {reason}" vocabulary as /explore.
     """
     return await graph_engine.get_prerequisite_chain(db, slug)
@@ -81,7 +81,7 @@ async def get_prerequisites(slug: str, db: DB):
 async def get_leads_to(slug: str, db: DB):
     """Get topics that this topic unlocks (is a prerequisite for).
 
-    G8: Each entry is `{ node, why }` — same shape as /prerequisites, so the
+    G8: Each entry is `{ node, why }`, same shape as /prerequisites, so the
     consumer can render "unlocks {reason}" under each downstream topic.
     """
     return await graph_engine.get_leads_to(db, slug)

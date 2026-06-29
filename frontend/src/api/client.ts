@@ -5,7 +5,7 @@ const BASE = '/api'
 /**
  * An API error carrying the HTTP status and the server's `detail` payload.
  * `detail` can be a plain string or a structured object (e.g. the fork
- * 409 conflict carries `{message, existing_fork_id, ...}`) — callers that
+ * 409 conflict carries `{message, existing_fork_id, ...}`), callers that
  * need the structured form read `err.detail`.
  */
 export class ApiError extends Error {
@@ -31,7 +31,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     const body = await res.json().catch(() => ({}))
     throw new ApiError(res.status, body.detail ?? `HTTP ${res.status}`)
   }
-  // 204 No Content (and any empty body) — nothing to parse.
+  // 204 No Content (and any empty body), nothing to parse.
   if (res.status === 204) return undefined as T
   return res.json()
 }
@@ -78,9 +78,9 @@ export interface ContentBlock {
   simulation_config: string | null
   hint: string | null
   solution: string | null
-  // I — Dynamic Topic View
-  // `anchor` — slug used by ScrollReader to pin the right-column viz to scroll position.
-  // `meta`   — JSON-serialized directive params; renderers `JSON.parse` once and route
+  // I, Dynamic Topic View
+  // `anchor`, slug used by ScrollReader to pin the right-column viz to scroll position.
+  // `meta`, JSON-serialized directive params; renderers `JSON.parse` once and route
   //            on `block_type` (plot spec/binds, decision options, playground controls/goal,
   //            callout kind, derivation title/collapsed, step_through steps, …).
   anchor: string | null
@@ -126,7 +126,7 @@ export interface LearningPathStep {
 /**
  * G8: Prereq / leads-to endpoints mirror the LearningPathStep `{topic, why}`
  * shape so the Zen drawers can render a "because {reason}" / "unlocks {reason}"
- * line under each row — same vocabulary as /explore's sidebar. Only direct
+ * line under each row, same vocabulary as /explore's sidebar. Only direct
  * edges carry a `why`; transitive prereqs surface with `why: null`.
  */
 export interface PrerequisiteEntry {
@@ -152,7 +152,7 @@ export interface ExecutionResult {
 
 /**
  * M1: progress-sync wire shapes. The frontend's `progressStore` slices
- * mirror these one-to-one — the wire is just "the topic's slice of state."
+ * mirror these one-to-one, the wire is just "the topic's slice of state."
  * One topic = one upsert. Conflict resolution is last-write-wins on
  * `client_updated_at` (the client's wall-clock at mutation time).
  */
@@ -282,7 +282,7 @@ export const api = {
     request<PrerequisiteEntry[]>(`/graph/leads-to/${slug}`),
 
   /**
-   * H7: server-side readiness check. Requires auth — returns {ready,
+   * H7: server-side readiness check. Requires auth, returns {ready,
    * completed, missing} based on the user's backend-synced progress.
    * Used by the sidebar's readiness line once progress sync lands
    * (H10 backlog). Until then the sidebar computes readiness locally
@@ -324,7 +324,7 @@ export const api = {
       body: JSON.stringify({ code, language, theme }),
     }),
 
-  // V0: which languages can actually run here — the UI gates the R toggle on
+  // V0: which languages can actually run here, the UI gates the R toggle on
   // this so readers never hit an "R is not installed" dead end.
   getExecuteCapabilities: () =>
     request<{ python: boolean; r: boolean }>('/execute/capabilities'),
@@ -342,6 +342,10 @@ export const api = {
       body: JSON.stringify({ email, display_name, password }),
     }),
 
+  // Y: current user from the token. Called on boot so server-side changes
+  // (e.g. a role promotion to editor/admin) propagate without a re-login.
+  getMe: () => request<{ id: string; email: string; display_name: string; role?: string }>('/auth/me'),
+
   // M1: progress sync
   //
   // `getProgress` is called on boot (if a token exists) and on window focus
@@ -351,7 +355,7 @@ export const api = {
   // `putTopicProgress` is fired by the sync orchestrator's debounced push
   // when any topic's `topicUpdatedAt` ticks. The server returns the
   // post-merge wire shape (which may be older than what the client sent if
-  // a newer write from another device clobbered it — the client adopts).
+  // a newer write from another device clobbered it, the client adopts).
   //
   // `batchProgress` is used once at login when local localStorage holds a
   // non-empty progress slice and we want to push everything before the
@@ -375,7 +379,7 @@ export const api = {
   //
   // `createFork` seeds a fork from the master topic's content.md. A 409
   // (already forked) surfaces as a thrown Error whose message carries the
-  // server detail — callers that want the redirect target catch and parse.
+  // server detail, callers that want the redirect target catch and parse.
   // `getFork` / `listForks` are public (no auth). `updateFork` / `deleteFork`
   // are owner-only (the bearer token is attached by `request`).
   createFork: (topicSlug: string) =>

@@ -1,5 +1,5 @@
 /**
- * Plot library — I4/I5
+ * Plot library, I4/I5
  *
  * One file = one library. Each `PlotSpec` is a tiny D3 component that reads
  * named keys from `state` and re-renders on change. The `spec` directive
@@ -20,7 +20,7 @@ import type { StateValue } from '../../../../stores/topicState'
 
 export interface PlotProps {
   state: Record<string, StateValue>
-  /** Optional dashed-target overlay — used by playground goals. */
+  /** Optional dashed-target overlay, used by playground goals. */
   ghost?: Record<string, StateValue> | null
   width?: number
   height?: number
@@ -48,8 +48,8 @@ function gaussianPdf(x: number, mu: number, sigma: number): number {
 
 /**
  * Log-gamma (Lanczos). Module-level so the discrete/continuous specs that
- * need factorials or the gamma function — binomial (inline, historical),
- * poisson_pmf, student_t_pdf — share one implementation. `lgamma(k+1) = ln(k!)`.
+ * need factorials or the gamma function, binomial (inline, historical),
+ * poisson_pmf, student_t_pdf, share one implementation. `lgamma(k+1) = ln(k!)`.
  */
 function lgamma(z: number): number {
   const c = [76.18009172947146, -86.50532032941677, 24.01409824083091,
@@ -192,7 +192,7 @@ function _ensureThemeObserver(): void {
   })
 }
 
-/** Hook variant — returns the cached colors and re-renders on theme flip. */
+/** Hook variant, returns the cached colors and re-renders on theme flip. */
 function useColors(): Colors {
   const [, force] = useState(0)
   useEffect(() => {
@@ -205,7 +205,7 @@ function useColors(): Colors {
   return _colorsCache
 }
 
-/** Function variant — safe to call inside `useEffect`. Returns the cache;
+/** Function variant, safe to call inside `useEffect`. Returns the cache;
  *  asserts a hook subscription has been set up so theme flips propagate. */
 function readColors(): Colors {
   if (_colorsCache === null) _colorsCache = _readColorsFresh()
@@ -218,7 +218,7 @@ const GaussianPdf: Spec = ({ state, ghost, width = 420, height = 280 }) => {
   const ref = useRef<SVGSVGElement | null>(null)
   const mu = num(state, 'mu', 0)
   const sigma = num(state, 'sigma', 1)
-  // Q3: optional `n` — when present (and > 1) the curve drawn is the
+  // Q3: optional `n`, when present (and > 1) the curve drawn is the
   // *sampling distribution of the mean*, N(mu, sigma/√n). Sampling-
   // distributions binds [mu, sigma, n] to show the standard error shrink.
   // Topics that bind only [mu, sigma] leave n absent → n=1 → no change.
@@ -303,7 +303,7 @@ const GaussianCdf: Spec = ({ state, width = 420, height = 280 }) => {
       .call(sel => sel.selectAll('line, path').attr('stroke', colors.muted))
       .call(sel => sel.selectAll('text').attr('fill', colors.muted))
 
-    // Numerical CDF via cumulative trapezoid of the PDF — simpler than erf.
+    // Numerical CDF via cumulative trapezoid of the PDF, simpler than erf.
     const samples = d3.range(-5, 5.05, 0.05)
     let acc = 0
     const cdf = samples.map((v, i) => {
@@ -375,7 +375,7 @@ const BinomialPmf: Spec = ({ state, width = 420, height = 280 }) => {
 }
 
 /**
- * population_dot_grid — the I5a Bayes consequence canvas.
+ * population_dot_grid, the I5a Bayes consequence canvas.
  *
  * 1,000 dots arranged in a grid, recolored by:
  *   - true_status      (sick / healthy) determined by `prior`
@@ -388,7 +388,7 @@ const BinomialPmf: Spec = ({ state, width = 420, height = 280 }) => {
  *   - missed sick:               muted advanced (different shade)
  *   - untreated healthy:         muted text
  *
- * Deterministic — uses a tiny LCG seeded by topic state so the same params
+ * Deterministic, uses a tiny LCG seeded by topic state so the same params
  * always produce the same grid. That way "state X recolors Y dots" is
  * reproducible across reloads.
  */
@@ -403,11 +403,11 @@ const PopulationDotGrid: Spec = ({ state, width = 420, height = 320 }) => {
   // L5: track the previous strategy so we can pick a snappier transition
   // when the user picks a decision option (discrete state change). The
   // 600ms ease feels right for slider drags but laggy on one-shot picks
-  // — see the K retrospective for the carry-over.
+  //, see the K retrospective for the carry-over.
   const prevStrategyRef = useRef(strategy)
 
   // J5: scaffolding effect. Runs once per mount (or geometry change). Creates
-  // 1,000 circles at fixed positions. The expensive bit — DOM allocation — is
+  // 1,000 circles at fixed positions. The expensive bit, DOM allocation, is
   // paid once instead of every state write.
   useEffect(() => {
     const svg = d3.select(ref.current!)
@@ -469,9 +469,9 @@ const PopulationDotGrid: Spec = ({ state, width = 420, height = 320 }) => {
 
     // J6 / L5: respect prefers-reduced-motion. Without it, dot recolor eases
     // over a duration that depends on what changed:
-    //   - 300ms when `treatment_strategy` changed (a discrete option pick —
+    //   - 300ms when `treatment_strategy` changed (a discrete option pick,
     //     the user clicked a decision, wants snappy feedback)
-    //   - 600ms when only scalar parameters changed (prior / sens / spec —
+    //   - 600ms when only scalar parameters changed (prior / sens / spec,
     //     usually a slider drag where the smoother ease reads as the curve
     //     "responding" to the drag)
     const reducedMotion =
@@ -497,7 +497,7 @@ const PopulationDotGrid: Spec = ({ state, width = 420, height = 320 }) => {
 }
 
 /**
- * empirical_histogram — counts a sample array bound from state.
+ * empirical_histogram, counts a sample array bound from state.
  *
  * Reads `state[meta.from_key || "samples"]` as an array of numbers. Useful
  * for code blocks that produce data (`expected_output`) which the parser
@@ -560,7 +560,7 @@ function useMemoSamples(state: Record<string, StateValue>): number[] {
   const key = Array.isArray(raw) ? raw.join(',') : `synth:${mu}:${sigma}`
   return useMemo(() => {
     if (Array.isArray(raw)) return raw.filter(n => typeof n === 'number') as number[]
-    // Box–Muller — deterministic via simple LCG so re-renders don't reshuffle.
+    // Box–Muller, deterministic via simple LCG so re-renders don't reshuffle.
     const out: number[] = []
     let s = 1234567
     const rand = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 0xffffffff }
@@ -575,11 +575,11 @@ function useMemoSamples(state: Record<string, StateValue>): number[] {
 }
 
 /**
- * scatter_with_fit — points + fit line.
+ * scatter_with_fit, points + fit line.
  *
  * Reads `state.points` as an array of `[x, y]` tuples (or `{x, y}` objects)
  * and renders a least-squares fit. Bound parameters (`slope`, `intercept`)
- * override the computed fit when present — useful for "drag the line to
+ * override the computed fit when present, useful for "drag the line to
  * match" interactions.
  */
 const ScatterWithFit: Spec = ({ state, width = 420, height = 280 }) => {
@@ -665,11 +665,11 @@ const ScatterWithFit: Spec = ({ state, width = 420, height = 280 }) => {
 }
 
 /**
- * posterior_update — stacked bar of P(H), P(H|+), P(H|−) given a test.
+ * posterior_update, stacked bar of P(H), P(H|+), P(H|−) given a test.
  *
  * Binds `prior`, `sensitivity`, `specificity`, and optional `observed_result`
  * ("positive" or "negative"). When an observed_result is present, that bar
- * gets the accent emphasis — the visual answer to "what's my posterior?"
+ * gets the accent emphasis, the visual answer to "what's my posterior?"
  */
 const PosteriorUpdate: Spec = ({ state, width = 420, height = 280 }) => {
   const ref = useRef<SVGSVGElement | null>(null)
@@ -731,7 +731,7 @@ const PosteriorUpdate: Spec = ({ state, width = 420, height = 280 }) => {
 }
 
 /**
- * poisson_pmf — Q0. Bars of P(X=k) for a Poisson(λ). Binds `lambda`.
+ * poisson_pmf, Q0. Bars of P(X=k) for a Poisson(λ). Binds `lambda`.
  * x-range grows with λ so the right tail stays visible: k = 0…max(10,
  * ⌈λ + 4√λ⌉). Visual vocabulary matches binomial_pmf (accent bars).
  */
@@ -777,7 +777,7 @@ const PoissonPmf: Spec = ({ state, width = 420, height = 280 }) => {
 }
 
 /**
- * student_t_pdf — Q0. Student's t density over t ∈ [−5, 5]. Binds `df`.
+ * student_t_pdf, Q0. Student's t density over t ∈ [−5, 5]. Binds `df`.
  * Heavy tails at df=1 (Cauchy-ish), converging onto the standard normal as
  * df grows. A faint dashed N(0,1) reference shows the convergence.
  */
@@ -807,7 +807,7 @@ const StudentTPdf: Spec = ({ state, ghost, width = 420, height = 280 }) => {
 
     const samples = d3.range(-5, 5.05, 0.05)
 
-    // Dashed N(0,1) reference — the limit the t-curve approaches as df → ∞.
+    // Dashed N(0,1) reference, the limit the t-curve approaches as df → ∞.
     const refLine = d3.line<number>().x(d => x(d)).y(d => y(gaussianPdf(d, 0, 1))).curve(d3.curveMonotoneX)
     g.append('path').datum(samples).attr('d', refLine)
       .attr('fill', 'none').attr('stroke', colors.muted)
@@ -830,7 +830,7 @@ const StudentTPdf: Spec = ({ state, ghost, width = 420, height = 280 }) => {
 }
 
 /**
- * exponential_pdf — R0. Exponential density f(x)=λe^−λx over x ≥ 0. Binds
+ * exponential_pdf, R0. Exponential density f(x)=λe^−λx over x ≥ 0. Binds
  * `rate` (λ). A dashed marker at the mean 1/λ anchors the headline fact that
  * the mean is the reciprocal of the rate.
  */
@@ -877,7 +877,7 @@ const ExponentialPdf: Spec = ({ state, width = 420, height = 280 }) => {
 }
 
 /**
- * chi_squared_pdf — R0. Chi-squared density with k degrees of freedom, binds
+ * chi_squared_pdf, R0. Chi-squared density with k degrees of freedom, binds
  * `df`. Strongly right-skewed at small k, approaching symmetry as k grows.
  * y-domain clamped because the density diverges at x→0 for k ≤ 2.
  */
@@ -919,7 +919,7 @@ const ChiSquaredPdf: Spec = ({ state, width = 420, height = 280 }) => {
 }
 
 /**
- * f_pdf — R0. F density with (d1, d2) degrees of freedom, binds `df1`, `df2`.
+ * f_pdf, R0. F density with (d1, d2) degrees of freedom, binds `df1`, `df2`.
  * Right-skewed; concentrates near 1 as both df grow. y clamped for d1 ≤ 2.
  */
 const FPdf: Spec = ({ state, width = 420, height = 280 }) => {
@@ -961,10 +961,10 @@ const FPdf: Spec = ({ state, width = 420, height = 280 }) => {
 }
 
 /**
- * likelihood_curve — R2. The likelihood L(p) = p^k (1−p)^(n−k) of a binomial
+ * likelihood_curve, R2. The likelihood L(p) = p^k (1−p)^(n−k) of a binomial
  * parameter p given k successes in n trials, over p ∈ [0,1], display-normalized
  * to peak 1, with a marker at the MLE p̂ = k/n. With `loglik` set (> 0 in state)
- * it draws the log-likelihood instead — same peak, the sum-of-logs view.
+ * it draws the log-likelihood instead, same peak, the sum-of-logs view.
  */
 const LikelihoodCurve: Spec = ({ state, width = 420, height = 280 }) => {
   const ref = useRef<SVGSVGElement | null>(null)
@@ -1025,9 +1025,9 @@ const LikelihoodCurve: Spec = ({ state, width = 420, height = 280 }) => {
 }
 
 /**
- * power_curves — R2. The two-world picture behind a one-sided z-test: the null
+ * power_curves, R2. The two-world picture behind a one-sided z-test: the null
  * N(0,1) and the alternative N(d,1), where d = effect·√n. The critical value
- * z* = invNorm(1−α) splits them — the α tail of the null is the Type-I region,
+ * z* = invNorm(1−α) splits them, the α tail of the null is the Type-I region,
  * the alternative beyond z* is power, the alternative below z* is Type II (β).
  */
 const PowerCurves: Spec = ({ state, width = 420, height = 280 }) => {
@@ -1081,7 +1081,7 @@ const PowerCurves: Spec = ({ state, width = 420, height = 280 }) => {
 }
 
 /**
- * beta_posterior — R2. Continuous Bayesian updating for a proportion: a Beta(a,b)
+ * beta_posterior, R2. Continuous Bayesian updating for a proportion: a Beta(a,b)
  * prior (dashed), the normalized binomial likelihood from k of n (dotted), and
  * the Beta(a+k, b+n−k) posterior (solid accent). Add data and the posterior
  * sharpens and slides toward k/n.
@@ -1139,10 +1139,10 @@ const BetaPosterior: Spec = ({ state, width = 420, height = 280 }) => {
 }
 
 /**
- * added_variable_plot — R4. The "holding others constant" picture for multiple
+ * added_variable_plot, R4. The "holding others constant" picture for multiple
  * regression. A confounder x₂ drives both x₁ and y. With `controlled` = 0 it
  * scatters y vs x₁ and shows the misleading *marginal* slope; with `controlled`
- * = 1 it shows the added-variable plot — y and x₁ each residualized on x₂ —
+ * = 1 it shows the added-variable plot, y and x₁ each residualized on x₂,
  * whose slope is the true *partial* coefficient. Here the two flip sign.
  */
 const AddedVariablePlot: Spec = ({ state, width = 420, height = 280 }) => {
@@ -1220,10 +1220,10 @@ const AddedVariablePlot: Spec = ({ state, width = 420, height = 280 }) => {
 }
 
 /**
- * residual_plot — R4. Residuals vs fitted values with a y=0 reference. The
+ * residual_plot, R4. Residuals vs fitted values with a y=0 reference. The
  * `pattern` toggle synthesizes the three diagnostic situations: `random` (a
- * structureless band — assumptions OK), `funnel` (widening spread —
- * heteroscedasticity), `curve` (a U-shape — a missed nonlinearity).
+ * structureless band, assumptions OK), `funnel` (widening spread,
+ * heteroscedasticity), `curve` (a U-shape, a missed nonlinearity).
  */
 const ResidualPlot: Spec = ({ state, width = 420, height = 280 }) => {
   const ref = useRef<SVGSVGElement | null>(null)
@@ -1275,7 +1275,7 @@ const ResidualPlot: Spec = ({ state, width = 420, height = 280 }) => {
 }
 
 /**
- * logistic_curve — R4. The logistic-regression S-curve σ(β₀ + β₁x) over binary
+ * logistic_curve, R4. The logistic-regression S-curve σ(β₀ + β₁x) over binary
  * 0/1 data. Binds `beta0`, `beta1`; a playground drags them to fit the cloud.
  * A dashed marker shows the decision boundary where p = 0.5 (x = −β₀/β₁).
  */
@@ -1339,10 +1339,10 @@ const LogisticCurve: Spec = ({ state, width = 420, height = 280 }) => {
 }
 
 /**
- * coefficient_path — R4. How regularization shrinks coefficients as the penalty
+ * coefficient_path, R4. How regularization shrinks coefficients as the penalty
  * λ grows. Binds `lambda` (a moving vertical marker) and `penalty`
  * (`ridge` | `lasso`). Ridge decays each coefficient smoothly toward 0; lasso
- * drives them to *exactly* 0 one at a time — the sparsity that does feature
+ * drives them to *exactly* 0 one at a time, the sparsity that does feature
  * selection. Stylized paths (soft-threshold vs 1/(1+λ)) for the teaching point.
  */
 const CoefficientPath: Spec = ({ state, width = 420, height = 280 }) => {
@@ -1400,7 +1400,7 @@ const CoefficientPath: Spec = ({ state, width = 420, height = 280 }) => {
 }
 
 /**
- * proportion_test — R6. The A/B-test picture: two conversion-rate bars (control
+ * proportion_test, R6. The A/B-test picture: two conversion-rate bars (control
  * A, variant B) with 95% error bars, plus a verdict from the two-proportion
  * z-test. Binds `p_a`, `p_b`, `n_a`, `n_b`. Significant when |z| > 1.96.
  */
@@ -1462,7 +1462,7 @@ const ProportionTest: Spec = ({ state, width = 420, height = 280 }) => {
 }
 
 /**
- * cv_error_curve — R6. Training error (falls forever) vs validation error
+ * cv_error_curve, R6. Training error (falls forever) vs validation error
  * (U-shaped) against model complexity. Binds `complexity` (a moving marker).
  * The validation minimum is the sweet spot cross-validation hunts for.
  */
@@ -1509,14 +1509,14 @@ const CvErrorCurve: Spec = ({ state, width = 420, height = 280 }) => {
 
     g.append('line').attr('x1', x(complexity)).attr('x2', x(complexity)).attr('y1', 0).attr('y2', h)
       .attr('stroke', colors.text).attr('stroke-width', 1).attr('stroke-dasharray', '3 3').attr('opacity', 0.6)
-    g.append('text').attr('x', 2).attr('y', 12).attr('fill', colors.muted).attr('font-size', 10).text('— train   — validation')
+    g.append('text').attr('x', 2).attr('y', 12).attr('fill', colors.muted).attr('font-size', 10).text(', train, validation')
   }, [complexity, width, height])
 
   return <svg ref={ref} width={width} height={height} />
 }
 
 /**
- * bias_variance_curve — R6. The decomposition: bias² falls and variance rises
+ * bias_variance_curve, R6. The decomposition: bias² falls and variance rises
  * with model complexity, and their sum plus irreducible noise is the U-shaped
  * total error. Binds `complexity` (a moving marker).
  */
@@ -1566,14 +1566,14 @@ const BiasVarianceCurve: Spec = ({ state, width = 420, height = 280 }) => {
     g.append('circle').attr('cx', x(cMin)).attr('cy', y(vMin)).attr('r', 4).attr('fill', colors.accent)
     g.append('line').attr('x1', x(complexity)).attr('x2', x(complexity)).attr('y1', 0).attr('y2', h)
       .attr('stroke', colors.text).attr('stroke-width', 1).attr('stroke-dasharray', '3 3').attr('opacity', 0.6)
-    g.append('text').attr('x', 2).attr('y', 12).attr('fill', colors.muted).attr('font-size', 10).text('bias²↓   variance↑   — total')
+    g.append('text').attr('x', 2).attr('y', 12).attr('fill', colors.muted).attr('font-size', 10).text('bias²↓   variance↑, total')
   }, [complexity, width, height])
 
   return <svg ref={ref} width={width} height={height} />
 }
 
 /**
- * missingness_grid — R6. A data matrix as a grid of cells; the `mechanism`
+ * missingness_grid, R6. A data matrix as a grid of cells; the `mechanism`
  * (`mcar` | `mar` | `mnar`) controls *which* cells go missing and `missing_frac`
  * how many. MCAR scatters at random; MAR concentrates by row (an observed
  * covariate); MNAR concentrates by column here, standing in for "the value
@@ -1618,9 +1618,9 @@ const MissingnessGrid: Spec = ({ state, width = 420, height = 280 }) => {
       .attr('opacity', d => d.missing ? 0.9 : 0.5)
 
     const pct = Math.round(100 * cells.filter(c => c.missing).length / cells.length)
-    const note = mechanism === 'mar' ? 'MAR — missingness tracks the row (an observed covariate)'
-      : mechanism === 'mnar' ? 'MNAR — missingness tracks the value itself'
-      : 'MCAR — missing completely at random'
+    const note = mechanism === 'mar' ? 'MAR, missingness tracks the row (an observed covariate)'
+      : mechanism === 'mnar' ? 'MNAR, missingness tracks the value itself'
+      : 'MCAR, missing completely at random'
     g.append('text').attr('x', 0).attr('y', -10).attr('fill', colors.muted).attr('font-size', 10)
       .text(`${note}  ·  ${pct}% missing`)
   }, [mechanism, frac, width, height])

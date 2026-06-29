@@ -1,9 +1,9 @@
 /**
- * contentDoc — X0. The block editor's foundation.
+ * contentDoc, X0. The block editor's foundation.
  *
  * A frontend tokenizer/serializer over a fork's raw `markdown_source` string.
- * It *partitions* the source into an ordered list of segments — prose runs and
- * directive blocks — whose `raw` strings concatenate back to the original
+ * It *partitions* the source into an ordered list of segments, prose runs and
+ * directive blocks, whose `raw` strings concatenate back to the original
  * **byte-for-byte**:
  *
  *     serializeDoc(parseDoc(x)) === x        // for any x
@@ -17,7 +17,7 @@
  * The directive grammar mirrors `_extract_multiline_blocks` in
  * `seed/import_seed.py` (the open/close regexes and the three type-sets) so the
  * two agree on "what is a directive". `parseAttrs` is a *best-effort* display
- * parser — it never affects round-trip (raw is preserved verbatim), it only
+ * parser, it never affects round-trip (raw is preserved verbatim), it only
  * feeds card labels and the X2 forms.
  */
 
@@ -25,7 +25,7 @@
 
 /** Single-line, self-closing directives (`<!-- block: T ... -->`). */
 const SINGLE_LINE = new Set(['plot', 'state', 'state_reset', 'gear', 'graph_view', 'dataset'])
-/** Fenced-code directives — close on the code fence's ``` , not `<!-- /block -->`. */
+/** Fenced-code directives, close on the code fence's ``` , not `<!-- /block -->`. */
 const CODE = new Set(['code_python', 'simulation', 'code_r'])
 /** Body directives closed by `<!-- /block -->`. */
 const MULTILINE = new Set(['step_through', 'callout', 'derivation', 'decision', 'playground', 'misconception'])
@@ -45,13 +45,13 @@ export interface DirectiveSegment {
   kind: 'directive'
   /** Lower-cased directive type, e.g. `gear`, `plot`, `decision`. */
   type: string
-  /** Best-effort parsed head attributes (display/forms only — not round-trip). */
+  /** Best-effort parsed head attributes (display/forms only, not round-trip). */
   attrs: Record<string, unknown>
   /** Inner body: multiline body text, or fenced code; '' for single-line. */
   body: string
   /** For CODE directives: the fence language (`python` | `r`). */
   codeLang?: string
-  /** Exact source span — the editor preserves this verbatim unless edited. */
+  /** Exact source span, the editor preserves this verbatim unless edited. */
   raw: string
 }
 
@@ -62,7 +62,7 @@ export type Segment = ProseSegment | DirectiveSegment
 /**
  * Partition `md` into ordered prose + directive segments. An open comment that
  * doesn't form a *valid* directive (unknown type, missing close tag, or a code
- * directive with no fence) is left inside prose — mirroring the backend, which
+ * directive with no fence) is left inside prose, mirroring the backend, which
  * leaves such matches for the legacy splitter.
  */
 export function parseDoc(md: string): Segment[] {
@@ -106,7 +106,7 @@ export function parseDoc(md: string): Segment[] {
     }
 
     if (end < 0) {
-      // Not a valid directive boundary — leave the comment in prose, keep
+      // Not a valid directive boundary, leave the comment in prose, keep
       // scanning right after the open tag.
       re.lastIndex = openEnd
       continue
@@ -162,7 +162,7 @@ export function serializeDoc(segs: Segment[]): string {
  * Parse `, key: value, key2: {a: 1}` into a shallow object. Top-level commas
  * are split while respecting `{}`, `[]`, and quotes. Object/array values are
  * kept as their raw substring (the forms re-parse the ones they need); scalars
- * are coerced (number / boolean / unquoted string). Best-effort by design —
+ * are coerced (number / boolean / unquoted string). Best-effort by design,
  * the backend uses a real YAML loader, but this never affects round-trip.
  */
 export function parseAttrs(rest: string): Record<string, unknown> {

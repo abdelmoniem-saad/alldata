@@ -1,13 +1,13 @@
 /**
- * ErrorBoundary — S2.
+ * ErrorBoundary, S2.
  *
  * Crash isolation at two altitudes:
  *
- *   - variant="block" — wraps a single visualization (a D3 plot spec, the
+ *   - variant="block", wraps a single visualization (a D3 plot spec, the
  *     graph flythrough). A throwing spec degrades to a quiet themed panel;
  *     the lesson keeps reading and every other block stays live.
  *
- *   - variant="page" — wraps the routed page inside Layout. A page crash
+ *   - variant="page", wraps the routed page inside Layout. A page crash
  *     keeps the navbar and routing alive; `resetKey` (the pathname) clears
  *     the error on navigation so the next page mounts fresh.
  *
@@ -57,7 +57,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             textTransform: 'uppercase', color: 'var(--color-advanced)',
           }}>Something broke</div>
           <div style={{ fontSize: 15, color: 'var(--color-text)', maxWidth: 480 }}>
-            This page hit an unexpected error. The rest of the app is fine —
+            This page hit an unexpected error. The rest of the app is fine,
             navigate elsewhere or reload.
           </div>
           <code style={{
@@ -80,7 +80,7 @@ export default class ErrorBoundary extends Component<Props, State> {
       )
     }
 
-    // block variant — sized like a plot panel so the layout doesn't jump.
+    // block variant, sized like a plot panel so the layout doesn't jump.
     return (
       <div style={{
         padding: '14px 18px', borderRadius: 'var(--radius)',
@@ -93,7 +93,7 @@ export default class ErrorBoundary extends Component<Props, State> {
           textTransform: 'uppercase', color: 'var(--color-advanced)',
           marginBottom: 6,
         }}>Visualization error</div>
-        This visual failed to render — the rest of the lesson is unaffected.
+        This visual failed to render, the rest of the lesson is unaffected.
         <div style={{
           marginTop: 6, fontFamily: 'var(--font-mono)', fontSize: 11,
           overflowWrap: 'anywhere',

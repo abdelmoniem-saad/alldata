@@ -1,5 +1,5 @@
 /**
- * ReviewQueue — O1 (`/review`).
+ * ReviewQueue, O1 (`/review`).
  *
  * The merge-back review surface. ADMIN/EDITOR only.
  *
@@ -158,7 +158,7 @@ export default function ReviewQueue() {
       padding: '24px clamp(16px, 4vw, 48px)',
       minHeight: 'calc(100vh - 52px)',
     }}>
-      {/* ─── left pane — list ──────────────────────────────────────── */}
+      {/* ─── left pane, list ──────────────────────────────────────── */}
       <aside style={{ minWidth: 0 }}>
         <h2 style={{
           fontSize: 11,
@@ -216,7 +216,7 @@ export default function ReviewQueue() {
         )}
       </aside>
 
-      {/* ─── right pane — detail ────────────────────────────────────── */}
+      {/* ─── right pane, detail ────────────────────────────────────── */}
       <main style={{ minWidth: 0 }}>
         {detail == null ? (
           <p style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>
@@ -285,7 +285,7 @@ export default function ReviewQueue() {
                     opacity: busy ? 0.7 : 1,
                   }}
                 >
-                  {busy ? 'Working…' : 'Accept — apply to master'}
+                  {busy ? 'Working…' : 'Accept, apply to master'}
                 </button>
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <input

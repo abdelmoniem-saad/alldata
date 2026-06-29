@@ -1,11 +1,11 @@
-"""seed.watch — author dev loop for the I plan.
+"""seed.watch, author dev loop for the I plan.
 
 Run with:
 
     python -m seed.watch
 
 Watches `seed/topics/**/{*.md, meta.yaml}` and re-imports the changed topic on
-save. Keeps the "edit md, see it reflected" loop fast — the user's stated
+save. Keeps the "edit md, see it reflected" loop fast, the user's stated
 authoring ergonomic this cycle has to preserve.
 
 Implementation notes
@@ -13,14 +13,14 @@ Implementation notes
 - A whole-DB reimport via `seed.import_seed.main` would work but takes seconds
   per save and clobbers user progress. Instead we surgically reimport just the
   one topic that changed by calling the same `import_topic_content` helpers
-  used by `import_schema` — that's the single-topic entry point in the
+  used by `import_schema`, that's the single-topic entry point in the
   importer.
 - Debounce: editors often fire multiple FS events per save (rename + write).
   We coalesce events within 200ms per (topic_dir) so a save reimports once.
 - Anchor on `topic_dir`, not the file. A topic = `seed/topics/{domain}/{slug}/`
   containing one or more `.md` and the `meta.yaml`. Any of those changing is
   the same reimport.
-- Output is intentionally chatty — author wants visible confirmation that the
+- Output is intentionally chatty, author wants visible confirmation that the
   change landed. Errors don't crash the watcher; they're printed and the loop
   continues so a syntax error in a file doesn't kill the session.
 """
@@ -38,7 +38,7 @@ from watchdog.observers import Observer
 from backend.database import async_session
 from seed import import_seed
 
-# Use the package-level helpers — keeps watch.py decoupled from internal
+# Use the package-level helpers, keeps watch.py decoupled from internal
 # refactors of the importer body.
 from seed.import_seed import (  # type: ignore[attr-defined]
     create_tables,
@@ -57,7 +57,7 @@ DEBOUNCE_MS = 200
 async def _full_reimport() -> None:
     """Run the importer end-to-end. Same as `python -m seed.import_seed`.
 
-    The importer is idempotent — every topic is upserted. We use the full path
+    The importer is idempotent, every topic is upserted. We use the full path
     rather than maintaining a parallel single-topic flow so behavior here is
     guaranteed to match production seeding.
     """
@@ -116,11 +116,11 @@ class _Handler(FileSystemEventHandler):
         except yaml.YAMLError as e:
             print(f"[watch] YAML error in {domain}/{slug}: {e}", flush=True)
             return
-        except Exception as e:  # noqa: BLE001 — author content can fail in many ways
+        except Exception as e:  # noqa: BLE001, author content can fail in many ways
             print(f"[watch] reimport failed: {e!r}", flush=True)
             return
         dt = (time.perf_counter() - t0) * 1000
-        print(f"[watch] reimported in {dt:.0f}ms — refresh the page.", flush=True)
+        print(f"[watch] reimported in {dt:.0f}ms, refresh the page.", flush=True)
 
     # ── FS event handlers ──────────────────────────────────────────────────
 
@@ -152,7 +152,7 @@ def main() -> None:
         sys.exit(1)
 
     print(f"[watch] watching {SEED_DIR}")
-    print("[watch] edit any seed/topics/**/*.md or meta.yaml — saves auto-reimport.")
+    print("[watch] edit any seed/topics/**/*.md or meta.yaml, saves auto-reimport.")
     print("[watch] Ctrl+C to stop.")
 
     # First run does a clean-state reimport so the DB matches the seed dir as

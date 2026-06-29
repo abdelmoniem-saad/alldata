@@ -1,8 +1,8 @@
 # Authoring guide
 
-The directive reference. This is the spec for everyone writing topic content. Pair with [`meta-yaml.md`](meta-yaml.md) for the per-topic header and [`principles.md`](principles.md) for the hard constraints. For the rendered behavior of each directive — what the reader actually sees on the page — see [`features.md`](features.md).
+The directive reference. This is the spec for everyone writing topic content. Pair with [`meta-yaml.md`](meta-yaml.md) for the per-topic header and [`principles.md`](principles.md) for the hard constraints. For the rendered behavior of each directive, what the reader actually sees on the page, see [`features.md`](features.md).
 
-> These directives are the on-disk format. Contributors editing a **fork** don't have to write them by hand — the fork editor's Visual mode (cycle X) presents each directive as a friendly card + form and emits exactly the canonical text documented here. This page remains the source of truth for that emitted form. See [`forks.md`](forks.md#authoring-inside-a-fork).
+> These directives are the on-disk format. Contributors editing a **fork** don't have to write them by hand, the fork editor's Visual mode (cycle X) presents each directive as a friendly card + form and emits exactly the canonical text documented here. This page remains the source of truth for that emitted form. See [`forks.md`](forks.md#authoring-inside-a-fork).
 
 The authoring loop is short:
 
@@ -26,7 +26,7 @@ The platform's vision document names six gears every topic should pass through. 
 | 3 | Visualization | The user manipulates something. Two valid modes: *observational* (a `playground` slider drags the curve) or *commitment* (a `decision` forces a pick before the consequence is revealed). | `playground`, `decision`, `plot` |
 | 4 | Formalism | The equation, color-coded term-by-term, walked through as a sentence. | `markdown` for the equation, `derivation` (collapsed) for the proof |
 | 5 | Code | Running code that demonstrates exactly what was just explained. Comments are part of the explanation. | `simulation`, `code_python` (with `auto_run: true`) |
-| 6 | Connections | One to three nearby topics with one-sentence reasons each. Not definitions — reasons. | `callout` listing related anchors |
+| 6 | Connections | One to three nearby topics with one-sentence reasons each. Not definitions, reasons. | `callout` listing related anchors |
 
 Mark each gear with a `gear` directive at the start of its section:
 
@@ -53,16 +53,16 @@ correct: c
 <!-- /block -->
 ```
 
-Gear markers are pure metadata. The reader sees only the `label:` text — a quiet hairline divider with a small-caps caption. The `n:` number is for ordering and validation only; it doesn't appear in the rendered topic. Markers without an explicit `label:` render *nothing* — they're invisible structural anchors.
+Gear markers are pure metadata. The reader sees only the `label:` text, a quiet hairline divider with a small-caps caption. The `n:` number is for ordering and validation only; it doesn't appear in the rendered topic. Markers without an explicit `label:` render *nothing*, they're invisible structural anchors.
 
-**Don't reuse the canonical gear names verbatim.** The names *Spark / Intuition / Visualization / Formalism / Code / Connections* are template placeholders, not section titles. When every topic carries the same six labels in the same order the topics feel templated. Pick a label that names what *this* section is about: "The 99% trap," "Why $1/\sqrt{n}$," "Where Monty's choice gives you information." Or drop the label entirely and let the section flow without a divider — that's also fine.
+**Don't reuse the canonical gear names verbatim.** The names *Spark / Intuition / Visualization / Formalism / Code / Connections* are template placeholders, not section titles. When every topic carries the same six labels in the same order the topics feel templated. Pick a label that names what *this* section is about: "The 99% trap," "Why $1/\sqrt{n}$," "Where Monty's choice gives you information." Or drop the label entirely and let the section flow without a divider, that's also fine.
 
 **Rule of thumb.** Most topics walk through all six gears. Exceptions:
 - The "Shape of Statistics" intro skips Formalism and Code (gears 4 + 5).
 - A pure derivation topic might skip the Spark + Intuition (1 + 2) and lead with the equation.
-- Don't skip Connections (gear 6) — that's where the graph stays alive on the page.
+- Don't skip Connections (gear 6), that's where the graph stays alive on the page.
 
-Pick *one* mechanic for Gear 3 — observational (playground) or commitment (decision). Mixing both in one topic dilutes the felt experience.
+Pick *one* mechanic for Gear 3, observational (playground) or commitment (decision). Mixing both in one topic dilutes the felt experience.
 
 ---
 
@@ -70,18 +70,18 @@ Pick *one* mechanic for Gear 3 — observational (playground) or commitment (dec
 
 `tour: true` in `meta.yaml` flips a topic from the standard scrollytelling surface to an immersive tour: the graph fills the viewport behind the prose, and the prose floats over it in a left-aligned column with translucent panels. Each scroll section can carry a `graph_view` block whose `target:` field drives the background camera:
 
-- `target: all` (or `*`) — fits the entire graph; no cluster filter.
-- `target: <domain-slug>` (`probability-foundations`, `distributions`, …) — hides every other cluster (legend-style) and frames the named one.
-- `target: <topic-slug>` — centers on that single node. The background stays filtered to *that node's domain* (not the whole graph), so spotlighting a member topic keeps its family cluster as the visible context. This is what lets a family-overview tour pan across its members one at a time without the rest of the graph flashing back in.
+- `target: all` (or `*`), fits the entire graph; no cluster filter.
+- `target: <domain-slug>` (`probability-foundations`, `distributions`, …), hides every other cluster (legend-style) and frames the named one.
+- `target: <topic-slug>`, centers on that single node. The background stays filtered to *that node's domain* (not the whole graph), so spotlighting a member topic keeps its family cluster as the visible context. This is what lets a family-overview tour pan across its members one at a time without the rest of the graph flashing back in.
 
-The active section is picked by a scroll listener that tracks whichever anchor is topmost above the 30% line — so the camera changes reliably regardless of scroll speed or programmatic jumps (no IntersectionObserver band that can drift between observer creation and first paint).
+The active section is picked by a scroll listener that tracks whichever anchor is topmost above the 30% line, so the camera changes reliably regardless of scroll speed or programmatic jumps (no IntersectionObserver band that can drift between observer creation and first paint).
 
 ```yaml
 # seed/topics/_meta/shape-of-statistics/meta.yaml
 slug: shape-of-statistics
 title: "The Shape of Statistics"
 domain: _meta
-tour: true        # <— flips on TourView
+tour: true        # <, flips on TourView
 …
 ```
 
@@ -101,9 +101,9 @@ You're looking at every concept this platform teaches, all at once…
 Almost everything we'll do leans on probability…
 ```
 
-The `graph_view` block renders nothing in prose flow when the topic is in tour mode — it's pure metadata for the background camera. The prose blocks render in floating panels over the graph.
+The `graph_view` block renders nothing in prose flow when the topic is in tour mode, it's pure metadata for the background camera. The prose blocks render in floating panels over the graph.
 
-**Use sparingly.** The tour surface is designed for orientation topics that *show* the graph itself. Two sanctioned uses: the **Shape of Statistics** new-user intro (targets `all` / domain slugs), and the five **family overviews** — one per domain root (`probability-foundations`, `distributions`, `statistical-inference`, `regression-modeling`, `data-science-practice`), which open with `target: <domain>`, spotlight each member topic with `target: <member-slug>`, then pull back to the family and hand off with links into the real lessons. It's the wrong surface for ordinary content topics — those want the pinned-viz scrollytelling that `ScrollReader` provides.
+**Use sparingly.** The tour surface is designed for orientation topics that *show* the graph itself. Two sanctioned uses: the **Shape of Statistics** new-user intro (targets `all` / domain slugs), and the five **family overviews**, one per domain root (`probability-foundations`, `distributions`, `statistical-inference`, `regression-modeling`, `data-science-practice`), which open with `target: <domain>`, spotlight each member topic with `target: <member-slug>`, then pull back to the family and hand off with links into the real lessons. It's the wrong surface for ordinary content topics, those want the pinned-viz scrollytelling that `ScrollReader` provides.
 
 ---
 
@@ -111,8 +111,8 @@ The `graph_view` block renders nothing in prose flow when the topic is in tour m
 
 A topic is a directory: `seed/topics/{domain}/{slug}/` containing `meta.yaml` plus one or more `.md` files. The parser splits each `.md` file into typed **blocks** the frontend renders. There are two block syntaxes:
 
-1. **Section separator** (`\n---\n`) — splits prose into sequential markdown blocks. A directive comment at the top of a section assigns that section a non-default block type.
-2. **Directive pair** (`<!-- block: TYPE attrs --> body <!-- /block -->`) — delimits a multi-paragraph block without forcing `---` between paragraphs.
+1. **Section separator** (`\n---\n`), splits prose into sequential markdown blocks. A directive comment at the top of a section assigns that section a non-default block type.
+2. **Directive pair** (`<!-- block: TYPE attrs --> body <!-- /block -->`), delimits a multi-paragraph block without forcing `---` between paragraphs.
 
 Both forms accept attributes after the type as YAML: `, key: value, key2: {a: 1, b: 2}`. Bare keys, quoted strings, inline maps, and inline arrays all work; the parser unwraps them via `yaml.safe_load`.
 
@@ -128,7 +128,7 @@ There is one topic-scoped state bag (`useTopicState`). Plots subscribe to keys; 
 <!-- block: state, values: {prior: 0.01, sensitivity: 0.99, specificity: 0.99, treatment_strategy: "none"} -->
 ```
 
-You can also let `plot` directives' `params:` seed defaults — `block: state` is the canonical home for keys not owned by any single plot.
+You can also let `plot` directives' `params:` seed defaults, `block: state` is the canonical home for keys not owned by any single plot.
 
 To restore defaults at a section boundary (e.g. before a clean playground):
 
@@ -149,7 +149,7 @@ The plot library reserves a small set of names. Use these when binding to existi
 | `n` | number | Sample size or trial count. Binomial trials; also narrows `gaussian_pdf` by σ/√n (sampling-error mode) |
 | `p` | number | Success probability (binomial) |
 | `lambda` | number ≥ 0 | Poisson rate/mean (`poisson_pmf`); also the penalty strength in `coefficient_path` |
-| `df` | number ≥ 1 | Degrees of freedom — `student_t_pdf` and `chi_squared_pdf` |
+| `df` | number ≥ 1 | Degrees of freedom, `student_t_pdf` and `chi_squared_pdf` |
 | `prior` | number ∈ [0,1] | Bayesian prior |
 | `sensitivity` | number ∈ [0,1] | P(+ \| condition) |
 | `specificity` | number ∈ [0,1] | P(− \| ¬condition) |
@@ -194,9 +194,9 @@ print(np.mean([1, 2, 3]))
 | Attr | Type | Default | Effect |
 |---|---|---|---|
 | `editable` | bool | false | Show a textarea so the reader can edit and re-run |
-| `expected_output` | string | — | Static stdout shown before any run |
+| `expected_output` | string |, | Static stdout shown before any run |
 | `auto_run` | bool | false | Execute once on first scroll-into-view; result cached |
-| `anchor` | slug | — | Pin to scroll position for nav / state_reset targeting |
+| `anchor` | slug |, | Pin to scroll position for nav / state_reset targeting |
 
 ### `simulation`
 
@@ -204,7 +204,7 @@ Same shape as `code_python` but flagged. Gets the teal indicator in the runner h
 
 ### Paired Python / R blocks (`pair_id:`)
 
-Two adjacent code blocks that share a `pair_id:` value merge into a single rendered surface with a language tab on top. Use this when you want the *same idea* expressed in both languages — the reader picks once, the choice persists across the whole site.
+Two adjacent code blocks that share a `pair_id:` value merge into a single rendered surface with a language tab on top. Use this when you want the *same idea* expressed in both languages, the reader picks once, the choice persists across the whole site.
 
 ```markdown
 <!-- block: simulation, editable: true, pair_id: bayes-update -->
@@ -224,12 +224,12 @@ prior <- 0.5
 Rules:
 
 - The blocks must be **adjacent** (no other directives or `\n---\n` separator between them) and they must declare **different languages** (one `code_python` or `simulation`, one `code_r`).
-- The `pair_id` value is just an identifier — make it the topic + concept (`bayes-update`, `binomial-mean-var`) so it's grep-able later.
+- The `pair_id` value is just an identifier, make it the topic + concept (`bayes-update`, `binomial-mean-var`) so it's grep-able later.
 - A code block with `pair_id:` but no partner renders as a standalone block (no tab).
-- The reader's language preference (`preferredCodeLang`) is persisted in `progressStore` and is **global**, not per-topic — flipping to R on one topic carries to the next.
+- The reader's language preference (`preferredCodeLang`) is persisted in `progressStore` and is **global**, not per-topic, flipping to R on one topic carries to the next.
 - Each tab's click re-mounts the runner with the new code, so any in-progress edits in one language don't bleed to the other.
 
-The opening fence after the directive can be ```` ```python ```` or ```` ```r ```` — pick whichever matches the directive's language so syntax highlighting in your editor lines up.
+The opening fence after the directive can be ```` ```python ```` or ```` ```r ````, pick whichever matches the directive's language so syntax highlighting in your editor lines up.
 
 ### `plot`
 
@@ -241,37 +241,37 @@ Pinned right-column visual on desktop. Inline on mobile.
 
 | Attr | Type | Default | Effect |
 |---|---|---|---|
-| `spec` | string (required) | — | Name from the plot library — see below |
+| `spec` | string (required) |, | Name from the plot library, see below |
 | `params` | map | `{}` | Seed values for the keys this plot reads (merged into state defaults) |
 | `binds` | string[] | all keys | Narrow what the plot subscribes to; omit to receive the full state bag |
-| `ghost` | map | — | Dashed target overlay (rare; usually set automatically by an active playground) |
-| `anchor` | slug | — | Required if you want this plot pinned when its section is in view |
+| `ghost` | map |, | Dashed target overlay (rare; usually set automatically by an active playground) |
+| `anchor` | slug |, | Required if you want this plot pinned when its section is in view |
 
 **Available plot specs** (extend by adding a file under `frontend/src/components/topic/blocks/plots/`):
 
-- `gaussian_pdf` — bell curve. Binds `mu`, `sigma`, and optional `n` (when bound, the curve is the sampling distribution of the mean: effective spread σ/√n, y-axis auto-rescales). Optional ghost for playground targets.
-- `gaussian_cdf` — cumulative normal. Binds `mu`, `sigma`.
-- `student_t_pdf` — Student's t density over t ∈ [−5, 5], with a dashed N(0,1) reference. Binds `df`; heavy tails at `df=1`, converges onto the normal by `df≈30`.
-- `binomial_pmf` — discrete bars. Binds `n`, `p`.
-- `poisson_pmf` — discrete bars over k = 0…⌈λ+4√λ⌉. Binds `lambda`; right-skewed at small λ, ~symmetric at large λ.
-- `exponential_pdf` — exponential density λe^−λx over x ≥ 0, with a dashed marker at the mean 1/λ. Binds `rate`. *(R0)*
-- `chi_squared_pdf` — chi-squared density; right-skewed at small `df`, → symmetric at large. Binds `df`. *(R0)*
-- `f_pdf` — F density (ratio of two scaled chi-squareds). Binds `df1`, `df2`. *(R0)*
-- `likelihood_curve` — binomial likelihood `p^k(1−p)^(n−k)`, normalized, MLE `p̂=k/n` marked. Binds `successes`, `trials`; optional `loglik` (> 0 → log-likelihood). *(R2)*
-- `power_curves` — null N(0,1) vs alternative N(d,1) with shaded Type-I / power regions; `z*` from `alpha`. Binds `effect`, `alpha`, optional `n`. *(R2)*
-- `beta_posterior` — Beta prior, scaled likelihood, and Beta posterior for a proportion. Binds `prior_a`, `prior_b`, `successes`, `trials`. *(R2)*
-- `added_variable_plot` — marginal vs partial (residualized) scatter; `controlled` toggles the confounding sign-flip. *(R4)*
-- `residual_plot` — residuals vs fitted with a y=0 reference. Binds `pattern` (`random` \| `funnel` \| `curve`). *(R4)*
-- `logistic_curve` — sigmoid σ(β₀+β₁x) over 0/1 points, with the p=0.5 decision boundary. Binds `beta0`, `beta1`. *(R4)*
-- `coefficient_path` — ridge/lasso coefficient shrinkage as the penalty grows. Binds `lambda`, `penalty` (`ridge` \| `lasso`). *(R4)*
-- `proportion_test` — two conversion bars with 95% error bars + a two-proportion z verdict. Binds `p_a`, `p_b`, `n_a`, `n_b`. *(R6)*
-- `cv_error_curve` — training error (falling) vs validation error (U) over complexity, validation min marked. Binds `complexity`. *(R6)*
-- `bias_variance_curve` — bias², variance, and U-shaped total error over complexity. Binds `complexity`. *(R6)*
-- `missingness_grid` — a data grid whose missing cells follow `mechanism` (`mcar` \| `mar` \| `mnar`) at `missing_frac`. *(R6)*
-- `empirical_histogram` — bins a sample array. Binds `samples` (or synthesizes from `mu`, `sigma`).
-- `scatter_with_fit` — points + least-squares line. Binds `points`, optional `slope`, `intercept`.
-- `posterior_update` — three-bar P(H), P(H \| +), P(H \| −). Binds `prior`, `sensitivity`, `specificity`, `observed_result`.
-- `population_dot_grid` — 1,000-dot Bayes canvas. Binds `prior`, `sensitivity`, `specificity`, `treatment_strategy`. The Bayes decision drives this one.
+- `gaussian_pdf`, bell curve. Binds `mu`, `sigma`, and optional `n` (when bound, the curve is the sampling distribution of the mean: effective spread σ/√n, y-axis auto-rescales). Optional ghost for playground targets.
+- `gaussian_cdf`, cumulative normal. Binds `mu`, `sigma`.
+- `student_t_pdf`, Student's t density over t ∈ [−5, 5], with a dashed N(0,1) reference. Binds `df`; heavy tails at `df=1`, converges onto the normal by `df≈30`.
+- `binomial_pmf`, discrete bars. Binds `n`, `p`.
+- `poisson_pmf`, discrete bars over k = 0…⌈λ+4√λ⌉. Binds `lambda`; right-skewed at small λ, ~symmetric at large λ.
+- `exponential_pdf`, exponential density λe^−λx over x ≥ 0, with a dashed marker at the mean 1/λ. Binds `rate`. *(R0)*
+- `chi_squared_pdf`, chi-squared density; right-skewed at small `df`, → symmetric at large. Binds `df`. *(R0)*
+- `f_pdf`, F density (ratio of two scaled chi-squareds). Binds `df1`, `df2`. *(R0)*
+- `likelihood_curve`, binomial likelihood `p^k(1−p)^(n−k)`, normalized, MLE `p̂=k/n` marked. Binds `successes`, `trials`; optional `loglik` (> 0 → log-likelihood). *(R2)*
+- `power_curves`, null N(0,1) vs alternative N(d,1) with shaded Type-I / power regions; `z*` from `alpha`. Binds `effect`, `alpha`, optional `n`. *(R2)*
+- `beta_posterior`, Beta prior, scaled likelihood, and Beta posterior for a proportion. Binds `prior_a`, `prior_b`, `successes`, `trials`. *(R2)*
+- `added_variable_plot`, marginal vs partial (residualized) scatter; `controlled` toggles the confounding sign-flip. *(R4)*
+- `residual_plot`, residuals vs fitted with a y=0 reference. Binds `pattern` (`random` \| `funnel` \| `curve`). *(R4)*
+- `logistic_curve`, sigmoid σ(β₀+β₁x) over 0/1 points, with the p=0.5 decision boundary. Binds `beta0`, `beta1`. *(R4)*
+- `coefficient_path`, ridge/lasso coefficient shrinkage as the penalty grows. Binds `lambda`, `penalty` (`ridge` \| `lasso`). *(R4)*
+- `proportion_test`, two conversion bars with 95% error bars + a two-proportion z verdict. Binds `p_a`, `p_b`, `n_a`, `n_b`. *(R6)*
+- `cv_error_curve`, training error (falling) vs validation error (U) over complexity, validation min marked. Binds `complexity`. *(R6)*
+- `bias_variance_curve`, bias², variance, and U-shaped total error over complexity. Binds `complexity`. *(R6)*
+- `missingness_grid`, a data grid whose missing cells follow `mechanism` (`mcar` \| `mar` \| `mnar`) at `missing_frac`. *(R6)*
+- `empirical_histogram`, bins a sample array. Binds `samples` (or synthesizes from `mu`, `sigma`).
+- `scatter_with_fit`, points + least-squares line. Binds `points`, optional `slope`, `intercept`.
+- `posterior_update`, three-bar P(H), P(H \| +), P(H \| −). Binds `prior`, `sensitivity`, `specificity`, `observed_result`.
+- `population_dot_grid`, 1,000-dot Bayes canvas. Binds `prior`, `sensitivity`, `specificity`, `treatment_strategy`. The Bayes decision drives this one.
 
 ### `gear`
 
@@ -279,7 +279,7 @@ Pinned right-column visual on desktop. Inline on mobile.
 <!-- block: gear, n: 1, label: "The spark" -->
 ```
 
-Pure structure metadata. `n` is 1..6 (Spark / Intuition / Visualization / Formalism / Code / Connections) — used for parser validation and authoring ordering; **not rendered**. `label` is what the reader sees: a small-caps hairline divider. A marker without `label:` renders nothing — invisible structural anchor. See "The six-gear scaffold" above for the template and the rule against reusing the canonical gear names verbatim.
+Pure structure metadata. `n` is 1..6 (Spark / Intuition / Visualization / Formalism / Code / Connections), used for parser validation and authoring ordering; **not rendered**. `label` is what the reader sees: a small-caps hairline divider. A marker without `label:` renders nothing, invisible structural anchor. See "The six-gear scaffold" above for the template and the rule against reusing the canonical gear names verbatim.
 
 Optional. A topic without gear markers renders identically.
 
@@ -289,9 +289,9 @@ Optional. A topic without gear markers renders identically.
 <!-- block: dataset, name: "titanic", source: "Kaggle" -->
 ```
 
-In-prose attribution chip above a code block that uses `load("titanic")`. `name` must match a dataset in `seed/datasets/manifest.yaml` (and a corresponding `seed/datasets/{name}.csv`). `source` is free-form attribution text. Pure metadata — links to `/datasets#{name}`.
+In-prose attribution chip above a code block that uses `load("titanic")`. `name` must match a dataset in `seed/datasets/manifest.yaml` (and a corresponding `seed/datasets/{name}.csv`). `source` is free-form attribution text. Pure metadata, links to `/datasets#{name}`.
 
-The topic-level `dataset:` field in `meta.yaml` is the parallel surface: setting `dataset: titanic` adds the topic to `/datasets`' reverse index (so a reader can browse "what topics use the titanic dataset?"). The two are independent — use the directive for inline attribution, the meta.yaml field for catalog membership.
+The topic-level `dataset:` field in `meta.yaml` is the parallel surface: setting `dataset: titanic` adds the topic to `/datasets`' reverse index (so a reader can browse "what topics use the titanic dataset?"). The two are independent, use the directive for inline attribution, the meta.yaml field for catalog membership.
 
 **The manifest format.** `seed/datasets/manifest.yaml` catalogs every shipped dataset. Each entry has:
 
@@ -305,7 +305,7 @@ The topic-level `dataset:` field in `meta.yaml` is the parallel surface: setting
 | `rows` | yes | Row count, for the dataset card. |
 | `synthetic` | yes | `true` if generated, `false` if real-world. |
 
-A manifest entry without a matching CSV will return 404 from `/api/datasets/{name}` — keep the two paired.
+A manifest entry without a matching CSV will return 404 from `/api/datasets/{name}`, keep the two paired.
 
 ### `step_through`
 
@@ -331,8 +331,8 @@ limit of these five.
 | Attr | Type | Default | Effect |
 |---|---|---|---|
 | `kind` | "insight" \| "warning" \| "aside" | "insight" | Color-coded left border + label |
-| `depends_on` | anchor | — | Branch filter — only render if `depends_on`'s decision was answered |
-| `branch` | id (or `a\|b`) | — | Branch filter — only render if the picked option matches |
+| `depends_on` | anchor |, | Branch filter, only render if `depends_on`'s decision was answered |
+| `branch` | id (or `a\|b`) |, | Branch filter, only render if the picked option matches |
 
 ### `derivation`
 
@@ -369,7 +369,7 @@ options:
     label: "About 99%"
     writes: { treatment_strategy: "treat_all" }
     response: |
-      Watch the plot — most who got the same result and followed your logic
+      Watch the plot, most who got the same result and followed your logic
       were treated for a disease they never had.
   - id: c
     label: "About 10%"
@@ -382,13 +382,13 @@ correct: c
 
 Three-state lifecycle:
 
-1. **Prompt** — question + options.
-2. **React** — picking an option dispatches `writes:` into topic state. The pinned plot recolors. Then the response text fades in below the question.
-3. **Reveal** — downstream blocks tagged `depends_on: <anchor>, branch: <id>` become visible.
+1. **Prompt**, question + options.
+2. **React**, picking an option dispatches `writes:` into topic state. The pinned plot recolors. Then the response text fades in below the question.
+3. **Reveal**, downstream blocks tagged `depends_on: <anchor>, branch: <id>` become visible.
 
 ### Branch-tagged downstream blocks
 
-Tag any `callout`, `derivation`, `step_through`, `decision`, or `playground` with `depends_on:` and `branch:` (single id, or `a|b` for "any of"). Untagged blocks always render — branching is opt-in.
+Tag any `callout`, `derivation`, `step_through`, `decision`, or `playground` with `depends_on:` and `branch:` (single id, or `a|b` for "any of"). Untagged blocks always render, branching is opt-in.
 
 ```markdown
 <!-- block: callout, kind: insight, depends_on: bayes-intuition, branch: c -->
@@ -396,7 +396,7 @@ You instinctively went for the right answer. Here's the math behind why...
 <!-- /block -->
 ```
 
-The `correct:` field powers a quiet "Show me the answer" link — applies the correct option's writes without marking progress.
+The `correct:` field powers a quiet "Show me the answer" link, applies the correct option's writes without marking progress.
 
 **Rule of thumb.** 1–2 decisions per topic, placed *before* the section that delivers the answer. The decision creates the question the rest of the prose answers.
 
@@ -421,7 +421,7 @@ goal:
   target: { mu: 1.5, sigma: 0.8 }
   success_when: "abs(mu - 1.5) < 0.1 and abs(sigma - 0.8) < 0.1"
   on_success: |
-    That's it. Width and center are independent — you found sigma by squeezing,
+    That's it. Width and center are independent, you found sigma by squeezing,
     then mu by sliding.
   hints:
     - after_seconds: 30
@@ -431,9 +431,9 @@ goal:
 <!-- /block -->
 ```
 
-Goal-directed exploration. The pinned plot reads the same state keys these sliders write — moving controls re-renders the plot, which now also draws a dashed target ghost overlay (from `goal.target`).
+Goal-directed exploration. The pinned plot reads the same state keys these sliders write, moving controls re-renders the plot, which now also draws a dashed target ghost overlay (from `goal.target`).
 
-`goal` is **optional**. Omit for pure exploration ("what does heavy-tailed feel like?"). With it, the user has a *thing they can do* — and the win is the felt understanding the lesson is trying to deliver.
+`goal` is **optional**. Omit for pure exploration ("what does heavy-tailed feel like?"). With it, the user has a *thing they can do*, and the win is the felt understanding the lesson is trying to deliver.
 
 ### Expression syntax (`safeExpr`)
 
@@ -478,7 +478,7 @@ The two stars of the surface are `decision` and `playground`. Use them when you 
 
 - **Authoring in plain markdown is the contract.** No WYSIWYG. Editors get diffable, grep-able, version-controlled lessons.
 - **Anchors are slugs**, not titles. Lowercase, hyphens, no spaces.
-- **`writes:` should change a state key the pinned plot already reads.** Otherwise the user picks an option and nothing visible happens — the whole point is the plot reacts.
+- **`writes:` should change a state key the pinned plot already reads.** Otherwise the user picks an option and nothing visible happens, the whole point is the plot reacts.
 - **Don't gamify.** No celebratory animations, no points, no badges. Feedback is the response text and the visible plot change.
 - **`prefers-reduced-motion` is honored.** Step-through reveals all steps at once; viz crossfades are skipped. Don't author content that requires motion to make sense.
 - **Run `--strict` before merging.** `python -m seed.import_seed --strict` fails on unknown plot specs, undeclared state keys, dangling `depends_on` references, and YAML parse errors. CI runs it; you can too.

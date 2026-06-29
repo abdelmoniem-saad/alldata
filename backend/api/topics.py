@@ -1,4 +1,4 @@
-"""Topic routes — CRUD, search, and children."""
+"""Topic routes, CRUD, search, and children."""
 
 import uuid
 

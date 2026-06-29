@@ -10,15 +10,15 @@ from backend.database import Base
 class TopicFork(Base):
     """A user's editable copy of a topic.
 
-    N (fork model): a fork carries its own `markdown_source` — the editable
-    `content.md` text — and serves as a read-only surface to other viewers
+    N (fork model): a fork carries its own `markdown_source`, the editable
+    `content.md` text, and serves as a read-only surface to other viewers
     at `/u/{username}/topic/{slug}`. Any authenticated user can fork any
     topic; forks are public by default. The blocks a reader sees come from
     re-parsing `markdown_source` on each GET.
 
     One fork per (user, topic) for the personal-fork path. `course_id` is
     nullable and reserved for a later cycle that pairs forks with the
-    existing Course model — N-created forks always leave it null.
+    existing Course model, N-created forks always leave it null.
 
     History: this table was scaffolded in an earlier cycle as a
     professor-only, course-scoped customization mechanism but never wired
@@ -40,7 +40,7 @@ class TopicFork(Base):
     markdown_source: Mapped[str] = mapped_column(Text, server_default="''")
 
     # O3: `content_snapshot` (a K-era JSON cache of parsed blocks) was
-    # removed here. Nothing read it — the N endpoints re-parse
+    # removed here. Nothing read it, the N endpoints re-parse
     # `markdown_source` on every GET. The importer's self-heal drops the
     # column on next run via the `_O3_DROP_COLUMNS` list in `import_seed.py`.
 

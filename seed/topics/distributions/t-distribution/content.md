@@ -8,7 +8,7 @@
 
 # Student's t-distribution
 
-The t-distribution is what you reach for when you want to reason about a mean but you *don't know the true spread* — you only have an estimate of it from a small sample. It looks like the normal's close relative: symmetric, bell-shaped, centered at zero. The difference is in the tails, and that difference is the whole point.
+The t-distribution is what you reach for when you want to reason about a mean but you *don't know the true spread*, you only have an estimate of it from a small sample. It looks like the normal's close relative: symmetric, bell-shaped, centered at zero. The difference is in the tails, and that difference is the whole point.
 
 The dashed curve on the right is the standard normal; the solid one is the t. One dial controls it: the **degrees of freedom**, $\nu$ (here `df`).
 
@@ -16,7 +16,7 @@ The dashed curve on the right is the standard normal; the solid one is the t. On
 
 <!-- block: gear, n: 2, label: "Why the tails are fat" -->
 
-When you standardize a sample mean you divide by the spread. If you knew the true $\sigma$, the result would be exactly normal. But with a small sample you must *estimate* $\sigma$ from the same data — and that estimate is itself noisy, sometimes too small, which occasionally makes the standardized value blow up. Those extra blow-ups are the t's heavier tails: it's the normal, widened to stay honest about the uncertainty in your own spread estimate.
+When you standardize a sample mean you divide by the spread. If you knew the true $\sigma$, the result would be exactly normal. But with a small sample you must *estimate* $\sigma$ from the same data, and that estimate is itself noisy, sometimes too small, which occasionally makes the standardized value blow up. Those extra blow-ups are the t's heavier tails: it's the normal, widened to stay honest about the uncertainty in your own spread estimate.
 
 The fewer the degrees of freedom, the more that matters. At $\nu = 1$ the tails are so heavy the distribution has no finite mean; by $\nu = 30$ it's almost indistinguishable from the normal.
 
@@ -24,7 +24,7 @@ The fewer the degrees of freedom, the more that matters. At $\nu = 1$ the tails 
 
 <!-- block: gear, n: 3, label: "Watch it become normal" -->
 
-Raise the degrees of freedom and watch the solid t-curve climb toward the dashed normal — the tails pull in and the peak rises.
+Raise the degrees of freedom and watch the solid t-curve climb toward the dashed normal, the tails pull in and the peak rises.
 
 <!-- block: state_reset, anchor: t-feel -->
 
@@ -41,7 +41,7 @@ goal:
   target: { df: 30 }
   success_when: "df >= 30"
   on_success: |
-    By about $\nu = 30$ the t and the normal are visually the same — which is
+    By about $\nu = 30$ the t and the normal are visually the same, which is
     the origin of the old "n ≥ 30" rule of thumb for using z instead of t.
     Below that, the t's heavier tails give wider, more honest intervals; the
     normal would be overconfident.
@@ -61,7 +61,7 @@ where $Z \sim N(0,1)$ and $V \sim \chi^2_\nu$ are independent. In practice that 
 
 $$T = \frac{\bar{X} - \mu}{s / \sqrt{n}} \sim t_{\,n-1}$$
 
-The "$n-1$" is the degrees of freedom — one fewer than the sample size, because estimating the mean spends one. Its density has the characteristic fat-tailed form
+The "$n-1$" is the degrees of freedom, one fewer than the sample size, because estimating the mean spends one. Its density has the characteristic fat-tailed form
 
 $$f(t; \nu) = \frac{\Gamma\!\left(\frac{\nu+1}{2}\right)}{\sqrt{\nu\pi}\;\Gamma\!\left(\frac{\nu}{2}\right)} \left(1 + \frac{t^2}{\nu}\right)^{-\frac{\nu+1}{2}}$$
 
@@ -77,7 +77,7 @@ import numpy as np
 from scipy import stats
 
 # Small samples from a normal, standardized with the SAMPLE sd. The
-# standardized values follow t_{n-1}, not the normal — their tails are fatter.
+# standardized values follow t_{n-1}, not the normal, their tails are fatter.
 rng = np.random.default_rng(0)
 n = 5                      # tiny sample -> df = 4
 N = 200_000
@@ -93,7 +93,7 @@ print(f"P(|T| > {stats.t.ppf(0.975, n-1):.2f}) = "
       f"{np.mean(np.abs(t_stat) > stats.t.ppf(0.975, n-1)):.4f}  (t_4 cutoff -> ~0.05)")
 ```
 
-Using the normal's $1.96$ cutoff rejects far more than 5% of the time — the heavy tails are real, and the wider t cutoff is what restores calibration.
+Using the normal's $1.96$ cutoff rejects far more than 5% of the time, the heavy tails are real, and the wider t cutoff is what restores calibration.
 
 ---
 
@@ -102,7 +102,7 @@ Using the normal's $1.96$ cutoff rejects far more than 5% of the time — the he
 
 *Wrong:* t is a rough stand-in you use when you can't be bothered with the normal.
 
-*Correct:* it's the other way around. When $\sigma$ is unknown and estimated from a small sample, the standardized mean *genuinely* follows a t-distribution — the t is the exact, correct answer, and the normal is the approximation (a good one only once $n$ is large). Reaching for z with $n = 5$ isn't simpler; it's wrong, and overconfident.
+*Correct:* it's the other way around. When $\sigma$ is unknown and estimated from a small sample, the standardized mean *genuinely* follows a t-distribution, the t is the exact, correct answer, and the normal is the approximation (a good one only once $n$ is large). Reaching for z with $n = 5$ isn't simpler; it's wrong, and overconfident.
 <!-- /block -->
 
 ---
@@ -112,5 +112,5 @@ Using the normal's $1.96$ cutoff rejects far more than 5% of the time — the he
 <!-- block: gear, n: 6, label: "Where it leads" -->
 
 <!-- block: callout, kind: insight -->
-**Where this leads.** The t is the engine behind **confidence intervals** and **t-tests** for means when $\sigma$ is unknown — which is nearly always. It's built from the **normal** and the **chi-squared** distribution, and its degrees-of-freedom idea recurs throughout inference.
+**Where this leads.** The t is the engine behind **confidence intervals** and **t-tests** for means when $\sigma$ is unknown, which is nearly always. It's built from the **normal** and the **chi-squared** distribution, and its degrees-of-freedom idea recurs throughout inference.
 <!-- /block -->

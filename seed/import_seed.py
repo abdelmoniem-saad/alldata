@@ -26,7 +26,7 @@ from backend.models.user import User, UserRole
 
 # ─── Warning collector ─────────────────────────────────────────────────────
 #
-# J3 hardening — accumulate warnings during parse + import so `--strict` mode
+# J3 hardening, accumulate warnings during parse + import so `--strict` mode
 # can fail at the end and developers see them all in one pass instead of
 # fixing one, re-running, fixing the next, etc.
 #
@@ -44,7 +44,7 @@ def _warn(msg: str) -> None:
 
 
 # Plot specs the frontend's plot library knows about. Mirrors PLOT_SPECS in
-# `frontend/src/components/topic/blocks/plots/index.tsx` — when a new spec is
+# `frontend/src/components/topic/blocks/plots/index.tsx`, when a new spec is
 # added there, append it here so authoring stays validated.
 _KNOWN_PLOT_SPECS = {
     "gaussian_pdf",
@@ -72,7 +72,7 @@ _KNOWN_PLOT_SPECS = {
     "population_dot_grid",
 }
 
-# I — Dynamic Topic View: directive helpers
+# I, Dynamic Topic View: directive helpers
 #
 # Two directive forms coexist:
 #   1. Single-line:  <!-- block: plot, spec: gaussian_pdf, anchor: bell-curve -->
@@ -94,11 +94,11 @@ _MULTILINE_BLOCK_TYPES = {
     # matched by the section-loop regex below.
     "misconception",
 }
-# M5: code-block directives are multi-line with a *different* close — the
+# M5: code-block directives are multi-line with a *different* close, the
 # closing ``` of their fenced code body. Tracked separately so the extractor
 # knows to look for ``` instead of <!-- /block -->.
 _CODE_BLOCK_TYPES = {"code_python", "simulation", "code_r"}
-# K1: gear marker — `<!-- block: gear, n: 1, label: "..." -->`. Single-line,
+# K1: gear marker, `<!-- block: gear, n: 1, label: "..." -->`. Single-line,
 # pure metadata. Renderer emits a small-caps section divider; parser stores
 # `n` and `label` in meta. Authors can omit gear markers entirely.
 # Single-line block types that own their own placeholder so they survive the
@@ -156,7 +156,7 @@ def _extract_multiline_blocks(text: str) -> tuple[str, list[dict]]:
             break
         block_type = m.group("type").lower()
         if block_type in _SINGLE_LINE_BLOCK_TYPES:
-            # Self-contained directive — capture as a placeholder so it doesn't
+            # Self-contained directive, capture as a placeholder so it doesn't
             # get glommed into surrounding prose by the `---` splitter.
             out_chunks.append(text[cursor:m.start()])
             attrs = _parse_directive_attrs(m.group("rest"))
@@ -169,13 +169,13 @@ def _extract_multiline_blocks(text: str) -> tuple[str, list[dict]]:
             # next ``` after the opening ```{python|r}, not <!-- /block -->.
             # Without this the section loop's regex would still pick them up,
             # *unless* the section also contains a placeholder for another
-            # block (e.g., a `dataset` chip) — in which case the placeholder
+            # block (e.g., a `dataset` chip), in which case the placeholder
             # mode strips the directive comment and the code becomes orphan
             # markdown. Lifting code into the placeholder pipeline closes
             # that gap and makes adjacent paired blocks survive cleanly.
             fence_open = re.search(r"```(python|r)\n", text[m.end():])
             if not fence_open:
-                # Malformed — no opening fence. Leave for the legacy path.
+                # Malformed, no opening fence. Leave for the legacy path.
                 out_chunks.append(text[cursor:m.end()])
                 cursor = m.end()
                 continue
@@ -198,14 +198,14 @@ def _extract_multiline_blocks(text: str) -> tuple[str, list[dict]]:
             cursor = fence_close + 3  # past closing ```
             continue
         if block_type not in _MULTILINE_BLOCK_TYPES:
-            # Unknown directive — leave it for the legacy splitter (matches
+            # Unknown directive, leave it for the legacy splitter (matches
             # any future directive types we haven't formally added).
             out_chunks.append(text[cursor:m.end()])
             cursor = m.end()
             continue
         close = _DIRECTIVE_CLOSE_RE.search(text, m.end())
         if not close:
-            # Unterminated multi-line block — emit as-is.
+            # Unterminated multi-line block, emit as-is.
             out_chunks.append(text[cursor:m.end()])
             cursor = m.end()
             continue
@@ -224,9 +224,16 @@ def _build_multiline_block(spec: dict, sort_order: int, layer: str) -> dict | No
     attrs = spec["attrs"]
     body = spec["body"]
     anchor = attrs.get("anchor")
+    # #2: per-block layer override. A directive may carry
+    # `layer: intuition|formal|both` to set its own layer regardless of the
+    # surrounding `<!-- layer: -->` marker — so e.g. a simulation that builds
+    # intuition can stay in the intuition layer even inside a formal section.
+    _blk_layer = attrs.get("layer")
+    if isinstance(_blk_layer, str) and _blk_layer.lower() in ("intuition", "formal", "both"):
+        layer = _blk_layer.lower()
     # Preserve branch-filter attrs on every block type so ScrollReader's
     # `depends_on`/`branch` gating works regardless of which block-type was
-    # tagged. These keys are passive metadata — renderers ignore them.
+    # tagged. These keys are passive metadata, renderers ignore them.
     branch_extras = {
         k: attrs[k] for k in ("depends_on", "branch") if k in attrs
     }
@@ -346,7 +353,7 @@ def _build_multiline_block(spec: dict, sort_order: int, layer: str) -> dict | No
                 "anchor": anchor,
                 "meta": json.dumps({k: v for k, v in attrs.items() if k != "anchor"}),
             }
-        # Without `inline: true` we fall through — caller treats it as no-op
+        # Without `inline: true` we fall through, caller treats it as no-op
         # so the legacy single-line path stays the single source of truth.
         return None
 
@@ -354,7 +361,7 @@ def _build_multiline_block(spec: dict, sort_order: int, layer: str) -> dict | No
     # branch extras are already inside `attrs`, so we don't need to merge
     # `branch_extras` separately.
     if btype == "plot":
-        # Single-line directive captured by `_extract_multiline_blocks` — body
+        # Single-line directive captured by `_extract_multiline_blocks`, body
         # is empty. All info lives in attrs (spec, params, binds, ghost).
         meta = {k: v for k, v in attrs.items() if k != "anchor"}
         spec = meta.get("spec")
@@ -375,7 +382,7 @@ def _build_multiline_block(spec: dict, sort_order: int, layer: str) -> dict | No
         }
 
     if btype == "state":
-        # Authoring-only marker — ScrollReader reads `meta.values` and seeds
+        # Authoring-only marker, ScrollReader reads `meta.values` and seeds
         # `useTopicState` defaults from it. Stored as an inert content block
         # so reordering / progress tracking can locate it by sort_order.
         meta = {k: v for k, v in attrs.items() if k != "anchor"}
@@ -416,7 +423,7 @@ def _build_multiline_block(spec: dict, sort_order: int, layer: str) -> dict | No
 
     if btype == "dataset":
         # K5: in-prose dataset attribution ("Loaded from Kaggle, ..."). Pure
-        # metadata — renders as a small chip above the relevant code block.
+        # metadata, renders as a small chip above the relevant code block.
         meta = {k: v for k, v in attrs.items() if k != "anchor"}
         if not meta.get("name"):
             _warn(f"dataset block (anchor={anchor!r}) is missing `name:`")
@@ -430,7 +437,7 @@ def _build_multiline_block(spec: dict, sort_order: int, layer: str) -> dict | No
         }
 
     if btype == "gear":
-        # K1: gear marker. Pure structure metadata — no body. `n` is the
+        # K1: gear marker. Pure structure metadata, no body. `n` is the
         # gear index (1..6), `label` is the displayed name. Authors map
         # their topic onto Spark / Intuition / Visualization / Formalism /
         # Code / Connections.
@@ -482,7 +489,7 @@ def _validate_topic_blocks(blocks: list[dict], topic_name: str) -> None:
     - Every `depends_on:` references an `anchor:` that exists on a `decision`
       block in this topic. Catches typos like `bayes-intuittion`.
     - Every `bind:` (plot, playground) and `writes:` (decision option) names a
-      key declared in *some* `<!-- block: state -->` directive — or seeded by
+      key declared in *some* `<!-- block: state -->` directive, or seeded by
       a `plot params:` mapping. Free-form keys are allowed but must be declared.
     - Every `branch:` id references an option that exists on the named decision.
 
@@ -560,7 +567,7 @@ def _validate_topic_blocks(blocks: list[dict], topic_name: str) -> None:
                             f"is not a valid option (have: {option_ids})"
                         )
 
-        # Plot binds — referencing keys that aren't declared anywhere
+        # Plot binds, referencing keys that aren't declared anywhere
         if bt == "plot":
             binds = meta.get("binds")
             if isinstance(binds, list):
@@ -574,7 +581,7 @@ def _validate_topic_blocks(blocks: list[dict], topic_name: str) -> None:
 
         # Q5: placeholder/scaffold guard. M3 shipped topic skeletons with
         # `TODO` gear labels and `> TODO (...)` prose, and they imported as
-        # real content (has_content=true) — so readers saw "TODO — name the
+        # real content (has_content=true), so readers saw "TODO, name the
         # spark" dividers on live pages. Fail `--strict` if any survive, so a
         # stub can never again ship as a finished lesson. Patterns are kept
         # specific (the exact M3 shapes + a TODO-prefixed gear label) so a
@@ -582,13 +589,13 @@ def _validate_topic_blocks(blocks: list[dict], topic_name: str) -> None:
         if bt == "gear" and str(meta.get("label", "")).strip().upper().startswith("TODO"):
             _warn(
                 f"{topic_name}: gear block (sort_order={b.get('sort_order')}) has "
-                f"placeholder label {meta.get('label')!r} — fill before import (--strict)"
+                f"placeholder label {meta.get('label')!r}, fill before import (--strict)"
             )
         body = b.get("content") or ""
-        if "> TODO (" in body or "TODO — name" in body or "TODO (N)" in body:
+        if "> TODO (" in body or "TODO, name" in body or "TODO (N)" in body:
             _warn(
                 f"{topic_name}: block (type={bt}, sort_order={b.get('sort_order')}) "
-                f"contains placeholder scaffold text — fill before import (--strict)"
+                f"contains placeholder scaffold text, fill before import (--strict)"
             )
 
 
@@ -599,7 +606,7 @@ async def create_tables():
     """Create missing tables AND add any columns the model declares but the
     live SQLite schema is missing.
 
-    SQLAlchemy's `create_all` only creates tables that don't exist — it
+    SQLAlchemy's `create_all` only creates tables that don't exist, it
     silently leaves existing tables alone, so new model columns are dropped
     on the floor unless we ALTER explicitly. The project convention is
     "reimport from seed, not hand-written migrations", which works for fresh
@@ -608,7 +615,7 @@ async def create_tables():
     The helper below runs *after* `create_all` and walks every mapped table
     looking for columns that exist in `Base.metadata` but not in the live DB,
     then issues `ALTER TABLE ... ADD COLUMN`. This stays well within the
-    "no migrations" ergonomic — authors don't write or check anything in —
+    "no migrations" ergonomic, authors don't write or check anything in,
     while making column additions automatic.
     """
     async with engine.begin() as conn:
@@ -621,7 +628,7 @@ def _self_heal_columns(conn) -> None:
     """Add any columns declared on the model but missing in the live DB.
 
     Handles SQLite's quirk that `ALTER TABLE ADD COLUMN ... NOT NULL`
-    requires a DEFAULT clause — we read the model's `server_default` (or
+    requires a DEFAULT clause, we read the model's `server_default` (or
     fall back to a sensible value per type) and emit it.
     """
     from sqlalchemy import inspect, text
@@ -655,7 +662,7 @@ def _self_heal_columns(conn) -> None:
                 # `[]`, `{...}`, `[...]`) without SQL string quoting, wrap it
                 # in single quotes so the resulting DDL parses on SQLite. A
                 # model author who passes `server_default="'{}'"` already has
-                # quotes — leave that alone.
+                # quotes, leave that alone.
                 type_str_upper = col_type.upper()
                 looks_unquoted_json = (
                     raw_str
@@ -702,10 +709,10 @@ async def get_or_create_system_user(db: AsyncSession) -> User:
 
 # O3: narrow one-off retirement pass for columns the model no longer
 # declares but the live DB may still carry. Inverse of `_self_heal_columns`
-# (which only ADDs). Idempotent — no-ops once the column is gone, and
+# (which only ADDs). Idempotent, no-ops once the column is gone, and
 # silently falls back to "leave it" on SQLite versions too old to support
 # `ALTER TABLE DROP COLUMN` (added in SQLite 3.35, 2021). Don't expand this
-# into a general drop-sync — each entry is a deliberate, audited removal.
+# into a general drop-sync, each entry is a deliberate, audited removal.
 _O3_DROP_COLUMNS: tuple[tuple[str, str], ...] = (
     ("topic_forks", "content_snapshot"),
 )
@@ -725,7 +732,7 @@ def _O3_drop_retired_columns(conn) -> None:
             conn.execute(text(f'ALTER TABLE {table_name} DROP COLUMN {col_name}'))
             print(f"  Self-heal: dropped retired column {table_name}.{col_name}")
         except Exception as exc:  # noqa: BLE001
-            # Older SQLite (<3.35) doesn't support DROP COLUMN — leave it.
+            # Older SQLite (<3.35) doesn't support DROP COLUMN, leave it.
             print(
                 f"  Self-heal: could not drop {table_name}.{col_name} "
                 f"(harmless; column is unused): {type(exc).__name__}: {exc}"
@@ -735,7 +742,7 @@ def _O3_drop_retired_columns(conn) -> None:
 def parse_content_file(content_path: Path) -> list[dict]:
     """Parse a content markdown file into content blocks.
 
-    Thin shim over `parse_content_md` — reads the file, then runs the
+    Thin shim over `parse_content_md`, reads the file, then runs the
     directive parser. Missing files return an empty block list (a shell
     topic with no content.md).
     """
@@ -750,13 +757,13 @@ def parse_content_file(content_path: Path) -> list[dict]:
 def parse_content_md(text: str, topic_name: str = "content") -> list[dict]:
     """Parse content.md *text* into a list of block dicts.
 
-    The full I-cycle directive pipeline — multi-line block extraction, layer
-    markers, code-block detection, the J3 cross-check validator — identical
+    The full I-cycle directive pipeline, multi-line block extraction, layer
+    markers, code-block detection, the J3 cross-check validator, identical
     to what `parse_content_file` ran historically. This text-taking variant
     exists so over-the-wire markdown (the N fork editor's save / preview
     path) can be parsed without a file on disk.
 
-    `topic_name` only feeds `_warn(...)` messages — pass the topic slug or
+    `topic_name` only feeds `_warn(...)` messages, pass the topic slug or
     dir name for legible warnings; the default is fine for ad-hoc parses.
     Any issues surface via `_warn(...)` and become failures under `--strict`.
     """
@@ -778,7 +785,7 @@ def parse_content_md(text: str, topic_name: str = "content") -> list[dict]:
         if not section:
             continue
 
-        # Multi-line block placeholder — emit any preceding markdown, then the
+        # Multi-line block placeholder, emit any preceding markdown, then the
         # extracted block. Multiple placeholders in one section are handled in
         # order. Markdown around them is salvaged.
         if "@@BLOCK_" in section:
@@ -865,8 +872,8 @@ def parse_content_md(text: str, topic_name: str = "content") -> list[dict]:
                 })
                 sort_order += 1
 
-            # I — anchor + auto_run extras for code blocks.
-            # M5 — surface any other directive attrs (notably `pair_id`)
+            # I, anchor + auto_run extras for code blocks.
+            # M5, surface any other directive attrs (notably `pair_id`)
             # so the frontend can recognize paired code blocks. We pull the
             # directive's attrs via the same parser the multi-line path
             # uses; this keeps the legacy single-line parser flexible
@@ -926,13 +933,13 @@ def parse_content_md(text: str, topic_name: str = "content") -> list[dict]:
 
         # Check for quiz block
         if "<!-- block: quiz -->" in section:
-            # S4: deprecated. The renderer has no quiz case — the block falls
+            # S4: deprecated. The renderer has no quiz case, the block falls
             # to the default markdown dump and its solution/hint meta is
             # silently lost. Author a `decision` (graded, branchable) or an
             # inline `misconception` instead. Warn (→ hard error under
             # --strict) so a quiz can't quietly reappear in seed content.
             _warn(
-                "deprecated `quiz` block — the reader renders it as plain "
+                "deprecated `quiz` block, the reader renders it as plain "
                 "markdown and drops its solution/hints. Use a `decision` or "
                 "`misconception` instead."
             )
@@ -970,7 +977,7 @@ def parse_content_md(text: str, topic_name: str = "content") -> list[dict]:
             })
             sort_order += 1
 
-    # J3 cross-check pass — surfaces typos that the per-block parser doesn't
+    # J3 cross-check pass, surfaces typos that the per-block parser doesn't
     # have enough context to catch.
     _validate_topic_blocks(blocks, topic_name)
 
@@ -987,7 +994,7 @@ async def import_schema(db: AsyncSession, user: User):
         schema = yaml.safe_load(f)
 
     if schema_exists:
-        print(f"Found {existing_topics} existing topics — will add content to topics without it")
+        print(f"Found {existing_topics} existing topics, will add content to topics without it")
         # Build topic_map from existing DB
         result = await db.execute(select(Topic))
         all_topics = result.scalars().all()
@@ -996,7 +1003,7 @@ async def import_schema(db: AsyncSession, user: User):
         # K2: additive schema-merge. New domains/topics in `schema.yaml` that
         # don't yet exist in the DB get inserted on every run. This keeps the
         # "reimport from seed" migration story working when the schema grows
-        # — without it, schema additions silently no-op until the DB is
+        #, without it, schema additions silently no-op until the DB is
         # wiped (which loses user progress).
         domain_topics_existing = {t.slug: t for t in all_topics if t.depth == 0}
         for domain in schema.get("domains", []):
@@ -1203,7 +1210,7 @@ async def import_schema(db: AsyncSession, user: User):
                     topic.has_formal_layer = True
                     topic.has_intuition_layer = True
 
-                # K3: optional spaced-repetition recall prompt — surfaced
+                # K3: optional spaced-repetition recall prompt, surfaced
                 # above the prose when the topic is due-for-review.
                 if meta.get("recall_prompt"):
                     topic.recall_prompt = str(meta["recall_prompt"]).strip()

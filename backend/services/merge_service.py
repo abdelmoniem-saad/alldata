@@ -1,26 +1,26 @@
-"""merge_service — O1.
+"""merge_service, O1.
 
 The two primitives merge-back needs:
 
-  - `apply_markdown_to_topic(db, topic, markdown)` — replace a topic's
+  - `apply_markdown_to_topic(db, topic, markdown)`, replace a topic's
     content blocks + misconceptions atomically from a fresh `content.md`
     source. Reuses the seed importer's parser and the same block /
     misconception split.
 
-  - `write_topic_source(topic, markdown)` — write the markdown to disk at
+  - `write_topic_source(topic, markdown)`, write the markdown to disk at
     `seed/topics/{domain}/{slug}/content.md`. The reimport convention
     (`import_seed`) skips topics that already have content, so a DB-only
-    update is durable — writing the seed file is about keeping the repo's
+    update is durable, writing the seed file is about keeping the repo's
     seed files honest as source-of-truth, not durability.
 
 Higher-level orchestration:
 
-  - `suggest_from_fork(db, fork, user_id)` — create or refresh the fork's
+  - `suggest_from_fork(db, fork, user_id)`, create or refresh the fork's
     pending suggestion (one pending per fork).
-  - `list_review_queue(db)` / `get_review_detail(db, suggestion_id)` —
+  - `list_review_queue(db)` / `get_review_detail(db, suggestion_id)`,
     review-queue reads.
-  - `accept_suggestion(db, suggestion, reviewer_id)` — apply to master.
-  - `reject_suggestion(db, suggestion, reviewer_id, note)` — close out.
+  - `accept_suggestion(db, suggestion, reviewer_id)`, apply to master.
+  - `reject_suggestion(db, suggestion, reviewer_id, note)`, close out.
 """
 
 from __future__ import annotations
@@ -105,7 +105,7 @@ def write_topic_source(topic: Topic, markdown: str) -> bool:
     """Write `markdown` to `seed/topics/{domain}/{slug}/content.md`.
 
     Returns True if the file was written, False if skipped (e.g. the
-    topic has no `domain` — an API-created topic never seeded to disk).
+    topic has no `domain`, an API-created topic never seeded to disk).
     The DB update should still proceed; the on-disk write is best-effort.
     """
     if not topic.domain or not topic.slug:
@@ -158,8 +158,8 @@ async def _get_pending_for_fork(
 async def latest_status_for_fork(
     db: AsyncSession, fork_id: uuid.UUID
 ) -> str | None:
-    """The most-recent suggestion status for this fork — pending, accepted,
-    or rejected — or None if the fork has never suggested. Used to render
+    """The most-recent suggestion status for this fork, pending, accepted,
+    or rejected, or None if the fork has never suggested. Used to render
     the status chip on fork surfaces."""
     row = await db.execute(
         select(MergeBackSuggestion.status)

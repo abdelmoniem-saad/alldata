@@ -2,7 +2,7 @@
 
 The surface aims for a working scientist's notebook: zinc, hairline, deliberate. Everything in this doc is already enforced in code; the doc exists so contributors don't have to read CSS comments to find it.
 
-For the *identity* layer — name, mark, tagline, voice-in-brief, and what AllData is / isn't — see [`identity.md`](identity.md). This doc is the *visual system* (color, type, spacing, motion, components) it sits on.
+For the *identity* layer, name, mark, tagline, voice-in-brief, and what AllData is / isn't, see [`identity.md`](identity.md). This doc is the *visual system* (color, type, spacing, motion, components) it sits on.
 
 Token references throughout cite vars defined in `frontend/src/styles/tokens.css` (typography, spacing, motion) and `frontend/src/styles/global.css` (color, theme, radius). The achromatopsia and reduced-motion rules in `docs/principles.md` apply across this whole doc.
 
@@ -18,7 +18,7 @@ Write the way a careful colleague explains something at a whiteboard. The reader
 |---|---|---|
 | Topic prose | "Bayes' Theorem is a powerful tool that revolutionizes how we think about probability!" | "Bayes' Theorem flips a conditional. You know P(B \| A); you want P(A \| B)." |
 | Decision response (correct) | "🎉 Awesome job! You got it right!" | "You're already past the trap most people fall into. Here's why the rarity pulls the posterior down." |
-| Decision response (wrong) | "Oops, that's not quite right. Try again!" | "Watch the plot — under your strategy, most treated patients are healthy. The test's accuracy isn't the whole story." |
+| Decision response (wrong) | "Oops, that's not quite right. Try again!" | "Watch the plot, under your strategy, most treated patients are healthy. The test's accuracy isn't the whole story." |
 | Error state | "Oh no! Something went wrong 😢" | "Topic not found." |
 | Empty state | "Looks like there's nothing here yet. Check back soon!" | "Content coming soon." |
 | Button label | "Click here to begin your learning journey" | "Start" |
@@ -26,7 +26,7 @@ Write the way a careful colleague explains something at a whiteboard. The reader
 Notes:
 - Sentence case for buttons, headings in chrome, and labels. Title case is reserved for proper nouns (Bayes' Theorem).
 - One emoji limit: zero. The surface doesn't use them.
-- Math in prose uses KaTeX (`$P(A \mid B)$`). Don't spell out "P of A given B" in body text — write the notation and trust the reader.
+- Math in prose uses KaTeX (`$P(A \mid B)$`). Don't spell out "P of A given B" in body text, write the notation and trust the reader.
 - Decision response text is the verdict. It does double duty: explains why the choice was right or wrong, and points the reader at what to look at next on the visible plot.
 
 ---
@@ -50,7 +50,7 @@ The surface has four families: neutrals (zinc), one accent (teal), five domain h
 | `--color-text-secondary` | `#a1a1aa` | `#52525b` | Body prose, secondary labels |
 | `--color-text-muted` | `#52525b` | `#a1a1aa` | Tertiary labels, axis ticks |
 
-### Accent — the teal energy
+### Accent, the teal energy
 
 | Var | Dark | Light | Use |
 |---|---|---|---|
@@ -61,9 +61,9 @@ The surface has four families: neutrals (zinc), one accent (teal), five domain h
 
 Rule: there is exactly one accent. If a new surface needs to read as interactive, it uses teal. Pages don't get their own accents.
 
-### Domain hues — muted jewel tones
+### Domain hues, muted jewel tones
 
-The five domains the platform covers. Hue + stroke pattern together is belt + suspenders — at the 11–28px node scale, hue alone reads as "five shades of gray with squiggles."
+The five domains the platform covers. Hue + stroke pattern together is belt + suspenders, at the 11–28px node scale, hue alone reads as "five shades of gray with squiggles."
 
 | Var | Dark | Light | Domain |
 |---|---|---|---|
@@ -73,7 +73,7 @@ The five domains the platform covers. Hue + stroke pattern together is belt + su
 | `--color-regression` | `#7cb098` | `#4a8268` | Regression modeling |
 | `--color-practice` | `#c98b8b` | `#9b5858` | Data science practice |
 
-**Achromatopsia rule.** Each hue's luminance value is distinct — a reader with no color vision can still tell domains apart by darkness. New hues must pass the same test (use the existing palette or have a clear luminance step). The stroke-pattern vocabulary (`--difficulty-dash` solid / dashed / dotted) is the secondary signal for that case.
+**Achromatopsia rule.** Each hue's luminance value is distinct, a reader with no color vision can still tell domains apart by darkness. New hues must pass the same test (use the existing palette or have a clear luminance step). The stroke-pattern vocabulary (`--difficulty-dash` solid / dashed / dotted) is the secondary signal for that case.
 
 ### Difficulty hues
 
@@ -97,9 +97,9 @@ Defined in `tokens.css`. Six steps. Use the var, never the raw px.
 | `--text-h1-*` | 32px | 22px | 1.2 | 700 | -0.5px | Prose h1 / hero title |
 | `--text-h2-*` | 26px | 18px | 1.25 | 700 | -0.3px | Prose h2 / section title |
 | `--text-h3-*` | 20px | 15px | 1.3 | 600 | 0 | Prose h3 / subsection |
-| `--text-body-*` | 15px | 14px | 1.75 | 400 | — | Body prose, decision response, callout body |
-| `--text-small-*` | 13px | 12px | 1.6 | 400 | — | Labels, axis ticks, control values |
-| `--text-mono-*` | 13px | 12px | 1.6 | 400 | — | Code, numeric readouts in playground sliders |
+| `--text-body-*` | 15px | 14px | 1.75 | 400 |, | Body prose, decision response, callout body |
+| `--text-small-*` | 13px | 12px | 1.6 | 400 |, | Labels, axis ticks, control values |
+| `--text-mono-*` | 13px | 12px | 1.6 | 400 |, | Code, numeric readouts in playground sliders |
 
 Headings use `var(--font-serif)` (STIX Two Text); body and chrome use `var(--font-sans)` (Inter); code uses `var(--font-mono)` (JetBrains Mono → Fira Code → Consolas).
 
@@ -140,7 +140,7 @@ Three durations, one easing. Every animation honors `prefers-reduced-motion`.
 | `--duration-slow` (also `--transition-spring`) | 600ms / 0.5s spring | Decision plot recolor, playground meter fill, anything where the user should *see* the change |
 | `--easing-standard` | `cubic-bezier(0.4, 0, 0.2, 1)` | The default. Use spring `cubic-bezier(0.34, 1.56, 0.64, 1)` only for the existing transition-spring |
 
-Under `prefers-reduced-motion`, all three durations collapse to 0ms (set in `tokens.css`). Components reading `var(--duration-*)` inherit that automatically — no per-component check needed.
+Under `prefers-reduced-motion`, all three durations collapse to 0ms (set in `tokens.css`). Components reading `var(--duration-*)` inherit that automatically, no per-component check needed.
 
 **Rule.** If the change is essential to the lesson (the plot reacting to a decision), use `--duration-slow`. If the change is just chrome (a hover, a focus ring), use `--duration-fast`. Don't guess; pick the slot.
 
@@ -165,7 +165,7 @@ Each element is one decision the surface has already made. New components reuse 
 ## How to use this doc
 
 When adding a new component:
-1. Use existing tokens — color, type, space, motion. Inline raw px or hex is a smell.
+1. Use existing tokens, color, type, space, motion. Inline raw px or hex is a smell.
 2. Inherit the component vocabulary above (zinc panel, hairline, accent bar) before designing something new.
 3. If you need a token that doesn't exist, add it to `tokens.css` first and update this doc in the same change.
 4. Verify the achromatopsia and reduced-motion rules still hold for what you've added.

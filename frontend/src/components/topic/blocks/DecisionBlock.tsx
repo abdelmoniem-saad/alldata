@@ -1,29 +1,29 @@
 /**
- * DecisionBlock — I5a
+ * DecisionBlock, I5a
  *
  * The decision is the cycle's headline: ask a question, let the user commit,
- * then reveal the consequence by *mutating shared topic state* — the pinned
+ * then reveal the consequence by *mutating shared topic state*, the pinned
  * plot reacts on its own. There's no separate sim engine; the option's
  * `writes:` map flows into `useTopicState` and any plot bound to those keys
  * recolors itself.
  *
  * Three states (in order):
- *   1. prompt — question + options (selection submits)
- *   2. react  — option chosen; writes dispatched to TopicState; plot recolors
+ *   1. prompt, question + options (selection submits)
+ *   2. react, option chosen; writes dispatched to TopicState; plot recolors
  *               (~600ms, gated by prefers-reduced-motion). Response text fades
  *               in below the question.
- *   3. reveal — gates downstream `branch:` blocks via the persisted decisions
+ *   3. reveal, gates downstream `branch:` blocks via the persisted decisions
  *               map (handled outside this component, in ScrollReader).
  *
  * Visual rules from the plan:
  *   - Zinc panel, no celebratory affordances. Selected option gets a left
- *     accent bar — `--color-accent` if `correct`, `--color-advanced` if wrong.
+ *     accent bar, `--color-accent` if `correct`, `--color-advanced` if wrong.
  *   - "Show me the answer" plain link applies the correct option's writes
  *     without granting credit (we just persist the selection like any other).
  *
  * Persistence: `useTopicStateStore.selectDecision(slug, anchor, optionId)`
  * stores the choice. On mount, if the anchor already has a decision, we jump
- * straight to react/reveal — no re-prompting on revisit.
+ * straight to react/reveal, no re-prompting on revisit.
  */
 import { useEffect, useMemo, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
@@ -45,7 +45,7 @@ interface DecisionMeta {
   question?: string
   options?: DecisionOption[]
   correct?: string
-  /** Reserved for I5 reveal hooks — block-id gates use `meta.depends_on`/`branch`. */
+  /** Reserved for I5 reveal hooks, block-id gates use `meta.depends_on`/`branch`. */
   reveals?: string
 }
 
@@ -74,7 +74,7 @@ export default function DecisionBlock({ slug, anchor, meta }: Props) {
   )
 
   // Local state mirrors the persisted event so the response fade lands
-  // immediately — no waiting on the store roundtrip.
+  // immediately, no waiting on the store roundtrip.
   const [chosen, setChosen] = useState<string | null>(persisted)
   useEffect(() => { setChosen(persisted) }, [persisted])
 

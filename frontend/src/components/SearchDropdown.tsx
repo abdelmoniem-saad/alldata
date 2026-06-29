@@ -1,5 +1,5 @@
 /**
- * SearchDropdown — L4.
+ * SearchDropdown, L4.
  *
  * The single inline-dropdown search component. Both the Home page's hero
  * input and the navbar's Ctrl-K modal route through this; the only thing
@@ -12,7 +12,7 @@
  *  - Keyboard nav: ↑/↓ between results, Enter to select, Escape clears.
  *  - On select, navigate to the matched topic. Callers can override via
  *    `onSelect` (the `/explore` graph chip overrides to pan-and-zoom
- *    rather than navigate — that's the one place that needs custom
+ *    rather than navigate, that's the one place that needs custom
  *    behavior, so we don't try to absorb it here).
  *
  * The `inline` variant is for surfaces that are themselves the input
@@ -33,8 +33,8 @@ export interface SearchDropdownProps {
   /** Autofocus the input on mount. Used by the navbar modal. */
   autoFocus?: boolean
   /**
-   * `inline` — renders the input + results stacked. Used by the Home page hero.
-   * `embedded` — renders only the input + results, no outer chrome. Used by
+   * `inline`, renders the input + results stacked. Used by the Home page hero.
+   * `embedded`, renders only the input + results, no outer chrome. Used by
    * the navbar Ctrl-K modal which provides its own modal frame.
    */
   variant?: 'inline' | 'embedded'
@@ -58,7 +58,7 @@ export default function SearchDropdown({
     if (autoFocus) inputRef.current?.focus()
   }, [autoFocus])
 
-  // Debounced search. Bail on short queries — the trigram fuzzy is noisy
+  // Debounced search. Bail on short queries, the trigram fuzzy is noisy
   // for 1-character inputs.
   const search = useCallback((q: string) => {
     setQuery(q)

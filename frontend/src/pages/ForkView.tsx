@@ -1,17 +1,17 @@
 /**
- * ForkView — N (fork model).
+ * ForkView, N (fork model).
  *
  * Reads one user's fork of a topic at `/u/:username/topic/:slug`. Renders
- * through the same `ScrollReader` the master topic page uses — the fork's
+ * through the same `ScrollReader` the master topic page uses, the fork's
  * `content_blocks` come back already parsed from the server.
  *
  * Differences from `TopicView`:
  *   - A lineage banner ("Fork of {master} by {username}") above the header.
- *   - No "Mark Learned" — fork engagement is namespaced separately and
+ *   - No "Mark Learned", fork engagement is namespaced separately and
  *     doesn't touch the reader's master-topic completion.
  *   - An "Edit" affordance, owner-only, routing to the fork editor.
  *   - A lightweight bespoke chrome (layer toggle + back link) rather than
- *     the full `ZenChrome` — a fork is a distinct surface.
+ *     the full `ZenChrome`, a fork is a distinct surface.
  *
  * Progress namespace: `ScrollReader` is handed `slug = "fork:{username}:
  * {slug}"` so decision events / topic state for a fork don't collide with
@@ -42,7 +42,7 @@ export default function ForkView() {
 
   // O0: resolve the `me` alias. `/u/me/topic/:slug` is what "Open my fork"
   // and the editor's back-link both navigate to, but `me` is not a real
-  // username — the backend's fuzzy lookup would 404. Redirect (replace)
+  // username, the backend's fuzzy lookup would 404. Redirect (replace)
   // to the canonical `/u/{display_name}/topic/{slug}` so the address bar
   // carries a real, shareable URL. Anonymous viewers have no "my fork";
   // bounce them to the master topic.
@@ -57,7 +57,7 @@ export default function ForkView() {
   }, [isMeAlias, slug, user, navigate])
 
   useEffect(() => {
-    // Skip the fetch while the `me` redirect resolves — `username` is
+    // Skip the fetch while the `me` redirect resolves, `username` is
     // still the literal alias and the API call would 404.
     if (!username || !slug || isMeAlias) return
     setLoading(true)
@@ -75,7 +75,7 @@ export default function ForkView() {
     setReadProgress(scrollHeight > 0 ? Math.min(el.scrollTop / scrollHeight, 1) : 0)
   }, [])
 
-  // Whether the viewer owns this fork — drives the Edit affordance.
+  // Whether the viewer owns this fork, drives the Edit affordance.
   const isOwner = useMemo(
     () => Boolean(user && fork && user.id && fork.owner_display_name === user.display_name),
     [user, fork],
@@ -186,7 +186,7 @@ export default function ForkView() {
         }} />
       </div>
 
-      {/* Bespoke fork chrome — layer toggle + back link + (owner) edit */}
+      {/* Bespoke fork chrome, layer toggle + back link + (owner) edit */}
       <div className="zen-bottom-bar">
         <Link
           to={`/topic/${master.slug}`}

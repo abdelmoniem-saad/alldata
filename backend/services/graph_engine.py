@@ -1,4 +1,4 @@
-"""Graph engine — the intellectual core of AllData.
+"""Graph engine, the intellectual core of AllData.
 
 Handles prerequisite traversal, learning path generation, cycle detection,
 subgraph extraction, and adaptive graph personalization.
@@ -58,7 +58,7 @@ async def get_full_graph(db: AsyncSession, status_filter: str | None = "publishe
     K2: topics whose domain begins with `_` are hidden navigation surfaces
     (e.g. `_meta` for the Shape of Statistics intro). They live in the DB
     so the topic page can render them via the normal route, but the public
-    graph view skips them — they aren't part of the curriculum.
+    graph view skips them, they aren't part of the curriculum.
     """
     topic_query = select(Topic)
     if status_filter:
@@ -195,7 +195,7 @@ async def get_prerequisite_chain(
 
     G8: Each entry carries a `why` that mirrors LearningPathStep.why_needed.
     Only *direct* prerequisites (those with an edge straight to the target)
-    have a description — transitive prereqs surface without one, since only
+    have a description, transitive prereqs surface without one, since only
     the immediate dependency has a documented rationale.
     """
     # Get the topic ID first
@@ -559,9 +559,9 @@ async def search_graph_nodes(
         topics = [row[0] for row in result.all()]
     else:
         # SQLite path: rank by where the match lands.
-        #   case 0 — title starts with q                  (best)
-        #   case 1 — q follows a space (word boundary)    (good)
-        #   case 2 — substring match anywhere              (fallback)
+        #   case 0, title starts with q                  (best)
+        #   case 1, q follows a space (word boundary)    (good)
+        #   case 2, substring match anywhere              (fallback)
         # `LIKE` in SQLite is case-insensitive for ASCII by default.
         rank = case(
             (Topic.title.ilike(q_prefix), 0),

@@ -1,8 +1,8 @@
-"""MergeBackSuggestion — O1.
+"""MergeBackSuggestion, O1.
 
 A fork owner's proposal to apply their fork's `markdown_source` to the
 master topic. Snapshotted at suggest time so later fork edits don't mutate
-a pending suggestion. One *pending* suggestion per fork — re-suggesting
+a pending suggestion. One *pending* suggestion per fork, re-suggesting
 while pending updates the snapshot in place rather than stacking.
 """
 
@@ -24,7 +24,7 @@ class MergeBackSuggestion(Base):
     suggested_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
 
     # Snapshot of the fork's markdown at suggest time. Subsequent fork edits
-    # don't mutate the suggestion — the reviewer sees a stable proposal.
+    # don't mutate the suggestion, the reviewer sees a stable proposal.
     suggested_markdown: Mapped[str] = mapped_column(Text)
 
     # Lifecycle: pending → accepted | rejected. `server_default` so the J3

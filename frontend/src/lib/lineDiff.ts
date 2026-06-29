@@ -1,12 +1,12 @@
 /**
- * lineDiff — O1.
+ * lineDiff, O1.
  *
  * A minimal LCS-based line diff. Given two multi-line strings, returns a
  * sequence of `{ kind, text }` entries where `kind` is one of:
  *
- *   - `'same'`  — a line present in both, unchanged.
- *   - `'add'`   — a line in `right` not in `left` at this position.
- *   - `'del'`   — a line in `left` not in `right` at this position.
+ *   - `'same'`, a line present in both, unchanged.
+ *   - `'add'`, a line in `right` not in `left` at this position.
+ *   - `'del'`, a line in `left` not in `right` at this position.
  *
  * Used by `MergeDiff` to render a unified diff between a master topic's
  * current `content.md` and a fork's suggested replacement. Quadratic in
@@ -23,7 +23,7 @@ export interface DiffLine {
 export function lineDiff(left: string, right: string): DiffLine[] {
   // Split on \n and keep blank trailing lines if present (so the diff
   // mirrors the source exactly). Lines never carry trailing '\n's in
-  // the returned list — the renderer adds spacing as needed.
+  // the returned list, the renderer adds spacing as needed.
   const a = left.split('\n')
   const b = right.split('\n')
   const m = a.length

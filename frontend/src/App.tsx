@@ -3,8 +3,9 @@ import { Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
 import Home from './pages/Home'
 import { startSyncOrchestrator, stopSyncOrchestrator } from './stores/syncOrchestrator'
+import { useAuthStore } from './stores/authStore'
 
-// T0: route-level code-splitting. `Layout` + `Home` stay eager — the shell
+// T0: route-level code-splitting. `Layout` + `Home` stay eager, the shell
 // and landing page, so first paint never flashes. Everything heavier or
 // rarer is lazy, so d3 (force graph + plots), katex's JS, and the 23 plot
 // specs download only when a graph / topic / fork route is first visited.
@@ -27,6 +28,12 @@ export default function App() {
   useEffect(() => {
     startSyncOrchestrator()
     return () => stopSyncOrchestrator()
+  }, [])
+
+  // Y: refresh the signed-in user on boot so a server-side role change
+  // (e.g. promotion to editor/admin) reflects on reload without a re-login.
+  useEffect(() => {
+    useAuthStore.getState().refreshUser()
   }, [])
 
   return (

@@ -1,5 +1,5 @@
 /**
- * safeExpr — tiny safe expression evaluator used by I5 directives.
+ * safeExpr, tiny safe expression evaluator used by I5 directives.
  *
  * Used by:
  *   - decision `branch` predicates (rare; usually a literal id match)

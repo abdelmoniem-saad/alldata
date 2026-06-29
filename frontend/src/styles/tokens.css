@@ -1,4 +1,4 @@
-/* tokens.css — J2
+/* tokens.css, J2
  *
  * The named ramps the surface uses everywhere. `global.css` keeps the color +
  * theme system; this file holds typography, spacing, and motion tokens that
@@ -7,7 +7,7 @@
  *
  * The file is import-ordered AFTER `global.css` so it can read color vars but
  * its own ramps win where component CSS uses them. Component CSS never uses
- * raw px for type or space values that have a token — `grep -r 'fontSize:'`
+ * raw px for type or space values that have a token, `grep -r 'fontSize:'`
  * over `frontend/src/components/topic/` should return zero hits.
  */
 
@@ -15,7 +15,7 @@
   /* ─── Typography scale ────────────────────────────────────────────────────
    * Six steps. `display` is for the topic header only; everything else is
    * the prose / chrome ramp. Body and small carry the 1.7 line-height that
-   * makes long-form math prose readable. Mono carries 1.6 — code is tighter.
+   * makes long-form math prose readable. Mono carries 1.6, code is tighter.
    */
   --text-display-size: clamp(32px, 5vw, 56px);
   --text-display-line: 1.05;
@@ -49,7 +49,7 @@
   --text-mono-line: 1.6;
   --text-mono-weight: 400;
 
-  /* Mobile overrides — preserved from the previous global.css media block.
+  /* Mobile overrides, preserved from the previous global.css media block.
    * Each ramp step's *size* gets a clamp with a smaller minimum so the page
    * compresses gracefully on phones. Line/weight/tracking are unchanged. */
   /* (mobile clamps applied below in @media (max-width: 768px)) */

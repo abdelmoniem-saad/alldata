@@ -1,4 +1,4 @@
-"""Merge-back review-queue endpoints — O1.
+"""Merge-back review-queue endpoints, O1.
 
 Mounted under `/api/merge-backs`. All endpoints require ADMIN or EDITOR
 (matches the existing PUT/DELETE /api/content/blocks gate). The fork-side

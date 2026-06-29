@@ -26,19 +26,19 @@ The reader is here to learn statistics, not to collect rewards. A wrong decision
 
 Every topic exposes one or more layers. The reader chooses depth; the surface honors it.
 
-The intuition layer is felt understanding — analogies, decisions, playgrounds, dot grids. The formal layer is the math — proofs, derivations, measure-theoretic statements. Topics that have both let the reader toggle between them; topics that have only one don't pretend to offer the other. The toggle in the chrome is the reader's way of asking "show me more rigor" or "show me less."
+The intuition layer is felt understanding, analogies, decisions, playgrounds, dot grids. The formal layer is the math, proofs, derivations, measure-theoretic statements. Topics that have both let the reader toggle between them; topics that have only one don't pretend to offer the other. The toggle in the chrome is the reader's way of asking "show me more rigor" or "show me less."
 
 ## 5. One plot system
 
 Decisions, playgrounds, and static visuals all write to / read from a single `useTopicState` bag. There is no separate sim engine.
 
-This is the architectural payoff of the I-cycle. A decision dispatches a state write, the plot subscribes to that key, the plot recolors. A playground slider writes the same way. A static `<!-- block: plot -->` reads from the same state. Authors think in one model — *what state does this topic have, and what plots show it?* — and renderers don't have to coordinate between a sim and a plot because there isn't one.
+This is the architectural payoff of the I-cycle. A decision dispatches a state write, the plot subscribes to that key, the plot recolors. A playground slider writes the same way. A static `<!-- block: plot -->` reads from the same state. Authors think in one model, *what state does this topic have, and what plots show it?*, and renderers don't have to coordinate between a sim and a plot because there isn't one.
 
 ## 6. Reduced-motion and color-blind safe by default
 
 Every animation gates on `prefers-reduced-motion`; every color carries luminance contrast independent of hue.
 
-The motion gate is non-negotiable: every transition, every stagger, every crossfade short-circuits to instant under the user's stated preference. The luminance rule is the achromatopsia-safe constraint — every domain hue is distinguishable on its luminance value alone, so a reader with no color vision can still tell domains apart by darkness. New hues must pass the same test. New animations must inherit the same gate.
+The motion gate is non-negotiable: every transition, every stagger, every crossfade short-circuits to instant under the user's stated preference. The luminance rule is the achromatopsia-safe constraint, every domain hue is distinguishable on its luminance value alone, so a reader with no color vision can still tell domains apart by darkness. New hues must pass the same test. New animations must inherit the same gate.
 
 ## 7. Reimport-from-seed is the migration story
 
@@ -46,10 +46,10 @@ Schema changes ship alongside a `python -m seed.import_seed` run, not hand-writt
 
 Topics live in `seed/topics/{domain}/{slug}/` as the source of truth. The database is a derived artifact. Adding a column to a model means: edit the model, run the importer, and the importer's self-healing pass adds the column to the live DB. There are no Alembic migrations, no manual SQL, no migration ordering to track. If a change can't be expressed by re-running the importer, it's the wrong change.
 
-**Hidden domains.** Domains whose slug starts with an underscore (`_meta`, future `_drafts`, etc.) are hidden navigation surfaces. They live in the DB and serve topic pages normally — `/topic/shape-of-statistics` works — but they're filtered out of `/explore`, the search dropdowns, and the public-snapshot graph. The convention is the leading underscore; the filter is applied at the graph API layer (`backend/services/graph_engine.py:get_full_graph`). New hidden domains land by adding a `_<name>` entry to `seed/schema.yaml`'s domain list. (K2 introduced this for the "Shape of Statistics" intro.)
+**Hidden domains.** Domains whose slug starts with an underscore (`_meta`, future `_drafts`, etc.) are hidden navigation surfaces. They live in the DB and serve topic pages normally, `/topic/shape-of-statistics` works, but they're filtered out of `/explore`, the search dropdowns, and the public-snapshot graph. The convention is the leading underscore; the filter is applied at the graph API layer (`backend/services/graph_engine.py:get_full_graph`). New hidden domains land by adding a `_<name>` entry to `seed/schema.yaml`'s domain list. (K2 introduced this for the "Shape of Statistics" intro.)
 
 ---
 
 ## How to use this list
 
-When proposing a change, name which principle it touches. If the change strengthens a principle, say so and ship. If it weakens one, the change either needs to be redesigned or the principle needs to be revised explicitly — the principle doesn't get bent silently. New principles get added through the same kind of review and only when an actual constraint repeatedly bites.
+When proposing a change, name which principle it touches. If the change strengthens a principle, say so and ship. If it weakens one, the change either needs to be redesigned or the principle needs to be revised explicitly, the principle doesn't get bent silently. New principles get added through the same kind of review and only when an actual constraint repeatedly bites.

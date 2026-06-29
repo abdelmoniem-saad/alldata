@@ -18,9 +18,9 @@ A 95% confidence interval is the most-misunderstood statistic in everyday use. T
 
 You compute a 95% CI for the mean. You report $[2.1, 4.3]$. Most people read that as "there's a 95% chance the true mean is in $[2.1, 4.3]$."
 
-That reading is *wrong* under the frequentist framework — and it matters.
+That reading is *wrong* under the frequentist framework, and it matters.
 
-The correct reading: if you re-ran your study many times, computing a fresh 95% CI each time, **95% of those intervals** would contain the true mean. The 95% is a property of the *procedure*, not of any single interval. Once you've computed a specific interval, the true mean either is or isn't in it — there's no probability about *that* anymore.
+The correct reading: if you re-ran your study many times, computing a fresh 95% CI each time, **95% of those intervals** would contain the true mean. The 95% is a property of the *procedure*, not of any single interval. Once you've computed a specific interval, the true mean either is or isn't in it, there's no probability about *that* anymore.
 
 ---
 
@@ -35,25 +35,25 @@ options:
     label: "There's a 95% probability the true mean is between 2.1 and 4.3."
     writes: { mu: 0 }
     response: |
-      This is the popular reading — and it's wrong frequentist-wise. The true
+      This is the popular reading, and it's wrong frequentist-wise. The true
       mean is a fixed (unknown) constant; either it *is* in $[2.1, 4.3]$ or it
       isn't. The 95% can't refer to a probability about the parameter once the
       data is collected. (A Bayesian credible interval *would* support this
-      reading — but it requires a prior, and the math is different.)
+      reading, but it requires a prior, and the math is different.)
   - id: b
     label: "If we repeated this procedure many times, 95% of the resulting intervals would contain the true mean."
     writes: { mu: 1.5 }
     response: |
       Right. The 95% describes the *long-run frequency* of intervals containing
       the parameter. It's a property of the procedure (and of the assumptions
-      it relies on — normality, iid, etc.), not of any single interval you
+      it relies on, normality, iid, etc.), not of any single interval you
       happen to have computed.
   - id: c
     label: "95% of the data falls between 2.1 and 4.3."
     writes: { sigma: 0.5 }
     response: |
       That would be a *prediction* interval for individual observations, not a
-      confidence interval for the *mean*. They're different things — prediction
+      confidence interval for the *mean*. They're different things, prediction
       intervals are wider because they have to account for the variability of
       single observations, not just the precision of the mean estimate.
 correct: b
@@ -62,11 +62,11 @@ correct: b
 ---
 
 <!-- block: callout, kind: insight, depends_on: ci-pick, branch: b -->
-The frequentist CI is a statement about the long-run reliability of the *procedure* under repeated sampling. Most readers want a Bayesian credible interval — *given my data, where do I think the parameter is?* — and the two coincide numerically only under specific priors. Knowing which one you're computing matters.
+The frequentist CI is a statement about the long-run reliability of the *procedure* under repeated sampling. Most readers want a Bayesian credible interval, *given my data, where do I think the parameter is?*, and the two coincide numerically only under specific priors. Knowing which one you're computing matters.
 <!-- /block -->
 
 <!-- block: callout, kind: insight, depends_on: ci-pick, branch: a|c -->
-The trap was conflating "95% of intervals contain the parameter" with "this interval contains the parameter with 95% probability." Frequentists treat the parameter as fixed; the randomness is in the *interval*. Bayesians treat the parameter as a random variable and *can* make probability statements about it — but that's a different framework with different machinery.
+The trap was conflating "95% of intervals contain the parameter" with "this interval contains the parameter with 95% probability." Frequentists treat the parameter as fixed; the randomness is in the *interval*. Bayesians treat the parameter as a random variable and *can* make probability statements about it, but that's a different framework with different machinery.
 <!-- /block -->
 
 ---
@@ -147,7 +147,7 @@ plt.show()
 <!-- block: gear, n: 6, label: "Where it leads" -->
 
 <!-- block: callout, kind: insight -->
-**Where this leads.** **Hypothesis testing** is a mirror of CIs — a CI that excludes 0 corresponds to a rejection of $H_0: \mu = 0$ at the same level. **Bayesian inference** offers credible intervals that *do* support the popular reading, at the cost of a prior. **Sampling distributions** is the engine room: every CI relies on a sampling distribution to compute its critical value.
+**Where this leads.** **Hypothesis testing** is a mirror of CIs, a CI that excludes 0 corresponds to a rejection of $H_0: \mu = 0$ at the same level. **Bayesian inference** offers credible intervals that *do* support the popular reading, at the cost of a prior. **Sampling distributions** is the engine room: every CI relies on a sampling distribution to compute its critical value.
 <!-- /block -->
 
 ---
@@ -157,5 +157,5 @@ plt.show()
 
 *Wrong:* the interval is a probabilistic statement about where the parameter lives.
 
-*Correct:* under frequentism, the parameter is fixed and the interval is random. *Before* you collect data, the interval-construction *procedure* covers the parameter 95% of the time. *After* the data is collected, the specific interval either covers the parameter or doesn't — there's no remaining probability statement to make. For a probabilistic reading of the parameter given the data, you need Bayesian inference.
+*Correct:* under frequentism, the parameter is fixed and the interval is random. *Before* you collect data, the interval-construction *procedure* covers the parameter 95% of the time. *After* the data is collected, the specific interval either covers the parameter or doesn't, there's no remaining probability statement to make. For a probabilistic reading of the parameter given the data, you need Bayesian inference.
 <!-- /block -->

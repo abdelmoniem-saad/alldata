@@ -25,7 +25,7 @@ interface Props {
     inProgressSlugs: string[]
   } | null
   /**
-   * M (immersive tour): when set, only that domain's nodes are drawn —
+   * M (immersive tour): when set, only that domain's nodes are drawn,
    * everything else is skipped at draw time. Same semantics as the
    * `/explore` page's domain legend filter: clicking "Probability"
    * narrows the view to the probability cluster.
@@ -37,7 +37,7 @@ interface Props {
    *
    * Originally this was a dim-not-hide signal called `focusDomain`. The
    * dim variant left non-cluster nodes faintly visible, which read as
-   * "broken" — the user expected the legend-style narrowing behavior.
+   * "broken", the user expected the legend-style narrowing behavior.
    */
   visibleDomain?: string | null
   /**
@@ -52,7 +52,7 @@ interface Props {
  * H6 / H8: imperative handle so parent containers (GraphExplorer's search
  * chip, keyboard nav) can steer the canvas without prop-change re-renders.
  * `centerOnSlug` pans+zooms onto a node; `getNeighborInDirection` is the
- * arrow-key walker — it returns the neighbor whose angle from the given
+ * arrow-key walker, it returns the neighbor whose angle from the given
  * node is closest to the pressed arrow's cardinal direction (within a
  * ±45° cone). Returns null when there's no neighbor in that direction.
  */
@@ -102,7 +102,7 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
   const completedSlugs = progressOverride?.completedSlugs ?? localCompleted
   const inProgressSlugs = progressOverride?.inProgressSlugs ?? localInProgress
   // K3: graph-level "subtle dimming" cue for spaced-repetition due topics.
-  // Recompute the due-set on every render — cheap (filter over a small map),
+  // Recompute the due-set on every render, cheap (filter over a small map),
   // and the draw pass is repaint-on-rAF anyway. Subscribing to the
   // schedule keeps us reactive when `recordReview` mutates it.
   const reviewSchedule = useProgressStore(s => s.reviewSchedule ?? {})
@@ -114,6 +114,17 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
     }
     return out
   }, [reviewSchedule])
+  // Y: topics where this reader has ≥1 "to revisit" flag, painted as a small
+  // accent badge so a mark is visible on the graph (not stranded in a topic).
+  const confusionFlags = useProgressStore(s => s.confusionFlags ?? {})
+  const revisitSet = useMemo(
+    () => new Set(
+      Object.entries(confusionFlags)
+        .filter(([, blocks]) => blocks && Object.keys(blocks).length > 0)
+        .map(([slug]) => slug),
+    ),
+    [confusionFlags],
+  )
   const nodesRef = useRef<SimNode[]>([])
   const linksRef = useRef<SimLink[]>([])
   const transformRef = useRef(d3.zoomIdentity)
@@ -188,7 +199,7 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
     const t = transformRef.current
     ctx.clearRect(0, 0, width, height)
 
-    // Background — Scholarly Gradient
+    // Background, Scholarly Gradient
     const bgGrad = ctx.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, width * 0.7)
     if (isLight) {
       bgGrad.addColorStop(0, '#ffffff')
@@ -205,7 +216,7 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
     ctx.translate(t.x, t.y)
     ctx.scale(t.k, t.k)
 
-    // Laboratory dot-grid — instrument reticle rather than graph paper lines.
+    // Laboratory dot-grid, instrument reticle rather than graph paper lines.
     // Dots read as a measurement surface without competing with the edges for
     // attention. Alpha is bumped from the old near-invisible lines so the
     // grid is actually perceivable on both themes.
@@ -250,7 +261,7 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
       if (source.x == null || source.y == null || target.x == null || target.y == null) continue
 
       // M (immersive tour): skip edges whose source or target isn't in
-      // the visible domain. Matches the `/explore` legend behavior — only
+      // the visible domain. Matches the `/explore` legend behavior, only
       // intra-cluster edges show when a cluster is selected.
       if (visibleDomain && (
         source.data.domain !== visibleDomain
@@ -356,7 +367,7 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
       // G4: split "interactive" from "total" glow. Interactive glow decides
       // when the node flips to accent teal (hover / highlight), so in-progress
       // nodes keep their domain hue. Total glow drives the outer bloom layer,
-      // giving in-progress nodes a static 0.3 floor — an ambient "currently
+      // giving in-progress nodes a static 0.3 floor, an ambient "currently
       // learning this" signal rather than an animation that fights
       // prefers-reduced-motion.
       const interactiveGlow = Math.max(node.glow, isHighlighted ? 1 : 0)
@@ -378,11 +389,11 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
       }
 
       const hasContent = node.data.has_content || node.data.depth === 0
-      // G4: empty shells drop to 0.45 fill alpha — they still read as
+      // G4: empty shells drop to 0.45 fill alpha, they still read as
       // "a node lives here" but clearly haven't been written yet. The ring
       // stays at full pattern alpha so the domain vocabulary survives.
       // K3: completed-but-due-for-review nodes get an additional alpha lift
-      // (0.7 multiplier). Subtle by design — the doc's "subtle dimming"
+      // (0.7 multiplier). Subtle by design, the doc's "subtle dimming"
       // signals "ready to revisit" without competing with the stronger
       // empty-shell or completed-tint signals.
       const isDueForReview = isCompleted && dueSet.has(node.data.slug)
@@ -398,13 +409,13 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
         * (isDueForReview ? 0.7 : 1)
         * ambientAlpha
 
-      // Node ring (outer) — H11: pattern now encodes DIFFICULTY, not
+      // Node ring (outer), H11: pattern now encodes DIFFICULTY, not
       // domain (domain is carried by color after H1's muted jewel palette;
       // doubling up was redundant). intro = solid, intermediate = dashed,
       // advanced = dotted. Ring width is uniform so pattern is the only
-      // variation — cleaner readability under colorblind emulation and at
+      // variation, cleaner readability under colorblind emulation and at
       // small render sizes (11–28px). isHot uses interactiveGlow so
-      // in-progress nodes don't bold their ring permanently — only hover
+      // in-progress nodes don't bold their ring permanently, only hover
       // or highlight does. Empty-shell signal stays on fill alpha (G4).
       const isHot = interactiveGlow > 0.1
       ctx.beginPath()
@@ -429,7 +440,7 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
       ctx.fillStyle = innerGrad
       ctx.fill()
 
-      // G4: completion tint — 0.15-alpha green wash so finished nodes read
+      // G4: completion tint, 0.15-alpha green wash so finished nodes read
       // as "done" at a glance. The checkmark overlay below still carries the
       // explicit signal; this just makes the fill echo it.
       if (isCompleted) {
@@ -467,7 +478,7 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
         : `rgba(226, 228, 240, ${textAlpha})`
       ctx.fillText(node.data.title, node.x, node.y + r + 6, 130)
 
-      // Difficulty indicator dot — reads from semantic CSS vars so dark/light
+      // Difficulty indicator dot, reads from semantic CSS vars so dark/light
       // themes stay in sync with the difficulty badges in the rest of the UI.
       if (node.data.difficulty && node.data.depth > 0) {
         const diffColors: Record<string, string> = {
@@ -482,11 +493,24 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
         ctx.fill()
       }
 
+      // Y: "to revisit" badge — accent dot at lower-right (upper corners are
+      // taken by the difficulty dot and the completed check). Signals the
+      // reader has marked a block in this topic to come back to.
+      if (hasContent && revisitSet.has(node.data.slug)) {
+        ctx.beginPath()
+        ctx.arc(node.x + r * 0.7, node.y + r * 0.7, 4, 0, Math.PI * 2)
+        ctx.fillStyle = palette.accent
+        ctx.fill()
+        ctx.lineWidth = 1.5
+        ctx.strokeStyle = isLight ? 'rgba(255,255,255,0.9)' : 'rgba(9,9,11,0.85)'
+        ctx.stroke()
+      }
+
       // Completed checkmark indicator
       if (isCompleted) {
         const cx = node.x - r * 0.7
         const cy = node.y - r * 0.7
-        // Teal circle background — the single "Energy" voice
+        // Teal circle background, the single "Energy" voice
         ctx.beginPath()
         ctx.arc(cx, cy, 5, 0, Math.PI * 2)
         ctx.fillStyle = palette.accent
@@ -503,7 +527,7 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
         ctx.stroke()
       }
 
-      // H4: misconception '!' marker removed — added visual noise without
+      // H4: misconception '!' marker removed, added visual noise without
       // driving decisions. `misconception_count` stays on the wire for the
       // future consolidated misconceptions page (H10 backlog).
     }
@@ -561,7 +585,7 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
     if (needsExtraFrame || (simRef.current?.alpha() ?? 0) > 0.001) {
       animFrameRef.current = requestAnimationFrame(render)
     }
-  }, [width, height, getNodeColor, getNodeRadius, highlightedNode, completedSlugs, inProgressSlugs, isLight, dueSet, visibleDomain, ambientAlpha])
+  }, [width, height, getNodeColor, getNodeRadius, highlightedNode, completedSlugs, inProgressSlugs, isLight, dueSet, revisitSet, visibleDomain, ambientAlpha])
 
   // Kick the render loop
   const scheduleRender = useCallback(() => {
@@ -572,7 +596,7 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
   // H5b: structural signatures over the node/edge sets. Using these as the
   // sim-effect deps instead of [nodes, edges] prevents a full simulation
   // rebuild when the store hands us a reference-changed but structurally
-  // identical array (a common case — GraphExplorer's filter, Zustand's
+  // identical array (a common case, GraphExplorer's filter, Zustand's
   // selector invalidation). Velocities are preserved across renders.
   const nodeKey = useMemo(() => nodes.map(n => n.id).join('|'), [nodes])
   const edgeKey = useMemo(
@@ -580,7 +604,7 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
     [edges],
   )
 
-  // Setup simulation — Obsidian-like physics
+  // Setup simulation, Obsidian-like physics
   useEffect(() => {
     if (nodes.length === 0) return
 
@@ -588,7 +612,7 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
     const oldPositions = new Map(nodesRef.current.map(n => [n.data.id, { x: n.x, y: n.y, vx: n.vx, vy: n.vy }]))
 
     // H5e: polar-by-domain seed for nodes we haven't seen before. Random
-    // seeding made the first paint "bloom" out of the canvas center — long
+    // seeding made the first paint "bloom" out of the canvas center, long
     // relaxation path, lots of motion. Seeding roughly into the final shape
     // means the sim only has to relax, not converge from chaos.
     const domainAngles: Record<string, number> = {}
@@ -636,7 +660,7 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
     const sim = d3.forceSimulation(simNodes)
       .alphaDecay(0.02)        // Slower cooldown = smoother settle
       .alphaMin(0.001)
-      .velocityDecay(0.35)     // Smooth damping — nodes glide, don't snap
+      .velocityDecay(0.35)     // Smooth damping, nodes glide, don't snap
       .force('link', d3.forceLink(simLinks)
         .id((d: any) => d.data.id)
         .distance(d => {
@@ -686,7 +710,7 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
       cancelAnimationFrame(animFrameRef.current)
     }
     // H5b: nodeKey / edgeKey are structural proxies for the nodes / edges
-    // arrays — using them as deps avoids reference-identity rebuilds.
+    // arrays, using them as deps avoids reference-identity rebuilds.
     // nodes/edges are read inside the effect but ESLint can't see that
     // nodeKey/edgeKey are equivalents.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -716,7 +740,7 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
 
     // G3: perpendicular-distance edge hit-test. 6px in screen space so the
     // threshold feels constant regardless of zoom. Only edges with a
-    // description can be hovered — empty-description edges have nothing to
+    // description can be hovered, empty-description edges have nothing to
     // show and would be a dead hover target.
     const findEdge = (mx: number, my: number): SimLink | null => {
       const t = transformRef.current
@@ -750,7 +774,7 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
       return best
     }
 
-    // D3 Drag behavior — the core Obsidian-like interaction
+    // D3 Drag behavior, the core Obsidian-like interaction
     const drag = d3.drag<HTMLCanvasElement, unknown>()
       .subject((event) => {
         const t = transformRef.current
@@ -796,7 +820,7 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
         // H5d: bump alpha before releasing the pin so the sim has a short
         // breath to settle the dragged node into its force-equilibrium
         // smoothly. Without this the node clears fx/fy at alpha ~0 and
-        // snaps perceptibly — small jump, but it reads as "glitchy."
+        // snaps perceptibly, small jump, but it reads as "glitchy."
         if (!event.active) simRef.current?.alphaTarget(0).alpha(0.1)
         node.fx = null
         node.fy = null
@@ -810,7 +834,7 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
       .filter((event) => {
         // Allow zoom via scroll wheel, but not during drag
         if (event.type === 'mousedown' || event.type === 'touchstart') {
-          // Check if we're on a node — if so, drag takes priority
+          // Check if we're on a node, if so, drag takes priority
           const rect = canvas.getBoundingClientRect()
           const mx = event.clientX - rect.left
           const my = event.clientY - rect.top
@@ -852,7 +876,7 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
         n.targetGlow = 0
       }
 
-      // Nodes always win hit-testing so they stay easy to grab — edge hover
+      // Nodes always win hit-testing so they stay easy to grab, edge hover
       // is only checked when no node is under the pointer.
       const edge = node ? null : findEdge(pending.x, pending.y)
 
@@ -930,7 +954,7 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
   // - centerOnSlug pans+zooms the canvas onto a node.
   // - getNeighborInDirection picks the neighbor closest to the pressed
   //   arrow's cardinal direction (±45° cone). Returns null if nothing's in
-  //   that cone — the caller can decide whether to beep, fall back, etc.
+  //   that cone, the caller can decide whether to beep, fall back, etc.
   // Honors prefers-reduced-motion by skipping the camera transition.
   useImperativeHandle(ref, () => ({
     centerOnSlug: (slug: string) => {
@@ -941,13 +965,13 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
       if (!node || node.x == null || node.y == null) return
 
       // L3: domain roots (depth-0 nodes whose slug equals their own domain
-      // name) sit at the center of nothing useful in the force layout — the
+      // name) sit at the center of nothing useful in the force layout, the
       // simulation balances them against repulsion from every cluster
       // member, so the root often ends up *outside* the visible cloud of
       // its own cluster. For those, target the cluster centroid instead:
       // the geometric center of all non-root nodes that share the domain.
       // Falls back to the root's own position if the cluster is empty (rare
-      // — only `_meta` is empty, and it's filtered out of /explore anyway).
+      //, only `_meta` is empty, and it's filtered out of /explore anyway).
       let targetX = node.x
       let targetY = node.y
       if (node.data.depth === 0) {
@@ -963,7 +987,7 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
         }
       }
 
-      // Keep current zoom unless we're zoomed all the way out — in which case
+      // Keep current zoom unless we're zoomed all the way out, in which case
       // bring the user in a bit so the centered node is actually visible.
       const currentK = transformRef.current.k
       const targetK = currentK < 0.6 ? 1 : currentK

@@ -1,6 +1,6 @@
 <!-- block: graph_view, target: data-science-practice, anchor: fam-dsp-start, mobile_order: 1 -->
 
-This family is the judgment the math doesn't capture — the skills for taking statistics out into real, messy data without fooling yourself. It's the smallest cluster on purpose: most of what makes a good practitioner is *how* they apply the other families, and that shows up here as habits rather than theorems.
+This family is the judgment the math doesn't capture, the skills for taking statistics out into real, messy data without fooling yourself. It's the smallest cluster on purpose: most of what makes a good practitioner is *how* they apply the other families, and that shows up here as habits rather than theorems.
 
 The cluster behind these words is the practice arm of the graph.
 
@@ -42,4 +42,4 @@ The central tension of modeling: too simple and the model underfits (high bias);
 
 ## Where to start
 
-Begin at [exploratory data analysis](/topic/exploratory-data-analysis) — it's the habit everything else rests on. The rest of this family is newer and still filling in; it leans on [hypothesis testing](/topic/hypothesis-testing) and [regression](/topic/simple-linear-regression), so those are good detours first.
+Begin at [exploratory data analysis](/topic/exploratory-data-analysis), it's the habit everything else rests on. The rest of this family is newer and still filling in; it leans on [hypothesis testing](/topic/hypothesis-testing) and [regression](/topic/simple-linear-regression), so those are good detours first.

@@ -18,9 +18,9 @@ This is the most-used result in statistics. It's why "more data" works.
 
 ## Averages forget their shape
 
-Pull samples from a wildly skewed distribution — incomes, earthquake magnitudes, anything heavy-tailed. The samples themselves stay skewed. But take the *average* of $n$ of them, and as $n$ grows, the average becomes normal.
+Pull samples from a wildly skewed distribution, incomes, earthquake magnitudes, anything heavy-tailed. The samples themselves stay skewed. But take the *average* of $n$ of them, and as $n$ grows, the average becomes normal.
 
-The original distribution's shape — uniform, exponential, bimodal — washes out. Only two facts about it survive in the limit: its mean $\mu$ and its variance $\sigma^2$.
+The original distribution's shape, uniform, exponential, bimodal, washes out. Only two facts about it survive in the limit: its mean $\mu$ and its variance $\sigma^2$.
 
 That's why $\bar{X}$ is approximately normal even when $X$ isn't.
 
@@ -30,7 +30,7 @@ That's why $\bar{X}$ is approximately normal even when $X$ isn't.
 
 ## The width shrinks as 1/√n
 
-The plot above shows the *sampling distribution* of the mean — what you'd get if you collected $n$ samples, took the average, and repeated forever. Two parameters control it: $\mu$ (same as the population mean) and $\sigma / \sqrt{n}$ (the standard error).
+The plot above shows the *sampling distribution* of the mean, what you'd get if you collected $n$ samples, took the average, and repeated forever. Two parameters control it: $\mu$ (same as the population mean) and $\sigma / \sqrt{n}$ (the standard error).
 
 <!-- block: state_reset, anchor: clt-narrow -->
 
@@ -60,7 +60,7 @@ goal:
   success_when: "n >= 16"
   on_success: |
     To shrink by a factor of 4, you need $n = 16$. By 10, $n = 100$. By 100,
-    $n = 10{,}000$. Standard error decays as the square root of sample size —
+    $n = 10{,}000$. Standard error decays as the square root of sample size,
     which is why doubling your data doesn't halve uncertainty. To halve
     uncertainty you need *four* times the data.
   hints:
@@ -85,12 +85,12 @@ Equivalently:
 $$\bar{X}_n \xrightarrow{d} N\!\left(\mu, \frac{\sigma^2}{n}\right)$$
 
 Three conditions matter:
-- **iid** — the samples are independent and identically distributed.
-- **finite variance** — $\sigma^2 < \infty$. Cauchy distributions, with infinite variance, *never* converge.
-- **the limit is in distribution** — pointwise CDF convergence, not pointwise sample convergence.
+- **iid**, the samples are independent and identically distributed.
+- **finite variance**, $\sigma^2 < \infty$. Cauchy distributions, with infinite variance, *never* converge.
+- **the limit is in distribution**, pointwise CDF convergence, not pointwise sample convergence.
 
 <!-- block: derivation, title: "The characteristic-function sketch", collapsed: true -->
-Let $Y_i = (X_i - \mu) / \sigma$ — standardized iid with mean 0, variance 1. The characteristic function is $\phi_Y(t) = \mathbb{E}[e^{itY}]$. Expanding,
+Let $Y_i = (X_i - \mu) / \sigma$, standardized iid with mean 0, variance 1. The characteristic function is $\phi_Y(t) = \mathbb{E}[e^{itY}]$. Expanding,
 
 $$\phi_Y(t) = 1 - \frac{t^2}{2} + o(t^2)$$
 
@@ -144,7 +144,7 @@ plt.show()
 <!-- block: gear, n: 6, label: "Where it leads" -->
 
 <!-- block: callout, kind: insight -->
-**Where this leads.** **Confidence intervals** and **hypothesis tests** lean on the CLT to claim "the sample mean is approximately normal" — that approximation is what makes the math tractable. **Sampling distributions** is the topic that formalizes what the CLT is making claims about. **The law of large numbers** is its weaker companion: same setup, different conclusion (point convergence instead of distributional).
+**Where this leads.** **Confidence intervals** and **hypothesis tests** lean on the CLT to claim "the sample mean is approximately normal", that approximation is what makes the math tractable. **Sampling distributions** is the topic that formalizes what the CLT is making claims about. **The law of large numbers** is its weaker companion: same setup, different conclusion (point convergence instead of distributional).
 <!-- /block -->
 
 ---
@@ -154,5 +154,5 @@ plt.show()
 
 *Wrong:* if I collect enough data, my data follows a normal distribution.
 
-*Correct:* the CLT says the **sample mean** (or sum) becomes normal — not the data itself. If your population is skewed, your data stays skewed no matter how much you collect. It's the *average* of the data that turns normal. The shorthand "everything becomes normal for large $n$" loses exactly that distinction.
+*Correct:* the CLT says the **sample mean** (or sum) becomes normal, not the data itself. If your population is skewed, your data stays skewed no matter how much you collect. It's the *average* of the data that turns normal. The shorthand "everything becomes normal for large $n$" loses exactly that distinction.
 <!-- /block -->

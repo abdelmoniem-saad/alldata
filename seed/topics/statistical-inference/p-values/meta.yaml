@@ -2,7 +2,7 @@ title: "P-Values"
 slug: p-values
 domain: statistical-inference
 difficulty: intermediate
-summary: The probability of data this extreme if nothing were going on — the most used and most misread number in statistics.
+summary: The probability of data this extreme if nothing were going on, the most used and most misread number in statistics.
 prerequisites: [hypothesis-testing]
 has_intuition_layer: true
 has_formal_layer: true

@@ -1,4 +1,4 @@
-"""Course service — course creation, forking, and topic management."""
+"""Course service, course creation, forking, and topic management."""
 
 import uuid
 

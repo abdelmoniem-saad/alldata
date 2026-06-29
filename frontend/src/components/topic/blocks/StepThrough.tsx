@@ -1,5 +1,5 @@
 /**
- * StepThrough — extracted from ScrollReader in L2 so `BlockRenderer` can
+ * StepThrough, extracted from ScrollReader in L2 so `BlockRenderer` can
  * import it from a stable location. Same behavior as before: numbered
  * steps stagger in by 300ms as the list scrolls into view; under
  * `prefers-reduced-motion` all steps appear at once.

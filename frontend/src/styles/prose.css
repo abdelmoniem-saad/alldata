@@ -1,4 +1,4 @@
-/* prose.css — J2
+/* prose.css, J2
  *
  * Prose typography for content blocks (markdown / decision response / callout
  * body / etc.). Lives in its own file so the ramps from `tokens.css` are the
@@ -7,7 +7,7 @@
  * tokens) so visual output is unchanged.
  *
  * Imported after `global.css` and `tokens.css` so the cascade resolves
- * cleanly. Component CSS never duplicates these — components inherit `.prose`
+ * cleanly. Component CSS never duplicates these, components inherit `.prose`
  * by wrapping markdown output in a `<div className="prose">`.
  */
 
@@ -112,7 +112,7 @@
   margin: 0;
 }
 
-/* Spark slide — first content slide of a topic. Inherits .prose but with
+/* Spark slide, first content slide of a topic. Inherits .prose but with
  * hero-scale typography and a "lede" first paragraph.
  */
 .prose-hero h1 {
@@ -129,7 +129,7 @@
   font-weight: 400;
 }
 
-/* KaTeX exhibits — framed math artefacts with a teal rail and soft lift. */
+/* KaTeX exhibits, framed math artefacts with a teal rail and soft lift. */
 .katex-display {
   margin: var(--space-6) 0 !important;
   padding: var(--space-5) var(--space-5) var(--space-5) var(--space-7);

@@ -1,4 +1,4 @@
-"""Code execution routes — run Python/R code in sandboxed containers."""
+"""Code execution routes, run Python/R code in sandboxed containers."""
 
 from fastapi import APIRouter, HTTPException
 
@@ -19,7 +19,7 @@ _PROFESSOR_TIER = {UserRole.PROFESSOR.value, UserRole.EDITOR.value, UserRole.ADM
 @router.get("/capabilities")
 async def capabilities():
     """V0: which execution languages are runnable here ({"python": bool,
-    "r": bool}). No auth — pure capability discovery the UI uses to gate the
+    "r": bool}). No auth, pure capability discovery the UI uses to gate the
     R language toggle so readers never hit an "R is not installed" dead end.
     """
     return execution_service.runtime_capabilities()

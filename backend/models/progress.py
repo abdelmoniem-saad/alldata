@@ -12,13 +12,13 @@ class UserProgress(Base):
     """Tracks a learner's progress through the knowledge graph.
 
     M1: extended with three JSON sidecars (`decision_events`, `review_schedule`,
-    `confusion_flags`) so the K-era event types — which today live only in
-    the browser's `progressStore` — can mirror to the server and travel
+    `confusion_flags`) so the K-era event types, which today live only in
+    the browser's `progressStore`, can mirror to the server and travel
     across devices. The sidecar shapes intentionally mirror the frontend
     slices so the wire format is just the same JSON the client already holds.
 
     Sync semantics: one row per (user, topic). The whole row is the unit of
-    upsert — clients send the topic's full progress slice and the server
+    upsert, clients send the topic's full progress slice and the server
     replaces. Conflict resolution is last-write-wins on `client_updated_at`
     (see `backend/api/progress.py`); the `updated_at` column is the canonical
     server timestamp that clients store back for the next push.
@@ -36,7 +36,7 @@ class UserProgress(Base):
     comfort_level: Mapped[int] = mapped_column(default=0, server_default="0")  # 0-5
     time_spent_seconds: Mapped[int] = mapped_column(default=0, server_default="0")
 
-    # M1: K-era event sidecars. JSON dialect-aware — compiles to JSONB on
+    # M1: K-era event sidecars. JSON dialect-aware, compiles to JSONB on
     # Postgres, TEXT (with JSON serialization on the way in/out) on SQLite.
     #
     # decision_events: { anchor_id: { optionId: str, pickedAt: int } }

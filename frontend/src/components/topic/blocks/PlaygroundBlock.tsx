@@ -1,8 +1,8 @@
 /**
- * PlaygroundBlock — I5b
+ * PlaygroundBlock, I5b
  *
  * Controls + goal status. No plot. The pinned plot in the right column reads
- * the same `useTopicState` keys this block writes — moving a slider here
+ * the same `useTopicState` keys this block writes, moving a slider here
  * recolors the curve there. That's the architectural payoff: the playground
  * owns *intent* (controls, target, success predicate); the plot owns visuals.
  *
@@ -22,10 +22,10 @@
  *     }
  *   }
  *
- * Goal is optional. Without it, the component is exploratory — sliders only.
+ * Goal is optional. Without it, the component is exploratory, sliders only.
  *
  * Hint timer starts on mount (or first interaction) and surfaces hint lines
- * one at a time at their `after_seconds` thresholds — quiet text, no modals.
+ * one at a time at their `after_seconds` thresholds, quiet text, no modals.
  *
  * The plot's ghost overlay (dashed target) is wired by ScrollReader: when
  * this playground is the active anchor, ScrollReader passes `goal.target`
@@ -76,7 +76,7 @@ export default function PlaygroundBlock({ slug, anchor, meta }: Props) {
   const goal = meta.goal
 
   // S3: EMPTY_STATE keeps the uninitialized-topic snapshot referentially
-  // stable — a fresh `{}` here trips React's getSnapshot caching check.
+  // stable, a fresh `{}` here trips React's getSnapshot caching check.
   const state = useTopicStateStore(s => s.byTopic[slug]?.state ?? EMPTY_STATE)
   const defaults = useTopicStateStore(s => s.byTopic[slug]?.defaults ?? EMPTY_STATE)
   const patchState = useTopicStateStore(s => s.patchState)
@@ -86,14 +86,14 @@ export default function PlaygroundBlock({ slug, anchor, meta }: Props) {
     s => (anchor ? Boolean(s.byTopic[slug]?.successes?.[anchor]) : false),
   )
 
-  // Hint timer — counts seconds since mount; releases hint text as thresholds pass.
+  // Hint timer, counts seconds since mount; releases hint text as thresholds pass.
   const [elapsed, setElapsed] = useState(0)
   useEffect(() => {
     const t = setInterval(() => setElapsed(e => e + 1), 1000)
     return () => clearInterval(t)
   }, [])
 
-  // Continuous match meter — 1 when success_when is true; otherwise a fraction
+  // Continuous match meter, 1 when success_when is true; otherwise a fraction
   // based on distance from target params (max 1 unit each, summed). Cosmetic;
   // the hard gate is `success_when`.
   const matchScore = useMemo(() => {

@@ -1,6 +1,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { useThemeStore } from '../stores/themeStore'
+import { useAuthStore } from '../stores/authStore'
 import SearchDropdown from './SearchDropdown'
 import AuthMenu from './AuthMenu'
 import ErrorBoundary from './ErrorBoundary'
@@ -21,6 +22,11 @@ export default function Layout() {
   const isTopicPage = location.pathname.startsWith('/topic/')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { theme, toggleTheme } = useThemeStore()
+  // O1/Y: reviewers (admin/editor) get a "Review" nav link to the merge-back
+  // queue — otherwise that surface is unreachable from the UI.
+  const user = useAuthStore(s => s.user)
+  const isReviewer = user?.role === 'admin' || user?.role === 'editor'
+  const items = isReviewer ? [...navItems, { path: '/review', label: 'Review' }] : navItems
 
   // Close mobile menu on navigation
   useEffect(() => {
@@ -45,15 +51,15 @@ export default function Layout() {
       transition: 'background var(--transition-smooth)',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
-        {/* Logo — P: the mark + wordmark live in <Logo/>; the navbar just
+        {/* Logo, P: the mark + wordmark live in <Logo/>; the navbar just
             wraps it in the home link. */}
-        <Link to="/" aria-label="AllData — home" style={{ display: 'flex', alignItems: 'center' }}>
+        <Link to="/" aria-label="AllData, home" style={{ display: 'flex', alignItems: 'center' }}>
           <Logo size={24} />
         </Link>
 
         {/* Desktop Nav */}
         <nav className="desktop-only" style={{ display: 'flex', gap: 2 }}>
-          {navItems.map(item => {
+          {items.map(item => {
             const isActive = location.pathname === item.path
             return (
               <Link
@@ -90,9 +96,9 @@ export default function Layout() {
             transition: 'all var(--transition-fast)',
           }}
           aria-label={`Theme: ${theme === 'high-contrast' ? 'high contrast' : theme}. Click to switch.`}
-          title={`Theme: ${theme === 'high-contrast' ? 'high contrast' : theme} — click to switch`}
+          title={`Theme: ${theme === 'high-contrast' ? 'high contrast' : theme}, click to switch`}
         >
-          {/* V2: icon reflects the current theme — moon (dark), sun (light),
+          {/* V2: icon reflects the current theme, moon (dark), sun (light),
               half-filled circle (high contrast). Click cycles all three. */}
           {theme === 'dark' ? (
             /* Moon Icon */
@@ -105,7 +111,7 @@ export default function Layout() {
               <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
             </svg>
           ) : (
-            /* High-contrast Icon — half-filled circle */
+            /* High-contrast Icon, half-filled circle */
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="9" />
               <path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none" />
@@ -169,7 +175,7 @@ export default function Layout() {
           padding: '8px 16px',
           display: 'flex', flexDirection: 'column', gap: 2,
         }}>
-          {navItems.map(item => {
+          {items.map(item => {
             const isActive = location.pathname === item.path
             return (
               <Link
@@ -208,7 +214,7 @@ export default function Layout() {
 }
 
 /**
- * CommandSearch — L4. Ctrl-K modal that hosts a `SearchDropdown` inside
+ * CommandSearch, L4. Ctrl-K modal that hosts a `SearchDropdown` inside
  * the modal frame. The modal owns the open/closed state + keyboard
  * shortcut; the search behavior (debounce, dropdown, arrow-key nav, empty
  * states) lives in `SearchDropdown` so the navbar and the Home page
@@ -238,7 +244,7 @@ function CommandSearch() {
 
   return (
     <>
-      {/* Trigger button — full on desktop, icon-only on mobile */}
+      {/* Trigger button, full on desktop, icon-only on mobile */}
       <button
         onClick={() => setOpen(true)}
         className="desktop-only"

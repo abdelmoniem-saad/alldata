@@ -1,8 +1,8 @@
 /**
- * branchFilter — L2 shared utility.
+ * branchFilter, L2 shared utility.
  *
  * Drop blocks tagged `depends_on: <anchor>, branch: <id>` whose decision
- * the user didn't pick. Untagged blocks always render — branching is opt-in.
+ * the user didn't pick. Untagged blocks always render, branching is opt-in.
  *
  * `branch` may be a single id or `|`-separated ids ("a|c") for "show if any
  * of these picks was made."

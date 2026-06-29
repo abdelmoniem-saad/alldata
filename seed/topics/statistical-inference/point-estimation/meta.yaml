@@ -2,5 +2,5 @@ slug: point-estimation
 has_formal_layer: true
 dataset: heights
 recall_prompt: |
-  An estimator is unbiased if its expected value equals the parameter. Why isn't unbiasedness alone enough — what's the second knob you need to look at?
+  An estimator is unbiased if its expected value equals the parameter. Why isn't unbiasedness alone enough, what's the second knob you need to look at?
 cycle_ported: K

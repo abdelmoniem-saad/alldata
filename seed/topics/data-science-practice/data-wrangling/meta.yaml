@@ -2,7 +2,7 @@ title: "Data Wrangling"
 slug: data-wrangling
 domain: data-science-practice
 difficulty: intro
-summary: Cleaning, reshaping, and preparing messy real-world data — the unglamorous 80% of every project.
+summary: Cleaning, reshaping, and preparing messy real-world data, the unglamorous 80% of every project.
 prerequisites: [random-variables]
 has_intuition_layer: true
 has_formal_layer: true

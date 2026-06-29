@@ -2,7 +2,7 @@ title: "Multiple Linear Regression"
 slug: multiple-regression
 domain: regression-modeling
 difficulty: intermediate
-summary: Predicting an outcome from several predictors at once — and the subtle art of "holding everything else constant."
+summary: Predicting an outcome from several predictors at once, and the subtle art of "holding everything else constant."
 prerequisites: [simple-linear-regression]
 has_intuition_layer: true
 has_formal_layer: true

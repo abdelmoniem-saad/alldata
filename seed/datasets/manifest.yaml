@@ -3,13 +3,13 @@
 # `{name}.csv` file in this directory.
 #
 # Fields:
-#   name        — slug used in `meta.yaml: dataset:` and `load("…")` calls
-#   title       — human-readable name
-#   description — one sentence about what the dataset shows
-#   source      — origin / attribution (free-form string)
-#   columns     — column names, for the dataset card
-#   rows        — row count, for the dataset card
-#   synthetic   — true if generated; false if real-world
+#   name, slug used in `meta.yaml: dataset:` and `load("…")` calls
+#   title, human-readable name
+#   description, one sentence about what the dataset shows
+#   source, origin / attribution (free-form string)
+#   columns, column names, for the dataset card
+#   rows, row count, for the dataset card
+#   synthetic, true if generated; false if real-world
 
 datasets:
   - name: coin-flips-1000

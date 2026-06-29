@@ -1,4 +1,4 @@
-"""Code execution service — Docker-based sandboxed code execution.
+"""Code execution service, Docker-based sandboxed code execution.
 
 Architecture:
 1. User submits code via API
@@ -28,7 +28,7 @@ def runtime_capabilities() -> dict:
     Python is always available (the sandbox/host has numpy/pandas/matplotlib).
     R is reported runnable only when there's a *real* R runtime: `Rscript` on
     PATH (local fallback), or `SANDBOX_R_ENABLED` set by a deployment that has
-    built the sandbox-r image (W0). Docker being present is *not* sufficient —
+    built the sandbox-r image (W0). Docker being present is *not* sufficient,
     the base sandbox image ships no R, so probing for `docker` alone would
     re-create the "R is not installed" dead end the UI is trying to avoid.
     """
@@ -239,7 +239,7 @@ async def _execute_r(code: str, timeout: int, theme: str = "dark") -> dict:
         output_dir = Path(tmpdir) / "output"
         output_dir.mkdir()
 
-        # The wrapped code references the output dir — re-wrap with the real path
+        # The wrapped code references the output dir, re-wrap with the real path
         wrapped_code = _wrap_r_code(code, output_dir=str(output_dir), theme=theme)
         code_path.write_text(wrapped_code, encoding="utf-8")
 
@@ -279,7 +279,7 @@ async def _execute_r(code: str, timeout: int, theme: str = "dark") -> dict:
                 }
 
         except (FileNotFoundError, NotImplementedError, OSError):
-            # Docker not available or no R image — fall back to local Rscript
+            # Docker not available or no R image, fall back to local Rscript
             if not settings.sandbox_allow_local_fallback:
                 return _fallback_refused()
             return await _execute_local_r(code, timeout, theme)
@@ -389,7 +389,7 @@ def _wrap_r_code(code: str, output_dir: str = "/home/sandbox/output", theme: str
     """Wrap R code to auto-capture plots.
 
     Opens a png() device with a `%03d` filename pattern so each `plot.new()`
-    call auto-rolls to a fresh PNG — users get multiple plots automatically
+    call auto-rolls to a fresh PNG, users get multiple plots automatically
     from base R graphics. For ggplot2, users must still call `print(plot)`.
     """
     safe_dir = output_dir.replace("\\", "/")
@@ -400,7 +400,7 @@ def _wrap_r_code(code: str, output_dir: str = "/home/sandbox/output", theme: str
     fg_color = "#09090b" if is_light else "#e4e4e7"
     axis_color = "#52525b" if is_light else "#a1a1aa"
 
-    return f"""# AllData R runtime — auto-capture plots under Laboratory Monolith theme
+    return f"""# AllData R runtime, auto-capture plots under Laboratory Monolith theme
 tryCatch({{
   png(filename = "{plot_pattern}", width = 900, height = 550, bg = "{bg_color}")
   par(
@@ -477,7 +477,7 @@ def _capture_show(*args, **kwargs):
 
 plt.show = _capture_show
 
-# K5: load(name) — read a curated dataset by name. Returns a pandas
+# K5: load(name), read a curated dataset by name. Returns a pandas
 # DataFrame when pandas is available, otherwise a list of dicts. Path is
 # resolved relative to wherever uvicorn runs from, matching
 # seed/datasets/{{name}}.csv. Slug-shaped names only.

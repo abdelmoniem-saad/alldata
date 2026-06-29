@@ -1,4 +1,4 @@
-# AllData Knowledge Graph — Seed Schema
+# AllData Knowledge Graph, Seed Schema
 # This defines the skeleton of the statistics & data science knowledge graph.
 # Topics are organized into domains, and edges define prerequisite relationships.
 
@@ -9,11 +9,11 @@ domains:
 
   - slug: distributions
     title: Distributions
-    description: Probability distributions — the building blocks of statistical models
+    description: Probability distributions, the building blocks of statistical models
 
   - slug: statistical-inference
     title: Statistical Inference
-    description: Drawing conclusions from data — estimation, testing, and uncertainty
+    description: Drawing conclusions from data, estimation, testing, and uncertainty
 
   - slug: regression-modeling
     title: Regression & Modeling
@@ -29,7 +29,7 @@ domains:
   # explicit links (e.g. /explore's "Start here").
   - slug: _meta
     title: Navigation
-    description: Hidden navigation surfaces — not part of the curriculum graph.
+    description: Hidden navigation surfaces, not part of the curriculum graph.
 
 topics:
   # ── Probability Foundations ──────────────────────────────────
@@ -37,7 +37,7 @@ topics:
     title: Sample Spaces and Events
     domain: probability-foundations
     difficulty: intro
-    summary: The foundation of probability — defining what can happen and what we're interested in.
+    summary: The foundation of probability, defining what can happen and what we're interested in.
 
   - slug: basic-probability
     title: Basic Probability Rules
@@ -64,28 +64,28 @@ topics:
     title: "Bayes' Theorem"
     domain: probability-foundations
     difficulty: intro
-    summary: Reversing conditional probabilities — the foundation of Bayesian thinking.
+    summary: Reversing conditional probabilities, the foundation of Bayesian thinking.
     prerequisites: [conditional-probability]
 
   - slug: random-variables
     title: Random Variables
     domain: probability-foundations
     difficulty: intro
-    summary: Mapping outcomes to numbers — the bridge between probability and statistics.
+    summary: Mapping outcomes to numbers, the bridge between probability and statistics.
     prerequisites: [basic-probability]
 
   - slug: expectation
     title: Expected Value
     domain: probability-foundations
     difficulty: intro
-    summary: The long-run average — what you'd expect on average over many repetitions.
+    summary: The long-run average, what you'd expect on average over many repetitions.
     prerequisites: [random-variables]
 
   - slug: variance
     title: Variance and Standard Deviation
     domain: probability-foundations
     difficulty: intro
-    summary: Measuring spread — how far values typically deviate from the mean.
+    summary: Measuring spread, how far values typically deviate from the mean.
     prerequisites: [expectation]
 
   - slug: law-of-large-numbers
@@ -99,7 +99,7 @@ topics:
     title: Central Limit Theorem
     domain: probability-foundations
     difficulty: intermediate
-    summary: Why the normal distribution appears everywhere — the most important theorem in statistics.
+    summary: Why the normal distribution appears everywhere, the most important theorem in statistics.
     prerequisites: [variance, normal-distribution]
 
   # ── Distributions ────────────────────────────────────────────
@@ -107,7 +107,7 @@ topics:
     title: Bernoulli Distribution
     domain: distributions
     difficulty: intro
-    summary: The simplest distribution — a single yes/no trial.
+    summary: The simplest distribution, a single yes/no trial.
     prerequisites: [random-variables]
 
   - slug: binomial-distribution
@@ -121,14 +121,14 @@ topics:
     title: Poisson Distribution
     domain: distributions
     difficulty: intro
-    summary: Modeling rare events — how many times something happens in a fixed interval.
+    summary: Modeling rare events, how many times something happens in a fixed interval.
     prerequisites: [expectation]
 
   - slug: normal-distribution
     title: Normal (Gaussian) Distribution
     domain: distributions
     difficulty: intro
-    summary: The bell curve — the most important continuous distribution in statistics.
+    summary: The bell curve, the most important continuous distribution in statistics.
     prerequisites: [expectation, variance]
 
   - slug: exponential-distribution
@@ -142,21 +142,21 @@ topics:
     title: Student's t-Distribution
     domain: distributions
     difficulty: intermediate
-    summary: Like the normal but with heavier tails — essential when sample sizes are small.
+    summary: Like the normal but with heavier tails, essential when sample sizes are small.
     prerequisites: [normal-distribution, variance]
 
   - slug: chi-squared-distribution
     title: Chi-Squared Distribution
     domain: distributions
     difficulty: intermediate
-    summary: The distribution of squared standard normals — used in goodness-of-fit tests.
+    summary: The distribution of squared standard normals, used in goodness-of-fit tests.
     prerequisites: [normal-distribution]
 
   - slug: f-distribution
     title: F-Distribution
     domain: distributions
     difficulty: intermediate
-    summary: The ratio of two chi-squared variables — used in ANOVA and regression testing.
+    summary: The ratio of two chi-squared variables, used in ANOVA and regression testing.
     prerequisites: [chi-squared-distribution]
 
   # ── Statistical Inference ────────────────────────────────────
@@ -178,7 +178,7 @@ topics:
     title: Confidence Intervals
     domain: statistical-inference
     difficulty: intermediate
-    summary: Quantifying uncertainty — a range of plausible values for a parameter.
+    summary: Quantifying uncertainty, a range of plausible values for a parameter.
     prerequisites: [sampling-distributions, normal-distribution]
 
   - slug: hypothesis-testing
@@ -199,7 +199,7 @@ topics:
     title: Statistical Power
     domain: statistical-inference
     difficulty: intermediate
-    summary: The probability of detecting a real effect — and how sample size affects it.
+    summary: The probability of detecting a real effect, and how sample size affects it.
     prerequisites: [hypothesis-testing, p-values]
 
   - slug: t-tests
@@ -227,7 +227,7 @@ topics:
     title: Bayesian Inference
     domain: statistical-inference
     difficulty: advanced
-    summary: Updating beliefs with data — priors, posteriors, and the Bayesian framework.
+    summary: Updating beliefs with data, priors, posteriors, and the Bayesian framework.
     prerequisites: [bayes-theorem, likelihood]
 
   # ── Regression & Modeling ────────────────────────────────────
@@ -263,7 +263,7 @@ topics:
     title: Logistic Regression
     domain: regression-modeling
     difficulty: intermediate
-    summary: Predicting binary outcomes — yes/no, pass/fail, click/no-click.
+    summary: Predicting binary outcomes, yes/no, pass/fail, click/no-click.
     prerequisites: [multiple-regression, maximum-likelihood-estimation]
 
   - slug: regularization
@@ -278,7 +278,7 @@ topics:
     title: Exploratory Data Analysis (EDA)
     domain: data-science-practice
     difficulty: intro
-    summary: Looking at your data before modeling — summaries, plots, and patterns.
+    summary: Looking at your data before modeling, summaries, plots, and patterns.
     prerequisites: [expectation, variance]
 
   - slug: data-wrangling
@@ -311,14 +311,14 @@ topics:
     title: Bias-Variance Tradeoff
     domain: data-science-practice
     difficulty: intermediate
-    summary: The fundamental tension in modeling — simplicity vs. flexibility.
+    summary: The fundamental tension in modeling, simplicity vs. flexibility.
     prerequisites: [variance, cross-validation]
 
   - slug: missing-data
     title: Missing Data
     domain: data-science-practice
     difficulty: intermediate
-    summary: Handling incomplete datasets — when values are absent and why it matters.
+    summary: Handling incomplete datasets, when values are absent and why it matters.
     prerequisites: [exploratory-data-analysis, point-estimation]
 
   # ── Navigation (hidden from the public graph) ────────────────
@@ -326,5 +326,5 @@ topics:
     title: The Shape of Statistics
     domain: _meta
     difficulty: intro
-    summary: An eight-minute flythrough of the whole graph. No equations, no code — just the map.
+    summary: An eight-minute flythrough of the whole graph. No equations, no code, just the map.
     prerequisites: []

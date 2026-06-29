@@ -1,7 +1,7 @@
 # Forks
 
 A fork is a user-owned, editable copy of one topic. Forks are a learner /
-contributor surface — not just a teaching tool. Anyone with an account can
+contributor surface, not just a teaching tool. Anyone with an account can
 fork any topic, edit its content freely, and share the result by URL.
 
 Introduced in cycle N. See [`cycles.md`](cycles.md#n--fork-model) for the
@@ -11,9 +11,9 @@ catalog.
 ## What a fork is
 
 - A user-owned, editable copy of **one** topic.
-- The editable surface is the topic's `content.md` — the same markdown +
+- The editable surface is the topic's `content.md`, the same markdown +
   directive language the seed authoring loop uses ([`authoring.md`](authoring.md)).
-- Forks are **public** — anyone with the URL can read them.
+- Forks are **public**, anyone with the URL can read them.
 - One fork per `(user, topic)`. Forking a topic you've already forked
   re-opens the existing fork rather than making a second.
 
@@ -27,7 +27,7 @@ catalog.
   a future cycle.
 - **Not a copy of someone's progress.** A fork shares *content*, not
   *history*. Reading a fork tracks engagement under a separate
-  `fork:{username}:{slug}` key — it never marks the master topic complete.
+  `fork:{username}:{slug}` key, it never marks the master topic complete.
 - **Not editable by anyone but the owner.** Reads are public; writes
   (`PUT` / `DELETE`) are owner-only.
 
@@ -56,24 +56,24 @@ catalog.
 
 The `me` segment resolves to the signed-in user. `{username}` matches a
 user's `display_name` (fuzzy: case-insensitive, dashes/underscores treated
-as spaces) — the same lookup the K7 public-snapshot route uses.
+as spaces), the same lookup the K7 public-snapshot route uses.
 
 ## Authoring inside a fork
 
-The editor has two modes, toggled in the top bar — **Visual** (default) and
-**Source** — both editing the same `content.md`.
+The editor has two modes, toggled in the top bar, **Visual** (default) and
+**Source**, both editing the same `content.md`.
 
-### Visual mode — the block editor (X)
+### Visual mode, the block editor (X)
 
 You never see the raw directive syntax. The fork is shown as an ordered list:
 
 - **Prose** runs are plain editable markdown fields (headings, **bold**,
-  `$\sigma$` — normal writing, not plumbing).
-- **Directives** are friendly **cards** — `SECTION`, `PLOT`, `CALLOUT`,
-  `DECISION`, … — each with a one-line summary, **↑/↓ reorder**, **delete**,
+  `$\sigma$`, normal writing, not plumbing).
+- **Directives** are friendly **cards**, `SECTION`, `PLOT`, `CALLOUT`,
+  `DECISION`, …, each with a one-line summary, **↑/↓ reorder**, **delete**,
   and an **Edit** button. Edit opens a small form (a Section's label + gear,
   a Callout's kind + text, a State's key/value rows, a Plot's parameters, a
-  Code block's language + flags, …) — no YAML, no `<!-- block -->`. The
+  Code block's language + flags, …), no YAML, no `<!-- block -->`. The
   heavier `decision` / `playground` blocks open a raw "edit source" hatch
   instead, which is also the universal fallback for any block.
 - The toolbar inserts a new block after the active one; **Plot…** opens the
@@ -90,10 +90,10 @@ Editing one block rewrites only that segment, so the backend parser, the live
 preview, and the **merge-back diff** are unchanged and an edit yields a
 minimal diff. The backend never sees the block model.
 
-### Source mode — the raw escape hatch
+### Source mode, the raw escape hatch
 
 Today's monospace `content.md` textarea, with the W insert toolbar + plot
-picker. The source stays plain markdown — the merge-back diff is computed on
+picker. The source stays plain markdown, the merge-back diff is computed on
 it, so the editor only ever produces the same text a human would type
 (deliberately not WYSIWYG). Same directive surface as the seed authoring loop
 (`gear`, `plot`, `decision`, `playground`, `callout`, `derivation`, `code_*`,
@@ -101,7 +101,7 @@ it, so the editor only ever produces the same text a human would type
 
 ### Both modes
 
-- `--strict` validation is **not** enforced on fork content — a fork can be
+- `--strict` validation is **not** enforced on fork content, a fork can be
   a work in progress. When a directive's YAML body fails to parse, the J3
   parse-error fallback renders the offending block visibly inline (in a
   dashed amber panel) so the author sees exactly what didn't parse.
@@ -110,40 +110,40 @@ it, so the editor only ever produces the same text a human would type
 
 ## Storage model
 
-`TopicFork` (`backend/models/fork.py`) holds `markdown_source` — the
+`TopicFork` (`backend/models/fork.py`) holds `markdown_source`, the
 editable source of truth. The blocks a reader sees are produced by parsing
 `markdown_source` on every `GET` (no persisted parsed tree). The parser is
 the seed importer's `parse_content_md(text)`, shared verbatim between the
 import loop and the fork save/preview endpoints.
 
 `content_snapshot` is a legacy column from the table's original (unused)
-course-scoped scaffold — the N code paths never read it; it's slated for
+course-scoped scaffold, the N code paths never read it; it's slated for
 removal.
 
-## Merge-back — proposing a fork's content as the new master (O1)
+## Merge-back, proposing a fork's content as the new master (O1)
 
 A fork owner can suggest their fork's content replace the master topic's. An ADMIN or EDITOR reviews the diff and accepts or rejects. Accept rewrites the master both in the DB *and* on disk (`seed/topics/{domain}/{slug}/content.md`), so the repo's seed files stay honest as source-of-truth.
 
 **Lifecycle.**
 
 1. Owner edits their fork in `/u/{username}/topic/{slug}/edit` and **saves**.
-2. Owner clicks **"Suggest to master"** in the editor's top bar. The button is disabled until the fork is saved — the suggestion snapshots the *saved* `markdown_source`, not in-progress edits.
+2. Owner clicks **"Suggest to master"** in the editor's top bar. The button is disabled until the fork is saved, the suggestion snapshots the *saved* `markdown_source`, not in-progress edits.
 3. The suggestion appears in `/review` for ADMIN/EDITOR users. The status chip on the fork now reads **"In review"**.
 4. The reviewer opens the suggestion → a unified line diff renders master's current `content.md` against the proposed replacement (`MergeDiff`).
-5. **Accept** → the master topic's content blocks + misconceptions are replaced from the suggestion's markdown, and the seed `content.md` on disk is rewritten. The fork's chip flips to **"Merged"**. The fork itself is untouched — the owner can keep editing and suggest again.
+5. **Accept** → the master topic's content blocks + misconceptions are replaced from the suggestion's markdown, and the seed `content.md` on disk is rewritten. The fork's chip flips to **"Merged"**. The fork itself is untouched, the owner can keep editing and suggest again.
 6. **Reject** → the suggestion is marked `rejected` with an optional reviewer note. The fork's chip reads **"Declined"**. The owner can edit and re-suggest, which creates a fresh pending suggestion.
 
 **Re-suggesting while pending.** One pending suggestion per fork. If the owner clicks the button again while one is already pending, the existing suggestion's `suggested_markdown` snapshot updates in place (the owner is revising). No queue of stale duplicates.
 
 **Why writing the seed file.** Reimport (`python -m seed.import_seed`) skips topics that already have content, so a DB-only accept would survive reimport without divergence. We still write the seed file because the repo's `seed/topics/.../content.md` is the readable source-of-truth a contributor reads; letting it drift out of sync with the DB would be dishonest documentation.
 
-**Review gate.** `ADMIN` and `EDITOR` roles only — mirrors the existing gate on `PUT /api/content/blocks` for direct master edits. `LEARNER` / `CONTRIBUTOR` / `PROFESSOR` who hit `/review` see a clear "not authorized" state.
+**Review gate.** `ADMIN` and `EDITOR` roles only, mirrors the existing gate on `PUT /api/content/blocks` for direct master edits. `LEARNER` / `CONTRIBUTOR` / `PROFESSOR` who hit `/review` see a clear "not authorized" state.
 
 **Endpoints.** See [`features.md`](features.md#api-surface) for the full row. In short:
 
-- `POST /api/forks/{username}/{slug}/suggest` — owner only.
-- `GET  /api/merge-backs` / `GET /api/merge-backs/{id}` — reviewer queue + detail.
-- `POST /api/merge-backs/{id}/accept` / `/reject` — apply or close.
+- `POST /api/forks/{username}/{slug}/suggest`, owner only.
+- `GET  /api/merge-backs` / `GET /api/merge-backs/{id}`, reviewer queue + detail.
+- `POST /api/merge-backs/{id}/accept` / `/reject`, apply or close.
 
 **Fork surfaces show suggestion status** via a chip in the lineage banner on `ForkView` and in `ForkEditor`'s top bar. The chip reads "In review" / "Merged" / "Declined" based on the *latest* `MergeBackSuggestion` for that fork; null when the fork has never been suggested.
 
@@ -151,21 +151,21 @@ A fork owner can suggest their fork's content replace the master topic's. An ADM
 
 ## Not yet (deferred to later cycles)
 
-- **Forking a fork** — multi-level fork chains. N+O keep forks one level
+- **Forking a fork**, multi-level fork chains. N+O keep forks one level
   deep.
-- **Signal aggregation** — "which sections get forked / edited most often,"
+- **Signal aggregation**, "which sections get forked / edited most often,"
   surfaced to master-content authors.
-- **Per-fork prerequisites / graph structure** — editing the topic's place
+- **Per-fork prerequisites / graph structure**, editing the topic's place
   in the knowledge graph.
-- **`meta.yaml` editing** — title, difficulty, summary, dataset stay
+- **`meta.yaml` editing**, title, difficulty, summary, dataset stay
   master-only. Merge-back accept therefore only ever rewrites
   `content.md`, never `meta.yaml`.
-- **Visibility flags** — forks are public-by-default; unlisted / private
+- **Visibility flags**, forks are public-by-default; unlisted / private
   toggles are a follow-on.
 - **Fork / suggestion comment threads.**
-- **Block-level diff + partial accept** — accept is all-or-nothing on the
+- **Block-level diff + partial accept**, accept is all-or-nothing on the
   whole `content.md`; the diff is line-level.
-- **Merge-back notifications** — owners learn the outcome from the status
+- **Merge-back notifications**, owners learn the outcome from the status
   chip on their fork, not a push.
-- **Course ↔ fork integration** — a course built from a set of your forks.
+- **Course ↔ fork integration**, a course built from a set of your forks.
   The `TopicFork.course_id` column is reserved for it.

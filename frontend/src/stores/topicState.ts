@@ -1,5 +1,5 @@
 /**
- * topicState — I5 reactive state bag, per topic.
+ * topicState, I5 reactive state bag, per topic.
  *
  * The plan's collapsing insight: there is no separate sim engine. Plot blocks
  * subscribe to named state keys; decision blocks WRITE state on selection;
@@ -25,7 +25,7 @@ export type StateValue = number | string | boolean | null
 export interface TopicStateRecord {
   /** User-mutable parameters bound to plots / playgrounds. */
   state: Record<string, StateValue>
-  /** Author-supplied defaults — restored by `state_reset`. */
+  /** Author-supplied defaults, restored by `state_reset`. */
   defaults: Record<string, StateValue>
   /** anchor → selected option id, for `decision` blocks. */
   decisions: Record<string, string>
@@ -36,7 +36,7 @@ export interface TopicStateRecord {
 interface Store {
   byTopic: Record<string, TopicStateRecord>
 
-  /** Initialize a topic with author defaults (idempotent — won't clobber existing). */
+  /** Initialize a topic with author defaults (idempotent, won't clobber existing). */
   initTopic: (slug: string, defaults: Record<string, StateValue>) => void
   /** Apply a partial state mutation (e.g. from a decision's `writes`). */
   patchState: (slug: string, patch: Record<string, StateValue>) => void

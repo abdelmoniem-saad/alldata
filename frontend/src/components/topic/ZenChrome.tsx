@@ -11,7 +11,7 @@ interface Props {
   topicDomain: string | null
   topicDifficulty: string | null
 
-  // Bottom bar — view/layer toggles + slide nav + mark-as-learned
+  // Bottom bar, view/layer toggles + slide nav + mark-as-learned
   viewMode: 'slides' | 'scroll'
   setViewMode: (m: 'slides' | 'scroll') => void
   hasFormalLayer: boolean
@@ -32,7 +32,7 @@ interface Props {
   onUnmark: () => void
 
   // G8: prereq/leads-to rows mirror the {node, why} shape so each chip can
-  // render its own "because {why}" / "unlocks {why}" line — same vocabulary
+  // render its own "because {why}" / "unlocks {why}" line, same vocabulary
   // as /explore's sidebar. Transitive prereqs come through with why=null
   // and render a chip without a reason line, which is correct (only the
   // direct edge has a documented rationale).
@@ -44,7 +44,7 @@ interface Props {
    * M5: when the topic is in immersive tour mode (`meta.yaml: tour: true`),
    * `TopicView` short-circuits the view-mode dispatch and always mounts
    * `TourView`. The scroll/slides toggle and the slide-nav UI would be
-   * inert in that mode — clicking them flips `viewMode` but nothing visible
+   * inert in that mode, clicking them flips `viewMode` but nothing visible
    * changes (TopicView keeps rendering TourView). Hiding them here keeps
    * the chrome honest: the user never sees an affordance that doesn't do
    * what it claims.
@@ -53,7 +53,7 @@ interface Props {
 
   /**
    * N: fork chip. `canFork` is false for anonymous viewers and tour topics
-   * — the chip is hidden entirely. When true, the chip reads "Fork this
+   *, the chip is hidden entirely. When true, the chip reads "Fork this
    * topic" (no existing fork) or "Open my fork" (`hasFork`). `onForkClick`
    * owns the create-or-navigate logic; `forkBusy` disables the chip during
    * the create round trip.
@@ -67,7 +67,7 @@ interface Props {
 export default function ZenChrome(props: Props) {
   return (
     <>
-      {/* Reading progress — 2px strip at the top, always visible */}
+      {/* Reading progress, 2px strip at the top, always visible */}
       <div style={{
         position: 'fixed',
         top: 0, left: 0, right: 0,
@@ -88,7 +88,7 @@ export default function ZenChrome(props: Props) {
       <BottomBar {...props} />
 
       {/* H2: single drawer on the left carries prereqs + leads-to + next.
-          RightDrawer deleted — leads-to is secondary to prereqs, not a peer.
+          RightDrawer deleted, leads-to is secondary to prereqs, not a peer.
           Consolidating keeps the reading surface uncluttered and removes the
           ambient right-edge hover target that was pulling focus. */}
       <LeftDrawer
@@ -152,7 +152,7 @@ function BottomBar(props: Props) {
         </div>
       )}
 
-      {/* View mode toggle — hidden in tour mode where TopicView ignores
+      {/* View mode toggle, hidden in tour mode where TopicView ignores
           `viewMode` and always renders TourView. M5. */}
       {!isTour && (
       <div style={{
@@ -197,7 +197,7 @@ function BottomBar(props: Props) {
       </div>
       )}
 
-      {/* Slide navigation — center of the bar when in slides mode. Hidden
+      {/* Slide navigation, center of the bar when in slides mode. Hidden
           in tour mode (same reason as the view-mode toggle above). M5. */}
       {!isTour && showSlideNav && slideTotal > 0 && (
         <div style={{
@@ -285,7 +285,7 @@ function BottomBar(props: Props) {
         </div>
       )}
 
-      {/* N: fork chip — sits just left of the LEARNED chip. Hidden for
+      {/* N: fork chip, sits just left of the LEARNED chip. Hidden for
           anonymous viewers and tour topics (`canFork` is false). Reads
           "Open my fork" when the viewer already has one. */}
       {canFork && (
@@ -322,7 +322,7 @@ function BottomBar(props: Props) {
         </div>
       )}
 
-      {/* Mark as Learned — right side. Push to right with margin-left:auto
+      {/* Mark as Learned, right side. Push to right with margin-left:auto
           unless the (visible) slide-nav already sits in the center, OR the
           fork chip already consumed the auto-margin to its left. */}
       {slug && (
@@ -427,7 +427,7 @@ function LeftDrawer({
   const domainColor = domainVar(topicDomain)
   return (
     <aside className="zen-drawer zen-drawer-left" aria-label="Topic context, prerequisites, and what this unlocks">
-      {/* H11: spine-stripe removed — the tall colored rule was too loud
+      {/* H11: spine-stripe removed, the tall colored rule was too loud
           against the zen surface. The DrawerPeek chevron already signals
           "panel here" minimally, which is all this edge needs. Domain
           vocabulary still carries through the prereq chips' tick glyphs. */}

@@ -1,13 +1,13 @@
 /**
- * BlockListEditor — X1. The Visual-mode left pane.
+ * BlockListEditor, X1. The Visual-mode left pane.
  *
  * Renders a fork's `markdown_source` as an ordered list of editable prose
- * fields and friendly directive cards — the contributor never sees a raw
+ * fields and friendly directive cards, the contributor never sees a raw
  * `<!-- block -->`. It's a pure editing layer over the same string: every
  * change re-serializes the segment list back to `content.md` and calls
  * `onChange`, so the existing live-preview + save pipeline is untouched.
  *
- * Separators (`\n\n`, `---`) live in whitespace-only "spacer" prose segments —
+ * Separators (`\n\n`, `---`) live in whitespace-only "spacer" prose segments,
  * kept for byte-exact round-trip but shown as a thin divider/gap rather than an
  * empty text box.
  */
@@ -25,7 +25,7 @@ interface Props {
   onChange: (next: string) => void
 }
 
-/** A prose run that's only whitespace and/or `---` rules — structural, not text. */
+/** A prose run that's only whitespace and/or `---` rules, structural, not text. */
 function isSpacer(raw: string): boolean {
   return raw.replace(/-{3,}/g, '').trim() === ''
 }
@@ -35,7 +35,7 @@ export default function BlockListEditor({ value, onChange }: Props) {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
   const lastEmitted = useRef(value)
-  // The prose <textarea> the cursor is in — bold/italic wraps act on it.
+  // The prose <textarea> the cursor is in, bold/italic wraps act on it.
   const focused = useRef<{ i: number; el: HTMLTextAreaElement } | null>(null)
 
   // Re-derive only when `value` changes *externally* (load, Source-mode edit,
@@ -87,7 +87,7 @@ export default function BlockListEditor({ value, onChange }: Props) {
     setActiveIndex(at)
   }
 
-  // bold/italic — wrap the selection in the focused prose field.
+  // bold/italic, wrap the selection in the focused prose field.
   const wrap = (before: string, after: string) => {
     const f = focused.current
     if (!f) return
@@ -148,7 +148,7 @@ export default function BlockListEditor({ value, onChange }: Props) {
         })}
         {segments.length === 0 && (
           <p className="block-list__empty">
-            Empty fork — use the toolbar above to add a section, prose, or a plot.
+            Empty fork, use the toolbar above to add a section, prose, or a plot.
           </p>
         )}
       </div>

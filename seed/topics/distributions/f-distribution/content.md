@@ -8,13 +8,13 @@
 
 # F-distribution
 
-A surprising number of questions collapse to one shape: *is this variation bigger than that variation?* Spread between groups versus spread within them (ANOVA). Variation a model explains versus the variation it leaves behind (regression). Form the ratio of two variance estimates and — when there's no real difference — that ratio follows an **F-distribution**.
+A surprising number of questions collapse to one shape: *is this variation bigger than that variation?* Spread between groups versus spread within them (ANOVA). Variation a model explains versus the variation it leaves behind (regression). Form the ratio of two variance estimates and, when there's no real difference, that ratio follows an **F-distribution**.
 
 ---
 
 <!-- block: gear, n: 2, label: "Two degrees of freedom, centered near one" -->
 
-F carries *two* degrees-of-freedom parameters: $d_1$ for the numerator variance, $d_2$ for the denominator. If the two variances are genuinely equal, their ratio hovers around **1** — so the distribution is centered just above one. Values far above 1 are the signal that the numerator's variation is really larger. It's right-skewed (a ratio bottoms out at 0 but can spike high) and it tightens around 1 as both degrees of freedom grow.
+F carries *two* degrees-of-freedom parameters: $d_1$ for the numerator variance, $d_2$ for the denominator. If the two variances are genuinely equal, their ratio hovers around **1**, so the distribution is centered just above one. Values far above 1 are the signal that the numerator's variation is really larger. It's right-skewed (a ratio bottoms out at 0 but can spike high) and it tightens around 1 as both degrees of freedom grow.
 
 ---
 
@@ -38,12 +38,12 @@ controls:
     max: 30
     step: 1
 goal:
-  prompt: "Give both the numerator and denominator plenty of degrees of freedom — push each up — and watch the curve tighten around 1."
+  prompt: "Give both the numerator and denominator plenty of degrees of freedom, push each up, and watch the curve tighten around 1."
   target: { df1: 20, df2: 20 }
   success_when: "df1 >= 15 and df2 >= 15"
   on_success: |
     With both variance estimates based on lots of data, each is precise, so the
-    ratio sits tightly around 1 — which makes even a moderately large $F$ strong
+    ratio sits tightly around 1, which makes even a moderately large $F$ strong
     evidence. With few degrees of freedom the distribution is broad and a big
     ratio can happen by chance alone.
 <!-- /block -->
@@ -61,7 +61,7 @@ $$F = \frac{U / d_1}{V / d_2} \sim F(d_1, d_2), \qquad \mathbb{E}[F] = \frac{d_2
 Each chi-squared is divided by its own degrees of freedom, then the two are stacked as a ratio. In **ANOVA** the statistic is (between-group mean square) / (within-group mean square); in **regression** it's (explained mean square) / (residual mean square). A large $F$ gives a small $p$-value: the numerator's variation is too big to be noise.
 
 <!-- block: derivation, title: "Why F is centered just above 1, not exactly at 1", collapsed: true -->
-Each chi-squared over its degrees of freedom has mean 1, since $\mathbb{E}[\chi^2(d)] = d$. So the numerator $U/d_1$ averages 1 and the denominator $V/d_2$ averages 1. But $\mathbb{E}[1/(V/d_2)] \ne 1 / \mathbb{E}[V/d_2]$ by Jensen's inequality — the reciprocal is convex — which nudges the mean up to $d_2/(d_2 - 2)$. As $d_2 \to \infty$ that ratio returns to 1.
+Each chi-squared over its degrees of freedom has mean 1, since $\mathbb{E}[\chi^2(d)] = d$. So the numerator $U/d_1$ averages 1 and the denominator $V/d_2$ averages 1. But $\mathbb{E}[1/(V/d_2)] \ne 1 / \mathbb{E}[V/d_2]$ by Jensen's inequality, the reciprocal is convex, which nudges the mean up to $d_2/(d_2 - 2)$. As $d_2 \to \infty$ that ratio returns to 1.
 <!-- /block -->
 
 ---
@@ -89,9 +89,9 @@ The mean sits just above 1 at $d_2/(d_2-2)$; the median is even closer to 1.
 <!-- block: misconception, inline: true -->
 **"A bigger F always means a bigger, more important effect."**
 
-*Wrong:* read $F$ as a raw effect size — large $F$, large effect.
+*Wrong:* read $F$ as a raw effect size, large $F$, large effect.
 
-*Correct:* $F$ weighs variation against its degrees of freedom, so the *same* $F$ is overwhelming with lots of data and unremarkable with little. It answers "is this ratio surprising if nothing is going on?" — not "how big is the effect?" For that you still need an effect size like $R^2$ or $\eta^2$. (And order matters: $F$ and $1/F$ swap numerator and denominator.)
+*Correct:* $F$ weighs variation against its degrees of freedom, so the *same* $F$ is overwhelming with lots of data and unremarkable with little. It answers "is this ratio surprising if nothing is going on?", not "how big is the effect?" For that you still need an effect size like $R^2$ or $\eta^2$. (And order matters: $F$ and $1/F$ swap numerator and denominator.)
 <!-- /block -->
 
 ---
@@ -101,5 +101,5 @@ The mean sits just above 1 at $d_2/(d_2-2)$; the median is even closer to 1.
 <!-- block: gear, n: 6, label: "Where it leads" -->
 
 <!-- block: callout, kind: insight -->
-**Where this leads.** F is a ratio of two **chi-squared** variables, each over its degrees of freedom. It's the test statistic of **ANOVA** — comparing several group means at once — and the overall-significance test in **multiple regression**: does the model explain more than noise? A neat special case: the square of a **t** statistic with $\nu$ degrees of freedom is exactly an $F(1, \nu)$.
+**Where this leads.** F is a ratio of two **chi-squared** variables, each over its degrees of freedom. It's the test statistic of **ANOVA**, comparing several group means at once, and the overall-significance test in **multiple regression**: does the model explain more than noise? A neat special case: the square of a **t** statistic with $\nu$ degrees of freedom is exactly an $F(1, \nu)$.
 <!-- /block -->

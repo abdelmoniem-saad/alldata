@@ -8,7 +8,7 @@
 
 # Sampling distributions
 
-You collect one sample, compute one average, and report it. But that average is just one draw from a lottery: a different sample would have given a different number. The **sampling distribution** is the distribution of your statistic across all the samples you *could* have drawn. It's the idea that makes inference possible — it's how you attach uncertainty to a single estimate.
+You collect one sample, compute one average, and report it. But that average is just one draw from a lottery: a different sample would have given a different number. The **sampling distribution** is the distribution of your statistic across all the samples you *could* have drawn. It's the idea that makes inference possible, it's how you attach uncertainty to a single estimate.
 
 ---
 
@@ -16,8 +16,8 @@ You collect one sample, compute one average, and report it. But that average is 
 
 There are two distributions in play, and keeping them apart is most of the battle:
 
-- The **distribution of the data** — what individual observations look like. Heights, incomes, dice rolls. Its spread is the population $\sigma$, and collecting more data does *not* shrink it.
-- The **sampling distribution of the mean** — what the *average* of $n$ observations looks like across repeated samples. It's centered at the same $\mu$, but its spread is the **standard error** $\sigma/\sqrt{n}$, which *does* shrink as $n$ grows.
+- The **distribution of the data**, what individual observations look like. Heights, incomes, dice rolls. Its spread is the population $\sigma$, and collecting more data does *not* shrink it.
+- The **sampling distribution of the mean**, what the *average* of $n$ observations looks like across repeated samples. It's centered at the same $\mu$, but its spread is the **standard error** $\sigma/\sqrt{n}$, which *does* shrink as $n$ grows.
 
 The curve on the right is the second one. Right now $n = 1$, so it matches the data. Raise $n$ and watch it pull in toward the mean.
 
@@ -36,7 +36,7 @@ controls:
     max: 100
     step: 1
 goal:
-  prompt: "Make the sampling distribution five times narrower than the population — get the standard error σ/√n down to about 0.2."
+  prompt: "Make the sampling distribution five times narrower than the population, get the standard error σ/√n down to about 0.2."
   target: { n: 25 }
   success_when: "n >= 25"
   on_success: |
@@ -56,7 +56,7 @@ For a sample of $n$ independent observations with population mean $\mu$ and stan
 
 $$\mathbb{E}[\bar{X}] = \mu \qquad \text{SE}(\bar{X}) = \frac{\sigma}{\sqrt{n}}.$$
 
-The mean is unbiased — centered on the truth. The standard error is the spread of the sampling distribution, and it shrinks like $1/\sqrt{n}$. The **central limit theorem** adds the shape: for large enough $n$, $\bar{X}$ is approximately normal *regardless of the data's shape*. That's why the normal curve, not the data's histogram, governs inference about the mean.
+The mean is unbiased, centered on the truth. The standard error is the spread of the sampling distribution, and it shrinks like $1/\sqrt{n}$. The **central limit theorem** adds the shape: for large enough $n$, $\bar{X}$ is approximately normal *regardless of the data's shape*. That's why the normal curve, not the data's histogram, governs inference about the mean.
 
 <!-- block: derivation, title: "Why the standard error is σ/√n", collapsed: true -->
 With independent observations, variances add. The sample mean is $\bar{X} = \frac{1}{n}\sum_i X_i$, so
@@ -75,7 +75,7 @@ Take the square root to get the standard deviation of $\bar{X}$: $\text{SE} = \s
 import numpy as np
 
 # Draw many samples; each gives one sample mean. The spread of those means
-# is the sampling distribution — and it tracks sigma/sqrt(n), not sigma.
+# is the sampling distribution, and it tracks sigma/sqrt(n), not sigma.
 rng = np.random.default_rng(0)
 sigma = 1.0
 for n in [1, 4, 25, 100]:
@@ -84,7 +84,7 @@ for n in [1, 4, 25, 100]:
           f"(sigma/sqrt(n) = {sigma/np.sqrt(n):.4f})")
 ```
 
-The observed spread of the sample means matches $\sigma/\sqrt{n}$ at every $n$ — the data's own spread stays $\sigma$ throughout.
+The observed spread of the sample means matches $\sigma/\sqrt{n}$ at every $n$, the data's own spread stays $\sigma$ throughout.
 
 ---
 
@@ -93,7 +93,7 @@ The observed spread of the sample means matches $\sigma/\sqrt{n}$ at every $n$ �
 
 *Wrong:* collecting a bigger sample shrinks the variability.
 
-*Correct:* a bigger sample shrinks the spread of your *estimate* (the standard error $\sigma/\sqrt{n}$), not the spread of the *data* (the population $\sigma$, which is a fact about the world and doesn't budge). Adding observations doesn't make people's heights more similar — it makes your estimate of the *average* height more precise. Conflating the two is the most common sampling-distribution mistake.
+*Correct:* a bigger sample shrinks the spread of your *estimate* (the standard error $\sigma/\sqrt{n}$), not the spread of the *data* (the population $\sigma$, which is a fact about the world and doesn't budge). Adding observations doesn't make people's heights more similar, it makes your estimate of the *average* height more precise. Conflating the two is the most common sampling-distribution mistake.
 <!-- /block -->
 
 ---

@@ -8,21 +8,21 @@
 
 # Bernoulli distribution
 
-A single yes/no trial. The coin lands heads or tails; the click happens or it doesn't; the part is defective or it isn't. One outcome out of two, with probability $p$ of "success." That's the whole distribution — and almost every count you'll ever model is built by stacking copies of it.
+A single yes/no trial. The coin lands heads or tails; the click happens or it doesn't; the part is defective or it isn't. One outcome out of two, with probability $p$ of "success." That's the whole distribution, and almost every count you'll ever model is built by stacking copies of it.
 
 ---
 
 <!-- block: gear, n: 2, label: "What p buys you" -->
 
-The Bernoulli has exactly one parameter, $p$ — the probability of a 1 (success). The probability of a 0 (failure) is whatever is left over, $1 - p$. Nothing else is free to vary.
+The Bernoulli has exactly one parameter, $p$, the probability of a 1 (success). The probability of a 0 (failure) is whatever is left over, $1 - p$. Nothing else is free to vary.
 
-It's worth holding onto how little structure that is. "Will this email get a click?" ($p \approx 0.02$), "will this treated patient recover?" ($p$ depends on the treatment), "will this fair coin land heads?" ($p = 0.5$) — same distribution, different dial setting. The model doesn't care what the trial *is*; it only cares about $p$.
+It's worth holding onto how little structure that is. "Will this email get a click?" ($p \approx 0.02$), "will this treated patient recover?" ($p$ depends on the treatment), "will this fair coin land heads?" ($p = 0.5$), same distribution, different dial setting. The model doesn't care what the trial *is*; it only cares about $p$.
 
 ---
 
 <!-- block: gear, n: 3, label: "Where uncertainty peaks" -->
 
-The two bars on the right are the whole distribution: the height at 0 is $1-p$, the height at 1 is $p$. Drag $p$ and watch them trade height — they always sum to 1.
+The two bars on the right are the whole distribution: the height at 0 is $1-p$, the height at 1 is $p$. Drag $p$ and watch them trade height, they always sum to 1.
 
 <!-- block: state_reset, anchor: bernoulli-feel -->
 
@@ -35,13 +35,13 @@ controls:
     max: 0.95
     step: 0.05
 goal:
-  prompt: "Find the value of p where the outcome is hardest to predict — where the two bars are equal."
+  prompt: "Find the value of p where the outcome is hardest to predict, where the two bars are equal."
   target: { p: 0.5 }
   success_when: "abs(p - 0.5) < 0.03"
   on_success: |
     That's the point of maximum uncertainty. The variance of a Bernoulli is
     $p(1-p)$, which is largest exactly at $p = 0.5$ (variance $0.25$) and
-    shrinks to $0$ as $p$ approaches either edge — a trial that almost always
+    shrinks to $0$ as $p$ approaches either edge, a trial that almost always
     does the same thing carries almost no surprise.
 <!-- /block -->
 
@@ -98,7 +98,7 @@ The empirical mean tracks $p$ and the variance tracks $p(1-p)$, peaking at $p = 
 
 *Wrong:* the Bernoulli is the model for a fair coin, so $p = 0.5$.
 
-*Correct:* $p$ can be any value in $[0, 1]$. A 2%-click-rate ad and a 99%-reliable sensor are both Bernoulli trials — just with very lopsided $p$. The fair coin is the *one* special case where uncertainty is maximal, not the definition.
+*Correct:* $p$ can be any value in $[0, 1]$. A 2%-click-rate ad and a 99%-reliable sensor are both Bernoulli trials, just with very lopsided $p$. The fair coin is the *one* special case where uncertainty is maximal, not the definition.
 <!-- /block -->
 
 ---
@@ -108,5 +108,5 @@ The empirical mean tracks $p$ and the variance tracks $p(1-p)$, peaking at $p = 
 <!-- block: gear, n: 6, label: "Where it leads" -->
 
 <!-- block: callout, kind: insight -->
-**Where this leads.** Add up $n$ independent Bernoulli($p$) trials and the count of successes is the **binomial distribution** — the next topic. Let the trials become many and rare and the count limits to the **Poisson**. And estimating $p$ from observed trials is the simplest case of **maximum likelihood estimation**.
+**Where this leads.** Add up $n$ independent Bernoulli($p$) trials and the count of successes is the **binomial distribution**, the next topic. Let the trials become many and rare and the count limits to the **Poisson**. And estimating $p$ from observed trials is the simplest case of **maximum likelihood estimation**.
 <!-- /block -->

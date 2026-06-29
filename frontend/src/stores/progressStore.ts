@@ -1,11 +1,11 @@
 /**
- * progressStore — completion tracking + decision-event log.
+ * progressStore, completion tracking + decision-event log.
  *
  * J4 split with `useTopicState`:
- *   - `useTopicState` owns the *world state* — the values plots react to
+ *   - `useTopicState` owns the *world state*, the values plots react to
  *     (mu, sigma, prior, treatment_strategy, ...). Decision option `writes:`
  *     dispatch into this store; plots subscribe.
- *   - `progressStore` owns the *event log* — completions, in-progress slugs,
+ *   - `progressStore` owns the *event log*, completions, in-progress slugs,
  *     and "which option did the user pick on this decision, when." Branch
  *     filtering (`depends_on`/`branch`) reads from here so the source of
  *     truth for "have they answered this decision?" is unambiguous.
@@ -28,7 +28,7 @@ import type { ProgressBundle, TopicProgressUpsert } from '../api/client'
 
 export interface DecisionEvent {
   optionId: string
-  /** Epoch ms — the moment the user picked. */
+  /** Epoch ms, the moment the user picked. */
   pickedAt: number
 }
 
@@ -45,10 +45,10 @@ export interface ReviewRecord {
   ease: number
   /** Days. */
   interval: number
-  /** Epoch ms — last reviewed; on first completion, this is set so the first
+  /** Epoch ms, last reviewed; on first completion, this is set so the first
    *  review fires after `interval` days. */
   lastReviewedAt: number
-  /** Epoch ms — when the next review becomes due. Materialized for cheap
+  /** Epoch ms, when the next review becomes due. Materialized for cheap
    *  selector reads. */
   dueAt: number
 }
@@ -77,7 +77,7 @@ interface ProgressState {
   /**
    * M5: global preference for which language renders inside paired code
    * blocks (`pair_id` directives). Defaults to Python; flips on tab click.
-   * One global preference rather than per-topic — a reader who reads in
+   * One global preference rather than per-topic, a reader who reads in
    * R wants R everywhere. Synced to the server alongside the rest of
    * progress in a later cycle; today it's local-only.
    */
@@ -109,7 +109,7 @@ interface ProgressState {
   recordDecision: (slug: string, anchor: string, optionId: string) => void
   /** Read the most recent pick for a (slug, anchor). Returns null if none. */
   getDecisionEvent: (slug: string, anchor: string) => DecisionEvent | null
-  /** Clear a decision — used by "change my answer" affordances. */
+  /** Clear a decision, used by "change my answer" affordances. */
   clearDecision: (slug: string, anchor: string) => void
 
   /** K3: dispatch one SM-2 review step. `quality` is 0–5 (we only emit 1/3/5). */
@@ -123,7 +123,7 @@ interface ProgressState {
   flagConfusion: (slug: string, blockId: string) => void
   /** K4: clear the confusion flag for a (slug, blockId). */
   unflagConfusion: (slug: string, blockId: string) => void
-  /** K4: read flag count (0 if untagged) — drives the heatmap overlay. */
+  /** K4: read flag count (0 if untagged), drives the heatmap overlay. */
   getConfusionCount: (slug: string, blockId: string) => number
 
   /**
@@ -155,7 +155,7 @@ function sm2Step(prev: ReviewRecord, quality: number, now: number): ReviewRecord
   const q = Math.max(0, Math.min(5, Math.round(quality)))
   let { ease, interval } = prev
 
-  // Ease update — applied for any non-failure quality. The 0.1/0.08/0.02
+  // Ease update, applied for any non-failure quality. The 0.1/0.08/0.02
   // constants are the original SM-2 paper values.
   if (q >= 3) {
     ease = ease + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02))
@@ -214,7 +214,7 @@ export const useProgressStore = create<ProgressState>()(
             : [...state.completedSlugs, slug]
           const inProgressSlugs = state.inProgressSlugs.filter(s => s !== slug)
           // K3: schedule the first review on first completion. Don't reset an
-          // existing schedule — re-marking a completed topic shouldn't break
+          // existing schedule, re-marking a completed topic shouldn't break
           // the SM-2 cadence the user has accumulated.
           const schedule = state.reviewSchedule ?? {}
           let reviewSchedule = schedule
@@ -351,7 +351,7 @@ export const useProgressStore = create<ProgressState>()(
             ? 'in_progress'
             : 'not_started'
         // Status-less topics with no review or decision data shouldn't be
-        // synced — they're noise that just bloats the bundle.
+        // synced, they're noise that just bloats the bundle.
         const hasContent =
           status !== 'not_started'
           || (s.decisionEvents?.[slug] && Object.keys(s.decisionEvents[slug]).length > 0)
@@ -385,7 +385,7 @@ export const useProgressStore = create<ProgressState>()(
           for (const t of bundle.topics) {
             const localTs = topicUpdatedAt[t.topic_slug] ?? 0
             if (localTs > t.server_updated_at) continue // local wins; keep
-            // Server wins — adopt its slice.
+            // Server wins, adopt its slice.
             if (t.status === 'completed') {
               completedSlugs.add(t.topic_slug)
               inProgressSlugs.delete(t.topic_slug)

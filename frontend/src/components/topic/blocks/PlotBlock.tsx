@@ -1,5 +1,5 @@
 /**
- * PlotBlock — I4/I5
+ * PlotBlock, I4/I5
  *
  * The state-binding wrapper around the spec library in `./plots`. Reads
  * `meta.spec` to pick a renderer, subscribes to topic state via
@@ -8,13 +8,13 @@
  *
  * `meta` shape (set by the parser from a `<!-- block: plot, ... -->` directive):
  *   {
- *     spec: "gaussian_pdf",            // required — name in PLOT_SPECS
+ *     spec: "gaussian_pdf",            // required, name in PLOT_SPECS
  *     params: { mu: 0, sigma: 1 },     // initial defaults (seeded into state)
- *     binds: ["mu","sigma"],           // optional — narrows what's read from state
- *     ghost: { mu: 1.5, sigma: 0.8 }   // optional — dashed target overlay
+ *     binds: ["mu","sigma"],           // optional, narrows what's read from state
+ *     ghost: { mu: 1.5, sigma: 0.8 }   // optional, dashed target overlay
  *   }
  *
- * If `binds` is omitted the spec receives the entire topic state — every spec
+ * If `binds` is omitted the spec receives the entire topic state, every spec
  * tolerates extra keys.
  */
 import { useMemo } from 'react'
@@ -26,7 +26,7 @@ import { useTopicStateStore, StateValue } from '../../../stores/topicState'
 interface Props {
   slug: string
   meta: Record<string, unknown>
-  /** Per-anchor playground ghost — overrides any meta.ghost when present. */
+  /** Per-anchor playground ghost, overrides any meta.ghost when present. */
   ghostOverride?: Record<string, StateValue> | null
   width?: number
   height?: number

@@ -6,13 +6,13 @@ import { useThemeStore } from '../stores/themeStore'
 import { DOMAIN_SLUGS, DOMAIN_LABEL, DOMAIN_DESC, domainColorHex, cssVarHex } from '../lib/domain'
 import SearchDropdown from '../components/SearchDropdown'
 
-// P: per-domain "topics with content" counts. These are a *fallback* — the
+// P: per-domain "topics with content" counts. These are a *fallback*, the
 // component derives the live numbers from `api.getGraph()` on mount and only
 // falls back to this snapshot if the fetch fails (so the cards never flash 0
 // and stay honest even offline). Snapshot taken at P; the live fetch keeps it
 // from going stale the way the old hardcoded counts did.
-// Offline fallback only — live counts derive from the graph (depth>0, has_content).
-// Post-R: the curriculum is complete — all 40 topics across the five domains.
+// Offline fallback only, live counts derive from the graph (depth>0, has_content).
+// Post-R: the curriculum is complete, all 40 topics across the five domains.
 const FALLBACK_TOPIC_COUNTS: Record<string, number> = {
   'probability-foundations': 10,
   'distributions': 8,
@@ -272,7 +272,7 @@ export default function Home() {
         })}
       </section>
 
-      {/* Progress Section — only shown if user has started learning */}
+      {/* Progress Section, only shown if user has started learning */}
       {completedSlugs.length > 0 && (
         <section className="animate-fade-in-up" style={{
           position: 'relative',
@@ -374,7 +374,7 @@ export default function Home() {
           <FeatureCard
             color={paletteHex.probability}
             title="Drag the Map"
-            description="Grab any concept and drag it. Watch the graph respond — connected ideas follow, springs stretch and settle. This is your curriculum, and you can shape it."
+            description="Grab any concept and drag it. Watch the graph respond, connected ideas follow, springs stretch and settle. This is your curriculum, and you can shape it."
           />
           <FeatureCard
             color={paletteHex.distributions}
@@ -399,7 +399,7 @@ export default function Home() {
           <FeatureCard
             color={paletteHex.accent}
             title="Proof by Doing"
-            description="Not quizzes — micro-challenges. Modify a simulation, see what breaks. Edit code, run it, verify your understanding through building, not multiple choice."
+            description="Not quizzes, micro-challenges. Modify a simulation, see what breaks. Edit code, run it, verify your understanding through building, not multiple choice."
           />
         </div>
       </section>
@@ -480,7 +480,7 @@ function FeatureCard({ color, title, description }: {
 }
 
 /**
- * Animated background — floating nodes with soft connections.
+ * Animated background, floating nodes with soft connections.
  * Rule: teal ("the Energy") particles are *always* the brightest and slightly
  * larger than the zinc (structure) particles. This makes the single-chromatic-voice
  * hierarchy unmistakable: even in ambient decor, teal reads as the pulse.
@@ -566,7 +566,7 @@ function BackgroundGraph({ isLight }: { isLight: boolean }) {
 
       // Draw particles
       for (const p of particles) {
-        // Glow — teal particles bloom 2× wider so they dominate the field
+        // Glow, teal particles bloom 2× wider so they dominate the field
         const glowR = p.isAccent ? p.r * 6 : p.r * 4
         const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, glowR)
         grad.addColorStop(0, p.color + (p.isAccent ? '30' : '15'))
@@ -576,7 +576,7 @@ function BackgroundGraph({ isLight }: { isLight: boolean }) {
         ctx.fillStyle = grad
         ctx.fill()
 
-        // Core — teal at ~70% alpha, zinc at ~25% alpha
+        // Core, teal at ~70% alpha, zinc at ~25% alpha
         ctx.beginPath()
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
         ctx.fillStyle = p.color + (p.isAccent ? 'b0' : '40')

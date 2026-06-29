@@ -131,7 +131,7 @@ function QuizBlock({ block }: { block: ContentBlock }) {
           <textarea
             value={userAnswer}
             onChange={e => setUserAnswer(e.target.value)}
-            placeholder="Type your answer here (optional — then check the solution)"
+            placeholder="Type your answer here (optional, then check the solution)"
             style={{
               width: '100%',
               minHeight: 60,

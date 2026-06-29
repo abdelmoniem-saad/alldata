@@ -1,5 +1,5 @@
 /**
- * GraphFlythrough — K2.
+ * GraphFlythrough, K2.
  *
  * Mounts a small ForceGraph in the right column of ScrollReader and
  * imperatively pans+zooms it to the `target` slug as the reader scrolls.
@@ -12,7 +12,7 @@
  *   - the same domain palette + difficulty patterns + completion glow
  *
  * What's deliberately small:
- *   - No interactive node selection (no `onNodeClick` wiring) — the
+ *   - No interactive node selection (no `onNodeClick` wiring), the
  *     flythrough is the lesson; clicks would steal it.
  *   - Reduced-motion: `centerOnSlug` is the same path the search chip uses,
  *     which already honors the reduced-motion gate.

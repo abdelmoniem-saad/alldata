@@ -20,12 +20,15 @@ export default function GraphSidebar({
   prereqReasons = {}, leadsToReasons = {},
 }: Props) {
   // H7: local readiness computation. `progressStore.completedSlugs` is the
-  // source of truth (localStorage-backed, works for anonymous users — the
+  // source of truth (localStorage-backed, works for anonymous users, the
   // backend `/graph/readiness/{slug}` endpoint requires auth and isn't
   // useful until progress sync lands on the H10 backlog). Count matches
   // against the already-loaded transitive prereq list passed as a prop.
   const completedSlugs = useProgressStore(s => s.completedSlugs)
   const hasProgress = completedSlugs.length > 0
+  // Y: blocks this reader marked "to revisit" on the selected topic.
+  const flaggedForNode = useProgressStore(s => (node ? s.confusionFlags?.[node.slug] : undefined))
+  const revisitCount = flaggedForNode ? Object.keys(flaggedForNode).length : 0
   const totalPrereqs = prerequisites.length
   const completedPrereqs = prerequisites.filter(p => completedSlugs.includes(p.slug)).length
   const missingPrereqs = totalPrereqs - completedPrereqs
@@ -107,7 +110,7 @@ export default function GraphSidebar({
         )}
 
         {/* H7: readiness line. Only surfaces once the user has at least
-            one completed topic — first-time users shouldn't wonder what
+            one completed topic, first-time users shouldn't wonder what
             "0/3 prereqs complete" means. Green when ready, amber with
             a learning-path shortcut when not. */}
         {showReadiness && (
@@ -132,7 +135,7 @@ export default function GraphSidebar({
                   ✓
                 </span>
                 <span style={{ color: 'var(--color-text)', flex: 1 }}>
-                  Ready — {completedPrereqs}/{totalPrereqs} prereqs complete
+                  Ready, {completedPrereqs}/{totalPrereqs} prereqs complete
                 </span>
               </>
             ) : (
@@ -184,6 +187,28 @@ export default function GraphSidebar({
         >
           {node.depth === 0 ? 'Open overview' : 'Open Topic'}
         </Link>
+
+        {/* Y: revisit signal. When this reader flagged blocks here, surface a
+            count + a jump that opens the topic scrolled to the first mark. */}
+        {revisitCount > 0 && (
+          <Link
+            to={`/topic/${node.slug}?revisit=1`}
+            style={{
+              marginTop: 8,
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '8px 10px', borderRadius: 8,
+              background: 'var(--color-bg-secondary)',
+              border: '1px solid var(--color-accent)',
+              color: 'var(--color-text)', fontSize: 12, textDecoration: 'none',
+            }}
+          >
+            <span aria-hidden style={{ color: 'var(--color-accent)' }}>●</span>
+            <span style={{ flex: 1 }}>
+              {revisitCount} block{revisitCount === 1 ? '' : 's'} marked to revisit
+            </span>
+            <span style={{ color: 'var(--color-accent)', fontWeight: 600, whiteSpace: 'nowrap' }}>jump →</span>
+          </Link>
+        )}
       </div>
 
       {/* H4: Common-misconceptions section removed. The data still arrives
@@ -258,7 +283,7 @@ function Section({ title, subtitle, color, count, children }: {
 }) {
   return (
     <div style={{ marginBottom: 20 }}>
-      {/* G5: heading row now carries a colored rule beneath it — the section's
+      {/* G5: heading row now carries a colored rule beneath it, the section's
           "accent". Prereqs get amber (intermediate), leads-to gets teal accent.
           This mirrors the graph's vocabulary: amber = "prerequisite signal",
           teal = "energy / unlock". */}

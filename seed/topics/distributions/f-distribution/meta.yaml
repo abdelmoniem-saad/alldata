@@ -2,7 +2,7 @@ title: "F-Distribution"
 slug: f-distribution
 domain: distributions
 difficulty: intermediate
-summary: The ratio of two variance estimates — the distribution that decides whether one source of variation is genuinely bigger than another, in ANOVA and regression.
+summary: The ratio of two variance estimates, the distribution that decides whether one source of variation is genuinely bigger than another, in ANOVA and regression.
 prerequisites: [chi-squared-distribution]
 has_intuition_layer: true
 has_formal_layer: true

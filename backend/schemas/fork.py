@@ -1,7 +1,7 @@
 """Pydantic shapes for the N fork model.
 
 A fork's editable surface is its `markdown_source`. The blocks a reader
-sees are produced by parsing that source on every GET — the fork never
+sees are produced by parsing that source on every GET, the fork never
 persists a parsed block tree. `ForkContentBlock` mirrors the frontend's
 `ContentBlock` interface so the existing `ScrollReader` renders forks with
 no per-fork render path.
@@ -18,7 +18,7 @@ from backend.schemas.topic import TopicSummary
 class ForkContentBlock(BaseModel):
     """A parsed block from a fork's markdown. Same field set as the
     master-topic `ContentBlockResponse`, but `id` is a synthesized string
-    (`{index}`) rather than a DB UUID — fork blocks have no DB rows.
+    (`{index}`) rather than a DB UUID, fork blocks have no DB rows.
     """
 
     id: str
@@ -61,7 +61,7 @@ class ForkOut(BaseModel):
     """The fork's identity + editable source. Returned by create + update."""
 
     id: uuid.UUID
-    username: str          # owner's display_name — the `/u/{username}/...` token
+    username: str          # owner's display_name, the `/u/{username}/...` token
     topic_slug: str
     topic_title: str
     created_at: datetime
@@ -70,7 +70,7 @@ class ForkOut(BaseModel):
 
 
 class ForkSummary(BaseModel):
-    """A row in a fork listing — no markdown body, just enough for a card."""
+    """A row in a fork listing, no markdown body, just enough for a card."""
 
     id: uuid.UUID
     username: str

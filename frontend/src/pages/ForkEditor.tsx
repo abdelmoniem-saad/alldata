@@ -1,5 +1,5 @@
 /**
- * ForkEditor — N (fork model).
+ * ForkEditor, N (fork model).
  *
  * Two-pane editor for a fork the viewer owns, at
  * `/u/:username/topic/:slug/edit`. Left pane: a monospace textarea bound
@@ -10,7 +10,7 @@
  * `POST /api/forks/preview` (parse-without-persist). Save (Cmd-S or the
  * button) hits `PUT /api/forks/{username}/{slug}`.
  *
- * The `:username` segment may be the literal `me` — resolved to the
+ * The `:username` segment may be the literal `me`, resolved to the
  * authenticated user's display_name for the API calls. Non-owners get a
  * "not your fork" guard.
  */
@@ -112,7 +112,7 @@ export default function ForkEditor() {
     api.getFork(effectiveUsername, slug)
       .then(fork => {
         if (user && fork.owner_display_name !== user.display_name) {
-          setError('This is not your fork — you can only edit forks you own.')
+          setError('This is not your fork, you can only edit forks you own.')
           return
         }
         setSource(fork.markdown_source)
@@ -139,7 +139,7 @@ export default function ForkEditor() {
           setMisconceptions(res.misconceptions)
           setWarnings(res.warnings)
         })
-        .catch(() => { /* preview failures are non-fatal — keep the last good render */ })
+        .catch(() => { /* preview failures are non-fatal, keep the last good render */ })
     }, PREVIEW_DEBOUNCE_MS)
     return () => {
       if (previewTimer.current) window.clearTimeout(previewTimer.current)
@@ -163,7 +163,7 @@ export default function ForkEditor() {
   }, [effectiveUsername, slug, source, saving])
 
   // O1: suggest the current saved fork to the master. The endpoint
-  // snapshots `markdown_source` server-side — owners save first, then
+  // snapshots `markdown_source` server-side, owners save first, then
   // suggest. We disable the button when there are unsaved changes so the
   // suggestion always reflects what's on screen.
   const handleSuggest = useCallback(async () => {
@@ -272,7 +272,7 @@ export default function ForkEditor() {
               className={`fork-mode__btn${mode === 'visual' ? ' fork-mode__btn--on' : ''}`}
               onClick={() => setMode('visual')}
               aria-pressed={mode === 'visual'}
-              title="Visual — edit blocks without the raw directive syntax"
+              title="Visual, edit blocks without the raw directive syntax"
             >
               Visual
             </button>
@@ -281,7 +281,7 @@ export default function ForkEditor() {
               className={`fork-mode__btn${mode === 'source' ? ' fork-mode__btn--on' : ''}`}
               onClick={() => setMode('source')}
               aria-pressed={mode === 'source'}
-              title="Source — edit the raw content.md markdown"
+              title="Source, edit the raw content.md markdown"
             >
               Source
             </button>
@@ -290,7 +290,7 @@ export default function ForkEditor() {
             onClick={handleSuggest}
             disabled={suggesting || dirty}
             title={
-              dirty ? 'Save your changes first — the suggestion snapshots the saved fork.'
+              dirty ? 'Save your changes first, the suggestion snapshots the saved fork.'
                 : suggestionStatus === 'pending' ? 'Update the pending suggestion with the current saved fork.'
                 : suggestionStatus === 'accepted' ? 'Your fork was merged. Suggesting again creates a fresh proposal from your current fork.'
                 : 'Propose your fork as the new master content.'
@@ -355,7 +355,7 @@ export default function ForkEditor() {
                 onChange={e => setSource(e.target.value)}
                 onKeyDown={handleKeyDown}
                 spellCheck={false}
-                placeholder="This fork has no content yet — start writing the topic's content.md here."
+                placeholder="This fork has no content yet, start writing the topic's content.md here."
                 aria-label="Fork markdown source"
               />
             </>
@@ -384,7 +384,7 @@ export default function ForkEditor() {
   )
 }
 
-// O1: merge-back status chip — small, sits next to the fork title.
+// O1: merge-back status chip, small, sits next to the fork title.
 function SuggestionChip({ status }: { status: 'pending' | 'accepted' | 'rejected' }) {
   const { bg, color, text, title } = (() => {
     if (status === 'accepted') return {

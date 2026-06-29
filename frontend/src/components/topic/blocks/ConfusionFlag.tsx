@@ -1,15 +1,15 @@
 /**
- * ConfusionFlag — K4.
+ * ConfusionFlag, K4.
  *
  * A minimal "I want to revisit this" toggle attached to every block in
  * ScrollReader. Click to flag, click again to unflag. The label exactly
- * matches the vision doc — no "I'm confused," no "this is bad." Just a
+ * matches the vision doc, no "I'm confused," no "this is bad." Just a
  * private signal that the reader wants to come back.
  *
  * Visual: a small text-button at the bottom-right of the block. Default
  * off (color-text-muted, no border accent). When flagged, a teal dot
  * prefixes the label and a hairline left-border appears on the parent
- * block (handled by the caller — ScrollReader wraps the BlockSwitch with
+ * block (handled by the caller, ScrollReader wraps the BlockSwitch with
  * a div that gets `border-left` when this block is flagged).
  */
 

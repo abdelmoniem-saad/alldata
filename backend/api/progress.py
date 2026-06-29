@@ -1,4 +1,4 @@
-"""User progress sync — M1 (H10 carryover).
+"""User progress sync, M1 (H10 carryover).
 
 One row per (user, topic). The wire is the topic's full progress slice;
 upserts replace, conflict resolution is last-write-wins on
@@ -7,7 +7,7 @@ canonical on ties.
 
 The K-era event types (`decision_events`, `review_schedule`,
 `confusion_flags`) ride on JSON sidecars on `UserProgress` so the wire
-format mirrors the frontend's `progressStore` exactly. No deep merge — the
+format mirrors the frontend's `progressStore` exactly. No deep merge, the
 client always sends its full per-topic view.
 
 Endpoints:
@@ -36,7 +36,7 @@ router = APIRouter()
 def _row_to_out(row: UserProgress, slug: str) -> TopicProgressOut:
     """Project a UserProgress row into the wire-shape `TopicProgressOut`.
 
-    The slug isn't on the row itself (we key by topic_id internally) — pass
+    The slug isn't on the row itself (we key by topic_id internally), pass
     it in from the join. `server_updated_at` is the canonical epoch-ms
     timestamp clients should store for the next push's conflict resolution.
     """
@@ -60,10 +60,10 @@ async def _upsert_one(
     """Apply one TopicProgressUpsert. Returns the post-write wire shape.
 
     Conflict resolution: if a server row exists and `client_updated_at <
-    server.updated_at`, the server wins — return the server's current state
+    server.updated_at`, the server wins, return the server's current state
     without writing. The client adopts what it gets back.
     """
-    # Look the topic up by slug. Topics that don't exist are a 404 — silent
+    # Look the topic up by slug. Topics that don't exist are a 404, silent
     # ignore would lose user writes for a typo or stale slug.
     topic_q = await db.execute(select(Topic).where(Topic.slug == payload.topic_slug))
     topic = topic_q.scalar_one_or_none()
@@ -82,7 +82,7 @@ async def _upsert_one(
     if row is not None:
         server_ms = int(row.updated_at.replace(tzinfo=timezone.utc).timestamp() * 1000)
         if payload.client_updated_at < server_ms:
-            # Server wins — return its state unchanged.
+            # Server wins, return its state unchanged.
             return _row_to_out(row, payload.topic_slug)
         # Client wins (>) or tie (==) → server clock is canonical for ties,
         # but the data is identical so it doesn't matter; still write to
@@ -150,7 +150,7 @@ async def upsert_topic_progress(
 ) -> TopicProgressOut:
     """Upsert one topic's progress.
 
-    The body's `topic_slug` must match the path slug (defensive — clients
+    The body's `topic_slug` must match the path slug (defensive, clients
     shouldn't construct a PUT with a mismatched body, but if they do we
     fail loudly rather than write to the wrong row).
     """

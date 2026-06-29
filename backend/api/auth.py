@@ -1,4 +1,4 @@
-"""Authentication routes — register, login, current user."""
+"""Authentication routes, register, login, current user."""
 
 from datetime import datetime, timedelta, timezone
 

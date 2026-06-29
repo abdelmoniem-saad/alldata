@@ -53,7 +53,7 @@ export function domainLabel(slug?: string | null): string {
  *
  * Only use this from canvas rendering contexts (e.g. ForceGraph). DOM components
  * should use `domainVar(slug)` and let the browser resolve the CSS variable.
- * Re-read once per frame if the theme can change — getComputedStyle is cheap.
+ * Re-read once per frame if the theme can change, getComputedStyle is cheap.
  */
 export function domainColorHex(
   slug: string | null | undefined,
@@ -82,19 +82,19 @@ export function cssVarHex(
 // ─── H11: Difficulty stroke vocabulary ─────────────────────────────────────
 //
 // H1 restored domain color (muted jewel palette), which freed up the stroke
-// pattern — previously used to encode domain alongside color — to carry a
+// pattern, previously used to encode domain alongside color, to carry a
 // second, independent signal. We now use it for **difficulty**, the most
 // useful "should I open this?" signal after topic title:
 //
 //   intro        → solid ring   (foundations, walk right in)
 //   intermediate → dashed ring  (needs some background)
-//   advanced     → dotted ring  (deep end — come back after prereqs)
+//   advanced     → dotted ring  (deep end, come back after prereqs)
 //
 // Difficulty color (green/amber/red dot on the node corner) + ring pattern
 // = redundant encoding for colorblind accessibility without doubling up
 // on domain vocabulary.
 //
-// The DOMAIN_TICK glyph still exists — it's used in DOM labels (sidebar
+// The DOMAIN_TICK glyph still exists, it's used in DOM labels (sidebar
 // chips, badges) where color is already legible, and reads as "which
 // discipline" in the context of a row of text, not as a second copy of
 // the graph's domain signal.

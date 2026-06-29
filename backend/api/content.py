@@ -1,4 +1,4 @@
-"""Content routes — content blocks management."""
+"""Content routes, content blocks management."""
 
 import uuid
 

@@ -5,7 +5,7 @@ import { useAuthStore } from '../../stores/authStore'
 // V0: probe execution capabilities once per session. The R language toggle is
 // hidden unless R can actually run here (Docker R image or local Rscript), so
 // readers never select R and hit the "R is not installed" dead end. On a probe
-// failure, default to hiding R (conservative — don't offer an unconfirmed lang).
+// failure, default to hiding R (conservative, don't offer an unconfirmed lang).
 let _capsPromise: Promise<{ python: boolean; r: boolean }> | null = null
 function execCapabilities() {
   if (!_capsPromise) {
@@ -73,7 +73,7 @@ export default function CodeRunner({
       setResult(res)
       setShowOutput(true)
     } catch (err: any) {
-      // A stale/expired token still 401s — fall back to the same sign-in card.
+      // A stale/expired token still 401s, fall back to the same sign-in card.
       if (err?.status === 401) {
         setNeedsSignIn(true)
         setShowOutput(true)
@@ -114,7 +114,7 @@ export default function CodeRunner({
     setShowOutput(!!expectedOutput)
   }
 
-  // I4 — auto-run on first intersection. Result is cached in component state
+  // I4, auto-run on first intersection. Result is cached in component state
   // so re-scrolling doesn't re-execute. Skipped for editable blocks (where
   // user input is the point) and once the user has explicitly clicked Run.
   useEffect(() => {
@@ -166,7 +166,7 @@ export default function CodeRunner({
         borderBottom: '1px solid var(--color-border-subtle)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {/* Instrument indicator — three zinc dots holding the monochrome rule.
+          {/* Instrument indicator, three zinc dots holding the monochrome rule.
               Teal dot lights only when this block is an interactive simulation. */}
           <div style={{ display: 'flex', gap: 5 }}>
             <span style={{
@@ -190,7 +190,7 @@ export default function CodeRunner({
             {isSimulation ? 'SIMULATION' : lang.toUpperCase()}
           </span>
 
-          {/* Language switcher — editable blocks only, so users can try R against a Python playground.
+          {/* Language switcher, editable blocks only, so users can try R against a Python playground.
               V0: the R option appears only when R can actually run here. */}
           {isEditable && (
             <div style={{ display: 'flex', gap: 2, marginLeft: 2 }}>
@@ -370,7 +370,7 @@ export default function CodeRunner({
         )}
       </div>
 
-      {/* U1: anonymous run-gate nudge — a gentle conversion card, not a red
+      {/* U1: anonymous run-gate nudge, a gentle conversion card, not a red
           error, shown where output would be. */}
       {showOutput && needsSignIn && (
         <div style={{
@@ -391,7 +391,7 @@ export default function CodeRunner({
               <strong style={{ color: 'var(--color-text)' }}>
                 Sign in to {isSimulation ? 'run this simulation' : 'run this code'}
               </strong>
-              {" — it's free, and it saves your progress."}
+              {", it's free, and it saves your progress."}
             </div>
             <button
               onClick={handleSignInToRun}

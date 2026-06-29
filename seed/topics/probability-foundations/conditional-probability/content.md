@@ -10,19 +10,19 @@
 
 You're told a family has two children, and at least one is a girl. What's the probability both are girls?
 
-Your gut says one in two. The answer is one in three. Welcome to **conditional probability** — the math of "given that I know B happened, what's the probability of A?"
+Your gut says one in two. The answer is one in three. Welcome to **conditional probability**, the math of "given that I know B happened, what's the probability of A?"
 
 The formula is simple:
 
 $$P(A \mid B) = \frac{P(A \cap B)}{P(B)}$$
 
-The intuition is the part worth thinking about: **knowing B happened shrinks the sample space.** You're not looking at all possible outcomes anymore — only the ones where B is true.
+The intuition is the part worth thinking about: **knowing B happened shrinks the sample space.** You're not looking at all possible outcomes anymore, only the ones where B is true.
 
 ---
 
 ## The Monty Hall problem
 
-The most famous conditional-probability puzzle. You're on a game show with three doors. Behind one is a car, behind the other two are goats. You pick door 1. The host — who knows where the car is — opens door 3, showing a goat. He asks: "Do you want to switch to door 2?"
+The most famous conditional-probability puzzle. You're on a game show with three doors. Behind one is a car, behind the other two are goats. You pick door 1. The host, who knows where the car is, opens door 3, showing a goat. He asks: "Do you want to switch to door 2?"
 
 Most people say it doesn't matter. The car is behind one of the two remaining doors, so it's 50/50, right? Pick what you want.
 
@@ -41,23 +41,23 @@ options:
     response: |
       Look at the population. About 1 in 3 of the games where you stuck with
       door 1 ended in a car; the other 2 in 3 had a goat. Your initial pick
-      had a 1/3 chance — Monty's information didn't change *that*. The 2/3
+      had a 1/3 chance, Monty's information didn't change *that*. The 2/3
       probability didn't disappear; it collapsed onto the door he didn't open.
   - id: switch
     label: "Switch to door 2"
     writes: { treatment_strategy: "treat_all" }
     response: |
       The dot grid is showing you why. Your original 1/3 chance of being
-      right stayed exactly where it was. The other 2/3 — the world where
-      the car is behind one of the doors you didn't pick — got concentrated
+      right stayed exactly where it was. The other 2/3, the world where
+      the car is behind one of the doors you didn't pick, got concentrated
       into door 2 the moment Monty revealed door 3 was empty. Switching
       doubles your win rate.
   - id: indifferent
-    label: "Doesn't matter — same odds"
+    label: "Doesn't matter, same odds"
     writes: { treatment_strategy: "none" }
     response: |
       It's a natural read of the problem, but it's the trap. Monty's choice
-      isn't random — he *knows* where the car is and never opens that door.
+      isn't random, he *knows* where the car is and never opens that door.
       That asymmetry is information. The remaining 2/3 collapses onto door 2
       when door 3 is opened.
 correct: switch
@@ -70,7 +70,7 @@ This is conditional probability with teeth: $P(\text{car behind 2} \mid \text{Mo
 <!-- /block -->
 
 <!-- block: callout, kind: insight, depends_on: monty-decision, branch: stay|indifferent -->
-The trap is treating Monty as if he picked at random. He didn't. He picked the door he knew was empty *given* your choice. That conditioning is the whole game — and it's why $P(\text{car} \mid \text{Monty opened 3})$ is two-to-one in favor of switching.
+The trap is treating Monty as if he picked at random. He didn't. He picked the door he knew was empty *given* your choice. That conditioning is the whole game, and it's why $P(\text{car} \mid \text{Monty opened 3})$ is two-to-one in favor of switching.
 <!-- /block -->
 
 ---
@@ -78,7 +78,7 @@ The trap is treating Monty as if he picked at random. He didn't. He picked the d
 <!-- block: step_through, anchor: monty-walk -->
 1. Before any door opens: $P(\text{car behind 1}) = P(\text{car behind 2}) = P(\text{car behind 3}) = 1/3$.
 2. You pick door 1. Your $1/3$ chance is locked in.
-3. Monty opens an empty door — he can always do this. The combined probability of doors 2 and 3, which was $2/3$, doesn't vanish.
+3. Monty opens an empty door, he can always do this. The combined probability of doors 2 and 3, which was $2/3$, doesn't vanish.
 4. Door 3 is revealed empty. The $2/3$ that was split between doors 2 and 3 is now entirely on door 2.
 5. **Switching wins with probability $2/3$.** Staying wins with probability $1/3$.
 <!-- /block -->
@@ -97,7 +97,7 @@ $$P(A \mid B) = \frac{P(A \cap B)}{P(B)}$$
 
 $$P(A \cap B) = P(A \mid B) \cdot P(B) = P(B \mid A) \cdot P(A)$$
 
-**Law of total probability** — if $B_1, B_2, \ldots, B_n$ partition $\Omega$:
+**Law of total probability**, if $B_1, B_2, \ldots, B_n$ partition $\Omega$:
 
 $$P(A) = \sum_{i=1}^{n} P(A \mid B_i) \, P(B_i)$$
 
@@ -110,7 +110,7 @@ $$P(A_1 \cap A_2 \cap \cdots \cap A_n) = P(A_1) \cdot P(A_2 \mid A_1) \cdot P(A_
 <!-- block: derivation, title: "Why Monty's choice gives you information", collapsed: true -->
 Let $C_i$ be "the car is behind door $i$." You pick door 1. Let $M_3$ be "Monty opens door 3."
 
-If the car is behind door 1, Monty has a free choice between doors 2 and 3 — he opens door 3 with probability $1/2$:
+If the car is behind door 1, Monty has a free choice between doors 2 and 3, he opens door 3 with probability $1/2$:
 
 $$P(M_3 \mid C_1) = 1/2$$
 
@@ -140,7 +140,7 @@ Switching wins two-thirds of the time.
 
 *Wrong:* the probability of having a disease given a positive test is the same as the probability of testing positive given you have the disease.
 
-*Correct:* these are completely different — that confusion is the **base rate fallacy**. A 99%-accurate test can still have a low $P(\text{disease} \mid +)$ if the disease is rare. English makes it easy to swap the direction; the math doesn't tolerate the swap.
+*Correct:* these are completely different, that confusion is the **base rate fallacy**. A 99%-accurate test can still have a low $P(\text{disease} \mid +)$ if the disease is rare. English makes it easy to swap the direction; the math doesn't tolerate the swap.
 <!-- /block -->
 
 ---
@@ -150,7 +150,7 @@ Switching wins two-thirds of the time.
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Monty Hall — simulate it. The math doesn't lie, but seeing 50,000 games
+# Monty Hall, simulate it. The math doesn't lie, but seeing 50,000 games
 # converge to the theoretical numbers usually seals the intuition.
 np.random.seed(42)
 n_games = 50_000

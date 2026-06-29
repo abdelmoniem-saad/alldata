@@ -1,12 +1,12 @@
-"""Fork service — N (fork model).
+"""Fork service, N (fork model).
 
 A fork is a user's editable copy of one topic. This module owns the
 persistence operations; the parsing of `markdown_source` into renderable
 blocks happens in the API layer (it reuses the seed importer's parser).
 
 The personal-fork contract: one fork per (user, topic). The uniqueness is
-enforced application-side in `create_fork` rather than via a DB constraint
-— the `course_id`-scoped fork path (legacy, unused) would otherwise need a
+enforced application-side in `create_fork` rather than via a DB constraint,
+the `course_id`-scoped fork path (legacy, unused) would otherwise need a
 partial unique index that SQLite doesn't support cleanly.
 """
 
@@ -30,7 +30,7 @@ def _read_topic_source(topic: Topic) -> str:
     Tries `seed/topics/{domain}/{slug}/content.md` first, then falls back to
     a glob in case the DB `domain` and the on-disk directory diverge.
     Returns an empty string when no source file exists (a user-authored
-    topic that never came from the seed) — the fork editor handles the
+    topic that never came from the seed), the fork editor handles the
     empty case with a "start writing" affordance.
     """
     if topic.domain:

@@ -1,5 +1,5 @@
 /**
- * BlockCard — X1. One directive segment as a friendly card.
+ * BlockCard, X1. One directive segment as a friendly card.
  *
  * Shows a type tag + plain-language summary (never the raw `<!-- block -->`),
  * with reorder / delete / edit controls. "Edit" expands the per-directive form

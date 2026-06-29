@@ -18,7 +18,7 @@ and each coefficient answers a sharper question than you might expect.
 
 <!-- block: gear, n: 2, label: "Holding everything else constant" -->
 
-Each $\beta_j$ is the effect of $x_j$ **with all the other predictors held fixed** — the slope you'd see if you could move $x_j$ alone. That conditioning is the whole point, and it's why a coefficient can *flip sign* versus simple regression: a predictor that looks helpful on its own may reverse once you control for a confounder it was secretly standing in for.
+Each $\beta_j$ is the effect of $x_j$ **with all the other predictors held fixed**, the slope you'd see if you could move $x_j$ alone. That conditioning is the whole point, and it's why a coefficient can *flip sign* versus simple regression: a predictor that looks helpful on its own may reverse once you control for a confounder it was secretly standing in for.
 
 ---
 
@@ -28,23 +28,23 @@ The scatter shows $y$ against $x_1$, ignoring a lurking confounder $x_2$ that's 
 
 <!-- block: decision, anchor: mr-flip -->
 question: |
-  The cloud of $y$ against $x_1$ slopes clearly *upward* — the marginal slope is
+  The cloud of $y$ against $x_1$ slopes clearly *upward*, the marginal slope is
   positive. But $x_1$ is entangled with a confounder $x_2$ you haven't accounted
   for. What happens to $x_1$'s effect once you control for $x_2$?
 options:
   - id: same
-    label: "Stays positive — controlling for x₂ won't change much"
+    label: "Stays positive, controlling for x₂ won't change much"
     writes: { controlled: 0 }
     response: |
       Not here. $x_1$ only looked helpful because it was riding along with
       $x_2$, the real driver. The positive marginal slope is borrowed from
-      $x_2$ — strip it away and $x_1$'s own contribution is something else
+      $x_2$, strip it away and $x_1$'s own contribution is something else
       entirely.
   - id: flips
-    label: "It can reverse — show me the partial relationship"
+    label: "It can reverse, show me the partial relationship"
     writes: { controlled: 1 }
     response: |
-      Exactly — watch the cloud become the added-variable plot and the slope
+      Exactly, watch the cloud become the added-variable plot and the slope
       flip *negative*. With $x_2$ held constant, $x_1$'s true partial effect
       (about $-1$ here) emerges. The positive marginal slope was an artifact of
       confounding.
@@ -52,14 +52,14 @@ options:
     label: "It drops to exactly zero"
     writes: { controlled: 1 }
     response: |
-      Close — controlling for $x_2$ does change it dramatically, but not to
+      Close, controlling for $x_2$ does change it dramatically, but not to
       zero. The added-variable plot reveals a genuine *negative* partial slope,
       not a null one.
 correct: flips
 <!-- /block -->
 
 <!-- block: callout, kind: insight, depends_on: mr-flip, branch: flips -->
-This is the **added-variable plot**: $y$ and $x_1$ each stripped of what $x_2$ explains. Its slope is exactly $x_1$'s multiple-regression coefficient. The lesson — a coefficient is only interpretable *alongside the others in the model*. Change the set of predictors and you change what every coefficient means.
+This is the **added-variable plot**: $y$ and $x_1$ each stripped of what $x_2$ explains. Its slope is exactly $x_1$'s multiple-regression coefficient. The lesson, a coefficient is only interpretable *alongside the others in the model*. Change the set of predictors and you change what every coefficient means.
 <!-- /block -->
 
 ---
@@ -72,7 +72,7 @@ Stack the predictors into a matrix $X$ (a column per predictor, plus a column of
 
 $$\hat{\beta} = (X^{\top}X)^{-1} X^{\top} y.$$
 
-Each $\hat{\beta}_j$ is the partial effect of predictor $j$. Two cautions: predictors that are highly correlated (**multicollinearity**) make $X^{\top}X$ nearly singular, so coefficients become unstable and their signs untrustworthy; and a coefficient is *causal* only if the model already includes every relevant confounder — regression controls for what you give it, nothing more.
+Each $\hat{\beta}_j$ is the partial effect of predictor $j$. Two cautions: predictors that are highly correlated (**multicollinearity**) make $X^{\top}X$ nearly singular, so coefficients become unstable and their signs untrustworthy; and a coefficient is *causal* only if the model already includes every relevant confounder, regression controls for what you give it, nothing more.
 
 <!-- block: derivation, title: "Why β̂ = (XᵀX)⁻¹Xᵀy", collapsed: true -->
 Minimize $S(\beta) = (y - X\beta)^{\top}(y - X\beta)$. The gradient is $\partial S/\partial\beta = -2X^{\top}(y - X\beta)$; setting it to zero gives the **normal equations** $X^{\top}X\beta = X^{\top}y$, so $\hat{\beta} = (X^{\top}X)^{-1}X^{\top}y$ whenever $X^{\top}X$ is invertible. The added-variable plot is the one-coefficient-at-a-time view of this (the Frisch–Waugh–Lovell theorem).
@@ -110,7 +110,7 @@ The simple slope is positive; controlling for $x_2$ recovers $x_1$'s true negati
 
 *Wrong:* more variables, more accuracy.
 
-*Correct:* adding a predictor *never increases* training error and usually nudges $R^2$ up — even if the predictor is pure noise. That's the trap. Irrelevant predictors add variance, inflate standard errors, and hurt predictions on new data (overfitting); correlated ones destabilize each other's coefficients. More predictors is a cost-benefit decision judged by *out-of-sample* performance, not in-sample fit.
+*Correct:* adding a predictor *never increases* training error and usually nudges $R^2$ up, even if the predictor is pure noise. That's the trap. Irrelevant predictors add variance, inflate standard errors, and hurt predictions on new data (overfitting); correlated ones destabilize each other's coefficients. More predictors is a cost-benefit decision judged by *out-of-sample* performance, not in-sample fit.
 <!-- /block -->
 
 ---

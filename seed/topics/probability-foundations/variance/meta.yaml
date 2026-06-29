@@ -2,7 +2,7 @@ title: "Variance and Standard Deviation"
 slug: variance
 domain: probability-foundations
 difficulty: intro
-summary: Measuring spread — how far values typically deviate from the mean, and why we square those deviations.
+summary: Measuring spread, how far values typically deviate from the mean, and why we square those deviations.
 prerequisites: [expectation]
 has_intuition_layer: true
 has_formal_layer: true

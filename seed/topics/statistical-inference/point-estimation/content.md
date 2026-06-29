@@ -8,7 +8,7 @@
 
 # Point estimation
 
-You have data. You have a parameter you want to know. The estimator is the rule that turns the data into a single number. The interesting question isn't "what's the rule?" — it's "how good is it?"
+You have data. You have a parameter you want to know. The estimator is the rule that turns the data into a single number. The interesting question isn't "what's the rule?", it's "how good is it?"
 
 ---
 
@@ -18,10 +18,10 @@ You have data. You have a parameter you want to know. The estimator is the rule 
 
 For any estimator $\hat{\theta}$ of a parameter $\theta$:
 
-- **Bias.** Does $\mathbb{E}[\hat{\theta}] = \theta$? If yes, the estimator is *unbiased* — on average, across many samples, it lands on the parameter.
+- **Bias.** Does $\mathbb{E}[\hat{\theta}] = \theta$? If yes, the estimator is *unbiased*, on average, across many samples, it lands on the parameter.
 - **Variance.** How much does $\hat{\theta}$ jump around between samples? Even an unbiased estimator can be useless if it's too noisy.
 
-The sample mean $\bar{X}$ is an unbiased estimator of the population mean $\mu$. Its variance is $\sigma^2/n$. Doubling the data doesn't halve the variance — it cuts it in half *linearly*, but the *standard error* (the spread you actually see) drops as $1/\sqrt{n}$.
+The sample mean $\bar{X}$ is an unbiased estimator of the population mean $\mu$. Its variance is $\sigma^2/n$. Doubling the data doesn't halve the variance, it cuts it in half *linearly*, but the *standard error* (the spread you actually see) drops as $1/\sqrt{n}$.
 
 ---
 
@@ -34,7 +34,7 @@ question: |
   variance 1. Which is better?
 options:
   - id: a
-    label: "A — unbiased always wins."
+    label: "A, unbiased always wins."
     writes: { sigma: 2 }
     response: |
       Unbiasedness is a virtue, but not the only one. The mean squared error
@@ -42,7 +42,7 @@ options:
       systematic offset, but it's so much more *precise* that it's closer to
       the truth on average. Unbiasedness alone doesn't beat smaller MSE.
   - id: b
-    label: "B — its MSE is 1.25, lower than A's 4."
+    label: "B, its MSE is 1.25, lower than A's 4."
     writes: { sigma: 1 }
     response: |
       Right. Mean squared error decomposes into $\text{bias}^2 + \text{variance}$.
@@ -57,7 +57,7 @@ options:
       True in spirit, but for the standard MSE loss the question has a clean
       answer. MSE penalizes squared error symmetrically, and B wins on MSE.
       For asymmetric loss functions (where over-estimating is much worse than
-      under-estimating, say), the answer can flip — but that's a separate
+      under-estimating, say), the answer can flip, but that's a separate
       decision-theory question.
 correct: b
 <!-- /block -->
@@ -65,7 +65,7 @@ correct: b
 ---
 
 <!-- block: callout, kind: insight, depends_on: pe-pick, branch: b -->
-The bias-variance decomposition is everywhere downstream. Regularized regression (ridge, lasso) deliberately introduces bias to cut variance — and the resulting estimator can dominate the unbiased least-squares fit when predictors are correlated or noisy. This is the same trade you just made in the toy problem.
+The bias-variance decomposition is everywhere downstream. Regularized regression (ridge, lasso) deliberately introduces bias to cut variance, and the resulting estimator can dominate the unbiased least-squares fit when predictors are correlated or noisy. This is the same trade you just made in the toy problem.
 <!-- /block -->
 
 <!-- block: callout, kind: insight, depends_on: pe-pick, branch: a|c -->
@@ -100,7 +100,7 @@ Expand:
 
 $$= \mathbb{E}[(\hat{\theta} - \mathbb{E}[\hat{\theta}])^2] + 2 \, \mathbb{E}[(\hat{\theta} - \mathbb{E}[\hat{\theta}])(\mathbb{E}[\hat{\theta}] - \theta)] + (\mathbb{E}[\hat{\theta}] - \theta)^2$$
 
-The first term is $\text{Var}(\hat{\theta})$. The middle term is zero because $\mathbb{E}[\hat{\theta}] - \theta$ is a constant and $\mathbb{E}[\hat{\theta} - \mathbb{E}[\hat{\theta}]] = 0$. The last term is $\text{Bias}^2$. The cross term *vanishes* — that's the structural fact that makes the decomposition clean.
+The first term is $\text{Var}(\hat{\theta})$. The middle term is zero because $\mathbb{E}[\hat{\theta}] - \theta$ is a constant and $\mathbb{E}[\hat{\theta} - \mathbb{E}[\hat{\theta}]] = 0$. The last term is $\text{Bias}^2$. The cross term *vanishes*, that's the structural fact that makes the decomposition clean.
 <!-- /block -->
 
 ---
@@ -157,5 +157,5 @@ print(f"B: {bias(B, mu_true):+.4f}  {var(B):.4f}  {mse(B, mu_true):.4f}  ({bias(
 
 *Wrong:* if it's unbiased, use it.
 
-*Correct:* unbiasedness is one virtue. Variance is another. The James–Stein estimator beats the sample mean (in $\ge 3$ dimensions) on MSE — by being biased. Ridge regression beats OLS on prediction error in many real settings — by being biased. The right metric is usually MSE (or out-of-sample loss), not unbiasedness.
+*Correct:* unbiasedness is one virtue. Variance is another. The James–Stein estimator beats the sample mean (in $\ge 3$ dimensions) on MSE, by being biased. Ridge regression beats OLS on prediction error in many real settings, by being biased. The right metric is usually MSE (or out-of-sample loss), not unbiasedness.
 <!-- /block -->

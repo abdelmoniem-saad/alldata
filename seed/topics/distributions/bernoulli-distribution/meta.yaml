@@ -2,7 +2,7 @@ title: "Bernoulli Distribution"
 slug: bernoulli-distribution
 domain: distributions
 difficulty: intro
-summary: The smallest distribution — one trial, two outcomes, one parameter. The atom every binary process is built from.
+summary: The smallest distribution, one trial, two outcomes, one parameter. The atom every binary process is built from.
 prerequisites: [random-variables]
 has_intuition_layer: true
 has_formal_layer: true

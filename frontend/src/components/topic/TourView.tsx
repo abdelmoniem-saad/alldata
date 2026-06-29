@@ -1,5 +1,5 @@
 /**
- * TourView — M (immersive tour) — a special reading surface for topics
+ * TourView, M (immersive tour), a special reading surface for topics
  * flagged `tour: true` in `meta.yaml`. Today only the "Shape of Statistics"
  * intro uses it; future onboarding tours can opt in the same way.
  *
@@ -18,7 +18,7 @@
  *   │  the rest of the field stays visible as context              │
  *   └──────────────────────────────────────────────────────────────┘
  *
- * The graph reacts to the active scroll anchor — same IntersectionObserver
+ * The graph reacts to the active scroll anchor, same IntersectionObserver
  * pattern as ScrollReader, but the resulting "active anchor" is mapped
  * onto a `graph_view` directive's `target`, which drives:
  *   - `target: all`        → fit every node, no focus dim
@@ -69,7 +69,7 @@ function resolveTarget(rawTarget: string): TourTarget {
 }
 
 /**
- * Anchor — a 1px positional sentinel. The active anchor is picked by
+ * Anchor, a 1px positional sentinel. The active anchor is picked by
  * `TourView`'s scroll listener (a single listener on the scroll root) so
  * the algorithm is deterministic across fast scrolls, programmatic jumps,
  * and the bottom-of-the-document edge case where the last anchor can
@@ -90,7 +90,7 @@ function Anchor({ id }: { id: string }) {
 /**
  * Read every `[data-anchor]` in the scroll root and return the id of the
  * anchor whose top is closest-to-but-not-past the activation line. This
- * is the "topmost anchor above the line" — the section the reader has
+ * is the "topmost anchor above the line", the section the reader has
  * most recently scrolled into.
  *
  * Why not IntersectionObserver: a per-anchor IO with a narrow band misses
@@ -127,7 +127,7 @@ export default function TourView({
 }: Props) {
   const graphRef = useRef<ForceGraphHandle>(null)
 
-  // Viewport tracking — the graph fills the whole scroll surface.
+  // Viewport tracking, the graph fills the whole scroll surface.
   const [dim, setDim] = useState({ width: 800, height: 600 })
   useEffect(() => {
     const update = () => setDim({
@@ -139,7 +139,7 @@ export default function TourView({
     return () => window.removeEventListener('resize', update)
   }, [])
 
-  // Graph data — fetched once on mount.
+  // Graph data, fetched once on mount.
   const [nodes, setNodes] = useState<GraphNode[]>([])
   const [edges, setEdges] = useState<GraphEdge[]>([])
   useEffect(() => {
@@ -150,11 +150,11 @@ export default function TourView({
         setNodes(g.nodes)
         setEdges(g.edges)
       })
-      .catch(() => { /* silently fail — the prose still works without the graph */ })
+      .catch(() => { /* silently fail, the prose still works without the graph */ })
     return () => { cancelled = true }
   }, [])
 
-  // Layer + branch filter — same logic as ScrollReader / SlideView.
+  // Layer + branch filter, same logic as ScrollReader / SlideView.
   const layeredBlocks = useMemo(
     () => blocks.filter(b =>
       activeLayer === 'both' || b.layer === 'both' || b.layer === activeLayer
@@ -196,7 +196,7 @@ export default function TourView({
     return out
   }, [visibleBlocks, metaCache])
 
-  // Sentinel ids — every block with an anchor gets one. Anchors without an
+  // Sentinel ids, every block with an anchor gets one. Anchors without an
   // associated graph_view directive leave the previous framing in place
   // (no flicker between sections that don't change the camera).
   const anchorBlocks = useMemo(
@@ -206,7 +206,7 @@ export default function TourView({
 
   const [activeTarget, setActiveTarget] = useState<TourTarget>({ kind: 'all' })
 
-  // M: single scroll listener on the scroll root — runs `pickActiveAnchor`
+  // M: single scroll listener on the scroll root, runs `pickActiveAnchor`
   // on every scroll, then maps the picked anchor to its `graph_view` target.
   // Anchors without a target keep the previous frame (no flicker). The
   // activation line is 30% from the top of the scroll root, which is a
@@ -222,7 +222,7 @@ export default function TourView({
       if (!id || id === lastId) return
       lastId = id
       const t = targetByAnchor.get(id)
-      if (!t) return // anchor with no graph_view directive — keep the frame
+      if (!t) return // anchor with no graph_view directive, keep the frame
       setActiveTarget(t)
     }
     update()
@@ -280,7 +280,7 @@ export default function TourView({
 
   return (
     <>
-      {/* Background graph — fixed to the viewport. The whole topic surface
+      {/* Background graph, fixed to the viewport. The whole topic surface
           scrolls *over* this layer (the scrollRef parent owns the scroll).
           `visibleDomain` filters the cluster currently in focus (same
           semantics as the /explore domain legend); ambientAlpha keeps
@@ -376,7 +376,7 @@ export default function TourView({
                 {isAnchorBearing && block.anchor && (
                   <Anchor id={block.anchor} />
                 )}
-                {/* graph_view blocks render nothing in prose flow — they're
+                {/* graph_view blocks render nothing in prose flow, they're
                     pure metadata for the background graph in tour mode. */}
                 {block.block_type === 'graph_view' ? null : (
                   <div
@@ -410,7 +410,7 @@ export default function TourView({
           {/* M: bottom spacer so the last block is comfortable to read
               instead of pinned to the viewport edge. The activation
               algorithm picks the topmost anchor above the 30% line, so
-              this spacer is purely about *reading comfort* now — it
+              this spacer is purely about *reading comfort* now, it
               doesn't affect which anchor is active. */}
           <div aria-hidden style={{ height: '60vh' }} />
         </div>

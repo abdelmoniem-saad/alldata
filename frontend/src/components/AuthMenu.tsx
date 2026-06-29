@@ -1,5 +1,5 @@
 /**
- * AuthMenu — M1.
+ * AuthMenu, M1.
  *
  * Navbar account chip. Two states:
  *

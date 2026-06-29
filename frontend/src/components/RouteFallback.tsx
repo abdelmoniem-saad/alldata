@@ -1,8 +1,8 @@
 /**
- * RouteFallback — T0.
+ * RouteFallback, T0.
  *
  * The Suspense fallback for lazy-loaded routes. A quiet centered pulse in
- * theme tokens — shown once per route on first navigation while its async
+ * theme tokens, shown once per route on first navigation while its async
  * chunk downloads, then never again (chunk is cached).
  */
 export default function RouteFallback() {

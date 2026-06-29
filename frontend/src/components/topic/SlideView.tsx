@@ -4,6 +4,9 @@ import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
 import { ContentBlock, Misconception } from '../../api/client'
 import BlockRenderer from './blocks/BlockRenderer'
+import PlotBlock from './blocks/PlotBlock'
+import GraphFlythrough from './blocks/GraphFlythrough'
+import ErrorBoundary from '../ErrorBoundary'
 import { applyBranchFilter, parseMeta } from './blocks/branchFilter'
 import { useProgressStore } from '../../stores/progressStore'
 
@@ -25,22 +28,57 @@ interface Slide {
   type: 'content' | 'code' | 'quiz' | 'misconceptions'
   block?: ContentBlock
   misconceptions?: Misconception[]
+  /** Z: the reactive viz pinned beside this slide (plot / graph_view), or null.
+   *  Persists across the slides in a section so a graph the reader manipulates
+   *  doesn't collapse into a single disconnected slide. */
+  pinned: ContentBlock | null
 }
 
-// L2: block types that should not get their own slide. `state` and
-// `state_reset` are invisible authoring directives; `dataset` is metadata
-// for the next code block and merges visually via the code block's chrome
-// (its attribution chip is suppressed in slides mode by BlockRenderer).
+// L2: block types that should not get their own slide. `state` / `state_reset`
+// are invisible authoring directives; `dataset` is metadata for the next code
+// block. Z: `plot` / `graph_view` are pulled out as the *pinned* viz instead of
+// standalone slides (see below), so they're not skipped here — handled in the
+// slide builder.
 const SKIP_AS_SLIDE = new Set(['state', 'state_reset', 'dataset', 'parse_error'])
+const PINNED_BLOCK_TYPES = new Set(['plot', 'graph_view'])
 
-// Stable reference for the empty-events case so the Zustand selector doesn't
-// return a fresh `{}` every render and trip React 18's getSnapshot infinite-
-// loop guard. Same pattern ScrollReader uses.
+// Stable empty-events reference so the Zustand selector doesn't return a fresh
+// `{}` each render (React 18 getSnapshot guard). Same pattern as ScrollReader.
 const EMPTY_EVENTS: Record<string, import('../../stores/progressStore').DecisionEvent> = {}
+
+/** Z: track the desktop breakpoint for the two-pane slide layout. */
+function useIsWide(breakpointPx = 1024): boolean {
+  const [wide, setWide] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth >= breakpointPx,
+  )
+  useEffect(() => {
+    const mq = window.matchMedia(`(min-width: ${breakpointPx}px)`)
+    const onChange = () => setWide(mq.matches)
+    onChange()
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [breakpointPx])
+  return wide
+}
+
+function usePrefersReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const onChange = () => setReduced(mq.matches)
+    onChange()
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+  return reduced
+}
 
 export default function SlideView({
   blocks, misconceptions, activeLayer, slug, current, onChange, onSlidesCount,
 }: Props) {
+  const isWide = useIsWide(1024)
+  const reducedMotion = usePrefersReducedMotion()
+
   const layeredBlocks = useMemo(
     () => blocks.filter(b =>
       activeLayer === 'both' || b.layer === 'both' || b.layer === activeLayer
@@ -48,10 +86,6 @@ export default function SlideView({
     [blocks, activeLayer],
   )
 
-  // L2: apply the same branch filter ScrollReader uses. Without this, a
-  // branch-tagged callout/derivation/playground (introduced in I5) would
-  // show in slides mode regardless of the user's decision, contradicting
-  // the I-cycle contract.
   const metaCache = useMemo(() => {
     const m = new Map<string, Record<string, unknown>>()
     for (const b of layeredBlocks) m.set(b.id, parseMeta(b))
@@ -74,33 +108,40 @@ export default function SlideView({
     [layeredBlocks, metaCache, decisions],
   )
 
-  // L2: drop invisible authoring blocks from the slide list. A `state`
-  // directive becoming an empty slide was the worst of the K-cycle gaps —
-  // the deck would interrupt the reader's flow with a blank screen for
-  // every state seeding.
-  const slideBlocks = useMemo(
-    () => visibleBlocks.filter(b => !SKIP_AS_SLIDE.has(b.block_type)),
-    [visibleBlocks],
-  )
-
-  // Build slides from blocks — each block becomes a slide, misconceptions at the end
-  const slides: Slide[] = [
-    ...slideBlocks.map(b => ({
-      type:
-        b.block_type === 'quiz' ? 'quiz' as const :
-        (b.block_type.startsWith('code') || b.block_type === 'simulation') ? 'code' as const :
-        'content' as const,
-      block: b,
-    })),
-    ...(misconceptions.length > 0 ? [{ type: 'misconceptions' as const, misconceptions }] : []),
-  ]
+  // Z: build slides from the *flow* blocks, carrying the most recent pinned
+  // viz (plot / graph_view) so it persists beside the prose that discusses it.
+  // Plots no longer become lone slides — they become the reactive right pane.
+  const slides: Slide[] = useMemo(() => {
+    const out: Slide[] = []
+    let lastPinned: ContentBlock | null = null
+    for (const b of visibleBlocks) {
+      if (PINNED_BLOCK_TYPES.has(b.block_type)) { lastPinned = b; continue }
+      if (SKIP_AS_SLIDE.has(b.block_type)) continue
+      out.push({
+        type:
+          b.block_type === 'quiz' ? 'quiz' :
+          (b.block_type.startsWith('code') || b.block_type === 'simulation') ? 'code' :
+          'content',
+        block: b,
+        pinned: lastPinned,
+      })
+    }
+    if (misconceptions.length > 0) {
+      out.push({ type: 'misconceptions', misconceptions, pinned: lastPinned })
+    }
+    // Edge: a topic that is *only* plots (no prose) still deserves to show
+    // them — fall back to one slide per pinned block.
+    if (out.length === 0 && visibleBlocks.some(b => PINNED_BLOCK_TYPES.has(b.block_type))) {
+      for (const b of visibleBlocks) {
+        if (PINNED_BLOCK_TYPES.has(b.block_type)) out.push({ type: 'content', block: b, pinned: null })
+      }
+    }
+    return out
+  }, [visibleBlocks, misconceptions])
 
   const total = slides.length
 
-  // Push total up to parent for the bottom-bar slide counter.
-  useEffect(() => {
-    onSlidesCount?.(total)
-  }, [total, onSlidesCount])
+  useEffect(() => { onSlidesCount?.(total) }, [total, onSlidesCount])
 
   // Keyboard navigation — arrows + spacebar advance/retreat slides.
   useEffect(() => {
@@ -116,46 +157,77 @@ export default function SlideView({
     return () => window.removeEventListener('keydown', handler)
   }, [current, total, onChange])
 
-  // Clamp current when slides count changes (e.g. layer toggle shrinks the set).
+  // Clamp current when the slide count changes (e.g. layer toggle shrinks it).
   useEffect(() => {
     if (current >= total && total > 0) onChange(total - 1)
   }, [total, current, onChange])
 
   if (total === 0) return null
 
+  const idx = Math.min(current, total - 1)
+  const slide = slides[idx]
+  const activePinned = slide?.pinned ?? null
+  const hasViz = !!activePinned && slide.type !== 'misconceptions'
+  const isSpark = idx === 0 && slide.type === 'content'
+
   return (
-    <div style={{
-      position: 'absolute',
-      inset: 0,
-      overflow: 'hidden',
-    }}>
-      {/* Crossfade stack — each slide is absolutely positioned over the same
-          surface; opacity toggles drive the fade. Only the active slide gets
-          pointer events so clicks don't fall through to hidden slides. */}
-      {slides.map((s, i) => {
-        const isActive = i === current
-        // Hero treatment for the first content-type slide only.
-        const isSpark = i === 0 && s.type === 'content'
-        return (
-          <div
-            key={i}
-            aria-hidden={!isActive}
-            style={{
-              position: 'absolute',
-              inset: 0,
-              opacity: isActive ? 1 : 0,
-              pointerEvents: isActive ? 'auto' : 'none',
-              transition: 'opacity var(--transition-smooth)',
-              overflowY: 'auto',
-              padding: 'clamp(88px, 12vh, 160px) clamp(32px, 8vw, 180px) clamp(104px, 14vh, 160px)',
-            }}
-          >
-            <div className={isSpark ? 'prose-hero' : undefined}>
-              <SlideContent slide={s} slug={slug} />
+    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
+      <div style={{
+        position: 'absolute', inset: 0,
+        display: 'flex',
+        flexDirection: isWide ? 'row' : 'column',
+      }}>
+        {/* Z: persistent reactive viz pane. Keyed by the pinned block so it
+            only remounts when the section's viz actually changes — it stays
+            put (and live) while the reader steps through the section's slides,
+            updating as decisions / playground sliders write state. */}
+        {hasViz && (
+          <div style={{
+            order: isWide ? 2 : 0,
+            flex: isWide ? '0 0 44%' : '0 0 auto',
+            minWidth: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'var(--color-bg-secondary)',
+            borderLeft: isWide ? '1px solid var(--color-border-subtle)' : 'none',
+            borderBottom: isWide ? 'none' : '1px solid var(--color-border-subtle)',
+            padding: isWide ? 'clamp(80px, 10vh, 140px) 24px' : '74px 16px 16px',
+          }}>
+            <div
+              key={activePinned!.anchor ?? activePinned!.id}
+              className={reducedMotion ? undefined : 'animate-fade-in'}
+              style={{ width: '100%', maxWidth: 520 }}
+            >
+              <ErrorBoundary variant="block" resetKey={activePinned!.anchor ?? String(activePinned!.id)}>
+                {activePinned!.block_type === 'graph_view' ? (
+                  <GraphFlythrough target={String(parseMeta(activePinned!).target ?? '')} />
+                ) : (
+                  <PlotBlock slug={slug} meta={parseMeta(activePinned!)} />
+                )}
+              </ErrorBoundary>
             </div>
           </div>
-        )
-      })}
+        )}
+
+        {/* Content pane — the active slide, fading in on change. */}
+        <div style={{
+          order: 1,
+          flex: 1, minWidth: 0,
+          overflowY: 'auto',
+          padding: hasViz && isWide
+            ? 'clamp(80px, 10vh, 140px) clamp(28px, 4vw, 72px) clamp(96px, 12vh, 140px)'
+            : 'clamp(88px, 12vh, 160px) clamp(32px, 8vw, 180px) clamp(104px, 14vh, 160px)',
+        }}>
+          <div
+            key={idx}
+            className={reducedMotion ? undefined : 'animate-fade-in'}
+            style={{ maxWidth: hasViz ? 'none' : 760, margin: '0 auto' }}
+          >
+            <div className={isSpark ? 'prose-hero' : undefined}>
+              <SlideContent slide={slide} slug={slug} />
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
@@ -183,17 +255,14 @@ function SlideContent({ slide, slug }: { slide: Slide; slug: string }) {
   const block = slide.block
 
   // L2: SlideView's quiz block is a legacy SlideView-only renderer with its
-  // own answer field + hint/solution toggles. `BlockRenderer` doesn't know
-  // about quiz today, so we keep this special case until the legacy quiz
-  // path gets a directive-style replacement (deferred).
+  // own answer field + hint/solution toggles.
   if (block.block_type === 'quiz') {
     return <SlideQuiz block={block} />
   }
 
-  // L2: every other block type routes through the shared renderer, which
-  // gives slides parity with scroll mode automatically. The `mode='slides'`
-  // axis lets specific renderers branch (gear → title slide, plot → full
-  // bleed, dataset → invisible).
+  // L2: every other block type routes through the shared renderer, which gives
+  // slides parity with scroll mode. Z: pinned viz is handled by the pane, so a
+  // plot only reaches here in the "only plots" fallback — render it inline.
   const meta = parseMeta(block)
   return (
     <BlockRenderer

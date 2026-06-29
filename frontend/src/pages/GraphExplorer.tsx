@@ -87,7 +87,7 @@ export default function GraphExplorer() {
 
   // G5: reason maps derived from the already-loaded edges. Only direct edges
   // have a "why" description; transitive prereqs from the API show up in the
-  // chip list without a reason line, which is the right behavior — only the
+  // chip list without a reason line, which is the right behavior, only the
   // direct dependency has a documented rationale.
   const prereqReasons = useMemo(() => {
     const map: Record<string, string | null> = {}
@@ -112,7 +112,7 @@ export default function GraphExplorer() {
   }, [edges, selectedNode])
 
   const handleNodeDoubleClick = useCallback((node: GraphNode) => {
-    // Q1: domain roots (depth 0) now navigate too — to their immersive
+    // Q1: domain roots (depth 0) now navigate too, to their immersive
     // family overview. Member topics go to their lesson. Both live at
     // /topic/{slug}.
     navigate(`/topic/${node.slug}`)
@@ -133,10 +133,10 @@ export default function GraphExplorer() {
   }, [activeDomain, handleNodeClick])
 
   // H8: page-scoped keyboard navigation for the graph.
-  //   Esc     — deselect node / close drawers (search chip has its own)
-  //   1-5     — toggle domain filters in DOMAIN_SLUGS order
-  //   Enter   — open the selected topic (same as double-click)
-  //   Arrows  — walk to the neighbor in that direction (via imperative handle)
+  //   Esc, deselect node / close drawers (search chip has its own)
+  //   1-5, toggle domain filters in DOMAIN_SLUGS order
+  //   Enter, open the selected topic (same as double-click)
+  //   Arrows, walk to the neighbor in that direction (via imperative handle)
   // '/' is handled inside GraphSearchChip to keep its ref concerns local.
   // Typing in inputs/textareas bypasses these keys so the search chip and
   // any future forms keep full keyboard control.
@@ -159,7 +159,7 @@ export default function GraphExplorer() {
         return
       }
 
-      // Domain filter toggles 1..5 — ignore modifiers so Ctrl/Cmd+N etc. pass.
+      // Domain filter toggles 1..5, ignore modifiers so Ctrl/Cmd+N etc. pass.
       if (!e.altKey && !e.ctrlKey && !e.metaKey && /^[1-5]$/.test(e.key)) {
         const idx = Number(e.key) - 1
         const slug = DOMAIN_SLUGS[idx]
@@ -232,7 +232,7 @@ export default function GraphExplorer() {
           Visually hidden (clip) but in the tab order and read by AT, so the
           same topics the graph shows are reachable without a pointer. */}
       <nav
-        aria-label="All topics — list view"
+        aria-label="All topics, list view"
         style={{
           position: 'absolute', width: 1, height: 1, padding: 0, margin: -1,
           overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap', border: 0,
@@ -320,7 +320,7 @@ export default function GraphExplorer() {
           })}
         </div>
 
-        {/* H6: graph search chip — top-right counterweight to the top-left
+        {/* H6: graph search chip, top-right counterweight to the top-left
             domain filter. Collapsed pill; expands into a combobox on click
             or '/' keypress. Filters the full nodes set (not the filtered
             set) so a user can jump to a node that's currently filtered out,
@@ -329,7 +329,7 @@ export default function GraphExplorer() {
 
         {/* K2: quiet "Start here" affordance for first-time visitors. Sits
             below the search chip in the same top-right corner. Routes to
-            the Shape of Statistics flythrough — an 8-minute tour that gives
+            the Shape of Statistics flythrough, an 8-minute tour that gives
             a new reader the map before they pick a node to start. */}
         <button
           onClick={() => navigate('/topic/shape-of-statistics')}
@@ -428,7 +428,7 @@ export default function GraphExplorer() {
 
 // G10: Stroke-pattern legend. Each row renders a mini SVG sample using the
 // same dash-array + width the ForceGraph ring uses on canvas, so the key
-// reads as the literal vocabulary of what's on screen. Collapsed default —
+// reads as the literal vocabulary of what's on screen. Collapsed default,
 // this is for curious users, not a cognitive tax on everyone.
 function GraphLegend() {
   const [open, setOpen] = useState(() => {
@@ -475,7 +475,7 @@ function GraphLegend() {
       </button>
       {open && (
         <div id="graph-legend-body" style={{ marginTop: 10 }}>
-          {/* H11: legend is now two orthogonal vocabularies — color carries
+          {/* H11: legend is now two orthogonal vocabularies, color carries
               domain, pattern carries difficulty. Pairing them in the key
               makes the redundant encoding explicit for anyone reading. */}
           <div style={{
@@ -558,9 +558,9 @@ function GraphLegend() {
   )
 }
 
-// H6: floating search chip — top-right counterweight to the domain filters.
+// H6: floating search chip, top-right counterweight to the domain filters.
 // Collapsed state is a pill-shaped button; expanded state renders a fuzzy
-// combobox over the in-memory nodes list (no network round-trip needed —
+// combobox over the in-memory nodes list (no network round-trip needed,
 // every node is already loaded on /explore). Uses the same onMouseDown +
 // preventDefault trick as H3 to make row clicks land reliably.
 function GraphSearchChip({ nodes, onSelect }: {
@@ -591,7 +591,7 @@ function GraphSearchChip({ nodes, onSelect }: {
   const results = useMemo(() => {
     const q = query.trim().toLowerCase()
     if (!q) return nodes.filter(n => n.depth > 0).slice(0, 8)
-    // Simple substring match with a weak prefix-bias — matches are ordered
+    // Simple substring match with a weak prefix-bias, matches are ordered
     // by (title starts with q) > (title contains q) > (slug contains q).
     const scored: Array<{ node: GraphNode; score: number }> = []
     for (const n of nodes) {

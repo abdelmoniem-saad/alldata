@@ -3,8 +3,8 @@
 The catalog. Every user-visible thing the platform does, no matter how small, lives here. Organized by surface so a reader can find a feature by where they encountered it.
 
 Cross-link conventions used throughout:
-- *(cycle: X)* — the cycle that introduced or last touched the feature. See [`cycles.md`](cycles.md).
-- `code: path:line` — a pointer to the source. Treat as "look here first," not as a stable line number; cycles shuffle the line counts but the symbol names stay.
+- *(cycle: X)*, the cycle that introduced or last touched the feature. See [`cycles.md`](cycles.md).
+- `code: path:line`, a pointer to the source. Treat as "look here first," not as a stable line number; cycles shuffle the line counts but the symbol names stay.
 
 **Maintenance pact.** When a new feature ships in a cycle, the cycle's PR adds the entry here in the same change. This doc is the authoritative *what*; [`cycles.md`](cycles.md) is the *when and why*. They cross-link; they don't duplicate.
 
@@ -35,7 +35,7 @@ Cross-link conventions used throughout:
 The whole graph rendered on a single `<canvas>` with a D3 force simulation. Drag a node to move it; drag empty space to pan; scroll to zoom; double-click to open. Edges are drawn with concept-reason captions where present *(cycle: G3)*. `code: frontend/src/components/graph/ForceGraph.tsx`.
 
 ### Domain hue palette
-Five muted jewel tones — steel blue (probability), violet (distributions), amber (inference), sage (regression), terracotta (practice). Pulled darker on light theme. Achromatopsia-safe: each hue has a distinct luminance step so a reader with no color vision can still tell domains apart. *(cycle: H1)* `code: frontend/src/styles/global.css` (the `--color-{probability,distributions,…}` vars), `frontend/src/lib/domain.ts`. See [`brand.md`](brand.md#color-system).
+Five muted jewel tones, steel blue (probability), violet (distributions), amber (inference), sage (regression), terracotta (practice). Pulled darker on light theme. Achromatopsia-safe: each hue has a distinct luminance step so a reader with no color vision can still tell domains apart. *(cycle: H1)* `code: frontend/src/styles/global.css` (the `--color-{probability,distributions,…}` vars), `frontend/src/lib/domain.ts`. See [`brand.md`](brand.md#color-system).
 
 ### Stroke pattern by difficulty
 Solid / dashed / dotted rings around the outer node ring encode `intro` / `intermediate` / `advanced`. Pattern + hue together is belt + suspenders at the 11–28px node scale where hue alone reads as five shades of gray. *(cycle: H11)* `code: frontend/src/components/graph/ForceGraph.tsx` (search for "DIFFICULTY").
@@ -44,10 +44,10 @@ Solid / dashed / dotted rings around the outer node ring encode `intro` / `inter
 0.15-alpha green wash on nodes the viewer has finished. The wash echoes the checkmark overlay so the "I'm done" signal is visible at a glance even when the node is small. *(cycle: G4)* `code: frontend/src/components/graph/ForceGraph.tsx` (search "completedTint").
 
 ### In-progress glow floor
-A 0.3 ambient glow on nodes the viewer has *started* but not finished. Differs from the interactive hover glow — it's a *static* floor, not an animation, so reduced-motion users still see the "currently learning this" signal. *(cycle: G4)* `code: frontend/src/components/graph/ForceGraph.tsx` (search "glowIntensity").
+A 0.3 ambient glow on nodes the viewer has *started* but not finished. Differs from the interactive hover glow, it's a *static* floor, not an animation, so reduced-motion users still see the "currently learning this" signal. *(cycle: G4)* `code: frontend/src/components/graph/ForceGraph.tsx` (search "glowIntensity").
 
 ### Spaced-repetition dim
-Completed nodes whose review is overdue get a slight alpha lift (0.7×). The doc's "subtle dimming" cue — a quiet "ready to revisit." Driven by `progressStore.reviewSchedule` per the SM-2 schedule. *(cycle: K3)* `code: frontend/src/components/graph/ForceGraph.tsx` (search "dueSet").
+Completed nodes whose review is overdue get a slight alpha lift (0.7×). The doc's "subtle dimming" cue, a quiet "ready to revisit." Driven by `progressStore.reviewSchedule` per the SM-2 schedule. *(cycle: K3)* `code: frontend/src/components/graph/ForceGraph.tsx` (search "dueSet").
 
 ### Empty-shell rendering
 Nodes whose topic has no content (depth-0 domain roots and unpopulated topics) drop to 0.45 fill alpha. The ring stays at full alpha so the domain vocabulary survives. Signals "a node lives here but nobody's written it yet." *(cycle: G4)* `code: frontend/src/components/graph/ForceGraph.tsx` (search "hasContent").
@@ -62,25 +62,25 @@ Top-left strip: "All / Probability / Distributions / …" toggles. Clicking a pi
 Top-right pill. Click or press `/` to expand into a fuzzy search combobox. Selecting a result pans and zooms the canvas onto that node (it doesn't navigate away). *(cycle: H6)* `code: frontend/src/pages/GraphExplorer.tsx` (`GraphSearchChip`). See also [Search](#search).
 
 ### "Start here" link
-Quiet chip below the search trigger, top-right. Routes to `/topic/shape-of-statistics` — the 8-minute intro tour. *(cycle: K2)* `code: frontend/src/pages/GraphExplorer.tsx` (search "Start here").
+Quiet chip below the search trigger, top-right. Routes to `/topic/shape-of-statistics`, the 8-minute intro tour. *(cycle: K2)* `code: frontend/src/pages/GraphExplorer.tsx` (search "Start here").
 
 ### Stroke-pattern legend
 Collapsible card bottom-left. Lists the difficulty patterns + domain hues with a small SVG sample for each. Remembered open/closed in localStorage. *(cycle: G10)* `code: frontend/src/pages/GraphExplorer.tsx` (`GraphLegend`).
 
 ### Stats bar
-Bottom-left, below the legend. `"45 topics, 69 connections"` — running count of what's currently rendered. *(cycle: G earlier)* `code: frontend/src/pages/GraphExplorer.tsx` (search "topics," + "connections").
+Bottom-left, below the legend. `"45 topics, 69 connections"`, running count of what's currently rendered. *(cycle: G earlier)* `code: frontend/src/pages/GraphExplorer.tsx` (search "topics," + "connections").
 
 ### Keyboard nav
-- `/` — focus the search chip
-- `1`–`5` — toggle domain filters in `DOMAIN_SLUGS` order
-- Arrow keys — walk between connected nodes (selects the neighbor in the pressed cardinal direction, within a ±45° cone) *(cycle: H8)*. `code: frontend/src/pages/GraphExplorer.tsx` (search "handleKeyDown"), `frontend/src/components/graph/ForceGraph.tsx` (`getNeighborInDirection`).
+- `/`, focus the search chip
+- `1`–`5`, toggle domain filters in `DOMAIN_SLUGS` order
+- Arrow keys, walk between connected nodes (selects the neighbor in the pressed cardinal direction, within a ±45° cone) *(cycle: H8)*. `code: frontend/src/pages/GraphExplorer.tsx` (search "handleKeyDown"), `frontend/src/components/graph/ForceGraph.tsx` (`getNeighborInDirection`).
 
 ### URL filter sync
 Bidirectional: changing the domain filter updates `?domain=`; loading a URL with `?domain=` pre-selects the filter. *(cycle: H9)* `code: frontend/src/pages/GraphExplorer.tsx` (`useSearchParams`).
 
 ### Drag / hover / seed dynamics
-- Drag a node — it pins under the cursor; releasing alpha-bumps the sim briefly so the layout re-settles smoothly *(cycle: H5d)*.
-- Hover an edge — its label reveals; hover a node — its glow brightens *(cycle: G3, H5a — the hit-test is RAF-throttled)*.
+- Drag a node, it pins under the cursor; releasing alpha-bumps the sim briefly so the layout re-settles smoothly *(cycle: H5d)*.
+- Hover an edge, its label reveals; hover a node, its glow brightens *(cycle: G3, H5a, the hit-test is RAF-throttled)*.
 - New nodes get a polar-by-domain seed position so initial layouts converge faster *(cycle: H5e)*.
 `code: frontend/src/components/graph/ForceGraph.tsx`.
 
@@ -94,7 +94,7 @@ Single click selects (opens the right sidebar). Double-click opens `/topic/{slug
 The right column on `/explore`, visible once a node is selected.
 
 ### Selected-node card
-Title, summary, difficulty chip, completed/in-progress marker. Topic open button. *(cycle: G earlier, G5 — added reasons)* `code: frontend/src/components/graph/GraphSidebar.tsx`.
+Title, summary, difficulty chip, completed/in-progress marker. Topic open button. *(cycle: G earlier, G5, added reasons)* `code: frontend/src/components/graph/GraphSidebar.tsx`.
 
 ### Prereq + leads-to lists with reason lines
 Each prereq/leads-to row has the topic title, domain tick glyph, and (when the edge has a `description`) a one-sentence "because {reason}" / "unlocks {reason}" line. *(cycle: G5, G8 reshaped to `{node, why}`)* `code: frontend/src/components/graph/GraphSidebar.tsx`, `frontend/src/api/client.ts` (`PrerequisiteEntry`).
@@ -119,13 +119,13 @@ The right column hosts a `PlotBlock` (or `GraphFlythrough` for tour topics) keye
 The `graph_view` directive pins a `GraphFlythrough` (a small mounted graph that pans + zooms imperatively) instead of a plot. Used by the "Shape of Statistics" intro and any future tour topic. *(cycle: K2)* `code: frontend/src/components/topic/blocks/GraphFlythrough.tsx`.
 
 ### Immersive tour mode
-When `meta.yaml: tour: true`, the topic is rendered by `TourView` instead of `ScrollReader` / `SlideView`. The graph fills the viewport as the background; the prose floats left in translucent zinc panels; a left-to-right vignette over the prose half keeps the text legible while the graph stays visible on the right. As the reader scrolls, a single scroll listener picks the topmost anchor above the 30% line and maps it to that section's `graph_view` target — narrowing the graph to a single cluster (legend-style hide), centering on a single node, or fitting the whole field. A node-target now keeps that node's *domain* as the visible background (rather than revealing the whole graph), so a tour can spotlight members of a family one at a time without the rest of the field flashing in. Used by the "Shape of Statistics" intro and the five family overviews (below). *(cycle: M0; Q1 node→domain filter)* `code: frontend/src/components/topic/TourView.tsx`.
+When `meta.yaml: tour: true`, the topic is rendered by `TourView` instead of `ScrollReader` / `SlideView`. The graph fills the viewport as the background; the prose floats left in translucent zinc panels; a left-to-right vignette over the prose half keeps the text legible while the graph stays visible on the right. As the reader scrolls, a single scroll listener picks the topmost anchor above the 30% line and maps it to that section's `graph_view` target, narrowing the graph to a single cluster (legend-style hide), centering on a single node, or fitting the whole field. A node-target now keeps that node's *domain* as the visible background (rather than revealing the whole graph), so a tour can spotlight members of a family one at a time without the rest of the field flashing in. Used by the "Shape of Statistics" intro and the five family overviews (below). *(cycle: M0; Q1 node→domain filter)* `code: frontend/src/components/topic/TourView.tsx`.
 
 ### Family overviews
-Each of the five domain roots (`probability-foundations`, `distributions`, `statistical-inference`, `regression-modeling`, `data-science-practice`) is a `tour: true` topic at `/topic/{domain}` that reuses `TourView` to give the family a front door. The overview opens framed on the whole family cluster, spotlights each member topic in turn as the prose introduces it (camera centers on the node while the cluster stays the visible background), then pulls back and hands off with links into the real lessons — orientation, not a lesson. Reachable from the Home domain cards (primary link; a secondary "explore the cluster →" still reaches `/explore?domain=`) and by opening a big family node in the graph (double-click, or the sidebar "Open overview" CTA). The roots stay out of Home's per-domain lesson counts via the `depth > 0` gate, but now render at full alpha in the graph instead of as empty shells. *(cycle: Q1)* `code: seed/topics/{domain}/{domain}/, frontend/src/pages/{Home,GraphExplorer}.tsx, frontend/src/components/graph/GraphSidebar.tsx`.
+Each of the five domain roots (`probability-foundations`, `distributions`, `statistical-inference`, `regression-modeling`, `data-science-practice`) is a `tour: true` topic at `/topic/{domain}` that reuses `TourView` to give the family a front door. The overview opens framed on the whole family cluster, spotlights each member topic in turn as the prose introduces it (camera centers on the node while the cluster stays the visible background), then pulls back and hands off with links into the real lessons, orientation, not a lesson. Reachable from the Home domain cards (primary link; a secondary "explore the cluster →" still reaches `/explore?domain=`) and by opening a big family node in the graph (double-click, or the sidebar "Open overview" CTA). The roots stay out of Home's per-domain lesson counts via the `depth > 0` gate, but now render at full alpha in the graph instead of as empty shells. *(cycle: Q1)* `code: seed/topics/{domain}/{domain}/, frontend/src/pages/{Home,GraphExplorer}.tsx, frontend/src/components/graph/GraphSidebar.tsx`.
 
 ### Mobile linear fallback
-Below 1024px, plots/graphs render inline at their natural sort_order. The pinned pane is hidden via CSS (not unmounted — that keeps the IntersectionObserver state alive across breakpoint flips). *(cycle: I3, J4 — kept-mounted refactor)* `code: frontend/src/components/topic/ScrollReader.tsx` (search "isWide").
+Below 1024px, plots/graphs render inline at their natural sort_order. The pinned pane is hidden via CSS (not unmounted, that keeps the IntersectionObserver state alive across breakpoint flips). *(cycle: I3, J4, kept-mounted refactor)* `code: frontend/src/components/topic/ScrollReader.tsx` (search "isWide").
 
 ### Mobile plot ordering
 Optional `mobile_order:` attribute on `plot` directives reorders plots on mobile. Lets authors curate a desktop pinning sequence that differs from the mobile linear flow. *(cycle: J6)* `code: frontend/src/components/topic/ScrollReader.tsx` (search "mobile_order").
@@ -137,7 +137,7 @@ Auto-hiding peek strips on the edges of the topic page. The left strip expands i
 Bottom chrome. Scroll is the default; `?mode=slides` (via the toggle or a deep link) flips to a crossfade slide deck. SlideView block-type parity with ScrollReader landed in L2. *(cycle: I3 made scroll the default; L2 brought slides to parity)* `code: frontend/src/pages/TopicView.tsx` (`viewMode`).
 
 ### Layer toggle (intuition / formal / both)
-Bottom chrome, three-state. Filters which content blocks render by their `<!-- layer: -->` marker. A topic without a formal layer omits the toggle. *(cycle: earlier — pre-Z)* `code: frontend/src/components/topic/ZenChrome.tsx`, `frontend/src/pages/TopicView.tsx` (`activeLayer`).
+Bottom chrome, three-state. Filters which content blocks render by their `<!-- layer: -->` marker. A topic without a formal layer omits the toggle. *(cycle: earlier, pre-Z)* `code: frontend/src/components/topic/ZenChrome.tsx`, `frontend/src/pages/TopicView.tsx` (`activeLayer`).
 
 ### LEARNED chip
 Bottom-right zen chrome. Toggles `progressStore.completedSlugs` for the current topic; on first toggle, also seeds an SM-2 review schedule (interval = 1 day). *(cycle: earlier; K3 wired the review seed)* `code: frontend/src/components/topic/ZenChrome.tsx`.
@@ -164,22 +164,22 @@ Authored via markdown directives, parsed by `seed/import_seed.py`, rendered by `
 Default body. Plain prose between `\n---\n` separators. KaTeX inline + display math. `code: frontend/src/components/topic/blocks/BlockRenderer.tsx` (`case 'markdown'`). See [`authoring.md`](authoring.md#markdown-default).
 
 ### `code_python` / `code_r` / `simulation`
-Server-executed code blocks. `simulation` flags the runner with a teal indicator. Optional `editable: true` makes the textarea writable. `auto_run: true` runs once on first scroll-into-view (cached afterward). The `load(name)` helper is injected into the Python preamble so code can pull curated datasets. Execution requires sign-in (S1); the gate is presented as a gentle nudge, not an error — see *Run-gate nudge*. *(cycles: earlier — code; I4 — auto_run; K5 — load() helper; S1 — auth; U — nudge)* `code: frontend/src/components/topic/CodeRunner.tsx`, `backend/services/execution_service.py` (search `load`).
+Server-executed code blocks. `simulation` flags the runner with a teal indicator. Optional `editable: true` makes the textarea writable. `auto_run: true` runs once on first scroll-into-view (cached afterward). The `load(name)` helper is injected into the Python preamble so code can pull curated datasets. Execution requires sign-in (S1); the gate is presented as a gentle nudge, not an error, see *Run-gate nudge*. *(cycles: earlier, code; I4, auto_run; K5, load() helper; S1, auth; U, nudge)* `code: frontend/src/components/topic/CodeRunner.tsx`, `backend/services/execution_service.py` (search `load`).
 
 ### Execution hardening
-`POST /api/execute` requires auth and enforces the per-user rate limits the config always promised: `execution_rate_limit_learner` (10/min) for learners/contributors, `execution_rate_limit_professor` (60/min) for professor/editor/admin, via an in-memory sliding-window limiter (429 + `Retry-After`; per-process by design — the Redis upgrade path is noted in the module). The unsandboxed local fallback (used when Docker is absent) is now gated by `SANDBOX_ALLOW_LOCAL_FALLBACK` — on by default for dev with a loud startup warning; with it off, execution refuses cleanly, and startup refuses outright if the dev `secret_key` is still in place (production posture check). *(cycle: S1)* `code: backend/api/execute.py`, `backend/services/rate_limit.py`, `backend/main.py` (lifespan).
+`POST /api/execute` requires auth and enforces the per-user rate limits the config always promised: `execution_rate_limit_learner` (10/min) for learners/contributors, `execution_rate_limit_professor` (60/min) for professor/editor/admin, via an in-memory sliding-window limiter (429 + `Retry-After`; per-process by design, the Redis upgrade path is noted in the module). The unsandboxed local fallback (used when Docker is absent) is now gated by `SANDBOX_ALLOW_LOCAL_FALLBACK`, on by default for dev with a loud startup warning; with it off, execution refuses cleanly, and startup refuses outright if the dev `secret_key` is still in place (production posture check). *(cycle: S1)* `code: backend/api/execute.py`, `backend/services/rate_limit.py`, `backend/main.py` (lifespan).
 
 ### Run-gate nudge
-The S1 sign-in requirement is presented as a gentle conversion moment rather than friction. An anonymous reader who hits Run — or scrolls to an `auto_run` simulation — sees an inline card in the output area ("Sign in to run … — it's free, and it saves your progress") instead of a bare red 401 or (for auto-run) an empty space. The card's button summons the global sign-in modal (its open-state lives in `authStore` so any component can trigger it — `requestSignIn()`), and on success the run the reader wanted **fires automatically** (a pending-run flag resolved when the auth token lands). Server execution itself is unchanged from S1. *(cycle: U; Pyodide/client-side execution was evaluated and declined — see cycles.md)* `code: frontend/src/components/topic/CodeRunner.tsx`, `frontend/src/stores/authStore.ts`, `frontend/src/components/AuthMenu.tsx`.
+The S1 sign-in requirement is presented as a gentle conversion moment rather than friction. An anonymous reader who hits Run, or scrolls to an `auto_run` simulation, sees an inline card in the output area ("Sign in to run …, it's free, and it saves your progress") instead of a bare red 401 or (for auto-run) an empty space. The card's button summons the global sign-in modal (its open-state lives in `authStore` so any component can trigger it, `requestSignIn()`), and on success the run the reader wanted **fires automatically** (a pending-run flag resolved when the auth token lands). Server execution itself is unchanged from S1. *(cycle: U; Pyodide/client-side execution was evaluated and declined, see cycles.md)* `code: frontend/src/components/topic/CodeRunner.tsx`, `frontend/src/stores/authStore.ts`, `frontend/src/components/AuthMenu.tsx`.
 
-**V0 follow-ups.** (a) The modal now renders via `createPortal(…, document.body)` — on topic pages it's inside the auto-hide navbar, whose `transform` made the `position:fixed` modal a descendant of a transformed containing block and hid it until hover; the portal fixes that. (b) The **R** language toggle only appears when R can actually run: `GET /api/execute/capabilities` reports R's availability and the toggle hides R otherwise, so readers never hit the "R is not installed" dead end. (c) The pinned-viz aside drops from `top: header+32px` to `header+14vh` so it rests between the top and the vertical center. *(cycle: V0)*
+**V0 follow-ups.** (a) The modal now renders via `createPortal(…, document.body)`, on topic pages it's inside the auto-hide navbar, whose `transform` made the `position:fixed` modal a descendant of a transformed containing block and hid it until hover; the portal fixes that. (b) The **R** language toggle only appears when R can actually run: `GET /api/execute/capabilities` reports R's availability and the toggle hides R otherwise, so readers never hit the "R is not installed" dead end. (c) The pinned-viz aside drops from `top: header+32px` to `header+14vh` so it rests between the top and the vertical center. *(cycle: V0)*
 
-**R runtime — honest by default (W0).** R is supported by the executor (`_execute_r`) but **unprovisioned by default**: the base sandbox image ships no R and most hosts lack `Rscript`, so there's no authored R content yet. `runtime_capabilities()` reports `r: true` only with a *real* R runtime — `Rscript` on PATH (local fallback) **or** `SANDBOX_R_ENABLED=true` — so Docker merely being present no longer lights up a toggle that would dead-end (the base image has no R). To enable R: install R locally, or in a deployment build `infra/Dockerfile.sandbox-r` (→ `alldata-sandbox-r:latest`) and set `SANDBOX_R_ENABLED=true`. *(cycle: W0)* `code: backend/config.py (sandbox_r_enabled), backend/services/execution_service.py (runtime_capabilities), infra/Dockerfile.sandbox-r`.
+**R runtime, honest by default (W0).** R is supported by the executor (`_execute_r`) but **unprovisioned by default**: the base sandbox image ships no R and most hosts lack `Rscript`, so there's no authored R content yet. `runtime_capabilities()` reports `r: true` only with a *real* R runtime, `Rscript` on PATH (local fallback) **or** `SANDBOX_R_ENABLED=true`, so Docker merely being present no longer lights up a toggle that would dead-end (the base image has no R). To enable R: install R locally, or in a deployment build `infra/Dockerfile.sandbox-r` (→ `alldata-sandbox-r:latest`) and set `SANDBOX_R_ENABLED=true`. *(cycle: W0)* `code: backend/config.py (sandbox_r_enabled), backend/services/execution_service.py (runtime_capabilities), infra/Dockerfile.sandbox-r`.
 
 ### Crash isolation (ErrorBoundary)
-Two altitudes of containment. **Block-level:** every plot / graph-flythrough mount (BlockRenderer's `plot`/`graph_view` cases and ScrollReader's pinned pane) is wrapped — a throwing D3 spec degrades to a quiet themed panel and the lesson keeps reading; the pinned pane's boundary resets per anchor so the next visual gets a fresh mount. **Page-level:** `Layout` wraps the routed `<Outlet/>` — a page crash keeps the navbar alive and clears on navigation. The only class component in the codebase, by necessity. *(cycle: S2)* `code: frontend/src/components/ErrorBoundary.tsx`, `Layout.tsx`, `blocks/BlockRenderer.tsx`, `topic/ScrollReader.tsx`.
+Two altitudes of containment. **Block-level:** every plot / graph-flythrough mount (BlockRenderer's `plot`/`graph_view` cases and ScrollReader's pinned pane) is wrapped, a throwing D3 spec degrades to a quiet themed panel and the lesson keeps reading; the pinned pane's boundary resets per anchor so the next visual gets a fresh mount. **Page-level:** `Layout` wraps the routed `<Outlet/>`, a page crash keeps the navbar alive and clears on navigation. The only class component in the codebase, by necessity. *(cycle: S2)* `code: frontend/src/components/ErrorBoundary.tsx`, `Layout.tsx`, `blocks/BlockRenderer.tsx`, `topic/ScrollReader.tsx`.
 
-### Paired code blocks (`pair_id:`) — Python / R toggle
+### Paired code blocks (`pair_id:`), Python / R toggle
 Two adjacent code blocks that share a `pair_id:` directive field merge into a single tabbed surface. Clicking the inactive tab swaps the code body in place; the runner re-mounts cleanly with the new language. The reader's language preference (`preferredCodeLang`) is global, persisted in `progressStore`. *(cycle: M5)* `code: frontend/src/components/topic/blocks/codePairs.ts`, `frontend/src/components/topic/blocks/CodePairRenderer.tsx`. See [`authoring.md`](authoring.md#paired-python--r-blocks-pair_id) for the syntax.
 
 ### `plot`
@@ -198,10 +198,10 @@ Collapsible `<details>` block for hairy math. `collapsed: true` (default) hides 
 In-flow misconception card with a `--color-advanced` amber left border. Authored as `<!-- block: misconception, inline: true -->`. *(cycle: I4)* The legacy `<!-- block: misconception -->` (no `inline:`) writes to a separate `Misconception` table for a future consolidated misconceptions page (H10 backlog).
 
 ### `decision`
-The headline I-cycle block. A question with options; picking an option dispatches the option's `writes:` into `useTopicState` (so the pinned plot reacts) and records the event in `progressStore.decisionEvents` (so branch-tagged downstream blocks reveal). Selected option gets a left accent bar — teal if `correct`, amber otherwise. Optional "Show me the answer" plain-text link applies the correct option's writes without progress credit. *(cycle: I5a; J4 — re-pickable, A11y; K0/K4 — confusion overlay)* `code: frontend/src/components/topic/blocks/DecisionBlock.tsx`.
+The headline I-cycle block. A question with options; picking an option dispatches the option's `writes:` into `useTopicState` (so the pinned plot reacts) and records the event in `progressStore.decisionEvents` (so branch-tagged downstream blocks reveal). Selected option gets a left accent bar, teal if `correct`, amber otherwise. Optional "Show me the answer" plain-text link applies the correct option's writes without progress credit. *(cycle: I5a; J4, re-pickable, A11y; K0/K4, confusion overlay)* `code: frontend/src/components/topic/blocks/DecisionBlock.tsx`.
 
 ### `playground`
-Two-way bound controls. Each control writes to a `useTopicState` key the pinned plot reads. Optional `goal` block: `target` parameters, a `success_when` predicate evaluated against state, an `on_success` reveal, and time-gated hints. Match meter fills as the user approaches the goal. Reset / Skip / Try-again affordances. *(cycle: I5b; J4 — try-again)* `code: frontend/src/components/topic/blocks/PlaygroundBlock.tsx`.
+Two-way bound controls. Each control writes to a `useTopicState` key the pinned plot reads. Optional `goal` block: `target` parameters, a `success_when` predicate evaluated against state, an `on_success` reveal, and time-gated hints. Match meter fills as the user approaches the goal. Reset / Skip / Try-again affordances. *(cycle: I5b; J4, try-again)* `code: frontend/src/components/topic/blocks/PlaygroundBlock.tsx`.
 
 ### `state` / `state_reset`
 Authoring-only directives. `state` seeds `useTopicState` defaults at mount. `state_reset` (with an anchor) fires when the named anchor scrolls into view, snapping bound state keys back to defaults. Both render nothing. *(cycle: I5)* `code: frontend/src/components/topic/ScrollReader.tsx` (search "state_reset"), `frontend/src/stores/topicState.ts`.
@@ -210,7 +210,7 @@ Authoring-only directives. `state` seeds `useTopicState` defaults at mount. `sta
 See [Gear divider](#gear-divider) above. *(cycles: K1, L1)*
 
 ### `graph_view`
-Pins a `GraphFlythrough` in the right column instead of a `PlotBlock`. `target:` is a node slug or a domain-root slug; the latter pans to the cluster centroid. In tour mode (`meta.yaml: tour: true`), the directive drives the *background* graph instead: `target: all` fits every node, a domain slug hides every other cluster and frames the named one (legend-style hide, not dim), and a topic slug centers on that node. The directive renders nothing in prose flow when the topic is in tour mode — it's pure metadata for the background camera. *(cycles: K2, L3, M0 tour semantics)* `code: frontend/src/components/topic/blocks/GraphFlythrough.tsx`, `frontend/src/components/topic/TourView.tsx`.
+Pins a `GraphFlythrough` in the right column instead of a `PlotBlock`. `target:` is a node slug or a domain-root slug; the latter pans to the cluster centroid. In tour mode (`meta.yaml: tour: true`), the directive drives the *background* graph instead: `target: all` fits every node, a domain slug hides every other cluster and frames the named one (legend-style hide, not dim), and a topic slug centers on that node. The directive renders nothing in prose flow when the topic is in tour mode, it's pure metadata for the background camera. *(cycles: K2, L3, M0 tour semantics)* `code: frontend/src/components/topic/blocks/GraphFlythrough.tsx`, `frontend/src/components/topic/TourView.tsx`.
 
 ### `dataset`
 In-prose attribution chip linking to `/datasets#{name}`. Pairs with the topic-level `meta.yaml: dataset:` field. *(cycle: K5)* `code: frontend/src/components/topic/blocks/BlockRenderer.tsx` (`case 'dataset'`). See [`authoring.md`](authoring.md#dataset).
@@ -238,10 +238,10 @@ The D3 plot library reads `--color-accent / text / muted / border / advanced` on
 1,000 dots created once in a mount effect; subsequent state writes attribute-update the existing circles instead of clearing + recreating. Re-render dropped from full SVG remount (~40ms) to attribute pass (~3ms). *(cycle: J5)* `code: frontend/src/components/topic/blocks/plots/index.tsx` (`PopulationDotGrid`).
 
 ### Dot-grid recolor transition
-600ms cubic-in-out easing on `prior / sensitivity / specificity` changes (slider drags); 300ms on `treatment_strategy` changes (option picks). Honors `prefers-reduced-motion` — snaps instantly. *(cycle: J6 introduced 600ms; L5 split scalar vs. discrete timing)* `code: frontend/src/components/topic/blocks/plots/index.tsx` (search `strategyChanged`).
+600ms cubic-in-out easing on `prior / sensitivity / specificity` changes (slider drags); 300ms on `treatment_strategy` changes (option picks). Honors `prefers-reduced-motion`, snaps instantly. *(cycle: J6 introduced 600ms; L5 split scalar vs. discrete timing)* `code: frontend/src/components/topic/blocks/plots/index.tsx` (search `strategyChanged`).
 
 ### Branch filter
-Blocks tagged `depends_on: X, branch: Y` (or `branch: a|c`) only render if the user picked an allowed option on decision anchor `X`. Untagged blocks always render — branching is opt-in. Reads from `progressStore.decisionEvents` so re-picking a decision live-flips the visible branches. *(cycle: I5; J4 — re-pickable; L2 — shared util for SlideView)* `code: frontend/src/components/topic/blocks/branchFilter.ts`.
+Blocks tagged `depends_on: X, branch: Y` (or `branch: a|c`) only render if the user picked an allowed option on decision anchor `X`. Untagged blocks always render, branching is opt-in. Reads from `progressStore.decisionEvents` so re-picking a decision live-flips the visible branches. *(cycle: I5; J4, re-pickable; L2, shared util for SlideView)* `code: frontend/src/components/topic/blocks/branchFilter.ts`.
 
 ### Decision event log
 `progressStore.decisionEvents` keyed by `(slug, anchor)` → `{ optionId, pickedAt }`. The single source of truth for "have they answered this decision?" and "which option?" *(cycle: J4)* `code: frontend/src/stores/progressStore.ts`.
@@ -253,29 +253,29 @@ Imperative handle on the graph canvas. Computes the AABB of the named slugs (or 
 Prop that filters the canvas to a single domain. When set, edges whose source or target sits outside the named domain skip drawing; non-matching nodes skip too. Layout simulation still includes everything so positions don't reshuffle between sections. Used by `TourView` for legend-style cluster framing in tour topics. *(cycle: M0)* `code: frontend/src/components/graph/ForceGraph.tsx` (search "visibleDomain").
 
 ### Plot library (23 specs)
-- `gaussian_pdf` — bell curve. Binds `mu, sigma`, and optional `n` — when `n` is bound the curve becomes the sampling distribution of the mean (effective spread σ/√n) and the y-axis auto-rescales so a narrow spike never clips. Optional `ghost` target overlay.
-- `gaussian_cdf` — cumulative normal. Binds `mu, sigma`.
-- `student_t_pdf` — Student's t density over t ∈ [−5, 5] with a dashed N(0,1) reference. Binds `df`. Lanczos lgamma in the normalizing constant; heavy tails at `df=1`, visually onto the normal by `df≈30`. *(cycle: Q0)*
-- `binomial_pmf` — discrete bars. Binds `n, p`. Lanczos lgamma for stability at large `n`.
-- `poisson_pmf` — discrete bars over k = 0…⌈λ+4√λ⌉. Binds `lambda`. Lanczos lgamma in the PMF; right-skewed at small λ, ~symmetric at large λ. *(cycle: Q0)*
-- `exponential_pdf` — λe^−λx over x ≥ 0, mean-1/λ marker. Binds `rate`. *(cycle: R0)*
-- `chi_squared_pdf` — chi-squared density (sum of k squared normals). Binds `df`. *(cycle: R0)*
-- `f_pdf` — F density, ratio of two scaled chi-squareds. Binds `df1, df2`. *(cycle: R0)*
-- `likelihood_curve` — normalized binomial likelihood with the MLE `p̂=k/n` marked; optional `loglik` log-scale. Binds `successes, trials`. *(cycle: R2)*
-- `power_curves` — null vs alternative normals with shaded Type-I / power regions. Binds `effect, alpha, n`. Uses the `normCdf`/`invNorm` helpers. *(cycle: R2)*
-- `beta_posterior` — Beta prior, scaled likelihood, Beta posterior for a proportion. Binds `prior_a, prior_b, successes, trials`. *(cycle: R2)*
-- `added_variable_plot` — marginal vs partial scatter; `controlled` toggles the confounding sign-flip. *(cycle: R4)*
-- `residual_plot` — residuals vs fitted with a y=0 line. Binds `pattern` (random/funnel/curve). *(cycle: R4)*
-- `logistic_curve` — sigmoid over 0/1 points with the p=0.5 boundary. Binds `beta0, beta1`. *(cycle: R4)*
-- `coefficient_path` — ridge/lasso shrinkage paths as λ grows. Binds `lambda, penalty`. *(cycle: R4)*
-- `proportion_test` — two conversion bars + a two-proportion z verdict. Binds `p_a, p_b, n_a, n_b`. *(cycle: R6)*
-- `cv_error_curve` — training vs validation error (U) over complexity, with the validation min. Binds `complexity`. *(cycle: R6)*
-- `bias_variance_curve` — bias², variance, and U-shaped total error. Binds `complexity`. *(cycle: R6)*
-- `missingness_grid` — data grid with MCAR/MAR/MNAR missingness footprints. Binds `mechanism, missing_frac`. *(cycle: R6)*
-- `empirical_histogram` — bins a sample array. Binds `samples` or synthesizes from `mu, sigma`.
-- `scatter_with_fit` — points + least-squares fit. Binds `points` (+ optional `slope, intercept` overrides).
-- `posterior_update` — three-bar P(H) / P(H|+) / P(H|−). Binds `prior, sensitivity, specificity, observed_result`.
-- `population_dot_grid` — 1,000-dot Bayes canvas. Binds `prior, sensitivity, specificity, treatment_strategy`.
+- `gaussian_pdf`, bell curve. Binds `mu, sigma`, and optional `n`, when `n` is bound the curve becomes the sampling distribution of the mean (effective spread σ/√n) and the y-axis auto-rescales so a narrow spike never clips. Optional `ghost` target overlay.
+- `gaussian_cdf`, cumulative normal. Binds `mu, sigma`.
+- `student_t_pdf`, Student's t density over t ∈ [−5, 5] with a dashed N(0,1) reference. Binds `df`. Lanczos lgamma in the normalizing constant; heavy tails at `df=1`, visually onto the normal by `df≈30`. *(cycle: Q0)*
+- `binomial_pmf`, discrete bars. Binds `n, p`. Lanczos lgamma for stability at large `n`.
+- `poisson_pmf`, discrete bars over k = 0…⌈λ+4√λ⌉. Binds `lambda`. Lanczos lgamma in the PMF; right-skewed at small λ, ~symmetric at large λ. *(cycle: Q0)*
+- `exponential_pdf`, λe^−λx over x ≥ 0, mean-1/λ marker. Binds `rate`. *(cycle: R0)*
+- `chi_squared_pdf`, chi-squared density (sum of k squared normals). Binds `df`. *(cycle: R0)*
+- `f_pdf`, F density, ratio of two scaled chi-squareds. Binds `df1, df2`. *(cycle: R0)*
+- `likelihood_curve`, normalized binomial likelihood with the MLE `p̂=k/n` marked; optional `loglik` log-scale. Binds `successes, trials`. *(cycle: R2)*
+- `power_curves`, null vs alternative normals with shaded Type-I / power regions. Binds `effect, alpha, n`. Uses the `normCdf`/`invNorm` helpers. *(cycle: R2)*
+- `beta_posterior`, Beta prior, scaled likelihood, Beta posterior for a proportion. Binds `prior_a, prior_b, successes, trials`. *(cycle: R2)*
+- `added_variable_plot`, marginal vs partial scatter; `controlled` toggles the confounding sign-flip. *(cycle: R4)*
+- `residual_plot`, residuals vs fitted with a y=0 line. Binds `pattern` (random/funnel/curve). *(cycle: R4)*
+- `logistic_curve`, sigmoid over 0/1 points with the p=0.5 boundary. Binds `beta0, beta1`. *(cycle: R4)*
+- `coefficient_path`, ridge/lasso shrinkage paths as λ grows. Binds `lambda, penalty`. *(cycle: R4)*
+- `proportion_test`, two conversion bars + a two-proportion z verdict. Binds `p_a, p_b, n_a, n_b`. *(cycle: R6)*
+- `cv_error_curve`, training vs validation error (U) over complexity, with the validation min. Binds `complexity`. *(cycle: R6)*
+- `bias_variance_curve`, bias², variance, and U-shaped total error. Binds `complexity`. *(cycle: R6)*
+- `missingness_grid`, data grid with MCAR/MAR/MNAR missingness footprints. Binds `mechanism, missing_frac`. *(cycle: R6)*
+- `empirical_histogram`, bins a sample array. Binds `samples` or synthesizes from `mu, sigma`.
+- `scatter_with_fit`, points + least-squares fit. Binds `points` (+ optional `slope, intercept` overrides).
+- `posterior_update`, three-bar P(H) / P(H|+) / P(H|−). Binds `prior, sensitivity, specificity, observed_result`.
+- `population_dot_grid`, 1,000-dot Bayes canvas. Binds `prior, sensitivity, specificity, treatment_strategy`.
 
 `code: frontend/src/components/topic/blocks/plots/index.tsx` (`PLOT_SPECS`). *(cycle: I5; specs added incrementally)*
 
@@ -290,13 +290,13 @@ In-prose attribution chip; see [`dataset` block type](#dataset).
 Flat catalog of every shipped dataset. Each card shows title, description, source, columns, rows, synthetic flag, and the topics that declare this dataset in their `meta.yaml`. Reads `GET /api/datasets`. *(cycle: K5)* `code: frontend/src/pages/Datasets.tsx`.
 
 ### `load(name)` helper
-Injected into the Python execution context. Reads `seed/datasets/{name}.csv` from disk; returns a `pandas.DataFrame` if pandas is available, otherwise a list of dicts. Slug-shaped names only — guards against path traversal. *(cycle: K5)* `code: backend/services/execution_service.py` (search `def load`).
+Injected into the Python execution context. Reads `seed/datasets/{name}.csv` from disk; returns a `pandas.DataFrame` if pandas is available, otherwise a list of dicts. Slug-shaped names only, guards against path traversal. *(cycle: K5)* `code: backend/services/execution_service.py` (search `def load`).
 
 ### Curated CSVs (initial 4)
-- `coin-flips-1000` — synthetic, 1,000 fair-coin trials.
-- `medical-test-results` — synthetic, 1,000 patients with 1% prevalence + 99% sensitivity/specificity.
-- `monty-hall-runs` — synthetic, 1,000 simulated games.
-- `heights` — synthetic, 500 adult heights drawn from sex-conditional normals.
+- `coin-flips-1000`, synthetic, 1,000 fair-coin trials.
+- `medical-test-results`, synthetic, 1,000 patients with 1% prevalence + 99% sensitivity/specificity.
+- `monty-hall-runs`, synthetic, 1,000 simulated games.
+- `heights`, synthetic, 500 adult heights drawn from sex-conditional normals.
 
 `code: seed/datasets/*.csv`, `seed/datasets/manifest.yaml`. *(cycle: K5)*
 
@@ -324,15 +324,15 @@ Logged-in users have their progress mirrored to the server in real time. The syn
 
 Anonymous mode is a no-op: the orchestrator never reaches the network without a token, so logged-out readers stay on localStorage-only with no behavior change.
 
-The K7 public snapshot endpoint (`/u/:username`) now reads the real `UserProgress` table — `synced: true` once the user has touched any topic. `code: backend/api/users.py, backend/api/progress.py, frontend/src/stores/syncOrchestrator.ts`.
+The K7 public snapshot endpoint (`/u/:username`) now reads the real `UserProgress` table, `synced: true` once the user has touched any topic. `code: backend/api/users.py, backend/api/progress.py, frontend/src/stores/syncOrchestrator.ts`.
 
 ### `authStore` + `AuthMenu` (M1)
-Minimal auth surface — register, login, logout, persisted token. The navbar shows a "Sign in" chip when anonymous and a 2-letter initials circle (with a popover) when authenticated. The popover links to the user's `/u/{display_name}` snapshot and `/u/me/forks`. `code: frontend/src/stores/authStore.ts, frontend/src/components/AuthMenu.tsx`. The legacy `localStorage.getItem('token')` key the `request()` wrapper reads stays in sync via the store's persist middleware.
+Minimal auth surface, register, login, logout, persisted token. The navbar shows a "Sign in" chip when anonymous and a 2-letter initials circle (with a popover) when authenticated. The popover links to the user's `/u/{display_name}` snapshot and `/u/me/forks`. `code: frontend/src/stores/authStore.ts, frontend/src/components/AuthMenu.tsx`. The legacy `localStorage.getItem('token')` key the `request()` wrapper reads stays in sync via the store's persist middleware.
 
-### `TopicFork` (N — fork model)
-Server-side table holding a user's editable copy of a topic. `markdown_source` is the source of truth (the editable `content.md` text); the blocks a reader sees are produced by re-parsing it on every `GET`. One fork per `(user, topic)`. `course_id` is reserved (always null on N forks). *(cycle: N; O3 — retired the unused `content_snapshot` column)* `code: backend/models/fork.py, backend/services/fork_service.py`. See [`forks.md`](forks.md).
+### `TopicFork` (N, fork model)
+Server-side table holding a user's editable copy of a topic. `markdown_source` is the source of truth (the editable `content.md` text); the blocks a reader sees are produced by re-parsing it on every `GET`. One fork per `(user, topic)`. `course_id` is reserved (always null on N forks). *(cycle: N; O3, retired the unused `content_snapshot` column)* `code: backend/models/fork.py, backend/services/fork_service.py`. See [`forks.md`](forks.md).
 
-### `MergeBackSuggestion` (O1 — merge-back)
+### `MergeBackSuggestion` (O1, merge-back)
 A fork owner's proposal that their fork's content replace the master topic's. Snapshots `suggested_markdown` at suggest time so later fork edits don't mutate a pending suggestion. One pending suggestion per fork; re-suggesting while pending updates the snapshot in place. Status: `pending` / `accepted` / `rejected`. Accept replaces the master topic's `content_blocks` + `Misconception` rows from the suggestion and rewrites the seed `content.md` on disk. *(cycle: O1)* `code: backend/models/merge_back.py, backend/services/merge_service.py, backend/api/merge_back.py`. See [`forks.md`](forks.md#merge-back--proposing-a-forks-content-as-the-new-master-o1).
 
 ### `useTopicState` (per-topic state)
@@ -349,22 +349,22 @@ Theme toggle in the navbar flips `data-theme` on `<html>`. Every color var has a
 Typography ramps (`--text-display`, `--text-h1` through `--text-mono` with size / line-height / weight / tracking per ramp step), spacing scale (`--space-1` through `--space-16`, 4-px base), motion durations (`--duration-fast/smooth/slow`), and `--header-h`. *(cycle: J2)* `code: frontend/src/styles/tokens.css`. See [`brand.md`](brand.md).
 
 ### Prose styles
-The `.prose` class — body typography for markdown-rendered content blocks. Routed through `tokens.css` ramps. *(cycle: J2)* `code: frontend/src/styles/prose.css`.
+The `.prose` class, body typography for markdown-rendered content blocks. Routed through `tokens.css` ramps. *(cycle: J2)* `code: frontend/src/styles/prose.css`.
 
 ### Reduced-motion gate
-Site-wide CSS — under `prefers-reduced-motion: reduce`, the three motion duration vars collapse to `0ms`. Every animation across the surface inherits this automatically. *(cycle: Z5; J2 — token-level gate)* `code: frontend/src/styles/tokens.css`.
+Site-wide CSS, under `prefers-reduced-motion: reduce`, the three motion duration vars collapse to `0ms`. Every animation across the surface inherits this automatically. *(cycle: Z5; J2, token-level gate)* `code: frontend/src/styles/tokens.css`.
 
 ### Focus-visible ring
 2px accent outline + 2px offset on `:focus-visible`. Mouse users don't see it; keyboard users always do. Applied at the token level so every interactive element inherits it without per-component wiring. *(cycle: J6)* `code: frontend/src/styles/tokens.css`.
 
 ### High-contrast (`prefers-contrast`)
-The muted/secondary text steps sit below WCAG AA on their backgrounds (dark `--color-text-muted` #52525b on #050505; light #a1a1aa on #fdfdfd). Under `@media (prefers-contrast: more)` they lift one zinc step toward the foreground (and `--color-border-subtle` strengthens) in both themes — token-only overrides, so every consumer inherits it and it's fully reversible. *(cycle: T3)* `code: frontend/src/styles/global.css`.
+The muted/secondary text steps sit below WCAG AA on their backgrounds (dark `--color-text-muted` #52525b on #050505; light #a1a1aa on #fdfdfd). Under `@media (prefers-contrast: more)` they lift one zinc step toward the foreground (and `--color-border-subtle` strengthens) in both themes, token-only overrides, so every consumer inherits it and it's fully reversible. *(cycle: T3)* `code: frontend/src/styles/global.css`.
 
 ### High-contrast theme (selectable)
 A third, user-selectable theme beyond the OS-driven `prefers-contrast` bump. `themeStore` is now `'dark' | 'light' | 'high-contrast'` and the navbar control cycles all three (icon = current theme; persisted in `alldata-theme`). The `[data-theme='high-contrast']` token block is dark-based: pure-black ground, near-white text at every step, strong always-visible borders (`#7a7a7a`), a brighter accent, and domain hues both brightened and spread across luminance so they stay separable at node scale. (Full non-hue/pattern domain encoding remains in the deferred full-WCAG track.) *(cycle: V2)* `code: frontend/src/stores/themeStore.ts`, `frontend/src/styles/global.css`, `Layout.tsx`.
 
 ### Accessibility semantics
-Plot SVGs are presented as a single labeled image: `PlotBlock` wraps the d3 mount in `role="img"` with a per-spec `aria-label` (the `SPEC_LABELS` map — e.g. "Normal distribution bell curve"), which collapses the meaningless d3 internals out of the a11y tree; `GraphFlythrough` is labeled likewise. Playground sliders carry `aria-label` (the control's name) + a live `aria-valuetext`. Decision options were already native `<button>`s with `aria-pressed`. **V3 adds:** the CodeRunner output is an `aria-live="polite"` region (results are announced when a run finishes), and `/explore` carries a visually-hidden but tab-order/AT-reachable "All topics — list view" `<nav>` of topic links so the mouse-driven force graph isn't a keyboard dead end. *(cycles: T3; V3)* `code: frontend/src/components/topic/blocks/PlotBlock.tsx`, `PlaygroundBlock.tsx`, `GraphFlythrough.tsx`, `topic/CodeRunner.tsx`, `pages/GraphExplorer.tsx`.
+Plot SVGs are presented as a single labeled image: `PlotBlock` wraps the d3 mount in `role="img"` with a per-spec `aria-label` (the `SPEC_LABELS` map, e.g. "Normal distribution bell curve"), which collapses the meaningless d3 internals out of the a11y tree; `GraphFlythrough` is labeled likewise. Playground sliders carry `aria-label` (the control's name) + a live `aria-valuetext`. Decision options were already native `<button>`s with `aria-pressed`. **V3 adds:** the CodeRunner output is an `aria-live="polite"` region (results are announced when a run finishes), and `/explore` carries a visually-hidden but tab-order/AT-reachable "All topics, list view" `<nav>` of topic links so the mouse-driven force graph isn't a keyboard dead end. *(cycles: T3; V3)* `code: frontend/src/components/topic/blocks/PlotBlock.tsx`, `PlaygroundBlock.tsx`, `GraphFlythrough.tsx`, `topic/CodeRunner.tsx`, `pages/GraphExplorer.tsx`.
 
 ---
 
@@ -373,14 +373,14 @@ Plot SVGs are presented as a single labeled image: `PlotBlock` wraps the d3 moun
 ### Route-level code-splitting
 `App.tsx` lazy-loads every route except the shell (`Layout`) and landing (`Home`) via `React.lazy` + a `<Suspense>` (nested inside the S2 page `ErrorBoundary`, so a failed chunk load degrades to the themed panel rather than hanging). This moves d3 (force graph + 23 plot specs), katex's JS, and react-markdown out of the initial download into per-route async chunks. **Initial entry chunk: 871 KB → 214 KB raw (262 → 68 KB gzip), a 75% cut; the >500 KB Rollup warning is gone.** The heavy lesson surface (`ScrollReader` + plots + katex, ~492 KB) loads only on first `/topic` or fork visit; the force graph (~76 KB) on first `/explore`; both cached after. *(cycle: T0)* `code: frontend/src/App.tsx`, `frontend/src/components/{Layout,RouteFallback}.tsx`.
 
-> **Why `plots/index.tsx` was *not* split into per-family files** (a roadmap candidate): `PlotBlock` imports the `PLOT_SPECS` registry, which eagerly references all 23 spec components, so Rollup emits them in one chunk regardless of file layout — splitting buys **zero bytes** while breaking up shared helpers (`lgamma`, `normCdf`, `betaPdf`, the LCG) and cross-family specs (`gaussian_pdf` spans ~6 topics; `student_t_pdf` → t-distribution + t-tests; `empirical_histogram` → EDA + data-wrangling). It stays one file, sectioned by cycle banners. The on-demand `ScrollReader` chunk's weight is dominated by katex (non-optional), not d3, so d3-submodule slimming was also skipped.
+> **Why `plots/index.tsx` was *not* split into per-family files** (a roadmap candidate): `PlotBlock` imports the `PLOT_SPECS` registry, which eagerly references all 23 spec components, so Rollup emits them in one chunk regardless of file layout, splitting buys **zero bytes** while breaking up shared helpers (`lgamma`, `normCdf`, `betaPdf`, the LCG) and cross-family specs (`gaussian_pdf` spans ~6 topics; `student_t_pdf` → t-distribution + t-tests; `empirical_histogram` → EDA + data-wrangling). It stays one file, sectioned by cycle banners. The on-demand `ScrollReader` chunk's weight is dominated by katex (non-optional), not d3, so d3-submodule slimming was also skipped.
 
 ---
 
 ## Brand & identity
 
 ### `<Logo>` component
-The canonical AllData mark + wordmark — a three-node graph triad on a teal rounded square, beside "AllData" (Inter 800, -0.5px tracking). `size` and `variant` (`full` | `mark`) props; the mark is always `--color-accent` (one-accent rule). The navbar wraps it in the home link; the favicon is derived from the same geometry so they never drift. *(cycle: P1)* `code: frontend/src/components/Logo.tsx`.
+The canonical AllData mark + wordmark, a three-node graph triad on a teal rounded square, beside "AllData" (Inter 800, -0.5px tracking). `size` and `variant` (`full` | `mark`) props; the mark is always `--color-accent` (one-accent rule). The navbar wraps it in the home link; the favicon is derived from the same geometry so they never drift. *(cycle: P1)* `code: frontend/src/components/Logo.tsx`.
 
 ### Favicon, meta & social cards
 `index.html` carries the favicon (`/favicon.svg`, the mark), `description`, `theme-color` (teal), and Open Graph + Twitter card tags pointing at `/og.png` (a 1200×630 card: zinc background, mark, wordmark, tagline). Static assets live in `frontend/public/` and serve at the site root with no build wiring. Copy is the canonical identity. *(cycle: P2)* `code: frontend/index.html`, `frontend/public/favicon.svg`, `frontend/public/og.svg` (editable source), `frontend/public/og.png`.
@@ -399,7 +399,7 @@ The domain cards and progress bar on `/` derive "topics with content" per domain
 Single component with `inline` (Home hero) and `embedded` (navbar modal) variants. Owns: debounce, fetch (`api.searchTopics`), keyboard nav (↑ / ↓ / Enter), dropdown rendering, empty state. Callers pass `onSelect` to override the default navigate-to-topic. *(cycle: L4)* `code: frontend/src/components/SearchDropdown.tsx`.
 
 ### Navbar search (Ctrl-K modal)
-Top-right pill on every page. Click or press `Ctrl-K` / `Cmd-K` to open the modal; inside, `SearchDropdown` handles the query. Escape closes. *(cycle: H6 — earlier; L4 — refactored to share the dropdown component)* `code: frontend/src/components/Layout.tsx` (`CommandSearch`).
+Top-right pill on every page. Click or press `Ctrl-K` / `Cmd-K` to open the modal; inside, `SearchDropdown` handles the query. Escape closes. *(cycle: H6, earlier; L4, refactored to share the dropdown component)* `code: frontend/src/components/Layout.tsx` (`CommandSearch`).
 
 ### Home-page hero search
 The "What do you want to learn?" input on `/`. Replaced naive Enter-slugify navigation with a live dropdown. *(cycle: L4)* `code: frontend/src/pages/Home.tsx`.
@@ -408,26 +408,26 @@ The "What do you want to learn?" input on `/`. Replaced naive Enter-slugify navi
 `/explore`-only, in-canvas. Behaves like the others but on select pans + zooms the canvas onto the chosen node rather than navigating away. *(cycle: H6)* `code: frontend/src/pages/GraphExplorer.tsx` (`GraphSearchChip`).
 
 ### `/api/graph/search`
-Backend endpoint. Postgres path uses `pg_trgm.similarity()` for trigram fuzzy ranking + ILIKE fallback for short queries. SQLite path ranks by where in the title the match lands (prefix → word-boundary → anywhere). *(cycle: H6; L4 — dialect-portable)* `code: backend/services/graph_engine.py` (`search_graph_nodes`).
+Backend endpoint. Postgres path uses `pg_trgm.similarity()` for trigram fuzzy ranking + ILIKE fallback for short queries. SQLite path ranks by where in the title the match lands (prefix → word-boundary → anywhere). *(cycle: H6; L4, dialect-portable)* `code: backend/services/graph_engine.py` (`search_graph_nodes`).
 
 ---
 
 ## Authoring loop
 
 ### `python -m seed.import_seed`
-End-to-end importer. Reads `seed/schema.yaml` + every `seed/topics/{domain}/{slug}/{meta.yaml,content.md}` and upserts. Self-healing: tables that don't exist get created; columns the model declares but the live DB lacks get added via `ALTER TABLE`. Idempotent — repeat runs are safe. *(cycle: seed-era; J3 self-heal; K2 additive schema-merge)* `code: seed/import_seed.py`.
+End-to-end importer. Reads `seed/schema.yaml` + every `seed/topics/{domain}/{slug}/{meta.yaml,content.md}` and upserts. Self-healing: tables that don't exist get created; columns the model declares but the live DB lacks get added via `ALTER TABLE`. Idempotent, repeat runs are safe. *(cycle: seed-era; J3 self-heal; K2 additive schema-merge)* `code: seed/import_seed.py`.
 
 ### `parse_content_md(text)`
-The directive parser, decoupled from the filesystem. `parse_content_file(path)` is now a one-line shim that reads the file and calls `parse_content_md`. The text-taking variant lets over-the-wire markdown be parsed without a file on disk — the N fork save / preview endpoints reuse it verbatim, so a fork renders through the exact pipeline the seed import uses. *(cycle: N — extracted from `parse_content_file`)* `code: seed/import_seed.py` (`parse_content_md`).
+The directive parser, decoupled from the filesystem. `parse_content_file(path)` is now a one-line shim that reads the file and calls `parse_content_md`. The text-taking variant lets over-the-wire markdown be parsed without a file on disk, the N fork save / preview endpoints reuse it verbatim, so a fork renders through the exact pipeline the seed import uses. *(cycle: N, extracted from `parse_content_file`)* `code: seed/import_seed.py` (`parse_content_md`).
 
 ### `--strict` flag
-`python -m seed.import_seed --strict`. Warnings become errors. Catches: unknown plot specs, undeclared state keys referenced in playground `binds:` or decision `writes:`, dangling `depends_on` references, branch ids that don't match any option, YAML body parse failures, and **placeholder scaffold text** — a `gear` whose `label` starts with `TODO`, or any body carrying an M3 stub marker (`> TODO (`, `TODO — name the`, `TODO (N):`). The last guard stops a scaffold stub from ever importing as real content again; the pattern is scoped narrowly so a legitimate `# TODO` inside a code block doesn't trip it. **S4 adds the deprecated-`quiz` guard**: the reader has no quiz renderer (the block fell to a plain markdown dump, silently losing its solution/hints), so any `<!-- block: quiz -->` now warns — author a `decision` or inline `misconception` instead. CI runs `--strict` on every push (S6, `.github/workflows/ci.yml`). *(cycle: J3; Q5 placeholder guard; S4 quiz; S6 CI)* `code: seed/import_seed.py` (search `_validate_topic_blocks`).
+`python -m seed.import_seed --strict`. Warnings become errors. Catches: unknown plot specs, undeclared state keys referenced in playground `binds:` or decision `writes:`, dangling `depends_on` references, branch ids that don't match any option, YAML body parse failures, and **placeholder scaffold text**, a `gear` whose `label` starts with `TODO`, or any body carrying an M3 stub marker (`> TODO (`, `TODO, name the`, `TODO (N):`). The last guard stops a scaffold stub from ever importing as real content again; the pattern is scoped narrowly so a legitimate `# TODO` inside a code block doesn't trip it. **S4 adds the deprecated-`quiz` guard**: the reader has no quiz renderer (the block fell to a plain markdown dump, silently losing its solution/hints), so any `<!-- block: quiz -->` now warns, author a `decision` or inline `misconception` instead. CI runs `--strict` on every push (S6, `.github/workflows/ci.yml`). *(cycle: J3; Q5 placeholder guard; S4 quiz; S6 CI)* `code: seed/import_seed.py` (search `_validate_topic_blocks`).
 
 ### `python -m seed.watch`
 Watchdog-based file-watcher. Edit a `.md` or `meta.yaml` under `seed/topics/`; the importer re-runs on save (debounced 200ms per topic dir). Author edits markdown, refreshes the page, sees the change. *(cycle: I6)* `code: seed/watch.py`.
 
 ### `meta.yaml` header schema
-Per-topic header. Documents: `slug`, `title`, `domain`, `difficulty`, `summary`, `prerequisites`, `has_intuition_layer`, `has_formal_layer`, `estimated_minutes`, `cycle_ported`, `recall_prompt`, `dataset`, `tour`. *(cycles: J3 — schema doc; K3 — recall_prompt; K5 — dataset; M0 — tour)* See [`meta-yaml.md`](meta-yaml.md).
+Per-topic header. Documents: `slug`, `title`, `domain`, `difficulty`, `summary`, `prerequisites`, `has_intuition_layer`, `has_formal_layer`, `estimated_minutes`, `cycle_ported`, `recall_prompt`, `dataset`, `tour`. *(cycles: J3, schema doc; K3, recall_prompt; K5, dataset; M0, tour)* See [`meta-yaml.md`](meta-yaml.md).
 
 ### Self-healing column adds
 `create_tables()` walks every mapped table on every run and ALTERs missing columns. The "no migrations" ergonomic survives every new column the team ships. *(cycle: J3)* `code: seed/import_seed.py` (`_self_heal_columns`).
@@ -436,57 +436,57 @@ Per-topic header. Documents: `slug`, `title`, `domain`, `difficulty`, `summary`,
 When the DB already has topics, new entries in `seed/schema.yaml` get inserted on every run (rather than only on first-seed). Domains, topics, prerequisite edges. *(cycle: K2)* `code: seed/import_seed.py` (search `additive schema-merge`).
 
 ### `_meta` hidden-domain convention
-Domains prefixed with `_` are hidden navigation surfaces — filtered from `/explore`, searchable only by direct URL. Used for the Shape of Statistics intro and any future "topic page but not part of the curriculum graph" content. *(cycle: K2)* `code: backend/services/graph_engine.py` (search `_meta`).
+Domains prefixed with `_` are hidden navigation surfaces, filtered from `/explore`, searchable only by direct URL. Used for the Shape of Statistics intro and any future "topic page but not part of the curriculum graph" content. *(cycle: K2)* `code: backend/services/graph_engine.py` (search `_meta`).
 
 ---
 
 ## Public surfaces
 
 ### `/about`
-The public "why" — a short, on-brand page (lazy route) drawn from the canonical identity sources (`docs/identity.md` + `docs/vision.md`): the tagline, the ask → act → explain loop, the one-graph thesis, and the what-it-is / what-it-isn't lists, with links into the graph. Linked from the navbar. *(cycle: V1)* `code: frontend/src/pages/About.tsx`.
+The public "why", a short, on-brand page (lazy route) drawn from the canonical identity sources (`docs/identity.md` + `docs/vision.md`): the tagline, the ask → act → explain loop, the one-graph thesis, and the what-it-is / what-it-isn't lists, with links into the graph. Linked from the navbar. *(cycle: V1)* `code: frontend/src/pages/About.tsx`.
 
-### `/u/:username` — public graph snapshot
+### `/u/:username`, public graph snapshot
 Read-only graph rendered with someone else's progress. Routes:
-- `/u/me` — reads local `progressStore`. Shareable URL for the *viewer*'s own progress.
-- `/u/{display_name}` — fetches `/api/users/{name}/snapshot`. Returns empty progress today (server-side sync is H10 backlog); the route exists so the URL contract is in place when sync lands.
+- `/u/me`, reads local `progressStore`. Shareable URL for the *viewer*'s own progress.
+- `/u/{display_name}`, fetches `/api/users/{name}/snapshot`. Returns empty progress today (server-side sync is H10 backlog); the route exists so the URL contract is in place when sync lands.
 
-Below the graph: per-cluster depth bars (proportional fill, no numbers — "depth signal, not a grade"). *(cycle: K7)* `code: frontend/src/pages/UserGraph.tsx`, `backend/api/users.py`.
+Below the graph: per-cluster depth bars (proportional fill, no numbers, "depth signal, not a grade"). *(cycle: K7)* `code: frontend/src/pages/UserGraph.tsx`, `backend/api/users.py`.
 
-### Forks — read surface (`/u/:username/topic/:slug`)
+### Forks, read surface (`/u/:username/topic/:slug`)
 A user's editable copy of a topic, rendered through the same `ScrollReader` the master topic uses. A lineage banner ("Fork of {master} by {username}") sits above the prose; the master title links back. The owner sees an "Edit" affordance. Fork reading is namespaced under `fork:{username}:{slug}` so it never touches master-topic progress. *(cycle: N)* `code: frontend/src/pages/ForkView.tsx`.
 
-### Forks — editor (`/u/me/topic/:slug/edit`)
+### Forks, editor (`/u/me/topic/:slug/edit`)
 Two-pane editor for a fork you own: a monospace textarea on the left bound to the fork's `markdown_source`, a live `ScrollReader` preview on the right. Edits debounce 400ms then re-parse via `POST /api/forks/preview`; Save (button or Cmd/Ctrl-S) persists via `PUT`. Parser warnings surface in a strip above the preview. *(cycle: N)* `code: frontend/src/pages/ForkEditor.tsx`.
 
-### Forks — authoring toolbar (W1)
-A toolbar above the source textarea drops *canonical* directive scaffolds at the cursor so a contributor needn't memorize the `<!-- block: … -->` vocabulary: **H2 / Bold / Italic** (inline, wrap-selection), **Section / Callout / Misconception**, **Decision / Playground / Simulation**, **State**, and **Plot…**. Block buttons frame the insert with blank lines so it parses cleanly and leave the caret after it; inline buttons wrap the current selection. A trailing **? reference** affordance hovers the directive cheat-sheet (mirrors `authoring.md`) and an "edits render live →" hint points at the preview. Pure text transforms — the substrate stays plain `content.md`, which the merge-back diff depends on. *(cycle: W1, W3)* `code: frontend/src/components/topic/ForkEditorToolbar.tsx`.
+### Forks, authoring toolbar (W1)
+A toolbar above the source textarea drops *canonical* directive scaffolds at the cursor so a contributor needn't memorize the `<!-- block: … -->` vocabulary: **H2 / Bold / Italic** (inline, wrap-selection), **Section / Callout / Misconception**, **Decision / Playground / Simulation**, **State**, and **Plot…**. Block buttons frame the insert with blank lines so it parses cleanly and leave the caret after it; inline buttons wrap the current selection. A trailing **? reference** affordance hovers the directive cheat-sheet (mirrors `authoring.md`) and an "edits render live →" hint points at the preview. Pure text transforms, the substrate stays plain `content.md`, which the merge-back diff depends on. *(cycle: W1, W3)* `code: frontend/src/components/topic/ForkEditorToolbar.tsx`.
 
-### Forks — plot picker (W2)
-The **Plot…** toolbar button opens a modal listing the whole plot library — all 23 specs grouped (Distributions, Inference & testing, Bayesian, Regression, Model & data) with each spec's label and bound state keys, plus a `graph_view` tour-step insert. Picking one inserts a matched `state` + `plot` directive pair seeded with the spec's default params and a generated anchor, so the visualization renders in the preview immediately and reacts to its binds. The label/params/binds metadata lives in a shared catalog (`lib/plotSpecs.ts`) that the picker and `PlotBlock`'s a11y labels both read — one source of truth, mirroring the `PLOT_SPECS` / `_KNOWN_PLOT_SPECS` discipline. Rendered through a portal to `document.body` (like the auth modal) so the editor's layout can't clip it. *(cycle: W2)* `code: frontend/src/components/topic/PlotPicker.tsx, frontend/src/lib/plotSpecs.ts`.
+### Forks, plot picker (W2)
+The **Plot…** toolbar button opens a modal listing the whole plot library, all 23 specs grouped (Distributions, Inference & testing, Bayesian, Regression, Model & data) with each spec's label and bound state keys, plus a `graph_view` tour-step insert. Picking one inserts a matched `state` + `plot` directive pair seeded with the spec's default params and a generated anchor, so the visualization renders in the preview immediately and reacts to its binds. The label/params/binds metadata lives in a shared catalog (`lib/plotSpecs.ts`) that the picker and `PlotBlock`'s a11y labels both read, one source of truth, mirroring the `PLOT_SPECS` / `_KNOWN_PLOT_SPECS` discipline. Rendered through a portal to `document.body` (like the auth modal) so the editor's layout can't clip it. *(cycle: W2)* `code: frontend/src/components/topic/PlotPicker.tsx, frontend/src/lib/plotSpecs.ts`.
 
-### Forks — Visual block editor (X)
-A **Visual ⇄ Source** toggle in the editor bar (Visual default). Visual mode hides the raw directive syntax entirely: the fork renders as an ordered list of editable **prose** markdown fields and friendly directive **cards** (`SECTION`, `PLOT`, `CALLOUT`, …) with reorder / delete / edit. Edit opens a per-directive **form** (gear label + stage, callout kind + text, state key/value rows, plot parameters, code language + flags, layer select, …) — no YAML, no `<!-- block -->`; `decision`/`playground` and any unmapped type fall back to a per-block raw "edit source" hatch. The W toolbar + plot picker become the insert bar; `<!-- layer: … -->` markers show as a compact `LAYER` chip. It's a **pure frontend editing layer over the same `markdown_source` string**: a tokenizer (`contentDoc.parseDoc`) partitions the source into segments whose `raw` concatenates back byte-for-byte (`serializeDoc(parseDoc(x)) === x`), so editing one block rewrites only that segment — the backend parser, the live preview, and the merge-back diff are all unchanged. Source mode is today's raw `content.md` textarea, preserved as the escape hatch. *(cycle: X)* `code: frontend/src/lib/contentDoc.ts, frontend/src/lib/directiveMeta.ts, frontend/src/components/topic/BlockListEditor.tsx, BlockCard.tsx, blockForms/*`.
+### Forks, Visual block editor (X)
+A **Visual ⇄ Source** toggle in the editor bar (Visual default). Visual mode hides the raw directive syntax entirely: the fork renders as an ordered list of editable **prose** markdown fields and friendly directive **cards** (`SECTION`, `PLOT`, `CALLOUT`, …) with reorder / delete / edit. Edit opens a per-directive **form** (gear label + stage, callout kind + text, state key/value rows, plot parameters, code language + flags, layer select, …), no YAML, no `<!-- block -->`; `decision`/`playground` and any unmapped type fall back to a per-block raw "edit source" hatch. The W toolbar + plot picker become the insert bar; `<!-- layer: … -->` markers show as a compact `LAYER` chip. It's a **pure frontend editing layer over the same `markdown_source` string**: a tokenizer (`contentDoc.parseDoc`) partitions the source into segments whose `raw` concatenates back byte-for-byte (`serializeDoc(parseDoc(x)) === x`), so editing one block rewrites only that segment, the backend parser, the live preview, and the merge-back diff are all unchanged. Source mode is today's raw `content.md` textarea, preserved as the escape hatch. *(cycle: X)* `code: frontend/src/lib/contentDoc.ts, frontend/src/lib/directiveMeta.ts, frontend/src/components/topic/BlockListEditor.tsx, BlockCard.tsx, blockForms/*`.
 
-### Forks — listing (`/u/:username/forks`)
+### Forks, listing (`/u/:username/forks`)
 Card grid of a user's forks. `/u/me/forks` shows your own with edit/delete; another user's listing is read-only. Linked from the navbar account popover. *(cycle: N)* `code: frontend/src/pages/UserForks.tsx`.
 
 ### "Fork this topic" chip
 Bottom-chrome chip on `/topic/:slug`, left of LEARNED. Hidden for anonymous viewers and tour topics. Reads "Fork this topic" (creates a fork, opens the editor) or "Open my fork" when one already exists. *(cycle: N)* `code: frontend/src/components/topic/ZenChrome.tsx` (search `canFork`), `frontend/src/pages/TopicView.tsx` (`handleForkClick`).
 
 ### Merge-back: "Suggest to master" + status chips
-Fork owners propose their fork's content as the new master via a "Suggest to master" button in the fork editor's top bar (disabled while there are unsaved changes — the suggestion snapshots the *saved* `markdown_source`). The fork's lineage banner (`ForkView`) and editor (`ForkEditor`) carry a small status chip: **In review** / **Merged** / **Declined** based on the latest suggestion. Owners can re-suggest after a rejection or merge to propose a new change. *(cycle: O1)* `code: frontend/src/pages/ForkEditor.tsx` (search `handleSuggest`), `frontend/src/pages/ForkView.tsx` (`ForkStatusChip`).
+Fork owners propose their fork's content as the new master via a "Suggest to master" button in the fork editor's top bar (disabled while there are unsaved changes, the suggestion snapshots the *saved* `markdown_source`). The fork's lineage banner (`ForkView`) and editor (`ForkEditor`) carry a small status chip: **In review** / **Merged** / **Declined** based on the latest suggestion. Owners can re-suggest after a rejection or merge to propose a new change. *(cycle: O1)* `code: frontend/src/pages/ForkEditor.tsx` (search `handleSuggest`), `frontend/src/pages/ForkView.tsx` (`ForkStatusChip`).
 
 ### Merge-back review queue (`/review`)
 ADMIN/EDITOR-only surface. Two panes: a list of suggestions (pending first) on the left, a per-suggestion detail with a unified line diff on the right. Accept applies the suggestion to the master topic (DB + seed `content.md` file). Reject closes the suggestion with an optional note that surfaces to the owner via the status chip. A LEARNER hitting `/review` sees a clear "not authorized" state. *(cycle: O1)* `code: frontend/src/pages/ReviewQueue.tsx`, `frontend/src/components/MergeDiff.tsx`, `frontend/src/lib/lineDiff.ts`, `backend/api/merge_back.py`, `backend/services/merge_service.py`. See [`forks.md`](forks.md#merge-back--proposing-a-forks-content-as-the-new-master-o1) for the lifecycle.
 
-See [`forks.md`](forks.md) for the full fork model — what a fork is, the lifecycle, merge-back, and what's deferred.
+See [`forks.md`](forks.md) for the full fork model, what a fork is, the lifecycle, merge-back, and what's deferred.
 
 ---
 
 ## Debug overlays
 
 ### `?debug=confusion`
-Visit any topic with this query string. Blocks the user has flagged with the confusion signal grow a tint scaled to their flag count. Author-facing only — no public surface yet (server aggregation is gated on H10). *(cycle: K4)* `code: frontend/src/components/topic/ScrollReader.tsx` (`BlockShell`, search `debug=confusion`).
+Visit any topic with this query string. Blocks the user has flagged with the confusion signal grow a tint scaled to their flag count. Author-facing only, no public surface yet (server aggregation is gated on H10). *(cycle: K4)* `code: frontend/src/components/topic/ScrollReader.tsx` (`BlockShell`, search `debug=confusion`).
 
 ---
 
@@ -504,24 +504,24 @@ Visit any topic with this query string. Blocks the user has flagged with the con
 | `GET /api/topics` | List topics (filterable). | seed-era |
 | `GET /api/topics/{slug}` | Single topic + all content blocks + misconceptions. | seed-era |
 | `GET /api/topics/search?q=` | Alt-search (keyword-literal). | seed-era |
-| `POST /api/execute` | Run Python or R in the sandbox, return stdout / stderr / images. Auth-required + per-user rate limit. | seed-era; S1 — hardened |
-| `GET /api/execute/capabilities` | `{python, r}` — which languages are runnable here; gates the R toggle. No auth. | V0 |
+| `POST /api/execute` | Run Python or R in the sandbox, return stdout / stderr / images. Auth-required + per-user rate limit. | seed-era; S1, hardened |
+| `GET /api/execute/capabilities` | `{python, r}`, which languages are runnable here; gates the R toggle. No auth. | V0 |
 | `GET /api/datasets` | Manifest + reverse index of topics-per-dataset. | K5 |
 | `GET /api/datasets/{name}` | Stream the CSV file. | K5 |
-| `GET /api/users/{username}/snapshot` | Public progress snapshot. Reads aggregated completed/in-progress slugs from `UserProgress`. | K7; M1 — wired to real data |
+| `GET /api/users/{username}/snapshot` | Public progress snapshot. Reads aggregated completed/in-progress slugs from `UserProgress`. | K7; M1, wired to real data |
 | `GET /api/users/me/progress` | Full snapshot of the authenticated user's progress (bundle of per-topic slices). | M1 |
 | `PUT /api/users/me/progress/{slug}` | Upsert one topic's full progress slice. Last-write-wins on `client_updated_at`. | M1 |
-| `POST /api/users/me/progress/batch` | Batch upsert N topics — used on login when local storage is non-empty. | M1 |
-| `POST /api/auth/login` / `POST /api/auth/register` / `GET /api/auth/me` | Account flows. Login/register wired into the navbar's `AuthMenu` in M1; `/me` returns the JWT-validated current user. | seed-era; M1 — UI wired |
+| `POST /api/users/me/progress/batch` | Batch upsert N topics, used on login when local storage is non-empty. | M1 |
+| `POST /api/auth/login` / `POST /api/auth/register` / `GET /api/auth/me` | Account flows. Login/register wired into the navbar's `AuthMenu` in M1; `/me` returns the JWT-validated current user. | seed-era; M1, UI wired |
 | `POST /api/forks` | Create a fork of a topic, seeded from its `content.md`. 409 if the caller already forked it. | N |
 | `GET /api/forks/me` | The caller's forks. | N |
 | `GET /api/forks/{username}` | A user's public fork listing. | N |
-| `GET /api/forks/{username}/{slug}` | Read one fork — parsed into renderable blocks. | N |
+| `GET /api/forks/{username}/{slug}` | Read one fork, parsed into renderable blocks. | N |
 | `PUT /api/forks/{username}/{slug}` | Overwrite a fork's `markdown_source` (owner-only). | N |
 | `DELETE /api/forks/{username}/{slug}` | Delete a fork (owner-only). | N |
-| `POST /api/forks/preview` | Parse markdown without persisting — the editor's live preview. | N |
+| `POST /api/forks/preview` | Parse markdown without persisting, the editor's live preview. | N |
 | `POST /api/forks/{username}/{slug}/suggest` | Owner-only. Create / refresh the fork's pending merge-back suggestion; snapshots `markdown_source`. | O1 |
-| `GET /api/merge-backs` | ADMIN/EDITOR. Review queue — pending suggestions first, then resolved. | O1 |
+| `GET /api/merge-backs` | ADMIN/EDITOR. Review queue, pending suggestions first, then resolved. | O1 |
 | `GET /api/merge-backs/{id}` | ADMIN/EDITOR. One suggestion + `master_markdown` (current) + `suggested_markdown` for the diff. | O1 |
 | `POST /api/merge-backs/{id}/accept` | ADMIN/EDITOR. Replace master topic's blocks + rewrite seed `content.md`. | O1 |
 | `POST /api/merge-backs/{id}/reject` | ADMIN/EDITOR. Close the suggestion with an optional note. | O1 |
@@ -532,8 +532,8 @@ Visit any topic with this query string. Blocks the user has flagged with the con
 
 | Route | Component | Notes | Cycle |
 |---|---|---|---|
-| `/` | `Home` | Hero search, domain cards, top-topic chips | seed-era; L4 — search refactor |
-| `/explore` | `GraphExplorer` | Full graph + sidebar + chrome | seed-era; G + H — most of the polish |
+| `/` | `Home` | Hero search, domain cards, top-topic chips | seed-era; L4, search refactor |
+| `/explore` | `GraphExplorer` | Full graph + sidebar + chrome | seed-era; G + H, most of the polish |
 | `/topic/:slug` | `TopicView` | Zen surface; ScrollReader by default, `?mode=slides` flips to SlideView | I3 default; J4 stickiness fixes |
 | `/path` | `LearningPath` | "Find a path from X to Y" pair-pick UI | seed-era |
 | `/datasets` | `Datasets` | Dataset catalog with reverse-index | K5 |

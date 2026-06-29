@@ -2,7 +2,7 @@ title: "Likelihood"
 slug: likelihood
 domain: statistical-inference
 difficulty: intermediate
-summary: How well each candidate parameter explains the data you actually saw — probability read backwards.
+summary: How well each candidate parameter explains the data you actually saw, probability read backwards.
 prerequisites: [conditional-probability, random-variables]
 has_intuition_layer: true
 has_formal_layer: true

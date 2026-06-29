@@ -1,9 +1,9 @@
 /**
- * authStore — M1.
+ * authStore, M1.
  *
  * One place for "am I logged in, and as whom?" Persisted to localStorage
  * (key `alldata-auth`) so the token survives a refresh. The `request()`
- * wrapper in `api/client.ts` reads from `localStorage.getItem('token')` —
+ * wrapper in `api/client.ts` reads from `localStorage.getItem('token')`,
  * we keep that key in sync via the persist middleware so the wrapper
  * stays untouched.
  *
@@ -38,11 +38,13 @@ interface AuthState {
   login: (email: string, password: string) => Promise<void>
   register: (email: string, display_name: string, password: string) => Promise<void>
   logout: () => void
+  /** Y: re-fetch the signed-in user so role/profile changes reflect on reload. */
+  refreshUser: () => Promise<void>
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       token: null,
       user: null,
       authModalOpen: false,
@@ -52,7 +54,7 @@ export const useAuthStore = create<AuthState>()(
 
       login: async (email, password) => {
         const r = await api.login(email, password)
-        // Keep the legacy `token` localStorage key in sync — request()
+        // Keep the legacy `token` localStorage key in sync, request()
         // reads from it directly without going through the store.
         localStorage.setItem('token', r.access_token)
         set({ token: r.access_token, user: r.user, authModalOpen: false })
@@ -68,10 +70,22 @@ export const useAuthStore = create<AuthState>()(
         localStorage.removeItem('token')
         set({ token: null, user: null })
       },
+
+      refreshUser: async () => {
+        if (!get().token) return
+        try {
+          const u = await api.getMe()
+          set(s => ({ user: s.user ? { ...s.user, ...u } : u }))
+        } catch {
+          // 401/expired — drop the stale session so the UI reflects signed-out.
+          localStorage.removeItem('token')
+          set({ token: null, user: null })
+        }
+      },
     }),
     {
       name: 'alldata-auth',
-      // U0: persist only identity — never the transient modal flag (else the
+      // U0: persist only identity, never the transient modal flag (else the
       // sign-in modal would spring open on every refresh).
       partialize: (s) => ({ token: s.token, user: s.user }),
       // On rehydrate, mirror the persisted token back into the legacy

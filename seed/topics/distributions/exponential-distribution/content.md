@@ -8,19 +8,19 @@
 
 # Exponential distribution
 
-The Poisson counts *how many* events land in a window. The exponential answers the partner question: *how long until the next one?* Time until the next bus, the next radioactive decay, the next email — when events arrive at a steady average rate, the gap between them follows an **exponential distribution**. Like the Poisson, it has a single dial: the rate $\lambda$.
+The Poisson counts *how many* events land in a window. The exponential answers the partner question: *how long until the next one?* Time until the next bus, the next radioactive decay, the next email, when events arrive at a steady average rate, the gap between them follows an **exponential distribution**. Like the Poisson, it has a single dial: the rate $\lambda$.
 
 ---
 
 <!-- block: gear, n: 2, label: "One rate, and a long tail" -->
 
-The rate $\lambda$ is events per unit time; the **mean waiting time** is its reciprocal, $1/\lambda$. The density is tallest at $x = 0$ and decays from there — so the *next* event is most likely to come soon, short waits are common, and long waits get exponentially rarer but never impossible. That long right tail is why the mean $1/\lambda$ (the dashed marker) sits well to the right of the peak: a few long waits drag the average out.
+The rate $\lambda$ is events per unit time; the **mean waiting time** is its reciprocal, $1/\lambda$. The density is tallest at $x = 0$ and decays from there, so the *next* event is most likely to come soon, short waits are common, and long waits get exponentially rarer but never impossible. That long right tail is why the mean $1/\lambda$ (the dashed marker) sits well to the right of the peak: a few long waits drag the average out.
 
 ---
 
 <!-- block: gear, n: 3, label: "Dial the rate" -->
 
-Drag $\lambda$ and watch the curve. Crank the rate up and events come thick and fast — the curve crushes toward zero and the mean wait shrinks. Ease it down and the wait stretches out.
+Drag $\lambda$ and watch the curve. Crank the rate up and events come thick and fast, the curve crushes toward zero and the mean wait shrinks. Ease it down and the wait stretches out.
 
 <!-- block: state_reset, anchor: exp-feel -->
 
@@ -28,17 +28,17 @@ Drag $\lambda$ and watch the curve. Crank the rate up and events come thick and 
 binds: [rate]
 controls:
   - param: rate
-    label: "Rate (λ — events per unit time)"
+    label: "Rate (λ, events per unit time)"
     min: 0.3
     max: 3
     step: 0.1
 goal:
-  prompt: "Speed the events up until the average wait drops below half a time unit — push the rate past 2."
+  prompt: "Speed the events up until the average wait drops below half a time unit, push the rate past 2."
   target: { rate: 2 }
   success_when: "rate >= 2"
   on_success: |
     The mean wait is $1/\lambda$, so at $\lambda = 2$ the average gap is $0.5$.
-    Higher rate, shorter waits — the whole curve is squeezed toward zero. The
+    Higher rate, shorter waits, the whole curve is squeezed toward zero. The
     marker for the mean slides left in lockstep with $1/\lambda$.
 <!-- /block -->
 
@@ -56,7 +56,7 @@ Its defining signature is **memorylessness**: the chance of waiting at least ano
 
 $$P(X > s + t \mid X > s) = P(X > t).$$
 
-The exponential is the *only* continuous distribution with this property — the continuous echo of a coin that never remembers its last flip.
+The exponential is the *only* continuous distribution with this property, the continuous echo of a coin that never remembers its last flip.
 
 <!-- block: derivation, title: "Why the exponential is memoryless", collapsed: true -->
 The survival function is $P(X > t) = 1 - F(t) = e^{-\lambda t}$. So
@@ -88,7 +88,7 @@ extra = x[x > 2] - 2                          # remaining wait, given already pa
 print(f"\noverall mean {x.mean():.3f};  extra wait beyond 2 averages {extra.mean():.3f}  (still ~1)")
 ```
 
-The extra wait beyond time 2 averages the same as a fresh wait — the past is forgotten.
+The extra wait beyond time 2 averages the same as a fresh wait, the past is forgotten.
 
 ---
 
@@ -97,7 +97,7 @@ The extra wait beyond time 2 averages the same as a fresh wait — the past is f
 
 *Wrong:* the longer you've waited, the closer the next event has to be.
 
-*Correct:* memorylessness says the remaining wait has the *same* distribution no matter how long you've already stood there. A bus modeled as exponential is no more due at minute 20 than at minute 0. (Real buses run on schedules, so real waits *do* have memory — which is exactly why the exponential is the wrong model for them and the right model for truly random arrivals like decay.)
+*Correct:* memorylessness says the remaining wait has the *same* distribution no matter how long you've already stood there. A bus modeled as exponential is no more due at minute 20 than at minute 0. (Real buses run on schedules, so real waits *do* have memory, which is exactly why the exponential is the wrong model for them and the right model for truly random arrivals like decay.)
 <!-- /block -->
 
 ---
@@ -107,5 +107,5 @@ The extra wait beyond time 2 averages the same as a fresh wait — the past is f
 <!-- block: gear, n: 6, label: "Where it leads" -->
 
 <!-- block: callout, kind: insight -->
-**Where this leads.** The exponential is the continuous twin of the **Poisson**: the gaps between Poisson events are exponentially distributed. Add up $k$ independent exponential waits and you get the **gamma** distribution. And its memorylessness — a constant hazard rate — makes it the foundation of **queueing theory** and the baseline against which **survival analysis** measures everything else.
+**Where this leads.** The exponential is the continuous twin of the **Poisson**: the gaps between Poisson events are exponentially distributed. Add up $k$ independent exponential waits and you get the **gamma** distribution. And its memorylessness, a constant hazard rate, makes it the foundation of **queueing theory** and the baseline against which **survival analysis** measures everything else.
 <!-- /block -->

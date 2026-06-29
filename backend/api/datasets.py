@@ -1,4 +1,4 @@
-"""Dataset routes — K5.
+"""Dataset routes, K5.
 
 Serves curated CSVs from `seed/datasets/{name}.csv` and the manifest that
 catalogs them. The `/datasets` index page reads the listing endpoint to
@@ -58,7 +58,7 @@ async def list_datasets(db: DB):
 async def get_dataset(name: str):
     """Serve the CSV bytes for a named dataset.
 
-    `name` must match a file in `seed/datasets/{name}.csv`. Slug-shaped only —
+    `name` must match a file in `seed/datasets/{name}.csv`. Slug-shaped only,
     no path traversal allowed.
     """
     if not name.replace("-", "").replace("_", "").isalnum():

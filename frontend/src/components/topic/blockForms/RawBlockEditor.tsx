@@ -1,9 +1,9 @@
 /**
- * RawBlockEditor — X1. The universal escape hatch.
+ * RawBlockEditor, X1. The universal escape hatch.
  *
  * A plain textarea bound to a directive segment's *raw* source. It's the
  * fallback for any directive type that doesn't (yet) have a friendly form, and
- * the "Edit source" expander on every card — so an expert never loses raw
+ * the "Edit source" expander on every card, so an expert never loses raw
  * control, while a contributor never has to use it. Edits set the raw text in
  * place; the parent re-tokenizes on blur to refresh the card's label.
  */

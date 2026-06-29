@@ -1,4 +1,4 @@
-"""Content service — CRUD and versioning for topics and content blocks."""
+"""Content service, CRUD and versioning for topics and content blocks."""
 
 import uuid
 
@@ -168,7 +168,7 @@ async def delete_content_block(db: AsyncSession, block_id: uuid.UUID) -> bool:
 
 
 async def search_topics(db: AsyncSession, query: str, limit: int = 20) -> list[Topic]:
-    """Graph-aware search — returns topics matching the query.
+    """Graph-aware search, returns topics matching the query.
 
     Uses PostgreSQL trigram similarity for fuzzy matching.
     """

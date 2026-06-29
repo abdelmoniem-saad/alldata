@@ -2,7 +2,7 @@ title: "T-Tests"
 slug: t-tests
 domain: statistical-inference
 difficulty: intermediate
-summary: Comparing means when the population variance is unknown and the sample is small — the most-used test in practice.
+summary: Comparing means when the population variance is unknown and the sample is small, the most-used test in practice.
 prerequisites: [hypothesis-testing, t-distribution]
 has_intuition_layer: true
 has_formal_layer: true

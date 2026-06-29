@@ -2,7 +2,7 @@ title: "Chi-Squared Distribution"
 slug: chi-squared-distribution
 domain: distributions
 difficulty: intermediate
-summary: What you get when you square and sum standard normals — the distribution behind variance estimates and goodness-of-fit tests.
+summary: What you get when you square and sum standard normals, the distribution behind variance estimates and goodness-of-fit tests.
 prerequisites: [normal-distribution]
 has_intuition_layer: true
 has_formal_layer: true

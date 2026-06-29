@@ -2,7 +2,7 @@ title: "A/B Testing"
 slug: ab-testing
 domain: data-science-practice
 difficulty: intermediate
-summary: Designing and analyzing randomized experiments in practice — and resisting the temptation to peek.
+summary: Designing and analyzing randomized experiments in practice, and resisting the temptation to peek.
 prerequisites: [hypothesis-testing, p-values, confidence-intervals]
 has_intuition_layer: true
 has_formal_layer: true

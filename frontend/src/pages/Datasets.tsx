@@ -1,11 +1,11 @@
 /**
- * /datasets — K5.
+ * /datasets, K5.
  *
  * Flat catalog of every curated dataset shipped with the platform, plus a
  * reverse index of which topics use each one. Reads `GET /api/datasets`,
  * which merges `seed/datasets/manifest.yaml` with topic metadata.
  *
- * This is the smallest possible "data graph" surface — a list, not a force
+ * This is the smallest possible "data graph" surface, a list, not a force
  * graph. The full data graph (datasets ↔ methods) is deferred (vision doc's
  * later cycle) until enough datasets exist to make the graph meaningful.
  */

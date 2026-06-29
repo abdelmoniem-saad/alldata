@@ -1,5 +1,5 @@
 /**
- * codePairs — M5.
+ * codePairs, M5.
  *
  * Authors pair two code blocks (Python + R, typically) by giving them the
  * same `pair_id: <slug>` in their directive front-matter. The reader sees a
@@ -10,7 +10,7 @@
  * TourView) so the BlockRenderer dispatch stays one-block-per-call. This
  * helper walks the visible-block list and merges adjacent code blocks that
  * share a `pair_id`. Non-adjacent blocks with matching `pair_id`s do not
- * pair — keeping the grouping local prevents distant blocks from
+ * pair, keeping the grouping local prevents distant blocks from
  * accidentally swallowing intermediate content.
  *
  * The current pairing scope is "two adjacent code blocks." Triples or
@@ -26,7 +26,7 @@ export interface CodePair {
   kind: 'code_pair'
   pairId: string
   /**
-   * Two language variants. Order is `[first declared, second declared]` —
+   * Two language variants. Order is `[first declared, second declared]`,
    * which sets the visible tab order. Active tab selection is independent;
    * it's stored in `progressStore.preferredCodeLang`.
    */

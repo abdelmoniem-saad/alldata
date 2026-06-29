@@ -1,13 +1,13 @@
 /**
- * CodePairRenderer — M5.
+ * CodePairRenderer, M5.
  *
  * Renders a paired code block (two adjacent code blocks sharing a
  * `pair_id` directive field) as a single surface with a language tab on
- * top. Switching tabs swaps the code body in place — the runner output
+ * top. Switching tabs swaps the code body in place, the runner output
  * panel and Run button live in the underlying `CodeRunner` and re-mount
  * with the new code.
  *
- * Active language reads from `progressStore.preferredCodeLang` — one
+ * Active language reads from `progressStore.preferredCodeLang`, one
  * global preference. Clicking a tab flips it.
  */
 

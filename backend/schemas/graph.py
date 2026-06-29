@@ -67,7 +67,7 @@ class LearningPathResponse(BaseModel):
 # {topic, why_needed} shape so Zen drawers can speak the same visual
 # vocabulary as /explore (tick glyph + italic "because {reason}" line).
 # Direct edges carry a description; transitive prereqs from the CTE
-# surface without one, which is the right behavior — only the direct
+# surface without one, which is the right behavior, only the direct
 # dependency has a documented rationale.
 class PrerequisiteEntry(BaseModel):
     node: GraphNode

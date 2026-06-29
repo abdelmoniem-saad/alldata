@@ -14,7 +14,7 @@ export default function TopicView() {
   const { slug } = useParams<{ slug: string }>()
   const [topic, setTopic] = useState<TopicDetail | null>(null)
   // G8: prereq/leads-to endpoints return {node, why} so drawers can render
-  // "because {reason}" / "unlocks {reason}" under each row — same vocabulary
+  // "because {reason}" / "unlocks {reason}" under each row, same vocabulary
   // as /explore's sidebar.
   const [prerequisites, setPrerequisites] = useState<PrerequisiteEntry[]>([])
   const [leadsTo, setLeadsTo] = useState<PrerequisiteEntry[]>([])
@@ -53,7 +53,7 @@ export default function TopicView() {
 
   const scrollRef = useRef<HTMLDivElement | null>(null)
 
-  // Track reading progress — watches the scroll container rather than window
+  // Track reading progress, watches the scroll container rather than window
   // since the zen surface is a fixed-inset-0 scroll region, not the page body.
   const handleScroll = useCallback(() => {
     const el = scrollRef.current
@@ -105,7 +105,7 @@ export default function TopicView() {
       .then(forks => {
         if (!cancelled) setHasFork(forks.some(f => f.topic_slug === slug))
       })
-      .catch(() => { /* non-fatal — the chip just stays on "Fork this topic" */ })
+      .catch(() => { /* non-fatal, the chip just stays on "Fork this topic" */ })
     return () => { cancelled = true }
   }, [slug, token])
 
@@ -140,7 +140,7 @@ export default function TopicView() {
     }
   }, [slug, hasFork, forkBusy, navigate, user])
 
-  // Smart "next topic" — prefer has-content, not-completed, lowest difficulty.
+  // Smart "next topic", prefer has-content, not-completed, lowest difficulty.
   // G8: leadsTo entries are now {node, why}; we sort by node fields and then
   // surface the picked node as the `nextTopic` prop (unchanged shape).
   const nextTopic = useMemo(() => {
@@ -195,7 +195,7 @@ export default function TopicView() {
 
   return (
     <>
-      {/* Zen surface — fills the entire viewport. Behind the auto-hiding
+      {/* Zen surface, fills the entire viewport. Behind the auto-hiding
           navbar (layout renders it at zIndex 100; our surface is below). */}
       <div
         ref={scrollRef}
@@ -212,7 +212,7 @@ export default function TopicView() {
           topic.tour ? (
             // M (immersive tour): graph fills the viewport behind the
             // prose. The standard ScrollReader/SlideView surfaces don't
-            // apply — TourView owns its own layout.
+            // apply, TourView owns its own layout.
             <TourView
               blocks={topic.content_blocks}
               misconceptions={topic.misconceptions}
@@ -296,7 +296,7 @@ export default function TopicView() {
             />
           )
         ) : (
-          /* Empty topic — Coming Soon state, centered in the viewport */
+          /* Empty topic, Coming Soon state, centered in the viewport */
           <div style={{
             position: 'absolute',
             inset: 0,
@@ -342,7 +342,7 @@ export default function TopicView() {
         )}
       </div>
 
-      {/* Floating chrome — dim at rest, reveals on edge hover */}
+      {/* Floating chrome, dim at rest, reveals on edge hover */}
       <ZenChrome
         readProgress={readProgress}
         topicTitle={topic.title}

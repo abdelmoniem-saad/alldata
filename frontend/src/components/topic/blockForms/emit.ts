@@ -1,5 +1,5 @@
 /**
- * emit — X2. Canonical directive serializers for the block forms.
+ * emit, X2. Canonical directive serializers for the block forms.
  *
  * Each friendly form holds local field state and calls one of these to produce
  * the directive's *raw* text, mirroring the authored forms in `seed/topics` and

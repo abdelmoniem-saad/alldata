@@ -18,14 +18,14 @@ Two variables move together. By how much? The Pearson correlation $r$ takes that
 
 Plot $y$ against $x$. The cloud of points has a shape. **Correlation** measures how close that shape is to a straight line:
 
-- $r = +1$ — perfect positive linear relationship.
-- $r = -1$ — perfect negative linear relationship.
-- $r = 0$ — no *linear* relationship (the cloud could still have a clear nonlinear pattern; $r$ won't tell you).
+- $r = +1$, perfect positive linear relationship.
+- $r = -1$, perfect negative linear relationship.
+- $r = 0$, no *linear* relationship (the cloud could still have a clear nonlinear pattern; $r$ won't tell you).
 
 Two key limits to remember:
 
 - **Correlation is symmetric.** $r$ between $X$ and $Y$ is the same as between $Y$ and $X$. Causation isn't symmetric; correlation can't carry causal direction.
-- **Correlation only sees lines.** A perfect quadratic ($y = x^2$ on $[-1, 1]$) has $r = 0$ — there's a perfect deterministic relationship and Pearson's $r$ misses it entirely.
+- **Correlation only sees lines.** A perfect quadratic ($y = x^2$ on $[-1, 1]$) has $r = 0$, there's a perfect deterministic relationship and Pearson's $r$ misses it entirely.
 
 ---
 
@@ -51,7 +51,7 @@ goal:
   target: { slope: 0.7, intercept: 0.3 }
   success_when: "abs(slope - 0.7) < 0.1 and abs(intercept - 0.3) < 0.15"
   on_success: |
-    The slope you found is approximately $r \cdot (s_y / s_x)$ — the
+    The slope you found is approximately $r \cdot (s_y / s_x)$, the
     least-squares fit. Pearson's $r$ measures how *tight* the points hug the
     line; the slope tells you the line's *direction and steepness*. They
     answer different questions.
@@ -75,7 +75,7 @@ $$r = \frac{\sum_i (x_i - \bar{x})(y_i - \bar{y})}{\sqrt{\sum_i (x_i - \bar{x})^
 
 Both sit in $[-1, +1]$ by Cauchy–Schwarz.
 
-<!-- block: derivation, title: "Why $|\\rho| \\le 1$ — Cauchy–Schwarz", collapsed: true -->
+<!-- block: derivation, title: "Why $|\\rho| \\le 1$, Cauchy–Schwarz", collapsed: true -->
 For random variables $U = X - \mu_X$ and $V = Y - \mu_Y$,
 
 $$|\mathbb{E}[UV]|^2 \le \mathbb{E}[U^2] \cdot \mathbb{E}[V^2]$$
@@ -88,7 +88,7 @@ Take square roots and divide:
 
 $$|\rho| = \frac{|\text{Cov}(X, Y)|}{\sigma_X \sigma_Y} \le 1$$
 
-Equality iff $V = a U$ for some constant $a$ — i.e., $Y$ is a perfect linear function of $X$.
+Equality iff $V = a U$ for some constant $a$, i.e., $Y$ is a perfect linear function of $X$.
 <!-- /block -->
 
 ---
@@ -103,9 +103,9 @@ np.random.seed(42)
 n = 200
 
 # Three relationships, three correlations:
-#   1. y = 0.7x + noise — strong positive linear, r ≈ 0.85
-#   2. y = -0.5x + noise — moderate negative linear, r ≈ -0.7
-#   3. y = x² — perfect quadratic, r ≈ 0 (Pearson can't see it)
+#   1. y = 0.7x + noise, strong positive linear, r ≈ 0.85
+#   2. y = -0.5x + noise, moderate negative linear, r ≈ -0.7
+#   3. y = x², perfect quadratic, r ≈ 0 (Pearson can't see it)
 x1 = np.random.uniform(-2, 2, n)
 y1 = 0.7 * x1 + np.random.normal(0, 0.5, n)
 
@@ -127,7 +127,7 @@ print(f"quadratic:        r = {np.corrcoef(x3, y3)[0, 1]:+.4f}  ← perfect rela
 <!-- block: gear, n: 6, label: "Where it leads" -->
 
 <!-- block: callout, kind: insight -->
-**Where this leads.** **Simple linear regression** uses correlation as a building block: the OLS slope is $r \cdot (s_y / s_x)$. **Multiple regression** generalizes to multiple predictors and partial correlations. **Causal inference** picks up where correlation gives up — $r$ tells you *that* two variables move together; causal methods try to tell you *why*.
+**Where this leads.** **Simple linear regression** uses correlation as a building block: the OLS slope is $r \cdot (s_y / s_x)$. **Multiple regression** generalizes to multiple predictors and partial correlations. **Causal inference** picks up where correlation gives up, $r$ tells you *that* two variables move together; causal methods try to tell you *why*.
 <!-- /block -->
 
 ---
@@ -137,5 +137,5 @@ print(f"quadratic:        r = {np.corrcoef(x3, y3)[0, 1]:+.4f}  ← perfect rela
 
 *Wrong:* if $r$ is high, $X$ causes $Y$ (or vice versa).
 
-*Correct:* high correlation can come from $X \to Y$, from $Y \to X$, from a common cause $Z$, or from a selection bias in how the sample was collected. Correlation is symmetric; causation isn't. The classic gotchas — ice cream sales correlate with drowning deaths (both driven by summer); shoe size correlates with vocabulary in children (both driven by age) — are correlation without direct causation. To get causation you need experimental data (random assignment) or a careful causal model. Pearson's $r$ alone never gets you there.
+*Correct:* high correlation can come from $X \to Y$, from $Y \to X$, from a common cause $Z$, or from a selection bias in how the sample was collected. Correlation is symmetric; causation isn't. The classic gotchas, ice cream sales correlate with drowning deaths (both driven by summer); shoe size correlates with vocabulary in children (both driven by age), are correlation without direct causation. To get causation you need experimental data (random assignment) or a careful causal model. Pearson's $r$ alone never gets you there.
 <!-- /block -->

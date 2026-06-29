@@ -1,5 +1,5 @@
 /**
- * RecallPrompt — K3.
+ * RecallPrompt, K3.
  *
  * Surfaced above the prose on a topic page when the topic is due-for-review
  * (per `progressStore.reviewSchedule`) and not yet reviewed in this session.

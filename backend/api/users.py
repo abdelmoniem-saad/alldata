@@ -1,4 +1,4 @@
-"""User snapshot routes — K7 (M1: wired to real progress).
+"""User snapshot routes, K7 (M1: wired to real progress).
 
 Returns a public graph snapshot for a named user: their completed and
 in-progress slug sets, plus public profile metadata (display_name only).
@@ -36,7 +36,7 @@ async def get_user_snapshot(username: str, db: DB):
     norm = username.lower().replace("-", " ").replace("_", " ").strip()
 
     # Match on a few sensible candidates. We intentionally don't expose the
-    # email or any other PII — the lookup is fuzzy on display_name and an
+    # email or any other PII, the lookup is fuzzy on display_name and an
     # email-local-part shortcut.
     result = await db.execute(
         select(User).where(
@@ -52,7 +52,7 @@ async def get_user_snapshot(username: str, db: DB):
         raise HTTPException(status_code=404, detail=f"user '{username}' not found")
 
     # M1: aggregate completed + in-progress slugs from the user's
-    # UserProgress rows. Only the two slug lists are exposed publicly —
+    # UserProgress rows. Only the two slug lists are exposed publicly,
     # decision events, review schedule, and confusion flags stay private to
     # the owner (and don't make sense in a "look at someone's progress map"
     # surface anyway).

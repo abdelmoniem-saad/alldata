@@ -1,9 +1,9 @@
 /**
- * blockForms — the per-directive editor router.
+ * blockForms, the per-directive editor router.
  *
  * `renderBlockEditor` picks the friendly form for a directive segment, falling
  * back to the raw-source escape hatch for the heavier types (decision,
- * playground, step_through, dataset) — so a contributor never sees plumbing on
+ * playground, step_through, dataset), so a contributor never sees plumbing on
  * the common blocks, and an expert keeps raw control on the rest. BlockCard
  * stays unchanged regardless.
  */
@@ -39,7 +39,7 @@ export function renderBlockEditor(props: BlockEditorProps): ReactNode {
     case 'code_python':
     case 'code_r': return <CodeForm {...props} />
     case 'plot': return <PlotForm {...props} />
-    // decision / playground / step_through / dataset — raw escape hatch.
+    // decision / playground / step_through / dataset, raw escape hatch.
     default: return <RawBlockEditor segment={props.segment} onChange={props.onChange} onBlur={props.onBlur} />
   }
 }

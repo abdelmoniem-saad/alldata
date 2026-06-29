@@ -1,10 +1,10 @@
 /**
- * PlotPicker — W2.
+ * PlotPicker, W2.
  *
  * The marquee of the fork authoring studio: a modal that surfaces the whole
  * plot library so an author *sees what's available and chooses*, rather than
  * memorizing spec names. Picking a plot inserts a canonical `state` + `plot`
- * directive pair (via `plotScaffold`) at the editor cursor — so it renders in
+ * directive pair (via `plotScaffold`) at the editor cursor, so it renders in
  * the live preview immediately and reacts to its bound state.
  *
  * Rendered through a portal to `document.body` (like the auth modal, V0) so the
@@ -63,7 +63,7 @@ export default function PlotPicker({ onPick, onClose }: Props) {
           <button type="button" className="plot-picker__close" onClick={onClose} aria-label="Close">×</button>
         </div>
         <p className="plot-picker__hint">
-          Choose a plot — it drops in a <code>state</code> + <code>plot</code> pair you can edit,
+          Choose a plot, it drops in a <code>state</code> + <code>plot</code> pair you can edit,
           and renders live in the preview.
         </p>
 
@@ -97,7 +97,7 @@ export default function PlotPicker({ onPick, onClose }: Props) {
                 type="button"
                 className="plot-picker__item"
                 onClick={pickGraphView}
-                title="Inserts a graph_view tour step — edit the target to a domain or topic slug"
+                title="Inserts a graph_view tour step, edit the target to a domain or topic slug"
               >
                 <span className="plot-picker__item-label">Immersive graph view (tour step)</span>
                 <span className="plot-picker__item-meta">

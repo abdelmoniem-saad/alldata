@@ -1,22 +1,22 @@
 /**
- * syncOrchestrator — M1.
+ * syncOrchestrator, M1.
  *
  * One module owns the sync rhythm so `progressStore` stays a pure data
  * store. The orchestrator is bootstrapped once at `App` level via
  * `startSyncOrchestrator()` and subscribes to:
  *
- *   1. `authStore` — token presence drives pull / push enablement.
+ *   1. `authStore`, token presence drives pull / push enablement.
  *      - login (token appears) → pull `/me/progress` + push every local
  *        topic that has a non-trivial slice.
  *      - logout (token disappears) → cancel any pending debounced push;
  *        keep local state intact (offline mode resumes).
  *
- *   2. `progressStore.topicUpdatedAt` — a per-topic wall-clock of the most
+ *   2. `progressStore.topicUpdatedAt`, a per-topic wall-clock of the most
  *      recent local mutation. When a topic's timestamp ticks, queue it for
  *      a debounced push. Multiple topics touched in the same window all
  *      go out together when the debounce fires.
  *
- *   3. `window.focus` — pull `/me/progress` to catch other-device updates.
+ *   3. `window.focus`, pull `/me/progress` to catch other-device updates.
  *      Skipped if last pull was <30s ago (cheap reconciliation, not a
  *      poll).
  *
@@ -39,12 +39,12 @@ let unsubs: Array<() => void> = []
 // Track per-topic snapshot of `topicUpdatedAt` to detect deltas.
 let lastTopicUpdatedAt: Record<string, number> = {}
 
-/** Initialize the orchestrator. Idempotent — calling twice tears down the
+/** Initialize the orchestrator. Idempotent, calling twice tears down the
  *  first set of subscriptions before installing the second. */
 export function startSyncOrchestrator() {
   stopSyncOrchestrator()
 
-  // 1. Auth subscription — token presence drives pull + initial push.
+  // 1. Auth subscription, token presence drives pull + initial push.
   const unsubAuth = useAuthStore.subscribe((state, prev) => {
     const tokenAppeared = !prev.token && state.token
     const tokenDisappeared = prev.token && !state.token
@@ -57,7 +57,7 @@ export function startSyncOrchestrator() {
   })
   unsubs.push(unsubAuth)
 
-  // 2. Progress subscription — detect which topics ticked since last call.
+  // 2. Progress subscription, detect which topics ticked since last call.
   const unsubProgress = useProgressStore.subscribe((state) => {
     const cur = state.topicUpdatedAt ?? {}
     for (const slug in cur) {
@@ -75,7 +75,7 @@ export function startSyncOrchestrator() {
   // brand-new mutations.
   lastTopicUpdatedAt = { ...(useProgressStore.getState().topicUpdatedAt ?? {}) }
 
-  // 3. Focus subscription — cheap reconciliation.
+  // 3. Focus subscription, cheap reconciliation.
   const onFocus = () => {
     if (!useAuthStore.getState().token) return
     if (Date.now() - lastPullAt < FOCUS_PULL_COOLDOWN_MS) return
@@ -124,7 +124,7 @@ async function flushPush() {
     try {
       await api.putTopicProgress(payload)
     } catch (err) {
-      // Network or auth failure — re-queue the topic so the next push
+      // Network or auth failure, re-queue the topic so the next push
       // attempt picks it up. Don't log a stack trace for the common case
       // (offline, token expired).
       dirtySlugs.add(slug)

@@ -1,7 +1,7 @@
-/* ForkEditor — N (fork model). Two-pane editor styling. */
+/* ForkEditor, N (fork model). Two-pane editor styling. */
 
 .fork-editor {
-  /* In-flow, not `position: fixed` — fills <main> (which is `flex: 1` below
+  /* In-flow, not `position: fixed`, fills <main> (which is `flex: 1` below
      the sticky header), so the editor sits *with* the page chrome instead of
      overlaying the viewport. `min-height: 0` lets the inner panes own the
      scroll; `100%` resolves against main's flex height, staying dynamic as the
@@ -263,7 +263,7 @@
   padding: 0 10px 10px;
   border-top: 1px solid var(--color-border-subtle);
 }
-/* Layer markers are tiny structural hints — render compact and dimmed. */
+/* Layer markers are tiny structural hints, render compact and dimmed. */
 .block-card[data-type='layer'] {
   background: transparent;
   border-style: dashed;

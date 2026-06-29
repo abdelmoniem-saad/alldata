@@ -1,5 +1,5 @@
 /**
- * Plot-spec catalog — W2.
+ * Plot-spec catalog, W2.
  *
  * Single source of truth for the *metadata* about each plot spec: its human
  * label, which group it belongs to, and the `state` keys it reads with sane
@@ -9,7 +9,7 @@
  *     canonical `state` + `plot` directive pair via `plotScaffold`.
  *
  * The *renderers* live in `components/topic/blocks/plots/index.tsx` (`PLOT_SPECS`).
- * Keep this catalog's keys in lock-step with that registry — same discipline as
+ * Keep this catalog's keys in lock-step with that registry, same discipline as
  * the frontend `PLOT_SPECS` / importer `_KNOWN_PLOT_SPECS` mirror. The defaults
  * here mirror each spec's `num(state, key, fallback)` fallbacks and the
  * canonical authored examples in `seed/topics`.
@@ -18,7 +18,7 @@
 export type ParamValue = number | string
 
 export interface PlotSpecMeta {
-  /** Registry key — must match a key in `PLOT_SPECS`. */
+  /** Registry key, must match a key in `PLOT_SPECS`. */
   name: string
   /** Human description (also the plot's a11y label). */
   label: string
@@ -26,7 +26,7 @@ export interface PlotSpecMeta {
   group: string
   /** Default state values seeded into the inserted `state` block. */
   params: Record<string, ParamValue>
-  /** State keys the spec reads — the inserted `plot` directive's `binds`. */
+  /** State keys the spec reads, the inserted `plot` directive's `binds`. */
   binds: string[]
 }
 
@@ -120,7 +120,7 @@ function inlineParams(params: Record<string, ParamValue>): string {
 }
 
 /**
- * The canonical `state` + `plot` directive pair for a spec — mirrors the
+ * The canonical `state` + `plot` directive pair for a spec, mirrors the
  * authored form in `seed/topics` (e.g. t-distribution/content.md). `anchor`
  * should be unique within the topic; the picker passes a generated slug.
  */

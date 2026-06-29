@@ -1,9 +1,9 @@
 /**
- * ForkEditorToolbar — W1.
+ * ForkEditorToolbar, W1.
  *
  * Insert-assist for the fork editor's plain-text `content.md`. Each button
  * drops a *canonical* directive scaffold (mirroring `docs/authoring.md`) at
- * the cursor, or wraps the selection for inline marks — so a contributor
+ * the cursor, or wraps the selection for inline marks, so a contributor
  * doesn't have to memorize the `<!-- block: … -->` vocabulary. The source
  * stays plain markdown (merge-back diffs depend on that); this is assist,
  * not a WYSIWYG editor. The "Plot" button defers to the W2 picker.
@@ -70,14 +70,14 @@ const STATE = `<!-- block: state, values: {param: 0} -->`
 const DIRECTIVE_REFERENCE = [
   'Directive reference (see docs/authoring.md):',
   '',
-  'state      — declare values: {key: n}',
-  'plot       — spec + binds, reacts to state (use Plot…)',
-  'gear       — a section divider / slide title',
-  'decision   — ask → commit → consequence',
-  'playground — sliders bound to state, with a goal',
-  'simulation — runnable python code block',
-  'callout    — insight / aside / warning',
-  'misconception — inline wrong-belief → correction',
+  'state, declare values: {key: n}',
+  'plot, spec + binds, reacts to state (use Plot…)',
+  'gear, a section divider / slide title',
+  'decision, ask → commit → consequence',
+  'playground, sliders bound to state, with a goal',
+  'simulation, runnable python code block',
+  'callout, insight / aside / warning',
+  'misconception, inline wrong-belief → correction',
   '',
   'Plain markdown (## headings, **bold**, lists) works too.',
 ].join('\n')
@@ -108,7 +108,7 @@ export default function ForkEditorToolbar({ onInsertBlock, onWrap, onInsertPlot 
       <Btn label="B" title="Bold (wraps selection)" onClick={() => onWrap('**', '**')} />
       <Btn label="i" title="Italic (wraps selection)" onClick={() => onWrap('*', '*')} />
       <Sep />
-      <Btn label="Section" title="Section divider (gear marker — a scroll divider / slide title)"
+      <Btn label="Section" title="Section divider (gear marker, a scroll divider / slide title)"
         onClick={() => onInsertBlock('<!-- block: gear, n: 1, label: "Section label" -->')} />
       <Btn label="Callout" title="Insight / aside / warning callout" onClick={() => onInsertBlock(CALLOUT)} />
       <Btn label="Misconception" title="Inline wrong-belief → correction" onClick={() => onInsertBlock(MISCONCEPTION)} />
@@ -118,7 +118,7 @@ export default function ForkEditorToolbar({ onInsertBlock, onWrap, onInsertPlot 
       <Btn label="Simulation" title="Runnable Python code block" onClick={() => onInsertBlock(SIMULATION)} />
       <Sep />
       <Btn label="State" title="Declare state values (bound by plots / playgrounds)" onClick={() => onInsertBlock(STATE)} />
-      {onInsertPlot && <Btn label="Plot…" title="Insert a visualization — pick from the plot library" onClick={onInsertPlot} />}
+      {onInsertPlot && <Btn label="Plot…" title="Insert a visualization, pick from the plot library" onClick={onInsertPlot} />}
       <span className="fork-tb__spacer" aria-hidden />
       <button type="button" className="fork-tb__btn fork-tb__help" title={DIRECTIVE_REFERENCE} aria-label="Directive reference">
         ? reference

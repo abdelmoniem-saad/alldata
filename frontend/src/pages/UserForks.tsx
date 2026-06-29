@@ -1,8 +1,8 @@
 /**
- * UserForks — N (fork model).
+ * UserForks, N (fork model).
  *
  * Card grid of a user's forks at `/u/:username/forks`. The `:username`
- * segment may be the literal `me` — resolved to the signed-in user, who
+ * segment may be the literal `me`, resolved to the signed-in user, who
  * then gets edit/delete affordances. Anyone else's listing is read-only.
  */
 

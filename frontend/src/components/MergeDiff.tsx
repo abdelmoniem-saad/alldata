@@ -1,5 +1,5 @@
 /**
- * MergeDiff — O1.
+ * MergeDiff, O1.
  *
  * Unified line diff between a master topic's current `content.md` and a
  * fork's suggested replacement. Green-tinted added lines, red-tinted

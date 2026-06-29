@@ -1,4 +1,4 @@
-"""Tests for parse_content_md — the most load-bearing function in the repo.
+"""Tests for parse_content_md, the most load-bearing function in the repo.
 
 Every lesson, fork save, and merge-back preview routes through this parser.
 S5: previously validated only by running the full importer; these are direct
@@ -126,7 +126,7 @@ class TestStrictGuards:
         assert any("'sigma'" in w and "binds" in w for w in warnings)
 
     def test_todo_gear_label_warns(self):
-        _, warnings = parse('<!-- block: gear, n: 1, label: "TODO — name the spark" -->\n\nProse.')
+        _, warnings = parse('<!-- block: gear, n: 1, label: "TODO, name the spark" -->\n\nProse.')
         assert any("placeholder label" in w for w in warnings)
 
     def test_todo_scaffold_body_warns(self):
@@ -140,7 +140,7 @@ class TestStrictGuards:
         )
         blocks, warnings = parse(text)
         assert any("deprecated `quiz`" in w for w in warnings)
-        # Still parses (non-strict imports keep working) — just loudly.
+        # Still parses (non-strict imports keep working), just loudly.
         assert "quiz" in types(blocks)
 
     def test_clean_modern_lesson_has_no_warnings(self):

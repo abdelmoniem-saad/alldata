@@ -16,7 +16,7 @@ class BlockType(str, enum.Enum):
     QUIZ = "quiz"  # Micro-challenge / proof of understanding
     IMAGE = "image"
     INTERACTIVE = "interactive"
-    # I — Dynamic Topic View
+    # I, Dynamic Topic View
     PLOT = "plot"  # Reactive D3 plot bound to TopicState keys
     STEP_THROUGH = "step_through"  # Numbered reveal sequence
     CALLOUT = "callout"  # Insight / warning / aside panel
@@ -58,9 +58,9 @@ class ContentBlock(Base):
     hint: Mapped[str | None] = mapped_column(Text, nullable=True)
     solution: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    # I — Dynamic Topic View
-    # `anchor` — slug used by the ScrollReader to pin viz / target navigation.
-    # `meta` — JSON-serialized dict of directive params (plot spec/binds, callout kind,
+    # I, Dynamic Topic View
+    # `anchor`, slug used by the ScrollReader to pin viz / target navigation.
+    # `meta`, JSON-serialized dict of directive params (plot spec/binds, callout kind,
     #          derivation title/collapsed, step_through steps, decision options, playground
     #          controls/goal, state defaults). Convention follows `simulation_config` (Text
     #          holding JSON) rather than introducing a JSONB column on a SQLite-friendly schema.

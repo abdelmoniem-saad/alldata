@@ -1,4 +1,4 @@
-"""Course routes — create, fork, and manage courses."""
+"""Course routes, create, fork, and manage courses."""
 
 import uuid
 

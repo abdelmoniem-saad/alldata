@@ -1,4 +1,4 @@
-"""Wire shapes for merge-back — O1."""
+"""Wire shapes for merge-back, O1."""
 
 import uuid
 from datetime import datetime

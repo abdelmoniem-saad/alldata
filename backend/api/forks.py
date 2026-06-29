@@ -1,4 +1,4 @@
-"""Fork routes — N (fork model).
+"""Fork routes, N (fork model).
 
 A fork is a user's editable copy of one topic. Any authenticated user can
 fork any topic; forks are public via `/u/{username}/topic/{slug}`.
@@ -91,7 +91,7 @@ def _parse_markdown(markdown: str, topic_name: str) -> tuple[
     misconceptions: list[ForkMisconception] = []
     for i, b in enumerate(parsed):
         if b.get("block_type") == "misconception":
-            # Legacy non-inline misconception — parsed dict has a distinct
+            # Legacy non-inline misconception, parsed dict has a distinct
             # shape (title / wrong_belief / correction / why_common).
             misconceptions.append(ForkMisconception(
                 id=f"m{i}",
@@ -153,7 +153,7 @@ async def _fork_detail(
 @router.post("", response_model=ForkOut, status_code=status.HTTP_201_CREATED)
 async def create_fork(data: ForkCreateIn, user: CurrentUser, db: DB) -> ForkOut:
     """Fork a topic. Seeds the fork's `markdown_source` from the master's
-    `content.md`. 409 if the caller already forked this topic — the body
+    `content.md`. 409 if the caller already forked this topic, the body
     carries the existing fork so the frontend can redirect to it.
     """
     try:
@@ -180,7 +180,7 @@ async def list_my_forks(user: CurrentUser, db: DB) -> list[ForkSummary]:
     out: list[ForkSummary] = []
     for fork, topic in rows:
         # O1: per-fork latest suggestion status for the card chip. N+1 is
-        # fine here — a typical user's fork count is small. Optimize when
+        # fine here, a typical user's fork count is small. Optimize when
         # fork volume warrants.
         status = await merge_service.latest_status_for_fork(db, fork.id)
         out.append(ForkSummary(
@@ -198,7 +198,7 @@ async def list_my_forks(user: CurrentUser, db: DB) -> list[ForkSummary]:
 
 @router.post("/preview", response_model=ForkPreviewOut)
 async def preview_fork(data: ForkPreviewIn, user: CurrentUser) -> ForkPreviewOut:
-    """Parse markdown without persisting — the editor's live-preview pane.
+    """Parse markdown without persisting, the editor's live-preview pane.
     Auth-required so anonymous traffic can't use it as a free parser.
     """
     blocks, misconceptions, warnings = _parse_markdown(data.markdown_source, "preview")
@@ -211,7 +211,7 @@ async def preview_fork(data: ForkPreviewIn, user: CurrentUser) -> ForkPreviewOut
 
 @router.get("/{username}", response_model=list[ForkSummary])
 async def list_user_forks(username: str, db: DB) -> list[ForkSummary]:
-    """A user's public fork listing. Open — no auth required."""
+    """A user's public fork listing. Open, no auth required."""
     rows = await fork_service.list_user_forks(db, username)
     if rows is None:
         raise HTTPException(status_code=404, detail=f"user '{username}' not found")
@@ -233,7 +233,7 @@ async def list_user_forks(username: str, db: DB) -> list[ForkSummary]:
 
 @router.get("/{username}/{slug}", response_model=ForkDetail)
 async def get_fork(username: str, slug: str, db: DB) -> ForkDetail:
-    """Read one fork — parsed into renderable blocks. Open — no auth."""
+    """Read one fork, parsed into renderable blocks. Open, no auth."""
     result = await fork_service.get_fork(db, username, slug)
     if result is None:
         raise HTTPException(status_code=404, detail="fork not found")
@@ -274,7 +274,7 @@ async def suggest_merge_back(
 ) -> MergeBackSummary:
     """Create or refresh a fork's pending merge-back suggestion. Owner-only.
 
-    Snapshots the fork's *saved* `markdown_source` — owners save first,
+    Snapshots the fork's *saved* `markdown_source`, owners save first,
     then suggest. One pending suggestion per fork; calling this while one
     is already pending updates that suggestion's snapshot in place
     (treats it as the owner revising their proposal).

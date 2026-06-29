@@ -45,7 +45,7 @@ class TestCreateFork:
         assert exc.value.existing.id == first.id
 
     async def test_seed_topic_fork_carries_real_source(self, db, test_user):
-        # A slug that exists on disk under seed/topics — the fork should be
+        # A slug that exists on disk under seed/topics, the fork should be
         # seeded with the actual content.md, not an empty string.
         await _topic(db, "variance", test_user.id, domain="probability-foundations")
         fork, _ = await fork_service.create_fork(db, test_user.id, "variance")

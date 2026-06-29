@@ -1,9 +1,9 @@
-/* AllData — Futuristic Design System */
+/* AllData, Futuristic Design System */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=STIX+Two+Text:ital,wght@0,400..700;1,400..700&display=swap');
 
 :root {
-  /* Color system — Laboratory Monolith (Monochrome base) */
+  /* Color system, Laboratory Monolith (Monochrome base) */
   --color-bg: #050505;          /* Inky black */
   --color-bg-secondary: #0d0d0d;
   --color-bg-tertiary: #141414;
@@ -21,10 +21,10 @@
   --color-accent-subtle: rgba(20, 184, 166, 0.08);
   --color-accent-glow: rgba(20, 184, 166, 0.2);
 
-  /* H1: Domain colors — muted jewel tones pair with G's pattern vocabulary.
+  /* H1: Domain colors, muted jewel tones pair with G's pattern vocabulary.
      The zinc ramp alone read as "five shades of gray with squiggles" at the
      11–28px node scale; hue + pattern together is belt + suspenders.
-     Desaturated on purpose — keeps the Laboratory Monolith feel rather than
+     Desaturated on purpose, keeps the Laboratory Monolith feel rather than
      Skittles. Each hue also differs in luminance so achromatopsia still
      leaves them distinguishable (pattern is the secondary signal there). */
   --color-probability: #6b9bd1;   /* muted steel blue */
@@ -46,7 +46,7 @@
   --color-error-bg: rgba(239, 68, 68, 0.08);
   --color-error-border: rgba(239, 68, 68, 0.2);
 
-  /* Glass effect — Hairline Precision */
+  /* Glass effect, Hairline Precision */
   --glass-bg: rgba(5, 5, 5, 0.85);
   --glass-bg-opaque: rgba(5, 5, 5, 0.95);
   --glass-border: rgba(255, 255, 255, 0.1);
@@ -92,7 +92,7 @@
   --color-overlay: rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.1);
 
-  /* H1: Light-mode domain palette — same five hues as dark mode, pulled
+  /* H1: Light-mode domain palette, same five hues as dark mode, pulled
      darker so they hold against white surfaces. Luminance ordering of the
      five hues is preserved so the pattern vocabulary reads consistently
      across themes. */
@@ -117,7 +117,7 @@
 }
 
 /* V2: user-selectable high-contrast theme (a deliberate choice, beyond T3's
- * OS `prefers-contrast` bump). Dark-based — pure black ground, near-white text
+ * OS `prefers-contrast` bump). Dark-based, pure black ground, near-white text
  * at every step, strong always-visible borders, a brighter accent, and domain
  * hues both brightened and spread across luminance so they stay separable at
  * the 11–28px node scale and for low-vision/color-blind readers. (Full
@@ -169,17 +169,17 @@
  * T3: the muted/secondary text steps sit below WCAG AA on their backgrounds
  * (dark muted #52525b on #050505; light muted #a1a1aa on #fdfdfd). When the
  * OS asks for more contrast, lift them one zinc step toward the foreground.
- * Token-only overrides — every consumer inherits it, fully reversible.
+ * Token-only overrides, every consumer inherits it, fully reversible.
  */
 @media (prefers-contrast: more) {
   :root {
     --color-text-secondary: #d4d4d8; /* zinc-300 */
-    --color-text-muted: #a1a1aa;     /* zinc-400 — was zinc-600 */
+    --color-text-muted: #a1a1aa;     /* zinc-400, was zinc-600 */
     --color-border-subtle: #52525b;
   }
   [data-theme='light'] {
     --color-text-secondary: #3f3f46; /* zinc-700 */
-    --color-text-muted: #52525b;     /* zinc-600 — was zinc-400 */
+    --color-text-muted: #52525b;     /* zinc-600, was zinc-400 */
     --color-border-subtle: #d4d4d8;
   }
 }
@@ -215,7 +215,7 @@ a:hover {
   color: var(--color-accent-hover);
 }
 
-/* Scrollbar — minimal */
+/* Scrollbar, minimal */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
@@ -331,7 +331,7 @@ pre {
    Pattern carries domain. Hue stays zinc. The five patterns remain
    distinguishable in grayscale (Achromatopsia-safe) and at small sizes
    where the zinc ramp collapses. Keep these in sync with DOMAIN_DASH /
-   DOMAIN_TICK in lib/domain.ts — same vocabulary, different media. */
+   DOMAIN_TICK in lib/domain.ts, same vocabulary, different media. */
 .spine-stripe {
   position: absolute;
   left: 0; top: 0; bottom: 0;
@@ -369,13 +369,13 @@ pre {
   );
 }
 
-/* Right-edge variant — same patterns, anchored to the right edge. */
+/* Right-edge variant, same patterns, anchored to the right edge. */
 .spine-stripe.spine-stripe-right {
   left: auto;
   right: 0;
 }
 
-/* Tick glyph for inline labels. Decorative — never a screen-reader anchor. */
+/* Tick glyph for inline labels. Decorative, never a screen-reader anchor. */
 .domain-tick {
   font-family: var(--font-mono);
   letter-spacing: -1px;
@@ -407,7 +407,7 @@ pre {
 }
 .glow-ring:hover::before { opacity: 0.85; }
 
-/* Button variant — release the overflow clip so the halo is visible, and
+/* Button variant, release the overflow clip so the halo is visible, and
    preserve the ripple's rounded corners without needing overflow:hidden. */
 .btn.glow-ring {
   overflow: visible;
@@ -460,7 +460,7 @@ pre {
   z-index: 50;
 }
 .zen-bottom-bar::before {
-  /* Extended hover catch-zone — cursor within 80px of bottom reveals the bar. */
+  /* Extended hover catch-zone, cursor within 80px of bottom reveals the bar. */
   content: '';
   position: absolute;
   top: -80px; left: 0; right: 0; height: 80px;
@@ -470,7 +470,7 @@ pre {
 .zen-bottom-bar:focus-within { opacity: 1; }
 
 /* H2: single consolidated left drawer. 360px panel holds prereqs + leads-to
-   + next-topic. Right drawer deleted. No hard border line — the backdrop
+   + next-topic. Right drawer deleted. No hard border line, the backdrop
    blur is the drawer's visual frame. A soft box-shadow gives the edge just
    enough anchoring without reading as chrome.
    (Original Z4.3/Z4.4 width was 320px with a 1px border-right; widening and
@@ -489,7 +489,7 @@ pre {
 }
 .zen-drawer-left {
   left: 0;
-  /* No border-right — the hard 1px seam was the user-reported "white line."
+  /* No border-right, the hard 1px seam was the user-reported "white line."
      A 6px 20% shadow fades outward from the content-side edge, anchoring the
      drawer visually without drawing a line across the reading surface. */
   box-shadow: 4px 0 24px rgba(0, 0, 0, 0.18);
@@ -498,7 +498,7 @@ pre {
 .zen-drawer-left:hover,
 .zen-drawer-left:focus-within { transform: translateX(0); }
 
-/* The peek chevron at the drawer's edge — visible when drawer is closed. */
+/* The peek chevron at the drawer's edge, visible when drawer is closed. */
 .zen-drawer-peek {
   position: absolute;
   top: 50%;
@@ -662,4 +662,18 @@ pre {
   .domain-grid {
     grid-template-columns: 1fr !important;
   }
+}
+
+/* Y: revisit jump — brief pulse when a flagged block is scrolled into view. */
+@keyframes block-flash {
+  0%   { background: transparent; box-shadow: 0 0 0 0 var(--color-accent-glow); }
+  20%  { background: var(--color-accent-subtle); box-shadow: -6px 0 0 0 var(--color-accent); }
+  100% { background: transparent; box-shadow: 0 0 0 0 transparent; }
+}
+.block-flash {
+  animation: block-flash 1.7s ease-out;
+  border-radius: var(--radius);
+}
+@media (prefers-reduced-motion: reduce) {
+  .block-flash { animation: none; outline: 2px solid var(--color-accent); outline-offset: 4px; }
 }
