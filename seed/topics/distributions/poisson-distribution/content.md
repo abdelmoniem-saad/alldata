@@ -74,7 +74,7 @@ The falling factorial $\frac{n!}{(n-k)!} \approx n^k$ cancels the $n^k$ in the d
 
 <!-- block: gear, n: 5, label: "Mean equals variance, checked" -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: poisson-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: poisson-sim, layer: both, pair_id: poisson-sim -->
 ```python
 import numpy as np
 
@@ -84,6 +84,17 @@ for lam in [1, 4, 9]:
     x = rng.poisson(lam, 500_000)
     print(f"lambda={lam}:  mean={x.mean():.3f}  var={x.var():.3f}  "
           f"P(0)={np.mean(x == 0):.4f} (=e^-lambda {np.exp(-lam):.4f})")
+```
+
+<!-- block: code_r, pair_id: poisson-sim, editable: true, layer: both -->
+```r
+# Draw Poisson counts and confirm mean ~ variance ~ lambda, and P(0) = e^-lambda.
+set.seed(0)
+for (lam in c(1, 4, 9)) {
+  x <- rpois(500000, lam)
+  cat(sprintf("lambda=%d:  mean=%.3f  var=%.3f  P(0)=%.4f (=e^-lambda %.4f)\n",
+              lam, mean(x), mean((x - mean(x))^2), mean(x == 0), exp(-lam)))
+}
 ```
 
 Mean and variance both land on $\lambda$, the equidispersion signature.

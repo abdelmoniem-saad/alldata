@@ -109,7 +109,7 @@ By symmetry of intersection, the same gives $P(B \mid A) = P(B)$ when $P(A) > 0$
 
 <!-- block: gear, n: 5, label: "Checking joint = product" -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: indep-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: indep-sim, layer: both, pair_id: indep-sim -->
 ```python
 import numpy as np
 
@@ -134,6 +134,30 @@ if abs(p_woman_and_stats - p_woman * p_stats) < 1e-9:
     print("Independent.")
 else:
     print(f"NOT independent, diff = {p_woman_and_stats - p_woman * p_stats:+.4f}")
+```
+
+<!-- block: code_r, pair_id: indep-sim, editable: true, layer: both -->
+```r
+# Build a 100-student class matching the decision setup. Then check whether
+# gender and 'studies statistics' are independent.
+# 30 women-stats, 20 women-not, 20 men-stats, 30 men-not
+gender  <- c(rep("F", 50), rep("M", 50))
+studies <- c(rep("S", 30), rep("N", 20), rep("S", 20), rep("N", 30))
+
+p_woman <- mean(gender == "F")
+p_stats <- mean(studies == "S")
+p_woman_and_stats <- mean(gender == "F" & studies == "S")
+
+cat(sprintf("P(woman):            %.4f\n", p_woman))
+cat(sprintf("P(stats):            %.4f\n", p_stats))
+cat(sprintf("P(woman AND stats):  %.4f\n", p_woman_and_stats))
+cat(sprintf("P(woman) * P(stats): %.4f\n", p_woman * p_stats))
+cat("\n")
+if (abs(p_woman_and_stats - p_woman * p_stats) < 1e-9) {
+  cat("Independent.\n")
+} else {
+  cat(sprintf("NOT independent, diff = %+.4f\n", p_woman_and_stats - p_woman * p_stats))
+}
 ```
 
 ---

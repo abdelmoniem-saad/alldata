@@ -127,10 +127,19 @@ function BottomBar(props: Props) {
           border: '1px solid var(--color-border-subtle)',
           flexShrink: 0,
         }}>
-          {(['intuition', 'formal', 'both'] as const).map(layer => (
+          {/* #2: "All" first (the default), then the two narrower reads.
+              All = everything with formal sections expanded; Intuition folds
+              formal sections away (still expandable inline); Formal = the
+              rigorous slice. */}
+          {([['both', 'All'], ['intuition', 'Intuition'], ['formal', 'Formal']] as const).map(([layer, label]) => (
             <button
               key={layer}
               onClick={() => setActiveLayer(layer)}
+              title={
+                layer === 'both' ? 'Everything, formal sections expanded'
+                  : layer === 'intuition' ? 'Gentle path — formal sections folded away (expand any in place)'
+                  : 'The rigorous slice — formal + shared, intuition-only hidden'
+              }
               style={{
                 padding: '5px 12px',
                 borderRadius: 6,
@@ -141,12 +150,11 @@ function BottomBar(props: Props) {
                 fontWeight: activeLayer === layer ? 600 : 500,
                 cursor: 'pointer',
                 transition: 'all var(--transition-smooth)',
-                textTransform: 'capitalize',
                 fontFamily: 'var(--font-mono)',
                 letterSpacing: '0.3px',
               }}
             >
-              {layer === 'both' ? 'All' : layer}
+              {label}
             </button>
           ))}
         </div>

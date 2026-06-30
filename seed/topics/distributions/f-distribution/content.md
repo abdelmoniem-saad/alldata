@@ -68,7 +68,7 @@ Each chi-squared over its degrees of freedom has mean 1, since $\mathbb{E}[\chi^
 
 <!-- block: gear, n: 5, label: "Build it from chi-squareds" -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: f-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: f-sim, layer: both, pair_id: f-sim -->
 ```python
 import numpy as np
 
@@ -80,6 +80,21 @@ for d1, d2 in [(5, 10), (10, 30), (20, 20)]:
     F = (U / d1) / (V / d2)
     print(f"F({d1},{d2}):  mean={F.mean():.3f} (d₂/(d₂-2)={d2/(d2-2):.3f})   "
           f"median≈{np.median(F):.3f}")
+```
+
+<!-- block: code_r, pair_id: f-sim, editable: true, layer: both -->
+```r
+# Build F directly: two independent chi-squareds, each divided by its df, ratioed.
+set.seed(0)
+N <- 400000
+for (dd in list(c(5, 10), c(10, 30), c(20, 20))) {
+  d1 <- dd[1]; d2 <- dd[2]
+  U <- numeric(N); for (j in seq_len(d1)) U <- U + rnorm(N)^2
+  V <- numeric(N); for (j in seq_len(d2)) V <- V + rnorm(N)^2
+  Fst <- (U / d1) / (V / d2)
+  cat(sprintf("F(%d,%d):  mean=%.3f (d2/(d2-2)=%.3f)   median~%.3f\n",
+              d1, d2, mean(Fst), d2/(d2-2), median(Fst)))
+}
 ```
 
 The mean sits just above 1 at $d_2/(d_2-2)$; the median is even closer to 1.

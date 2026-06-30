@@ -37,6 +37,11 @@ export default function BlockListEditor({ value, onChange }: Props) {
   const lastEmitted = useRef(value)
   // The prose <textarea> the cursor is in, bold/italic wraps act on it.
   const focused = useRef<{ i: number; el: HTMLTextAreaElement } | null>(null)
+  // #6: drag-and-drop reorder. `dragIndex` is the row being dragged, `overIndex`
+  // the current drop target (for the drop-line indicator). The ↑/↓ buttons stay
+  // for keyboard / precise moves.
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [overIndex, setOverIndex] = useState<number | null>(null)
 
   // Re-derive only when `value` changes *externally* (load, Source-mode edit,
   // mode switch). Our own edits set `lastEmitted` first, so they don't reparse
@@ -73,6 +78,15 @@ export default function BlockListEditor({ value, onChange }: Props) {
 
   const move = (i: number, dir: -1 | 1) => emit(moveSegment(segments, i, dir))
   const remove = (i: number) => emit(removeSegment(segments, i))
+
+  // #6: move a segment to an arbitrary index (drag-and-drop drop target).
+  const moveTo = (from: number, to: number) => {
+    if (from === to) return
+    const next = segments.slice()
+    const [item] = next.splice(from, 1)
+    next.splice(from < to ? to - 1 : to, 0, item)
+    emit(next)
+  }
 
   // Insert a directive/heading snippet after the active block (or at the end),
   // keeping a blank line of separation from the previous segment.
@@ -113,14 +127,15 @@ export default function BlockListEditor({ value, onChange }: Props) {
       />
       <div className="block-list__items">
         {segments.map((seg, i) => {
+          // Whitespace/`---` spacers aren't draggable rows — render as before.
+          if (seg.kind === 'prose' && isSpacer(seg.raw)) {
+            return <div key={i} className={seg.raw.includes('---') ? 'block-list__rule' : 'block-list__gap'} aria-hidden />
+          }
+          let content
           if (seg.kind === 'prose') {
-            if (isSpacer(seg.raw)) {
-              return <div key={i} className={seg.raw.includes('---') ? 'block-list__rule' : 'block-list__gap'} aria-hidden />
-            }
             const rows = Math.max(2, Math.min(24, seg.raw.replace(/\n+$/, '').split('\n').length))
-            return (
+            content = (
               <textarea
-                key={i}
                 className="block-list__prose"
                 value={seg.raw}
                 rows={rows}
@@ -131,19 +146,48 @@ export default function BlockListEditor({ value, onChange }: Props) {
                 onBlur={() => commitSegment(i)}
               />
             )
+          } else {
+            content = (
+              <BlockCard
+                segment={seg}
+                isFirst={i === 0}
+                isLast={i === segments.length - 1}
+                onMove={dir => move(i, dir)}
+                onRemove={() => remove(i)}
+                onChangeRaw={raw => setDirectiveRaw(i, raw)}
+                onReplaceRaw={raw => emit(replaceSegmentRaw(segments, i, raw))}
+                onCommit={() => commitSegment(i)}
+                onOpenPlotPicker={() => { setActiveIndex(i); setPickerOpen(true) }}
+              />
+            )
           }
           return (
-            <BlockCard
+            <div
               key={i}
-              segment={seg}
-              isFirst={i === 0}
-              isLast={i === segments.length - 1}
-              onMove={dir => move(i, dir)}
-              onRemove={() => remove(i)}
-              onChangeRaw={raw => setDirectiveRaw(i, raw)}
-              onCommit={() => commitSegment(i)}
-              onOpenPlotPicker={() => { setActiveIndex(i); setPickerOpen(true) }}
-            />
+              className="block-row"
+              data-dragging={dragIndex === i}
+              data-over={overIndex === i && dragIndex !== null && dragIndex !== i}
+              onDragOver={e => { if (dragIndex !== null) { e.preventDefault(); if (overIndex !== i) setOverIndex(i) } }}
+              onDrop={e => {
+                e.preventDefault()
+                // Source index travels in dataTransfer — robust against React's
+                // async state (the drop handler can't rely on a fresh closure).
+                const from = Number(e.dataTransfer.getData('text/plain'))
+                if (!Number.isNaN(from)) moveTo(from, i)
+                setDragIndex(null); setOverIndex(null)
+              }}
+            >
+              <span
+                className="block-row__handle"
+                draggable
+                onDragStart={e => { setDragIndex(i); e.dataTransfer.setData('text/plain', String(i)); e.dataTransfer.effectAllowed = 'move' }}
+                onDragEnd={() => { setDragIndex(null); setOverIndex(null) }}
+                role="button"
+                aria-label="Drag to reorder"
+                title="Drag to reorder"
+              >⠿</span>
+              <div className="block-row__content">{content}</div>
+            </div>
           )
         })}
         {segments.length === 0 && (

@@ -76,7 +76,7 @@ The total area is $\int_{-\infty}^{\infty} \frac{1}{\sigma\sqrt{2\pi}} e^{-(x-\m
 
 <!-- block: gear, n: 5, label: "The empirical rule, checked" -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: normal-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: normal-sim, layer: both, pair_id: normal-sim -->
 ```python
 import numpy as np
 
@@ -90,6 +90,21 @@ for k in (1, 2, 3):
 y = rng.normal(50, 8, 1_000_000)          # N(mu=50, sigma=8)
 z = (y - 50) / 8
 print(f"standardized mean={z.mean():.3f}, sd={z.std():.3f}  (≈ 0, 1)")
+```
+
+<!-- block: code_r, pair_id: normal-sim, editable: true, layer: both -->
+```r
+# Draw from N(0,1) and confirm the 68-95-99.7 rule directly.
+set.seed(0)
+x <- rnorm(1000000, 0, 1)
+for (k in c(1, 2, 3)) {
+  frac <- mean(abs(x) < k)
+  cat(sprintf("within %d sigma: %.2f%%\n", k, frac*100))
+}
+# z-score: standardizing any normal lands on N(0,1).
+y <- rnorm(1000000, 50, 8)              # N(mu=50, sigma=8)
+z <- (y - 50) / 8
+cat(sprintf("standardized mean=%.3f, sd=%.3f  (~ 0, 1)\n", mean(z), sd(z)))
 ```
 
 ---

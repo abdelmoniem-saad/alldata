@@ -75,7 +75,7 @@ Garbage in, garbage out is not a cliché here: a type error or a stray sentinel 
 
 <!-- block: gear, n: 5, label: "Clean a messy export" -->
 
-<!-- block: code_python, editable: true, auto_run: true, anchor: dw-code -->
+<!-- block: code_python, editable: true, auto_run: true, anchor: dw-code, layer: both, pair_id: dw-code -->
 ```python
 import pandas as pd
 import numpy as np
@@ -99,6 +99,29 @@ clean["rating"] = clean["rating"].replace(-999, np.nan)
 print("clean:\n", clean, "\n")
 print(f"mean rating  raw (with -999): {raw['rating'].mean():8.1f}")
 print(f"mean rating  cleaned        : {clean['rating'].mean():8.2f}")
+```
+
+<!-- block: code_r, pair_id: dw-code, editable: true, layer: both -->
+```r
+# A messy export: prices as strings with $ and commas, ratings using -999 as
+# a 'no rating' sentinel. Exactly what tends to land on your desk.
+raw <- data.frame(
+  product = c("A", "B", "C", "D", "E"),
+  price   = c("$1,200", "$950", "N/A", "$3,400", "$780"),
+  rating  = c(4.5, -999, 3.9, 4.1, -999),
+  stringsAsFactors = FALSE
+)
+cat("raw 'price' class:", class(raw$price), "(stored as text!)\n\n")
+
+clean <- raw
+# 1) Parse price: strip $ and commas, coerce to number ('N/A' -> NA).
+clean$price <- suppressWarnings(as.numeric(gsub("[$,]", "", clean$price)))
+# 2) The -999 sentinel is missing in disguise, make it a real NA.
+clean$rating[clean$rating == -999] <- NA
+
+cat("clean:\n"); print(clean); cat("\n")
+cat(sprintf("mean rating  raw (with -999): %8.1f\n", mean(raw$rating)))
+cat(sprintf("mean rating  cleaned        : %8.2f\n", mean(clean$rating, na.rm = TRUE)))
 ```
 
 The raw mean rating is a nonsensical negative number; once the sentinel becomes `NaN`, the real average (~4.2) appears. One sentinel, one wrecked statistic.

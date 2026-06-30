@@ -98,7 +98,7 @@ $$P(A \cup B) = [P(A) - P(A \cap B)] + P(A \cap B) + [P(B) - P(A \cap B)] = P(A)
 
 <!-- block: gear, n: 5, label: "50,000 die rolls" -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: dice-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: dice-sim, layer: both, pair_id: dice-sim -->
 ```python
 import numpy as np
 
@@ -115,6 +115,23 @@ print(f"P(even):       {is_even.mean():.4f}  (theoretical 3/6 = 0.5000)")
 print(f"P(>3):         {is_gt3.mean():.4f}  (theoretical 3/6 = 0.5000)")
 print(f"P(even OR >3): {is_either.mean():.4f}  (theoretical 4/6 = 0.6667)")
 print(f"P(even AND >3): {(is_even & is_gt3).mean():.4f}  (theoretical 2/6 = 0.3333)")
+```
+
+<!-- block: code_r, pair_id: dice-sim, editable: true, layer: both -->
+```r
+# Simulate the union question. P(even OR > 3), should land near 4/6 ~ 0.667.
+set.seed(42)
+n_rolls <- 50000
+rolls <- sample(1:6, n_rolls, replace = TRUE)
+
+is_even <- rolls %% 2 == 0
+is_gt3 <- rolls > 3
+is_either <- is_even | is_gt3
+
+cat(sprintf("P(even):        %.4f  (theoretical 3/6 = 0.5000)\n", mean(is_even)))
+cat(sprintf("P(>3):          %.4f  (theoretical 3/6 = 0.5000)\n", mean(is_gt3)))
+cat(sprintf("P(even OR >3):  %.4f  (theoretical 4/6 = 0.6667)\n", mean(is_either)))
+cat(sprintf("P(even AND >3): %.4f  (theoretical 2/6 = 0.3333)\n", mean(is_even & is_gt3)))
 ```
 
 ---

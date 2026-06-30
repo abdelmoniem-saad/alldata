@@ -109,7 +109,7 @@ The first term is $\text{Var}(\hat{\theta})$. The middle term is zero because $\
 
 <!-- block: dataset, name: heights, source: synthetic -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: pe-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: pe-sim, layer: both, pair_id: pe-sim -->
 ```python
 import numpy as np
 
@@ -138,6 +138,32 @@ def var(est): return est.var()
 print(f"  bias    var     MSE     decomposition")
 print(f"A: {bias(A, mu_true):+.4f}  {var(A):.4f}  {mse(A, mu_true):.4f}  ({bias(A,mu_true)**2 + var(A):.4f})")
 print(f"B: {bias(B, mu_true):+.4f}  {var(B):.4f}  {mse(B, mu_true):.4f}  ({bias(B,mu_true)**2 + var(B):.4f})")
+```
+
+<!-- block: code_r, pair_id: pe-sim, editable: true, layer: both -->
+```r
+# Two estimators on the same draws: A unbiased high-variance, B biased low-variance.
+# Watch their MSE behavior over many simulated samples.
+set.seed(42)
+mu_true <- 5; sigma <- 2; n <- 20
+
+n_sims <- 5000
+A <- numeric(n_sims); B <- numeric(n_sims)
+for (i in seq_len(n_sims)) {
+  sample_i <- rnorm(n, mu_true, sigma)
+  A[i] <- mean(sample_i)                  # unbiased, var = sigma^2/n = 0.2
+  B[i] <- mean(sample_i) * 0.9 + 0.5      # biased toward 0.5 + 0.9mu, lower var
+}
+
+mse  <- function(est, truth) mean((est - truth)^2)
+bias <- function(est, truth) mean(est) - truth
+varp <- function(est) mean((est - mean(est))^2)
+
+cat("  bias    var     MSE     decomposition\n")
+cat(sprintf("A: %+.4f  %.4f  %.4f  (%.4f)\n",
+            bias(A, mu_true), varp(A), mse(A, mu_true), bias(A, mu_true)^2 + varp(A)))
+cat(sprintf("B: %+.4f  %.4f  %.4f  (%.4f)\n",
+            bias(B, mu_true), varp(B), mse(B, mu_true), bias(B, mu_true)^2 + varp(B)))
 ```
 
 ---

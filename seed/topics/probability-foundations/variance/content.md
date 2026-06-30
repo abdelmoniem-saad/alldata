@@ -75,7 +75,7 @@ You could measure spread with mean *absolute* deviation $\mathbb{E}|X - \mu|$, a
 
 <!-- block: gear, n: 4, label: "Two ways to the same number" -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: var-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: var-sim, layer: both, pair_id: var-sim -->
 ```python
 import numpy as np
 
@@ -89,6 +89,22 @@ for name, x in [("calm", calm), ("wild", wild)]:
     v2 = np.mean(x**2) - x.mean()**2          # E[X^2] - (E[X])^2
     print(f"{name}: mean={x.mean():.2f}  var={v1:.2f}  "
           f"(check {v2:.2f})  sd={np.sqrt(v1):.2f}")
+```
+
+<!-- block: code_r, pair_id: var-sim, editable: true, layer: both -->
+```r
+# Same mean, different variance, and the two formulas agree.
+set.seed(0)
+calm <- rnorm(200000, 6, 2)     # Fund A: mean 6, sd 2
+wild <- rnorm(200000, 6, 10)    # Fund B: mean 6, sd 10
+
+for (nm in c("calm", "wild")) {
+  x <- if (nm == "calm") calm else wild
+  v1 <- mean((x - mean(x))^2)            # E[(X-mu)^2]
+  v2 <- mean(x^2) - mean(x)^2            # E[X^2] - (E[X])^2
+  cat(sprintf("%s: mean=%.2f  var=%.2f  (check %.2f)  sd=%.2f\n",
+              nm, mean(x), v1, v2, sqrt(v1)))
+}
 ```
 
 Both means land near 6; the variances and standard deviations are worlds apart, and the two formulas match.

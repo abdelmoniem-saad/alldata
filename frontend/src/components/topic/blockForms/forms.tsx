@@ -7,12 +7,16 @@
  * (decision / playground / step_through / dataset) fall back to the raw hatch
  * in `index.tsx`.
  */
-import { ReactNode, useState } from 'react'
+import { ReactNode, useState, useMemo } from 'react'
 import { DirectiveSegment } from '../../../lib/contentDoc'
 import {
   singleLine, multiLine, codeBlock, inlineObj, inlineArr,
-  parseInlineObj, parseInlineArr,
+  parseInlineObj, parseInlineArr, KV,
 } from './emit'
+import {
+  DecisionModel, PlaygroundModel,
+  emitDecisionBody, parseDecisionBody, emitPlaygroundBody, parsePlaygroundBody,
+} from './yaml'
 
 export interface FormProps {
   segment: DirectiveSegment
@@ -272,6 +276,160 @@ export function PlotForm({ segment, onChange, onBlur }: FormProps) {
         </Field>
       ))}
       {s.rows.length === 0 && <p className="block-form__hint">No parameters.</p>}
+    </div>
+  )
+}
+
+// Reusable key/value rows (decision `writes`, playground `goal.target`).
+function KVRows({ rows, onChange, addLabel }: { rows: KV[]; onChange: (r: KV[]) => void; addLabel: string }) {
+  return (
+    <>
+      {rows.map((r, i) => (
+        <div key={i} className="block-form__kv">
+          <input value={r.key} placeholder="key"
+            onChange={e => onChange(rows.map((x, j) => (j === i ? { ...x, key: e.target.value } : x)))} />
+          <input value={r.value} placeholder="value"
+            onChange={e => onChange(rows.map((x, j) => (j === i ? { ...x, value: e.target.value } : x)))} />
+          <button type="button" className="block-card__btn block-card__btn--danger"
+            onClick={() => onChange(rows.filter((_, j) => j !== i))} aria-label="Remove value">✕</button>
+        </div>
+      ))}
+      <button type="button" className="block-card__btn" onClick={() => onChange([...rows, { key: '', value: '' }])}>{addLabel}</button>
+    </>
+  )
+}
+
+// ── decision (#6) ─────────────────────────────────────────────────────────────
+export function DecisionForm({ segment, onChange, onBlur }: FormProps) {
+  const anchor = attrStr(segment, 'anchor') || undefined
+  const parsed = useMemo(() => parseDecisionBody(segment.body), []) // parse once on mount
+  const [raw, setRaw] = useState(parsed === null)
+  const [body, setBody] = useState(segment.body)
+  const [model, setModel] = useState<DecisionModel>(
+    parsed ?? { question: '', options: [{ id: 'a', label: '', writes: [], response: '' }], correct: 'a' },
+  )
+  const emitM = (m: DecisionModel) => { setModel(m); onChange(multiLine('decision', [['anchor', anchor]], emitDecisionBody(m))) }
+  const setOpt = (i: number, patch: Partial<DecisionModel['options'][number]>) =>
+    emitM({ ...model, options: model.options.map((o, j) => (j === i ? { ...o, ...patch } : o)) })
+
+  if (raw) {
+    return (
+      <div className="block-form" onBlur={onBlur}>
+        <p className="block-form__hint">
+          Decision (YAML).{' '}
+          <button type="button" className="block-form__link"
+            onClick={() => { const p = parseDecisionBody(body); if (p) { setModel(p); setRaw(false) } }}>
+            Use the form
+          </button>
+        </p>
+        <textarea rows={12} value={body} spellCheck={false}
+          onChange={e => { setBody(e.target.value); onChange(multiLine('decision', [['anchor', anchor]], e.target.value)) }} />
+      </div>
+    )
+  }
+  return (
+    <div className="block-form" onBlur={onBlur}>
+      <Field label="Question (commit before reading on)">
+        <textarea rows={3} value={model.question} onChange={e => emitM({ ...model, question: e.target.value })} />
+      </Field>
+      {model.options.map((o, i) => (
+        <div key={i} className="block-form__sub">
+          <div className="block-form__sub-head">
+            <input className="block-form__id" value={o.id} placeholder="id" onChange={e => setOpt(i, { id: e.target.value })} />
+            <input style={{ flex: 1 }} value={o.label} placeholder="Option label" onChange={e => setOpt(i, { label: e.target.value })} />
+            <button type="button" className="block-card__btn block-card__btn--danger"
+              onClick={() => emitM({ ...model, options: model.options.filter((_, j) => j !== i) })} aria-label="Remove option">✕</button>
+          </div>
+          <span className="block-form__label">Writes (state this option sets)</span>
+          <KVRows rows={o.writes} addLabel="+ write" onChange={w => setOpt(i, { writes: w })} />
+          <span className="block-form__label">Response (shown after picking)</span>
+          <textarea rows={3} value={o.response} onChange={e => setOpt(i, { response: e.target.value })} />
+        </div>
+      ))}
+      <button type="button" className="block-card__btn"
+        onClick={() => emitM({ ...model, options: [...model.options, { id: String.fromCharCode(97 + model.options.length), label: '', writes: [], response: '' }] })}>
+        + option
+      </button>
+      <Field label="Correct option">
+        <select value={model.correct} onChange={e => emitM({ ...model, correct: e.target.value })}>
+          {model.options.map(o => <option key={o.id} value={o.id}>{o.id}{o.label ? `: ${o.label.slice(0, 22)}` : ''}</option>)}
+        </select>
+      </Field>
+      <button type="button" className="block-form__link" onClick={() => { setBody(emitDecisionBody(model)); setRaw(true) }}>Edit YAML directly</button>
+    </div>
+  )
+}
+
+// ── playground (#6) ───────────────────────────────────────────────────────────
+export function PlaygroundForm({ segment, onChange, onBlur }: FormProps) {
+  const anchor = attrStr(segment, 'anchor') || undefined
+  const parsed = useMemo(() => parsePlaygroundBody(segment.body), [])
+  const [raw, setRaw] = useState(parsed === null)
+  const [body, setBody] = useState(segment.body)
+  const [model, setModel] = useState<PlaygroundModel>(
+    parsed ?? {
+      binds: ['param'],
+      controls: [{ param: 'param', label: '', min: '0', max: '10', step: '1' }],
+      goal: { prompt: '', target: [], successWhen: '', onSuccess: '' },
+    },
+  )
+  const emitM = (m: PlaygroundModel) => { setModel(m); onChange(multiLine('playground', [['anchor', anchor]], emitPlaygroundBody(m))) }
+  const setCtl = (i: number, patch: Partial<PlaygroundModel['controls'][number]>) =>
+    emitM({ ...model, controls: model.controls.map((c, j) => (j === i ? { ...c, ...patch } : c)) })
+  const setGoal = (patch: Partial<PlaygroundModel['goal']>) => emitM({ ...model, goal: { ...model.goal, ...patch } })
+
+  if (raw) {
+    return (
+      <div className="block-form" onBlur={onBlur}>
+        <p className="block-form__hint">
+          Playground (YAML).{' '}
+          <button type="button" className="block-form__link"
+            onClick={() => { const p = parsePlaygroundBody(body); if (p) { setModel(p); setRaw(false) } }}>
+            Use the form
+          </button>
+        </p>
+        <textarea rows={12} value={body} spellCheck={false}
+          onChange={e => { setBody(e.target.value); onChange(multiLine('playground', [['anchor', anchor]], e.target.value)) }} />
+      </div>
+    )
+  }
+  return (
+    <div className="block-form" onBlur={onBlur}>
+      {model.controls.map((c, i) => (
+        <div key={i} className="block-form__sub">
+          <div className="block-form__sub-head">
+            <input className="block-form__id" value={c.param} placeholder="param" onChange={e => setCtl(i, { param: e.target.value })} />
+            <input style={{ flex: 1 }} value={c.label} placeholder="Slider label" onChange={e => setCtl(i, { label: e.target.value })} />
+            <button type="button" className="block-card__btn block-card__btn--danger"
+              onClick={() => emitM({ ...model, controls: model.controls.filter((_, j) => j !== i) })} aria-label="Remove control">✕</button>
+          </div>
+          <div className="block-form__kv3">
+            <label>min<input value={c.min} onChange={e => setCtl(i, { min: e.target.value })} /></label>
+            <label>max<input value={c.max} onChange={e => setCtl(i, { max: e.target.value })} /></label>
+            <label>step<input value={c.step} onChange={e => setCtl(i, { step: e.target.value })} /></label>
+          </div>
+        </div>
+      ))}
+      <button type="button" className="block-card__btn"
+        onClick={() => emitM({ ...model, controls: [...model.controls, { param: '', label: '', min: '0', max: '10', step: '1' }] })}>
+        + control
+      </button>
+      <Field label="Bound state keys (comma-separated)">
+        <input value={model.binds.join(', ')}
+          onChange={e => emitM({ ...model, binds: e.target.value.split(',').map(t => t.trim()).filter(Boolean) })} />
+      </Field>
+      <Field label="Goal prompt (what to aim for)">
+        <textarea rows={2} value={model.goal.prompt} onChange={e => setGoal({ prompt: e.target.value })} />
+      </Field>
+      <span className="block-form__label">Target (state values that count as success)</span>
+      <KVRows rows={model.goal.target} addLabel="+ target" onChange={t => setGoal({ target: t })} />
+      <Field label="Success when (expression, optional)">
+        <input value={model.goal.successWhen} onChange={e => setGoal({ successWhen: e.target.value })} placeholder="e.g. abs(sigma - 0.8) < 0.1" />
+      </Field>
+      <Field label="On success (message)">
+        <textarea rows={2} value={model.goal.onSuccess} onChange={e => setGoal({ onSuccess: e.target.value })} />
+      </Field>
+      <button type="button" className="block-form__link" onClick={() => { setBody(emitPlaygroundBody(model)); setRaw(true) }}>Edit YAML directly</button>
     </div>
   )
 }

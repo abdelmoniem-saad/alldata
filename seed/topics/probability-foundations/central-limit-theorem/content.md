@@ -105,7 +105,7 @@ That's the characteristic function of $N(0, 1)$. Lévy's continuity theorem turn
 
 <!-- block: gear, n: 5, label: "Watching the bell emerge" -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: clt-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: clt-sim, layer: both, pair_id: clt-sim -->
 ```python
 import numpy as np
 import matplotlib.pyplot as plt
@@ -135,6 +135,30 @@ for idx, n in enumerate([2, 10, 50]):
 
 plt.tight_layout()
 plt.show()
+```
+
+<!-- block: code_r, pair_id: clt-sim, editable: true, layer: both -->
+```r
+# Pick a heavily non-normal population (exponential) and watch the sample
+# means of size n approach normality as n grows.
+set.seed(42)
+n_samples <- 5000
+pop_mean <- 2.0   # exponential(rate=0.5) has mean 2
+
+par(mfrow = c(1, 4))
+pop <- rexp(10000, rate = 1/pop_mean)
+hist(pop, breaks = 50, col = "#71717a", border = NA, freq = FALSE,
+     main = "Population (exponential)", xlab = "")
+abline(v = pop_mean, col = "#14b8a6", lty = 2)
+
+for (n in c(2, 10, 50)) {
+  means <- replicate(n_samples, mean(rexp(n, rate = 1/pop_mean)))
+  hist(means, breaks = 50, col = "#d4d4d8", border = NA, freq = FALSE,
+       main = sprintf("Sample means, n=%d", n), xlab = "")
+  xs <- seq(min(means), max(means), length.out = 200)
+  lines(xs, dnorm(xs, pop_mean, pop_mean / sqrt(n)), col = "#14b8a6", lwd = 2)
+  abline(v = pop_mean, col = "#14b8a6", lty = 2)
+}
 ```
 
 ---

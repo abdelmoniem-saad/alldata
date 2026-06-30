@@ -97,7 +97,7 @@ For pathological functions (rare in practice but real in measure theory), some "
 
 <!-- block: gear, n: 5, label: "Two RVs on one experiment" -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: rv-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: rv-sim, layer: both, pair_id: rv-sim -->
 ```python
 import numpy as np
 import matplotlib.pyplot as plt
@@ -125,6 +125,24 @@ plt.show()
 
 print(f"E[X] = {x.mean():.4f}  (theoretical 3.5)")
 print(f"E[Y] = {y.mean():.4f}  (theoretical 0.5)")
+```
+
+<!-- block: code_r, pair_id: rv-sim, editable: true, layer: both -->
+```r
+# Simulate two random variables on the same experiment: roll a die.
+# X = the number; Y = is_even.
+set.seed(42)
+n <- 10000
+rolls <- sample(1:6, n, replace = TRUE)
+x <- rolls
+y <- as.integer(rolls %% 2 == 0)
+
+par(mfrow = c(1, 2))
+barplot(table(x), col = "#14b8a6", border = NA, main = "X = roll value", xlab = "value")
+barplot(table(y), col = "#14b8a6", border = NA, main = "Y = is_even", xlab = "value")
+
+cat(sprintf("E[X] = %.4f  (theoretical 3.5)\n", mean(x)))
+cat(sprintf("E[Y] = %.4f  (theoretical 0.5)\n", mean(y)))
 ```
 
 ---

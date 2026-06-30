@@ -63,7 +63,7 @@ Picture each penalty as a constraint region the coefficients must stay inside. L
 
 <!-- block: gear, n: 5, label: "Bias for variance, measured" -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: reg-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: reg-sim, layer: both, pair_id: reg-sim -->
 ```python
 import numpy as np
 
@@ -79,6 +79,22 @@ ols = np.linalg.lstsq(Xtr, ytr, rcond=None)[0]
 ridge = np.linalg.solve(Xtr.T @ Xtr + 5 * np.eye(p), Xtr.T @ ytr)
 print(f"OLS   test MSE = {test_err(ols):.2f}")
 print(f"Ridge test MSE = {test_err(ridge):.2f}   (lambda=5, shrinkage wins on new data)")
+```
+
+<!-- block: code_r, pair_id: reg-sim, editable: true, layer: both -->
+```r
+set.seed(0)
+# 30 predictors, only 3 truly matter; 40 training rows -> OLS overfits badly.
+n <- 40; p <- 30
+Xtr <- matrix(rnorm(n * p), n, p); beta <- numeric(p); beta[1:3] <- c(2.0, -1.5, 1.0)
+ytr <- Xtr %*% beta + rnorm(n, 0, 1)
+Xte <- matrix(rnorm(500 * p), 500, p); yte <- Xte %*% beta + rnorm(500, 0, 1)
+
+test_err <- function(B) mean((Xte %*% B - yte)^2)
+ols   <- qr.solve(Xtr, ytr)
+ridge <- solve(t(Xtr) %*% Xtr + 5 * diag(p), t(Xtr) %*% ytr)
+cat(sprintf("OLS   test MSE = %.2f\n", test_err(ols)))
+cat(sprintf("Ridge test MSE = %.2f   (lambda=5, shrinkage wins on new data)\n", test_err(ridge)))
 ```
 
 OLS fits the 40 rows too eagerly and generalizes badly; ridge's shrinkage roughly halves the test error, bias traded for variance.

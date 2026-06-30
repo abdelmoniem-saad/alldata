@@ -80,7 +80,7 @@ Residuals are mechanically correlated with the observed $y$ (since $y = \hat{y} 
 
 <!-- block: gear, n: 5, label: "Manufacture a violation" -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: md-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: md-sim, layer: both, pair_id: md-sim -->
 ```python
 import numpy as np
 
@@ -94,6 +94,20 @@ resid = y - np.polyval(b, x)
 # Correlating |residual| with the fitted value exposes the funnel:
 corr = np.corrcoef(np.abs(resid), x)[0, 1]
 print(f"corr(|residual|, fitted) = {corr:.2f}   -> > 0 means the spread grows: heteroscedastic")
+```
+
+<!-- block: code_r, pair_id: md-sim, editable: true, layer: both -->
+```r
+set.seed(0)
+x <- seq(0, 10, length.out = 200)
+# Heteroscedastic truth: the noise grows with x.
+y <- 1.5 + 0.8 * x + rnorm(200, 0, 0.2 + 0.4 * x)
+
+b <- coef(lm(y ~ x))
+resid <- y - (b[1] + b[2] * x)
+# Correlating |residual| with the fitted value exposes the funnel:
+co <- cor(abs(resid), x)
+cat(sprintf("corr(|residual|, fitted) = %.2f   -> > 0 means the spread grows: heteroscedastic\n", co))
 ```
 
 A positive correlation between residual *size* and the fitted value is the funnel, quantified, exactly what the eye sees.

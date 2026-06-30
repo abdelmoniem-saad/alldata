@@ -70,7 +70,7 @@ The $s$ cancels completely: the past wait leaves no trace on the future.
 
 <!-- block: gear, n: 5, label: "Memorylessness, checked" -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: exp-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: exp-sim, layer: both, pair_id: exp-sim -->
 ```python
 import numpy as np
 
@@ -86,6 +86,24 @@ for lam in [0.5, 1, 2]:
 x = rng.exponential(1.0, 3_000_000)          # rate 1 → mean 1
 extra = x[x > 2] - 2                          # remaining wait, given already past 2
 print(f"\noverall mean {x.mean():.3f};  extra wait beyond 2 averages {extra.mean():.3f}  (still ~1)")
+```
+
+<!-- block: code_r, pair_id: exp-sim, editable: true, layer: both -->
+```r
+# R parameterizes rexp by rate. Confirm mean and variance, then test
+# memorylessness: among waits already past 2, the extra wait should still
+# look exponential with the same mean.
+set.seed(0)
+for (lam in c(0.5, 1, 2)) {
+  x <- rexp(1000000, rate = lam)
+  cat(sprintf("rate=%g:  mean=%.3f (1/lam=%.3f)   var=%.3f (1/lam^2=%.3f)\n",
+              lam, mean(x), 1/lam, mean((x - mean(x))^2), 1/lam^2))
+}
+
+x <- rexp(3000000, rate = 1)            # rate 1 -> mean 1
+extra <- x[x > 2] - 2                    # remaining wait, given already past 2
+cat(sprintf("\noverall mean %.3f;  extra wait beyond 2 averages %.3f  (still ~1)\n",
+            mean(x), mean(extra)))
 ```
 
 The extra wait beyond time 2 averages the same as a fresh wait, the past is forgotten.

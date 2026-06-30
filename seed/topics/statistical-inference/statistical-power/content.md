@@ -63,7 +63,7 @@ Set power $= 0.80$, so $z_\alpha - \delta\sqrt{n} = \Phi^{-1}(0.20) = -z_{0.80}$
 
 <!-- block: gear, n: 5, label: "Power, simulated" -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: power-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: power-sim, layer: both, pair_id: power-sim -->
 ```python
 import numpy as np
 
@@ -77,6 +77,22 @@ for n in [10, 25, 60]:
         z = x.mean() / (1 / np.sqrt(n))
         detect += z > z_crit
     print(f"n={n:>3}:  estimated power = {detect/20_000:.3f}")
+```
+
+<!-- block: code_r, pair_id: power-sim, editable: true, layer: both -->
+```r
+set.seed(0)
+# True standardized effect delta = 0.5; test H0: mean = 0 at one-sided alpha = 0.05.
+delta <- 0.5; z_crit <- 1.645
+for (n in c(10, 25, 60)) {
+  detect <- 0
+  for (i in seq_len(20000)) {
+    x <- rnorm(n, delta, 1)
+    z <- mean(x) / (1 / sqrt(n))
+    detect <- detect + (z > z_crit)
+  }
+  cat(sprintf("n=%3d:  estimated power = %.3f\n", n, detect/20000))
+}
 ```
 
 Power climbs with $n$, crossing $\sim 0.80$ near $n = 25$ for this effect, exactly what the formula predicts.

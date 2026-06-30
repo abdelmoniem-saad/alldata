@@ -58,9 +58,10 @@ export function directiveSummary(seg: DirectiveSegment): string {
     case 'code_r':
       return seg.codeLang ? `${seg.codeLang} code` : 'runnable code'
     case 'decision':
-      return 'ask → commit → consequence'
+      return firstField(seg.body, 'question') || 'ask → commit → consequence'
     case 'playground':
-      return /(^|\n)\s*goal\s*:/.test(seg.body) ? 'sliders with a goal' : 'sliders bound to state'
+      return firstField(seg.body, 'prompt')
+        || (/(^|\n)\s*goal\s*:/.test(seg.body) ? 'sliders with a goal' : 'sliders bound to state')
     case 'misconception':
       return 'wrong belief → correction'
     case 'layer':
@@ -81,4 +82,30 @@ function keysOf(v: unknown): string {
   if (typeof v !== 'string') return ''
   const keys = [...v.matchAll(/([A-Za-z_][\w]*)\s*:/g)].map(m => m[1])
   return keys.join(', ')
+}
+
+/**
+ * Pull the first line of a YAML `field:` (inline or `|` block) out of a body,
+ * for an informative card summary (e.g. a decision's question). Truncated.
+ */
+function firstField(body: string, field: string): string {
+  const lines = body.replace(/\r/g, '').split('\n')
+  const re = new RegExp(`^\\s*${field}\\s*:\\s*(.*)$`)
+  for (let i = 0; i < lines.length; i++) {
+    const m = re.exec(lines[i])
+    if (!m) continue
+    let text = m[1].trim()
+    if (text === '' || text === '|' || text === '>') {
+      // Block scalar — take the first non-empty indented line.
+      for (let j = i + 1; j < lines.length; j++) {
+        if (lines[j].trim() === '') continue
+        if (!/^\s/.test(lines[j])) break
+        text = lines[j].trim()
+        break
+      }
+    }
+    text = text.replace(/^["']|["']$/g, '').replace(/\*\*/g, '')
+    return text.length > 60 ? text.slice(0, 58) + '…' : text
+  }
+  return ''
 }

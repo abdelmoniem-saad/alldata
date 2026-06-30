@@ -87,7 +87,7 @@ $$\text{Var}(X) = \sum_{i=1}^{n} \text{Var}(X_i) = \sum_{i=1}^{n} p(1-p) = np(1-
 
 <!-- block: gear, n: 5, label: "Exactly, versus at least" -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: binomial-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: binomial-sim, layer: both, pair_id: binomial-sim -->
 ```python
 import numpy as np
 from math import comb
@@ -104,6 +104,23 @@ draws = rng.binomial(n, p, 200_000)
 print(f"empirical P(exactly 5) = {(draws == 5).mean():.4f}")
 print(f"empirical P(5 or more) = {(draws >= 5).mean():.4f}")
 print(f"mean = {draws.mean():.3f} (= np {n*p})   var = {draws.var():.3f} (= np(1-p) {n*p*(1-p)})")
+```
+
+<!-- block: code_r, pair_id: binomial-sim, editable: true, layer: both -->
+```r
+# 10 fair flips. The single value k=5 is the mode, but it's still only
+# about 1 chance in 4. "Most likely" is not "likely".
+n <- 10; p <- 0.5
+p_exactly_5 <- choose(n, 5) * p^5 * (1 - p)^(n - 5)
+cat(sprintf("P(exactly 5 heads) = %.4f\n", p_exactly_5))
+
+# Empirical check + P(at least 5), which is much larger than P(exactly 5).
+set.seed(0)
+draws <- rbinom(200000, n, p)
+cat(sprintf("empirical P(exactly 5) = %.4f\n", mean(draws == 5)))
+cat(sprintf("empirical P(5 or more) = %.4f\n", mean(draws >= 5)))
+cat(sprintf("mean = %.3f (= np %g)   var = %.3f (= np(1-p) %g)\n",
+            mean(draws), n*p, mean((draws - mean(draws))^2), n*p*(1-p)))
 ```
 
 ---

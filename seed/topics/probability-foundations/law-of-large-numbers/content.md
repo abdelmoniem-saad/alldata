@@ -63,7 +63,7 @@ Chebyshev's inequality bounds how often a variable strays from its mean by its v
 
 <!-- block: gear, n: 5, label: "Watch a running average converge" -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: lln-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: lln-sim, layer: both, pair_id: lln-sim -->
 ```python
 import numpy as np
 
@@ -75,6 +75,19 @@ running = np.cumsum(rolls) / np.arange(1, rolls.size + 1)
 
 for n in [10, 100, 1_000, 10_000, 50_000]:
     print(f"after {n:>6} rolls: running average = {running[n-1]:.4f}   (true mean 3.5)")
+```
+
+<!-- block: code_r, pair_id: lln-sim, editable: true, layer: both -->
+```r
+# Roll a fair die many times; track the running average. It wanders early,
+# then locks onto the true mean of 3.5, the law of large numbers in motion.
+set.seed(0)
+rolls <- sample(1:6, 50000, replace = TRUE)
+running <- cumsum(rolls) / seq_along(rolls)
+
+for (n in c(10, 100, 1000, 10000, 50000)) {
+  cat(sprintf("after %6d rolls: running average = %.4f   (true mean 3.5)\n", n, running[n]))
+}
 ```
 
 Early on the average swings; by 10,000 rolls it's glued near 3.5. Note it does *not* jump to exactly 3.5, it just gets reliably closer.

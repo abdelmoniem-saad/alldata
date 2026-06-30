@@ -103,7 +103,7 @@ The probability is over $\bar{X}$, not over $\mu$. That's the whole subtlety: $\
 
 <!-- block: gear, n: 5, label: "100 intervals, ~95 should cover" -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: ci-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: ci-sim, layer: both, pair_id: ci-sim -->
 ```python
 import numpy as np
 import matplotlib.pyplot as plt
@@ -138,6 +138,34 @@ ax.set_title(f'{contains}/{n_intervals} intervals cover the true mean')
 ax.legend()
 plt.tight_layout()
 plt.show()
+```
+
+<!-- block: code_r, pair_id: ci-sim, editable: true, layer: both -->
+```r
+# Simulate the frequentist promise: build 100 95%-CIs for the mean of a
+# normal population with known mu=0, sigma=1, n=30. Count how many cover mu=0.
+set.seed(42)
+n <- 30; mu_true <- 0; sigma <- 1; n_intervals <- 100
+
+los <- numeric(n_intervals); his <- numeric(n_intervals)
+z <- qnorm(0.975)
+for (i in seq_len(n_intervals)) {
+  sample_i <- rnorm(n, mu_true, sigma)
+  se <- sigma / sqrt(n)
+  los[i] <- mean(sample_i) - z * se
+  his[i] <- mean(sample_i) + z * se
+}
+contains <- sum(los <= mu_true & mu_true <= his)
+cat(sprintf("%d / %d intervals contain the true mean (target: ~95)\n", contains, n_intervals))
+
+plot(NA, xlim = range(c(los, his)), ylim = c(1, n_intervals),
+     xlab = "CI for mu", ylab = "Replication",
+     main = sprintf("%d/%d intervals cover the true mean", contains, n_intervals))
+for (i in seq_len(n_intervals)) {
+  col_i <- if (los[i] <= mu_true && mu_true <= his[i]) "#14b8a6" else "#c98b8b"
+  segments(los[i], i, his[i], i, col = col_i, lwd = 1.5)
+}
+abline(v = mu_true, col = "#a1a1aa", lty = 2)
 ```
 
 ---

@@ -88,7 +88,7 @@ The whole edifice rests on the **sampling distribution** of the statistic under 
 
 <!-- block: gear, n: 5, label: "Calibrate the false-alarm rate" -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: ht-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: ht-sim, layer: both, pair_id: ht-sim -->
 ```python
 import numpy as np
 
@@ -105,6 +105,23 @@ for _ in range(trials):
     if abs(z) > z_crit:
         reject += 1
 print(f"False-positive rate under H0: {reject/trials:.4f}  (target ~ {alpha})")
+```
+
+<!-- block: code_r, pair_id: ht-sim, editable: true, layer: both -->
+```r
+# When H0 is TRUE, a level-0.05 test should wrongly reject about 5% of the
+# time, no more. Simulate 50,000 experiments under the null and check.
+set.seed(0)
+n <- 30; alpha <- 0.05
+z_crit <- 1.96                      # two-sided 5% cutoff for a z-test
+reject <- 0
+trials <- 50000
+for (i in seq_len(trials)) {
+  sample_i <- rnorm(n, 0, 1)        # H0 true: mean really is 0
+  z <- mean(sample_i) / (1 / sqrt(n))
+  if (abs(z) > z_crit) reject <- reject + 1
+}
+cat(sprintf("False-positive rate under H0: %.4f  (target ~ %g)\n", reject/trials, alpha))
 ```
 
 The test rejects a true null right around 5% of the time, that's $\alpha$ doing exactly its job. Set $\alpha$ smaller and false alarms fall, but so does power.

@@ -68,7 +68,7 @@ The prior is $\propto p^{a-1}(1-p)^{b-1}$ and the likelihood is $\propto p^{k}(1
 
 <!-- block: gear, n: 5, label: "Update two ways, agree once" -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: bayes-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: bayes-sim, layer: both, pair_id: bayes-sim -->
 ```python
 import numpy as np
 
@@ -86,6 +86,25 @@ grid_mean = (p * post).sum() * dp
 print(f"grid posterior mean = {grid_mean:.4f}")
 print(f"conjugate posterior = Beta({a+k},{b+n-k}), mean = {(a+k)/(a+b+n):.4f}")
 print(f"prior mean {a/(a+b):.2f}  ->  data {k/n:.2f};  posterior sits between, nearer the data")
+```
+
+<!-- block: code_r, pair_id: bayes-sim, editable: true, layer: both -->
+```r
+# Prior Beta(2,2); observe 6 of 10. Compute the posterior two ways.
+a <- 2; b <- 2; k <- 6; n <- 10
+
+# 1) Brute force on a grid: prior * likelihood, renormalized.
+p <- seq(0, 1, length.out = 1001)
+dp <- p[2] - p[1]
+post <- p^(a-1) * (1-p)^(b-1) * p^k * (1-p)^(n-k)
+post <- post / (sum(post) * dp)               # renormalize to integrate to 1
+grid_mean <- sum(p * post) * dp
+
+# 2) Conjugacy: posterior is Beta(a+k, b+n-k); mean = (a+k)/(a+b+n).
+cat(sprintf("grid posterior mean = %.4f\n", grid_mean))
+cat(sprintf("conjugate posterior = Beta(%d,%d), mean = %.4f\n", a+k, b+n-k, (a+k)/(a+b+n)))
+cat(sprintf("prior mean %.2f  ->  data %.2f;  posterior sits between, nearer the data\n",
+            a/(a+b), k/n))
 ```
 
 Both routes agree, and the posterior mean lands between the prior's $0.50$ and the data's $0.60$, closer to the data.

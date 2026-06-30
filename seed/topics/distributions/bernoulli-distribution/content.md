@@ -75,7 +75,7 @@ Differentiating $p(1-p)$ and setting it to zero gives $1 - 2p = 0$, so the varia
 
 <!-- block: gear, n: 5, label: "Check it against draws" -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: bernoulli-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: bernoulli-sim, layer: both, pair_id: bernoulli-sim -->
 ```python
 import numpy as np
 
@@ -87,6 +87,19 @@ for p in [0.1, 0.3, 0.5, 0.8]:
     x = (rng.random(n) < p).astype(int)
     print(f"p={p}:  mean={x.mean():.4f} (=p {p})   "
           f"var={x.var():.4f} (=p(1-p) {p*(1-p):.4f})")
+```
+
+<!-- block: code_r, pair_id: bernoulli-sim, editable: true, layer: both -->
+```r
+# Draw 100,000 Bernoulli trials at several p and compare the empirical
+# mean and variance to the closed forms p and p(1-p).
+set.seed(0)
+n <- 100000
+for (p in c(0.1, 0.3, 0.5, 0.8)) {
+  x <- as.integer(runif(n) < p)
+  cat(sprintf("p=%g:  mean=%.4f (=p %g)   var=%.4f (=p(1-p) %.4f)\n",
+              p, mean(x), p, mean((x - mean(x))^2), p*(1-p)))
+}
 ```
 
 The empirical mean tracks $p$ and the variance tracks $p(1-p)$, peaking at $p = 0.5$.

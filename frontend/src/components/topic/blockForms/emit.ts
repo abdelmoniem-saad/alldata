@@ -9,6 +9,9 @@
  */
 import { splitTopLevel } from '../../../lib/contentDoc'
 
+/** A key/value row, the editable shape behind an inline `{k: v}` directive value. */
+export interface KV { key: string; value: string }
+
 /** Format a scalar for an inline value: numbers bare, everything else quoted. */
 export function fmtScalar(v: string): string {
   const t = v.trim()

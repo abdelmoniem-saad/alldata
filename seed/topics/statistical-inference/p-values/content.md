@@ -64,7 +64,7 @@ Under $H_0$, the p-value is $p = 1 - F(T)$ where $F$ is the null CDF of the stat
 
 <!-- block: gear, n: 5, label: "Watch the uniform appear" -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: pv-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: pv-sim, layer: both, pair_id: pv-sim -->
 ```python
 import numpy as np
 from math import erf, sqrt
@@ -80,6 +80,20 @@ p = 2 * (1 - phi(np.abs(z)))
 print(f"P(p < 0.05) under a true null: {(p < 0.05).mean():.4f}   (calibrated to 0.05)")
 hist, _ = np.histogram(p, bins=10, range=(0, 1))
 print("share of p-values per decile:", np.round(hist / trials, 3))
+```
+
+<!-- block: code_r, pair_id: pv-sim, editable: true, layer: both -->
+```r
+set.seed(0)
+# Run 100,000 experiments where H0 is TRUE (mean really is 0).
+# Compute each experiment's two-sided p-value and look at the distribution.
+n <- 30; trials <- 100000
+z <- rowMeans(matrix(rnorm(trials * n), nrow = trials, ncol = n)) * sqrt(n)
+pval <- 2 * (1 - pnorm(abs(z)))
+
+cat(sprintf("P(p < 0.05) under a true null: %.4f   (calibrated to 0.05)\n", mean(pval < 0.05)))
+counts <- hist(pval, breaks = seq(0, 1, by = 0.1), plot = FALSE)$counts
+cat("share of p-values per decile:", paste(sprintf("%.3f", counts / trials), collapse = " "), "\n")
 ```
 
 Every decile holds ~10%, the p-value is uniform under a true null, and exactly 5% of null experiments land below 0.05. The false-alarm rate is the calibration, working as designed.

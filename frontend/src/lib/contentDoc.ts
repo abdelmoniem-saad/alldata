@@ -247,3 +247,21 @@ export function insertSegmentAt(segs: Segment[], index: number, raw: string): Se
   next.splice(index, 0, ...parseDoc(raw))
   return next
 }
+
+/**
+ * #2: set or clear a per-block `layer:` attribute on a directive's open tag.
+ * `both` (the section default) is written as *no* attr so the source stays
+ * clean. Only the first `<!-- block: … -->` head is touched; non-directive raw
+ * (prose, layer markers) returns unchanged. Mirrors the per-block layer the
+ * backend parser reads in `import_seed._build_multiline_block`.
+ */
+export function setLayerAttr(raw: string, layer: string): string {
+  return raw.replace(
+    /(<!--\s*block:\s*[a-z_]+)([^>]*?)(\s*-->)/i,
+    (_full, head: string, attrs: string, close: string) => {
+      let a = attrs.replace(/,\s*layer:\s*\w+/gi, '').replace(/\s+$/, '')
+      if (layer && layer !== 'both') a += `, layer: ${layer}`
+      return head + a + close
+    },
+  )
+}

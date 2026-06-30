@@ -61,7 +61,7 @@ The fitted model minimizes error *on the training set*, so it has adapted to tha
 
 <!-- block: gear, n: 5, label: "Select a model by CV" -->
 
-<!-- block: code_python, editable: true, auto_run: true, anchor: cv-code -->
+<!-- block: code_python, editable: true, auto_run: true, anchor: cv-code, layer: both, pair_id: cv-code -->
 ```python
 import numpy as np
 rng = np.random.default_rng(0)
@@ -84,6 +84,34 @@ def cv_mse(deg, k=5):
 for deg in [1, 2, 3, 5, 9, 13]:
     train = np.mean((np.polyval(np.polyfit(x, y, deg), x) - y)**2)
     print(f"degree {deg:>2}:  train MSE = {train:5.2f}   CV MSE = {cv_mse(deg):5.2f}")
+```
+
+<!-- block: code_r, pair_id: cv-code, editable: true, layer: both -->
+```r
+set.seed(0)
+
+# Truth is quadratic. Fit polynomials of rising degree; 5-fold CV picks the degree.
+x <- sort(runif(120, -3, 3))
+y <- 0.5 * x^2 - x + 1 + rnorm(120, 0, 2)
+
+polypred <- function(xtr, ytr, xte, deg) {
+  Xtr <- outer(xtr, 0:deg, "^"); Xte <- outer(xte, 0:deg, "^")
+  as.vector(Xte %*% qr.solve(Xtr, ytr))
+}
+cv_mse <- function(deg, k = 5) {
+  idx <- sample(length(x))
+  folds <- split(idx, cut(seq_along(idx), k, labels = FALSE))
+  errs <- numeric(k)
+  for (i in seq_len(k)) {
+    te <- folds[[i]]; tr <- setdiff(idx, te)
+    errs[i] <- mean((polypred(x[tr], y[tr], x[te], deg) - y[te])^2)
+  }
+  mean(errs)
+}
+for (deg in c(1, 2, 3, 5, 9, 13)) {
+  train <- mean((polypred(x, y, x, deg) - y)^2)
+  cat(sprintf("degree %2d:  train MSE = %5.2f   CV MSE = %5.2f\n", deg, train, cv_mse(deg)))
+}
 ```
 
 Training error keeps falling as the degree climbs; CV error bottoms out at degree 2, the true shape, then rises as higher degrees start chasing noise.

@@ -63,7 +63,7 @@ Cross-multiply: $k(1-p) = (n-k)p \Rightarrow k - kp = np - kp \Rightarrow k = np
 
 <!-- block: gear, n: 5, label: "MLE on simulated data" -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: mle-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: mle-sim, layer: both, pair_id: mle-sim -->
 ```python
 import numpy as np
 
@@ -77,6 +77,20 @@ ps = np.linspace(0.001, 0.999, 999)
 loglik = k * np.log(ps) + (n - k) * np.log(1 - ps)
 print(f"observed {k}/{n};  MLE p_hat = {ps[loglik.argmax()]:.3f}   "
       f"(= k/n = {k/n:.3f}, true {true_p})")
+```
+
+<!-- block: code_r, pair_id: mle-sim, editable: true, layer: both -->
+```r
+set.seed(0)
+# True p = 0.3. Collect data, then recover it by maximizing the log-likelihood.
+true_p <- 0.3; n <- 200
+data <- runif(n) < true_p
+k <- sum(data)
+
+ps <- seq(0.001, 0.999, length.out = 999)
+loglik <- k * log(ps) + (n - k) * log(1 - ps)
+cat(sprintf("observed %d/%d;  MLE p_hat = %.3f   (= k/n = %.3f, true %g)\n",
+            k, n, ps[which.max(loglik)], k/n, true_p))
 ```
 
 The argmax of the log-likelihood lands on $k/n$, close to the true $0.3$, and it tightens around the truth as $n$ grows, because MLEs are **consistent**.

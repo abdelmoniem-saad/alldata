@@ -145,7 +145,7 @@ Switching wins two-thirds of the time.
 
 ---
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: monty-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: monty-sim, layer: both, pair_id: monty-sim -->
 ```python
 import numpy as np
 import matplotlib.pyplot as plt
@@ -181,4 +181,33 @@ ax.legend()
 ax.grid(alpha=0.2)
 plt.tight_layout()
 plt.show()
+```
+
+<!-- block: code_r, pair_id: monty-sim, editable: true, layer: both -->
+```r
+# Monty Hall, simulate it. The math doesn't lie, but seeing 50,000 games
+# converge to the theoretical numbers usually seals the intuition.
+set.seed(42)
+n_games <- 50000
+car_positions <- sample(0:2, n_games, replace = TRUE)
+initial_picks <- sample(0:2, n_games, replace = TRUE)
+
+# Stay wins exactly when your initial pick is right.
+# Switch wins exactly when your initial pick is wrong.
+stay_wins <- sum(initial_picks == car_positions)
+switch_wins <- n_games - stay_wins
+
+cat(sprintf("Games: %d\n", n_games))
+cat(sprintf("Stay wins:   %.4f  (theoretical 1/3 = 0.3333)\n", stay_wins/n_games))
+cat(sprintf("Switch wins: %.4f  (theoretical 2/3 = 0.6667)\n", switch_wins/n_games))
+
+cum_switch <- cumsum(initial_picks != car_positions) / seq_len(n_games)
+cum_stay   <- cumsum(initial_picks == car_positions) / seq_len(n_games)
+
+plot(cum_switch, type = "l", col = "#14b8a6", lwd = 1.5, ylim = c(0, 1),
+     xlab = "Game number", ylab = "Win rate", main = "Convergence")
+lines(cum_stay, col = "#71717a", lwd = 1.5)
+abline(h = 2/3, col = "#14b8a6", lty = 2)
+abline(h = 1/3, col = "#71717a", lty = 2)
+legend("right", legend = c("Switch", "Stay"), col = c("#14b8a6", "#71717a"), lwd = 1.5)
 ```

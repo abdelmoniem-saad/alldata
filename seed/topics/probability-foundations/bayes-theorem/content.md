@@ -170,7 +170,7 @@ $$P(H_i \mid B) = \frac{P(B \mid H_i) \, P(H_i)}{\sum_{j=1}^{n} P(B \mid H_j) \,
 
 ---
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: bayes-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: bayes-sim, layer: both, pair_id: bayes-pop -->
 ```python
 import numpy as np
 import matplotlib.pyplot as plt
@@ -208,4 +208,39 @@ ax.set_xlabel('Number of people')
 ax.set_title('Among positive tests, most are FALSE positives')
 plt.tight_layout()
 plt.show()
+```
+
+<!-- block: code_r, pair_id: bayes-pop, editable: true, layer: both -->
+```r
+# Bayes, population simulation. Tweak the parameters and re-run.
+set.seed(42)
+
+population <- 100000
+disease_rate <- 0.01      # 1 in 100
+test_sensitivity <- 0.95  # P(+ | sick)
+test_specificity <- 0.95  # P(- | healthy)
+
+has_disease <- runif(population) < disease_rate
+n_sick <- sum(has_disease)
+
+test_positive <- logical(population)
+test_positive[has_disease] <- runif(n_sick) < test_sensitivity
+test_positive[!has_disease] <- runif(population - n_sick) < (1 - test_specificity)
+
+true_pos <- sum(test_positive & has_disease)
+false_pos <- sum(test_positive & !has_disease)
+total_pos <- sum(test_positive)
+
+f <- function(x) formatC(x, big.mark = ",", format = "d")
+cat(sprintf("Population: %s\n", f(population)))
+cat(sprintf("Actually sick: %s\n", f(n_sick)))
+cat(sprintf("Test positive: %s\n", f(total_pos)))
+cat(sprintf("  True positives: %s\n", f(true_pos)))
+cat(sprintf("  False positives: %s\n", f(false_pos)))
+cat(sprintf("\nP(disease | positive) = %.1f%%\n", 100 * true_pos / total_pos))
+
+barplot(c(true_pos, false_pos), horiz = TRUE, col = c("#14b8a6", "#71717a"),
+        names.arg = c("True positive\n(sick & +)", "False positive\n(healthy & +)"),
+        xlab = "Number of people",
+        main = "Among positive tests, most are FALSE positives")
 ```

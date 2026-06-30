@@ -70,7 +70,7 @@ Take the square root to get the standard deviation of $\bar{X}$: $\text{SE} = \s
 
 <!-- block: gear, n: 5, label: "Build one by resampling" -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: sd-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: sd-sim, layer: both, pair_id: sd-sim -->
 ```python
 import numpy as np
 
@@ -82,6 +82,19 @@ for n in [1, 4, 25, 100]:
     means = rng.normal(0, sigma, size=(100_000, n)).mean(axis=1)
     print(f"n={n:>3}:  SD of sample means = {means.std():.4f}   "
           f"(sigma/sqrt(n) = {sigma/np.sqrt(n):.4f})")
+```
+
+<!-- block: code_r, pair_id: sd-sim, editable: true, layer: both -->
+```r
+# Draw many samples; each gives one sample mean. The spread of those means
+# is the sampling distribution, and it tracks sigma/sqrt(n), not sigma.
+set.seed(0)
+sigma <- 1.0; M <- 50000
+for (n in c(1, 4, 25, 100)) {
+  means <- rowMeans(matrix(rnorm(M * n, 0, sigma), nrow = M, ncol = n))
+  cat(sprintf("n=%3d:  SD of sample means = %.4f   (sigma/sqrt(n) = %.4f)\n",
+              n, sd(means), sigma/sqrt(n)))
+}
 ```
 
 The observed spread of the sample means matches $\sigma/\sqrt{n}$ at every $n$, the data's own spread stays $\sigma$ throughout.

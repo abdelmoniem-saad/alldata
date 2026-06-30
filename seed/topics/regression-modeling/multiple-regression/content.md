@@ -82,7 +82,7 @@ Minimize $S(\beta) = (y - X\beta)^{\top}(y - X\beta)$. The gradient is $\partial
 
 <!-- block: gear, n: 5, label: "Fit it, and see the flip" -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: mr-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: mr-sim, layer: both, pair_id: mr-sim -->
 ```python
 import numpy as np
 
@@ -99,6 +99,24 @@ X = np.column_stack([np.ones_like(x1), x1, x2])
 beta = np.linalg.solve(X.T @ X, X.T @ y)
 print(f"simple slope on x1  = {b_simple:+.2f}   (confounded)")
 print(f"multiple coef on x1 = {beta[1]:+.2f}   (true -1.0),   on x2 = {beta[2]:+.2f} (true 3.0)")
+```
+
+<!-- block: code_r, pair_id: mr-sim, editable: true, layer: both -->
+```r
+set.seed(0)
+# x2 confounds: it drives both x1 and y. x1's TRUE effect on y is -1.
+x2 <- runif(200, -2, 2)
+x1 <- x2 + 0.7 * rnorm(200)
+y <- -1.0 * x1 + 3.0 * x2 + 0.6 * rnorm(200)
+
+# Simple regression of y on x1 alone (confounded):
+b_simple <- coef(lm(y ~ x1))[2]
+# Multiple regression y ~ x1 + x2 via the normal equations:
+X <- cbind(1, x1, x2)
+beta <- solve(t(X) %*% X, t(X) %*% y)
+cat(sprintf("simple slope on x1  = %+.2f   (confounded)\n", b_simple))
+cat(sprintf("multiple coef on x1 = %+.2f   (true -1.0),   on x2 = %+.2f (true 3.0)\n",
+            beta[2], beta[3]))
 ```
 
 The simple slope is positive; controlling for $x_2$ recovers $x_1$'s true negative effect.

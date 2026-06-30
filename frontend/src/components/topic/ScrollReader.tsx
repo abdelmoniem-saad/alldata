@@ -219,6 +219,33 @@ function BlockShell({
   )
 }
 
+// #2: a collapsible run of formal-layer blocks. "Show the formal version" in
+// Intuition mode (collapsed), an open "Hide" affordance in All / Formal. The
+// open state re-syncs when the layer toggle flips the default, so switching to
+// Intuition folds rigor away and All unfolds it — progressive disclosure
+// without losing the reader's place.
+function FormalSection({ defaultOpen, count, children }: {
+  defaultOpen: boolean; count: number; children: ReactNode
+}) {
+  const [open, setOpen] = useState(defaultOpen)
+  useEffect(() => { setOpen(defaultOpen) }, [defaultOpen])
+  return (
+    <div className="formal-section" data-open={open}>
+      <button
+        type="button"
+        className="formal-section__toggle"
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+      >
+        <span className="formal-section__chev" aria-hidden>{open ? '▾' : '▸'}</span>
+        {open ? 'Hide the formal version' : 'Show the formal version'}
+        {!open && <span className="formal-section__count">{count} block{count === 1 ? '' : 's'}</span>}
+      </button>
+      {open && <div className="formal-section__body">{children}</div>}
+    </div>
+  )
+}
+
 // `parseMeta` and `applyBranchFilter` live in `./blocks/branchFilter.ts` so
 // SlideView (and any future reading surface) can reuse them without
 // re-implementing branch gating.
@@ -339,9 +366,14 @@ export default function ScrollReader({
   }, [decisionEvents])
 
   const visibleBlocks = useMemo(() => {
-    const layered = blocks.filter(
-      b => activeLayer === 'both' || b.layer === 'both' || b.layer === activeLayer,
-    )
+    // #2: layer policy. "All" (both) shows everything; "Intuition" keeps
+    // formal blocks but they render *collapsed* behind an inline expander
+    // (progressive disclosure, see FormalSection) rather than vanishing;
+    // "Formal" hides intuition-only blocks and shows the rigorous slice.
+    const layered = blocks.filter(b => {
+      if (activeLayer === 'formal') return b.layer !== 'intuition'
+      return true
+    })
     const filtered = applyBranchFilter(layered, metaCache, decisions)
     // J6: on mobile (<1024px), respect `meta.mobile_order` on plot blocks so
     // a topic curated for desktop pinning can re-sequence its plots when
@@ -524,40 +556,59 @@ export default function ScrollReader({
               `pair_id` directive field so the two language variants render
               as one tabbed surface instead of two separate blocks. */}
           <div style={{ minWidth: 0 }}>
-            {groupCodePairs(visibleBlocks, metaCache).map(item => {
-              if (isCodePair(item)) {
-                // Pairs don't carry confusion flags or anchors today, the
-                // underlying CodeRunner's per-language re-mount makes both
-                // awkward to support. If the need surfaces, both can be
-                // lifted to the pair level.
+            {(() => {
+              const items = groupCodePairs(visibleBlocks, metaCache)
+              const renderItem = (item: typeof items[number]): ReactNode => {
+                if (isCodePair(item)) {
+                  // Pairs don't carry confusion flags or anchors today.
+                  return (
+                    <div key={`pair:${item.pairId}`} style={{ marginBottom: 24 }}>
+                      <CodePairRenderer pair={item} metaCache={metaCache} />
+                    </div>
+                  )
+                }
+                const block = item
+                const isAnchorBearing = anchoredBlockIds.has(block.id)
+                const meta = metaCache.get(block.id) ?? {}
                 return (
-                  <div key={`pair:${item.pairId}`} style={{ marginBottom: 24 }}>
-                    <CodePairRenderer pair={item} metaCache={metaCache} />
-                  </div>
+                  <BlockShell
+                    key={block.id}
+                    slug={slug}
+                    block={block}
+                    showConfusionFlag={CONFUSION_FLAGGABLE_TYPES.has(block.block_type)}
+                  >
+                    {isAnchorBearing && block.anchor && (
+                      <Anchor id={block.anchor} onActive={handleAnchorActive} rootRef={scrollRef} />
+                    )}
+                    <BlockSwitch block={block} meta={meta} slug={slug} inlinePlots={!isWide} />
+                  </BlockShell>
                 )
               }
-              const block = item
-              const isAnchorBearing = anchoredBlockIds.has(block.id)
-              const meta = metaCache.get(block.id) ?? {}
-              return (
-                <BlockShell
-                  key={block.id}
-                  slug={slug}
-                  block={block}
-                  showConfusionFlag={CONFUSION_FLAGGABLE_TYPES.has(block.block_type)}
-                >
-                  {isAnchorBearing && block.anchor && (
-                    <Anchor id={block.anchor} onActive={handleAnchorActive} rootRef={scrollRef} />
-                  )}
-                  <BlockSwitch
-                    block={block}
-                    meta={meta}
-                    slug={slug}
-                    inlinePlots={!isWide}
-                  />
-                </BlockShell>
-              )
-            })}
+              // #2: group consecutive formal-layer blocks into a collapsible
+              // run (progressive disclosure). Open by default in All/Formal,
+              // collapsed in Intuition. Code pairs are treated as non-formal.
+              const itemLayer = (item: typeof items[number]) =>
+                isCodePair(item) ? 'both' : item.layer
+              const out: ReactNode[] = []
+              let run: typeof items = []
+              const flush = () => {
+                if (run.length === 0) return
+                const r = run
+                run = []
+                const key = isCodePair(r[0]) ? `formal:${r[0].pairId}` : `formal:${r[0].id}`
+                out.push(
+                  <FormalSection key={key} defaultOpen={activeLayer !== 'intuition'} count={r.length}>
+                    {r.map(renderItem)}
+                  </FormalSection>,
+                )
+              }
+              for (const item of items) {
+                if (itemLayer(item) === 'formal') run.push(item)
+                else { flush(); out.push(renderItem(item)) }
+              }
+              flush()
+              return out
+            })()}
 
             {misconceptions.length > 0 && (
               <div style={{ marginTop: 40 }}>

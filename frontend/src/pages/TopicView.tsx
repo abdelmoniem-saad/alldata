@@ -18,7 +18,9 @@ export default function TopicView() {
   // as /explore's sidebar.
   const [prerequisites, setPrerequisites] = useState<PrerequisiteEntry[]>([])
   const [leadsTo, setLeadsTo] = useState<PrerequisiteEntry[]>([])
-  const [activeLayer, setActiveLayer] = useState<'intuition' | 'formal' | 'both'>('intuition')
+  // #2: default to "All" (everything, formal sections expanded) per the owner
+  // decision; readers fold rigor away via the Intuition toggle or per-section.
+  const [activeLayer, setActiveLayer] = useState<'intuition' | 'formal' | 'both'>('both')
   // I3: scroll (ScrollReader) is the default. SlideView lives behind ?mode=slides
   // for the small fraction of authors who still want crossfade decks. The
   // initial mode is read once from the URL so a deep-link to a slide deck still

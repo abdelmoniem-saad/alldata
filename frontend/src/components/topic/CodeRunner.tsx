@@ -7,7 +7,9 @@ import { useAuthStore } from '../../stores/authStore'
 // readers never select R and hit the "R is not installed" dead end. On a probe
 // failure, default to hiding R (conservative, don't offer an unconfirmed lang).
 let _capsPromise: Promise<{ python: boolean; r: boolean }> | null = null
-function execCapabilities() {
+// Exported so the paired Python/R surface (CodePairRenderer) can hide the R tab
+// with the same one-probe-per-session cache, no duplicate request.
+export function execCapabilities() {
   if (!_capsPromise) {
     _capsPromise = api.getExecuteCapabilities().catch(() => ({ python: true, r: false }))
   }

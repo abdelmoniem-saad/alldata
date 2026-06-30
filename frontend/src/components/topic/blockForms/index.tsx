@@ -12,7 +12,7 @@ import { DirectiveSegment } from '../../../lib/contentDoc'
 import RawBlockEditor from './RawBlockEditor'
 import {
   GearForm, LayerForm, CalloutForm, DerivationForm, MisconceptionForm,
-  StateForm, GraphViewForm, CodeForm, PlotForm,
+  StateForm, GraphViewForm, CodeForm, PlotForm, DecisionForm, PlaygroundForm,
 } from './forms'
 
 export interface BlockEditorProps {
@@ -39,7 +39,9 @@ export function renderBlockEditor(props: BlockEditorProps): ReactNode {
     case 'code_python':
     case 'code_r': return <CodeForm {...props} />
     case 'plot': return <PlotForm {...props} />
-    // decision / playground / step_through / dataset, raw escape hatch.
+    case 'decision': return <DecisionForm {...props} />
+    case 'playground': return <PlaygroundForm {...props} />
+    // step_through / dataset, raw escape hatch.
     default: return <RawBlockEditor segment={props.segment} onChange={props.onChange} onBlur={props.onBlur} />
   }
 }

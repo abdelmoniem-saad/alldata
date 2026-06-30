@@ -63,7 +63,7 @@ Write $y = f + \varepsilon$ with $\mathbb{E}[\varepsilon] = 0$, $\text{Var}(\var
 
 <!-- block: gear, n: 5, label: "Watch bias fall and variance rise" -->
 
-<!-- block: code_python, editable: true, auto_run: true, anchor: bv-code -->
+<!-- block: code_python, editable: true, auto_run: true, anchor: bv-code, layer: both, pair_id: bv-code -->
 ```python
 import numpy as np
 rng = np.random.default_rng(0)
@@ -83,6 +83,30 @@ for deg in [1, 3, 9]:
     bias2 = (preds.mean() - truth)**2
     var = preds.var()
     print(f"degree {deg}:  bias^2 = {bias2:.3f}   variance = {var:.3f}")
+```
+
+<!-- block: code_r, pair_id: bv-code, editable: true, layer: both -->
+```r
+set.seed(0)
+
+# Truth is a smooth sine. Fit polynomials of rising degree on many resampled
+# training sets, then measure bias^2 and variance of the prediction at x0 = 2.
+truth <- sin(2.0); x0 <- 2.0
+polypred <- function(xtr, ytr, xte, deg) {
+  Xtr <- outer(xtr, 0:deg, "^"); Xte <- outer(xte, 0:deg, "^")
+  as.vector(Xte %*% qr.solve(Xtr, ytr))
+}
+for (deg in c(1, 3, 9)) {
+  preds <- numeric(300)
+  for (i in seq_len(300)) {
+    x <- runif(30, 0, 2*pi)
+    y <- sin(x) + rnorm(30, 0, 0.3)
+    preds[i] <- polypred(x, y, x0, deg)
+  }
+  bias2 <- (mean(preds) - truth)^2
+  v <- mean((preds - mean(preds))^2)
+  cat(sprintf("degree %d:  bias^2 = %.3f   variance = %.3f\n", deg, bias2, v))
+}
 ```
 
 The straight line (degree 1) is badly biased but stable; degree 9 is nearly unbiased but its predictions swing all over the place. Bias down, variance up, the tradeoff in numbers.

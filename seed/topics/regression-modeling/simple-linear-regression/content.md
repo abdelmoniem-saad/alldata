@@ -78,7 +78,7 @@ The middle form is covariance over variance; the right form rewrites it with the
 
 <!-- block: gear, n: 5, label: "Fit it in code" -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: slr-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: slr-sim, layer: both, pair_id: slr-sim -->
 ```python
 import numpy as np
 
@@ -95,6 +95,24 @@ r = np.corrcoef(x, y)[0, 1]
 print(f"slope     = {slope:.3f}   (true 0.7)")
 print(f"intercept = {intercept:.3f}   (true 0.3)")
 print(f"check: r * (sy/sx) = {r * y.std() / x.std():.3f}  == slope")
+```
+
+<!-- block: code_r, pair_id: slr-sim, editable: true, layer: both -->
+```r
+# Data generated from y = 0.7x + 0.3 + noise (the same cloud you fit by hand).
+# Recover the slope and intercept by least squares and confirm the formulas.
+set.seed(0)
+x <- runif(200, -3, 3)
+y <- 0.7 * x + 0.3 + rnorm(200, 0, 0.75)
+
+# Closed form: slope = cov(x,y)/var(x), intercept through the means.
+slope <- mean((x - mean(x)) * (y - mean(y))) / mean((x - mean(x))^2)
+intercept <- mean(y) - slope * mean(x)
+r <- cor(x, y)
+sx <- sqrt(mean((x - mean(x))^2)); sy <- sqrt(mean((y - mean(y))^2))
+cat(sprintf("slope     = %.3f   (true 0.7)\n", slope))
+cat(sprintf("intercept = %.3f   (true 0.3)\n", intercept))
+cat(sprintf("check: r * (sy/sx) = %.3f  == slope\n", r * sy / sx))
 ```
 
 ---

@@ -71,7 +71,7 @@ and as $\nu \to \infty$ it converges to the standard normal.
 
 <!-- block: gear, n: 5, label: "The tails, measured" -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: t-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: t-sim, layer: both, pair_id: t-sim -->
 ```python
 import numpy as np
 from scipy import stats
@@ -91,6 +91,26 @@ t_stat = xbar / (s / np.sqrt(n))
 print(f"P(|T| > 1.96) = {np.mean(np.abs(t_stat) > 1.96):.4f}  (normal would say 0.05)")
 print(f"P(|T| > {stats.t.ppf(0.975, n-1):.2f}) = "
       f"{np.mean(np.abs(t_stat) > stats.t.ppf(0.975, n-1)):.4f}  (t_4 cutoff -> ~0.05)")
+```
+
+<!-- block: code_r, pair_id: t-sim, editable: true, layer: both -->
+```r
+# Small samples from a normal, standardized with the SAMPLE sd. The
+# standardized values follow t_{n-1}, not the normal, their tails are fatter.
+set.seed(0)
+n <- 5                      # tiny sample -> df = 4
+N <- 200000
+samples <- matrix(rnorm(N * n), nrow = N, ncol = n)
+xbar <- rowMeans(samples)
+s <- sqrt(rowSums((samples - xbar)^2) / (n - 1))   # sample sd, ddof=1
+t_stat <- xbar / (s / sqrt(n))
+
+# How often does |T| exceed 2.78 (the t critical value for df=4, 95%)
+# versus the normal's 1.96? Using the normal cutoff over-rejects.
+cat(sprintf("P(|T| > 1.96) = %.4f  (normal would say 0.05)\n", mean(abs(t_stat) > 1.96)))
+tcrit <- qt(0.975, n - 1)
+cat(sprintf("P(|T| > %.2f) = %.4f  (t_4 cutoff -> ~0.05)\n",
+            tcrit, mean(abs(t_stat) > tcrit)))
 ```
 
 Using the normal's $1.96$ cutoff rejects far more than 5% of the time, the heavy tails are real, and the wider t cutoff is what restores calibration.

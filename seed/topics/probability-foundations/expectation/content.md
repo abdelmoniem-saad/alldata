@@ -92,7 +92,7 @@ This is why the expected number of heads in $n$ fair flips is $n/2$ even though 
 
 <!-- block: gear, n: 5, label: "A million die rolls" -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: expectation-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: expectation-sim, layer: both, pair_id: expectation-sim -->
 ```python
 import numpy as np
 
@@ -104,6 +104,20 @@ running = np.cumsum(rolls) / np.arange(1, len(rolls) + 1)
 # Spot checks at orders of magnitude.
 for n in [10, 100, 10_000, 1_000_000]:
     print(f"n={n:>10,}  running mean = {running[n-1]:.4f}  (E[X] = 3.5000)")
+```
+
+<!-- block: code_r, pair_id: expectation-sim, editable: true, layer: both -->
+```r
+# Roll a fair die a million times and watch the running mean converge to 3.5.
+set.seed(42)
+rolls <- sample(1:6, 1000000, replace = TRUE)
+running <- cumsum(rolls) / seq_along(rolls)
+
+# Spot checks at orders of magnitude.
+for (n in c(10, 100, 10000, 1000000)) {
+  cat(sprintf("n=%s  running mean = %.4f  (E[X] = 3.5000)\n",
+              formatC(n, big.mark = ",", width = 10, format = "d"), running[n]))
+}
 ```
 
 ---

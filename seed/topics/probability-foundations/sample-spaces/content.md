@@ -86,7 +86,7 @@ The hard part of real problems is rarely the arithmetic; it's writing down $\Ome
 
 <!-- block: gear, n: 5, label: "Count it by simulating" -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: ss-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: ss-sim, layer: both, pair_id: ss-sim -->
 ```python
 import numpy as np
 
@@ -102,6 +102,22 @@ p_both_given_one = np.mean(heads[at_least_one] == 2)
 
 print(f"P(both heads)                    = {p_both:.4f}  (= 1/4)")
 print(f"P(both heads | at least one head) = {p_both_given_one:.4f}  (= 1/3)")
+```
+
+<!-- block: code_r, pair_id: ss-sim, editable: true, layer: both -->
+```r
+# Flip two fair coins many times. Confirm the unconditional P(HH) = 1/4,
+# then condition on "at least one head" and watch it rise to 1/3.
+set.seed(0)
+flips <- matrix(sample(0:1, 2000000, replace = TRUE), ncol = 2)  # 0 = tails, 1 = heads
+heads <- rowSums(flips)                          # 0, 1, or 2 heads
+
+p_both <- mean(heads == 2)
+at_least_one <- heads >= 1
+p_both_given_one <- mean(heads[at_least_one] == 2)
+
+cat(sprintf("P(both heads)                     = %.4f  (= 1/4)\n", p_both))
+cat(sprintf("P(both heads | at least one head) = %.4f  (= 1/3)\n", p_both_given_one))
 ```
 
 ---

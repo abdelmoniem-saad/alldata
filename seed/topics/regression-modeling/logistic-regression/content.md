@@ -68,7 +68,7 @@ Start from $p = \sigma(\beta_0 + \beta_1 x) = 1/(1 + e^{-(\beta_0 + \beta_1 x)})
 
 <!-- block: gear, n: 5, label: "Fit by maximizing likelihood" -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: lr-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: lr-sim, layer: both, pair_id: lr-sim -->
 ```python
 import numpy as np
 
@@ -85,6 +85,24 @@ for _ in range(4000):
     b0 += lr * np.mean(yb - pred)
     b1 += lr * np.mean((yb - pred) * x)
 print(f"recovered beta0 = {b0:+.2f} (true -0.5),  beta1 = {b1:+.2f} (true 1.3)")
+```
+
+<!-- block: code_r, pair_id: lr-sim, editable: true, layer: both -->
+```r
+set.seed(0)
+# True model: log-odds = -0.5 + 1.3 x. Generate labels, then recover beta by
+# gradient ascent on the log-likelihood, no library needed.
+x <- runif(400, -6, 6)
+p <- 1 / (1 + exp(-(-0.5 + 1.3 * x)))
+yb <- as.numeric(runif(400) < p)
+
+b0 <- 0.0; b1 <- 0.0; lr <- 0.02
+for (i in seq_len(4000)) {
+  pred <- 1 / (1 + exp(-(b0 + b1 * x)))
+  b0 <- b0 + lr * mean(yb - pred)
+  b1 <- b1 + lr * mean((yb - pred) * x)
+}
+cat(sprintf("recovered beta0 = %+.2f (true -0.5),  beta1 = %+.2f (true 1.3)\n", b0, b1))
 ```
 
 Gradient ascent on the log-likelihood walks the coefficients to the truth, maximum likelihood in action, no closed form required.

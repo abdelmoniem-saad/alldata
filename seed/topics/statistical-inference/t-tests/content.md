@@ -77,7 +77,7 @@ The sample variance $s^2$ is computed around the sample mean $\bar{x}$, which is
 
 <!-- block: gear, n: 5, label: "Pairing, in code" -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: tt-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: tt-sim, layer: both, pair_id: tt-sim -->
 ```python
 import numpy as np
 
@@ -94,6 +94,23 @@ print(f"paired   t = {t:.2f}  on df = {len(d)-1};  mean drop = {d.mean():.2f}")
 se = np.sqrt(before.var(ddof=1)/len(before) + after.var(ddof=1)/len(after))
 t_wrong = (before.mean() - after.mean()) / se
 print(f"unpaired t = {t_wrong:.2f}  (wrong), much weaker; pairing removes baseline noise")
+```
+
+<!-- block: code_r, pair_id: tt-sim, editable: true, layer: both -->
+```r
+set.seed(0)
+# 20 patients, a real ~4-point drop, with large person-to-person baselines.
+before <- rnorm(20, 140, 12)
+after <- before - rnorm(20, 4, 5)
+
+d <- before - after                                   # per-patient difference
+t <- mean(d) / (sd(d) / sqrt(length(d)))
+cat(sprintf("paired   t = %.2f  on df = %d;  mean drop = %.2f\n", t, length(d)-1, mean(d)))
+
+# Treat the groups as independent (wrong), baseline spread swamps the effect:
+se <- sqrt(var(before)/length(before) + var(after)/length(after))
+t_wrong <- (mean(before) - mean(after)) / se
+cat(sprintf("unpaired t = %.2f  (wrong), much weaker; pairing removes baseline noise\n", t_wrong))
 ```
 
 The paired test sees the effect clearly; the unpaired one, drowning in baseline variation, often can't.

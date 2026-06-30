@@ -95,7 +95,7 @@ Equality iff $V = a U$ for some constant $a$, i.e., $Y$ is a perfect linear func
 
 <!-- block: gear, n: 5, label: "Linear, quadratic, no relationship" -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: corr-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: corr-sim, layer: both, pair_id: corr-sim -->
 ```python
 import numpy as np
 
@@ -118,6 +118,24 @@ y3 = x3 ** 2 + np.random.normal(0, 0.05, n)
 print(f"linear positive:  r = {np.corrcoef(x1, y1)[0, 1]:+.4f}")
 print(f"linear negative:  r = {np.corrcoef(x2, y2)[0, 1]:+.4f}")
 print(f"quadratic:        r = {np.corrcoef(x3, y3)[0, 1]:+.4f}  ← perfect relationship, r ≈ 0")
+```
+
+<!-- block: code_r, pair_id: corr-sim, editable: true, layer: both -->
+```r
+set.seed(42)
+n <- 200
+
+# Three relationships, three correlations:
+#   1. y = 0.7x + noise, strong positive linear, r ~ 0.85
+#   2. y = -0.5x + noise, moderate negative linear, r ~ -0.7
+#   3. y = x^2, perfect quadratic, r ~ 0 (Pearson can't see it)
+x1 <- runif(n, -2, 2); y1 <- 0.7 * x1 + rnorm(n, 0, 0.5)
+x2 <- runif(n, -2, 2); y2 <- -0.5 * x2 + rnorm(n, 0, 0.5)
+x3 <- runif(n, -2, 2); y3 <- x3^2 + rnorm(n, 0, 0.05)
+
+cat(sprintf("linear positive:  r = %+.4f\n", cor(x1, y1)))
+cat(sprintf("linear negative:  r = %+.4f\n", cor(x2, y2)))
+cat(sprintf("quadratic:        r = %+.4f  <- perfect relationship, r ~ 0\n", cor(x3, y3)))
 ```
 
 ---

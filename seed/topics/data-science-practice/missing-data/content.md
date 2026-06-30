@@ -81,7 +81,7 @@ Replace $m$ of $n$ values with the sample mean $\bar{x}$ of the observed ones. T
 
 <!-- block: gear, n: 5, label: "Watch imputation bias an estimate" -->
 
-<!-- block: code_python, editable: true, auto_run: true, anchor: md-code -->
+<!-- block: code_python, editable: true, auto_run: true, anchor: md-code, layer: both, pair_id: md-code -->
 ```python
 import numpy as np
 rng = np.random.default_rng(0)
@@ -98,6 +98,27 @@ for name, obs in [("MNAR", mnar), ("MCAR", mcar)]:
     drop = np.nanmean(obs)                                          # drop missing
     imputed = np.where(np.isnan(obs), np.nanmean(obs), obs).mean()  # mean-impute
     print(f"{name}:  true = {true_mean:.1f}   drop-missing = {drop:.1f}   mean-imputed = {imputed:.1f}")
+```
+
+<!-- block: code_r, pair_id: md-code, editable: true, layer: both -->
+```r
+set.seed(0)
+
+income <- rnorm(5000, 70, 20)
+true_mean <- mean(income)
+
+# MNAR: high earners (value > 90) decline to report.
+mnar <- income; mnar[income > 90] <- NA
+# MCAR: a random 20% go missing, unrelated to value.
+mcar <- income; mcar[runif(5000) < 0.2] <- NA
+
+for (nm in c("MNAR", "MCAR")) {
+  obs <- if (nm == "MNAR") mnar else mcar
+  drop <- mean(obs, na.rm = TRUE)                              # drop missing
+  imputed <- mean(ifelse(is.na(obs), mean(obs, na.rm = TRUE), obs))  # mean-impute
+  cat(sprintf("%s:  true = %.1f   drop-missing = %.1f   mean-imputed = %.1f\n",
+              nm, true_mean, drop, imputed))
+}
 ```
 
 Under **MCAR** both estimates land on the truth. Under **MNAR** both are biased *low* by several points, the high earners are simply gone, and no amount of filling with the observed mean brings them back.

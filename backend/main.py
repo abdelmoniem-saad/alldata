@@ -1,8 +1,11 @@
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from backend.api import (
     auth, content, courses, datasets, execute, forks, graph, merge_back,
@@ -76,11 +79,36 @@ app.include_router(forks.router, prefix="/api/forks", tags=["forks"])
 app.include_router(merge_back.router, prefix="/api/merge-backs", tags=["merge-backs"])
 
 
-@app.get("/")
-async def root():
-    return {"name": "AllData API", "health": "/api/health", "docs": "/docs"}
-
-
 @app.get("/api/health")
 async def health():
     return {"status": "ok"}
+
+
+# ── Serve the built frontend (single-container / Hugging Face deploy) ──
+# In local dev the Vite server serves the SPA and this block is a no-op
+# (frontend/dist is absent). In the container, FastAPI serves the built assets
+# and falls back to index.html for client-side routes, so the whole app runs
+# from one origin and the frontend's same-origin `/api` calls hit the routers
+# above. Registered last so every `/api/...` route is matched first.
+_DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+if (_DIST / "assets").is_dir():
+    app.mount("/assets", StaticFiles(directory=_DIST / "assets"), name="assets")
+
+if _DIST.is_dir():
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def spa(full_path: str):
+        # API + docs are matched by their own routes first; an unmatched
+        # `/api/...` is a real 404, anything else is a client-side route.
+        if full_path.startswith("api/"):
+            raise HTTPException(status_code=404, detail="Not found")
+        candidate = _DIST / full_path
+        if full_path and candidate.is_file():
+            return FileResponse(candidate)
+        return FileResponse(_DIST / "index.html")
+
+else:
+
+    @app.get("/")
+    async def root():
+        return {"name": "AllData API", "health": "/api/health", "docs": "/docs"}

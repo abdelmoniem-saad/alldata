@@ -62,7 +62,7 @@ $L(p) = \binom{n}{k} p^{k}(1-p)^{n-k}$. The factor $\binom{n}{k}$ is a constant 
 
 <!-- block: gear, n: 5, label: "Read the curve numerically" -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: lik-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: lik-sim, layer: both, pair_id: lik-sim -->
 ```python
 import numpy as np
 
@@ -75,6 +75,19 @@ print(f"peak at p = {ps[L.argmax()]:.2f}   (= k/n = {k/n:.2f})")
 # It is NOT a density in p, its 'area' is an arbitrary number, not 1.
 dp = ps[1] - ps[0]
 print(f"area under L over p = {L.sum() * dp:.5f}   (likelihood doesn't normalize)")
+```
+
+<!-- block: code_r, pair_id: lik-sim, editable: true, layer: both -->
+```r
+# Likelihood of p for 7 heads in 10 flips (up to the constant C(n,k)).
+k <- 7; n <- 10
+ps <- seq(0.01, 0.99, length.out = 99)
+L <- ps^k * (1 - ps)^(n - k)
+cat(sprintf("peak at p = %.2f   (= k/n = %.2f)\n", ps[which.max(L)], k/n))
+
+# It is NOT a density in p, its 'area' is an arbitrary number, not 1.
+dp <- ps[2] - ps[1]
+cat(sprintf("area under L over p = %.5f   (likelihood doesn't normalize)\n", sum(L) * dp))
 ```
 
 The peak sits at $k/n$; the area is some arbitrary value, a reminder that $L$ ranks parameters, it isn't a distribution over them.

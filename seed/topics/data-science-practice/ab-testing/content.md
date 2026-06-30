@@ -73,7 +73,7 @@ Power analysis inverts the test: to detect a lift $\delta$ with power $1-\beta$ 
 
 <!-- block: gear, n: 5, label: "Run a test, and watch peeking misfire" -->
 
-<!-- block: code_python, editable: true, auto_run: true, anchor: ab-code -->
+<!-- block: code_python, editable: true, auto_run: true, anchor: ab-code, layer: both, pair_id: ab-code -->
 ```python
 import numpy as np
 rng = np.random.default_rng(0)
@@ -104,6 +104,38 @@ for _ in range(trials):
             break
 print(f"peeking at 10 checkpoints in a NULL test: {false_alarms/trials:.1%} "
       f"false positives (should be ~5%)")
+```
+
+<!-- block: code_r, pair_id: ab-code, editable: true, layer: both -->
+```r
+set.seed(0)
+
+# One clean result: 300/3000 (A) vs 360/3000 (B).
+nA <- 3000; nB <- 3000
+xA <- 300; xB <- 360
+pA <- xA/nA; pB <- xB/nB
+pool <- (xA + xB) / (nA + nB)
+z <- (pB - pA) / sqrt(pool*(1-pool)*(1/nA + 1/nB))
+cat(sprintf("observed: A=%.1f%%  B=%.1f%%  z=%.2f  ->  %s\n",
+            100*pA, 100*pB, z, if (abs(z) > 1.96) "significant" else "n.s."))
+
+# Now the peeking trap: NULL A/A tests (no real difference), stop at the first
+# significant peek among 10 checkpoints. The false-positive rate should be 5%.
+checks <- seq(300, 3000, by = 300)
+false_alarms <- 0
+trials <- 1500
+for (i in seq_len(trials)) {
+  a <- cumsum(runif(3000) < 0.10)
+  b <- cumsum(runif(3000) < 0.10)
+  for (t in checks) {
+    pa <- a[t]/t; pb <- b[t]/t
+    pp <- (a[t] + b[t]) / (2*t)
+    s <- if (pp > 0 && pp < 1) sqrt(pp*(1-pp)*(2/t)) else 0
+    if (s > 0 && abs((pb - pa)/s) > 1.96) { false_alarms <- false_alarms + 1; break }
+  }
+}
+cat(sprintf("peeking at 10 checkpoints in a NULL test: %.1f%% false positives (should be ~5%%)\n",
+            100*false_alarms/trials))
 ```
 
 The honest single test is significant; the peeking experiment cries "winner!" on identical groups roughly **one time in five**, peeking, quantified.

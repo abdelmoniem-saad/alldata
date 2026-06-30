@@ -63,7 +63,7 @@ For a single $Z \sim N(0,1)$: $\mathbb{E}[Z^2] = \text{Var}(Z) = 1$, so summing 
 
 <!-- block: gear, n: 5, label: "Build it from normals" -->
 
-<!-- block: simulation, editable: true, auto_run: true, anchor: chi-sim -->
+<!-- block: simulation, editable: true, auto_run: true, anchor: chi-sim, layer: both, pair_id: chi-sim -->
 ```python
 import numpy as np
 
@@ -73,6 +73,20 @@ rng = np.random.default_rng(0)
 for k in [1, 3, 10]:
     q = (rng.standard_normal((1_000_000, k)) ** 2).sum(axis=1)
     print(f"df={k}:  mean={q.mean():.3f} (=k {k})   var={q.var():.3f} (=2k {2*k})")
+```
+
+<!-- block: code_r, pair_id: chi-sim, editable: true, layer: both -->
+```r
+# Build chi-squared literally: square standard normals and sum k of them.
+# Confirm mean = k and variance = 2k.
+set.seed(0)
+N <- 1000000
+for (k in c(1, 3, 10)) {
+  q <- numeric(N)
+  for (j in seq_len(k)) q <- q + rnorm(N)^2
+  cat(sprintf("df=%d:  mean=%.3f (=k %d)   var=%.3f (=2k %d)\n",
+              k, mean(q), k, mean((q - mean(q))^2), 2*k))
+}
 ```
 
 Mean lands on $k$, variance on $2k$, exactly as built.

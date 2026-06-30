@@ -1,3 +1,17 @@
+---
+title: AllData
+emoji: 📊
+colorFrom: green
+colorTo: gray
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
+<!-- The YAML block above is Hugging Face Space metadata, read when this repo is
+     deployed as a Docker Space (see docs/deploy-huggingface.md). It must stay at
+     the very top of the file. It is harmless on GitHub. -->
+
 # alldata
 
 Knowledge graph learning platform for statistics and data science.

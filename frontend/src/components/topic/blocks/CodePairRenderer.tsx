@@ -11,7 +11,8 @@
  * global preference. Clicking a tab flips it.
  */
 
-import CodeRunner from '../CodeRunner'
+import { useEffect, useState } from 'react'
+import CodeRunner, { execCapabilities } from '../CodeRunner'
 import type { CodePair } from './codePairs'
 import { useProgressStore } from '../../../stores/progressStore'
 
@@ -25,14 +26,21 @@ export default function CodePairRenderer({ pair, metaCache }: Props) {
   const preferred = useProgressStore(s => s.preferredCodeLang)
   const setPreferred = useProgressStore(s => s.setPreferredCodeLang)
 
-  // Pick the variant that matches the user's preference. If a pair is
-  // declared with only one of {python, r} variants (shouldn't happen
-  // post-grouping, but defensive) fall back to the first variant.
-  const active = pair.variants.find(v => v.lang === preferred) ?? pair.variants[0]
+  // Hide the R tab until R can actually run (Docker R image or local Rscript),
+  // so authored R variants aren't a dead end before the runtime is provisioned
+  // — same probe + cache as CodeRunner's single-language gate.
+  const [rAvailable, setRAvailable] = useState(false)
+  useEffect(() => { execCapabilities().then(c => setRAvailable(c.r)) }, [])
+  const variants = pair.variants.filter(v => v.lang !== 'r' || rAvailable)
+
+  // Pick the variant that matches the user's preference. Falls back to the
+  // first shown variant (e.g. Python when R is hidden).
+  const active = variants.find(v => v.lang === preferred) ?? variants[0]
   const meta = metaCache.get(active.block.id) ?? {}
 
   return (
     <div>
+      {variants.length > 1 && (
       <div role="tablist" aria-label="Code language" style={{
         display: 'inline-flex',
         gap: 2,
@@ -42,7 +50,7 @@ export default function CodePairRenderer({ pair, metaCache }: Props) {
         background: 'var(--color-surface)',
         border: '1px solid var(--color-border-subtle)',
       }}>
-        {pair.variants.map(v => {
+        {variants.map(v => {
           const isActive = v.lang === preferred
           return (
             <button
@@ -69,6 +77,7 @@ export default function CodePairRenderer({ pair, metaCache }: Props) {
           )
         })}
       </div>
+      )}
       {/* The key forces CodeRunner to re-mount on language flip so its
           per-instance state (last run output, edited buffer if any) resets
           cleanly to the new language. */}

@@ -84,7 +84,7 @@ The mean minimizes squared distance to the data, so each point pulls on it with 
 
 <!-- block: gear, n: 5, label: "Run a first-look pass" -->
 
-<!-- block: code_python, editable: true, auto_run: true, anchor: eda-code -->
+<!-- block: code_python, editable: true, auto_run: true, anchor: eda-code, layer: both, pair_id: eda-code -->
 ```python
 import numpy as np
 import matplotlib.pyplot as plt
@@ -114,6 +114,33 @@ plt.tight_layout(); plt.show()
 
 print(f"{n} rows; missing sleep: {int(np.isnan(sleep).sum())}")
 print(f"study hours: mean {study.mean():.2f} vs median {np.median(study):.2f}  -> right skew, consider log")
+```
+
+<!-- block: code_r, pair_id: eda-code, editable: true, layer: both -->
+```r
+set.seed(42)
+# A realistic student dataset: skewed study hours, normal-ish sleep, a score
+# driven by both, plus a few missing sleep values, as real data always has.
+n <- 200
+study <- pmin(pmax(rexp(n, rate = 1/3) + 1, 0.5), 15)   # right-skewed
+sleep <- pmin(pmax(rnorm(n, 7, 1.5), 3), 12)
+score <- pmin(pmax(40 + 3*study + 2*sleep + rnorm(n, 0, 8), 0), 100)
+sleep[sample(n, 10)] <- NA                              # missing values
+
+par(mfrow = c(2, 2))
+hist(score, breaks = 25, col = "#14b8a6", border = NA, main = "Scores", xlab = "score")
+abline(v = mean(score), lty = 2, col = "tomato")
+abline(v = median(score), lty = 2, col = "seagreen")
+hist(study, breaks = 25, col = "#71717a", border = NA, main = "Study hours, right-skewed", xlab = "hours")
+plot(study, score, pch = 16, cex = 0.6, col = "#14b8a6",
+     main = sprintf("Study vs score  (r = %.2f)", cor(study, score)))
+ok <- !is.na(sleep)
+plot(sleep[ok], score[ok], pch = 16, cex = 0.6, col = "#71717a",
+     main = sprintf("Sleep vs score  (r = %.2f)", cor(sleep[ok], score[ok])))
+
+cat(sprintf("%d rows; missing sleep: %d\n", n, sum(is.na(sleep))))
+cat(sprintf("study hours: mean %.2f vs median %.2f  -> right skew, consider log\n",
+            mean(study), median(study)))
 ```
 
 Four plots and three printed lines already surface the skew, the relationships, and the missing values, everything a model would otherwise trip over silently.
