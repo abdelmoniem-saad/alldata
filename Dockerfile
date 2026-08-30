@@ -21,6 +21,7 @@ FROM python:3.12-slim
 # fallback, since Hugging Face can't nest Docker sandboxes).
 RUN pip install --no-cache-dir \
       "fastapi>=0.115" "uvicorn[standard]>=0.32" "sqlalchemy[asyncio]>=2.0.36" \
+      "asyncpg>=0.30" \
       "aiosqlite>=0.20" "pydantic>=2.10" "pydantic-settings>=2.6" \
       "python-jose[cryptography]>=3.3" "passlib[bcrypt]>=1.7.4" "bcrypt<5" \
       "python-multipart>=0.0.12" "pyyaml>=6.0" "httpx>=0.28" "redis>=5.2" "docker>=7.1" \
