@@ -86,11 +86,12 @@ different, run `git push hf HEAD:main` instead.)
 - **Does it fall asleep?** If nobody visits for a while, the Space pauses to save
   resources, then wakes up on the next visit (a few seconds' delay). Normal for
   free hosting.
-- **Do sign-ups and progress stay forever?** On the free tier, storage resets
-  when the Space restarts or rebuilds (the lessons re-seed themselves each time,
-  so the content is always there, but visitor accounts/progress reset). That's
-  fine for letting people try it. If you later want permanent accounts, that's a
-  small upgrade (a real database), ask and I'll wire it.
+- **Do sign-ups and progress stay forever?** On the free tier alone, storage
+  resets when the Space restarts or rebuilds (the lessons re-seed themselves
+  each time, so the content is always there, but visitor accounts/progress
+  reset). That's fine for letting people try it. **Part D below** wires a
+  free external Postgres in ~5 minutes to make accounts, progress, and forks
+  permanent.
 - **Is running strangers' code safe?** Their code runs **inside your Space's own
   sandbox**, with time limits and rate limits already on, and the app mints a
   fresh security key each restart. Good for a public trial. Don't put anything
@@ -102,6 +103,43 @@ different, run `git push hf HEAD:main` instead.)
   the `Dockerfile`, ask when you want it. See [`r-runtime.md`](r-runtime.md).
 
 ---
+
+## Part D — Make accounts and progress durable (optional, ~5 minutes)
+
+By default the Space's storage is **ephemeral**: accounts, progress, and forks
+reset whenever the Space restarts. To make them permanent, give the Space an
+external Postgres database (free tiers work — e.g. [Neon](https://neon.tech)
+or [Supabase]):
+
+1. Create a free Postgres database at your provider and copy its connection
+   string. It looks like:
+   `postgresql://user:password@ep-xyz.eu-central-1.aws.neon.tech/dbname`
+2. AllData uses the async driver, so change the scheme to
+   `postgresql+asyncpg://…` and add `?sslmode=require` at the end.
+3. In your Space: **Settings → Variables and secrets → New secret**
+   - Name: `DATABASE_URL`
+   - Value: `postgresql+asyncpg://user:password@…?sslmode=require`
+   - While you're there, also set `SECRET_KEY` to a long random string so
+     logins survive restarts too (without it, a new secret is minted per boot
+     and everyone is signed out).
+4. The Space takes care of the rest: on boot it runs the idempotent importer
+   against the external DB (schema + lesson content), and
+   `GET /api/health` reports `{"status":"ok","database":"ok"}` when the
+   connection is live — or 503 if the database is unreachable, which the
+   keep-alive workflow below surfaces.
+
+Nothing else changes: lessons still live in `seed/` (re-imported on boot),
+and content updates still deploy with `git push hf main`.
+
+## Keep-alive (optional, already wired)
+
+`.github/workflows/keepalive.yml` pings `/api/health` every 30 minutes from
+GitHub Actions. That keeps the free Space from sleeping after 48 idle hours
+(so the first visitor doesn't wait for a cold start) and shows red runs in
+the Actions tab when the Space or its database is down. If your Space lives
+at a different address, set a repository secret `ALLODATA_URL` to the base
+URL. Nothing to configure — it runs as long as the workflow file is on the
+GitHub repo's default branch.
 
 ## If something goes wrong
 

@@ -1,0 +1,35 @@
+# Keep-alive — Hugging Face pauses free Spaces after ~48h without requests;
+# a cold start costs the first visitor several seconds of wake-up (and the
+# SQLite file resets on restart). Pinging /api/health every 30 minutes keeps
+# the Space warm and doubles as an uptime monitor: a failed check shows up
+# as a red run in the Actions tab.
+#
+# The endpoint returns 503 when the database is unreachable, so a broken
+# external-Postgres deployment surfaces here too, not just in the Space logs.
+# Override the target with a repository secret named ALLODATA_URL if the
+# Space moves.
+name: keepalive
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping /api/health
+        run: |
+          BASE_URL="${ALLODATA_URL:-https://amoniem-alldata.hf.space}"
+          for attempt in 1 2 3; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 \
+              "$BASE_URL/api/health" || true)
+            echo "attempt $attempt: HTTP $code"
+            if [ "$code" = "200" ]; then
+              exit 0
+            fi
+            sleep 20
+          done
+          echo "::warning::Health check failed after 3 attempts ($BASE_URL/api/health)"
+          exit 1

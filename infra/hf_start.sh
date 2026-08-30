@@ -11,10 +11,33 @@ export SECRET_KEY="${SECRET_KEY:-$(python -c 'import secrets; print(secrets.toke
 export SANDBOX_ALLOW_LOCAL_FALLBACK=true
 
 # Build the content database if this container doesn't have one yet. HF storage
-# is ephemeral, so a fresh container re-seeds from seed/ on first boot.
-if [ ! -f alldata.db ]; then
-  echo "Seeding content database..."
-  python -m seed.import_seed || echo "WARN: seeding hit an error; starting anyway."
-fi
+# is ephemeral, so a fresh container re-seeds from seed/ on first boot. With an
+# external DATABASE_URL (a Space secret pointing at e.g. Neon Postgres) the DB
+# is durable but may be empty or schema-stale — the importer is idempotent, so
+# it runs on every boot there instead.
+import_database() {
+  for attempt in 1 2 3; do
+    if python -m seed.import_seed; then
+      return 0
+    fi
+    echo "WARN: seeding attempt $attempt failed; retrying in 5s..."
+    sleep 5
+  done
+  echo "WARN: seeding did not succeed; starting anyway."
+  return 0
+}
+
+case "${DATABASE_URL:-}" in
+  ""|sqlite*)
+    if [ ! -f alldata.db ]; then
+      echo "Seeding content database..."
+      import_database
+    fi
+    ;;
+  *)
+    echo "External DATABASE_URL configured; running idempotent re-import..."
+    import_database
+    ;;
+esac
 
 exec uvicorn backend.main:app --host 0.0.0.0 --port 7860

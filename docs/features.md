@@ -494,6 +494,7 @@ Visit any topic with this query string. Blocks the user has flagged with the con
 
 | Endpoint | Purpose | Cycle |
 |---|---|---|
+| `GET /api/health` | Liveness + database reachability (`SELECT 1` round-trip; 503 + detail when the DB is down). The keep-alive cron's probe. | seed-era; Y7, db-aware |
 | `GET /api/graph` | Full graph (nodes + edges). Filters `_meta` domains. | seed-era; K2 hidden-domain filter |
 | `GET /api/graph/search?q=` | Fuzzy search topics by title. Postgres trigram, SQLite prefix-ranked. | H6, L4 dialect-portable |
 | `GET /api/graph/subgraph?root=&depth=` | Local neighborhood of a topic. | seed-era |
@@ -541,6 +542,12 @@ When Docker isn't reachable (the HF Space can't nest it), submitted code runs on
 
 ### Dataset resolution in executed code
 The injected `load(name)` helper resolves `seed/datasets/{name}.csv` via the `ALLODATA_DATASET_DIR` env var (set by both the local fallback and, with a read-only mount, the Docker sandbox) instead of walking up from a cwd it doesn't control — datasets now load in every execution environment. *(cycle: Y4)* `code: backend/services/execution_service.py` (`_wrap_python_code`, `_DATASET_DIR`).
+
+### Durable external DB on the Space
+`hf_start.sh` distinguishes the default SQLite file (seed once per fresh container) from an external `DATABASE_URL` (idempotent re-import on every boot, 3 retries with backoff), so a Neon/Supabase Postgres secret makes accounts, progress, and forks survive Space restarts. `.env.example` documents the asyncpg URL shape. *(cycle: Y6)* `code: infra/hf_start.sh`, `.env.example`.
+
+### Keep-alive cron
+`.github/workflows/keepalive.yml` pings `/api/health` every 30 minutes (GitHub Actions cron + manual trigger), keeping the free Space from sleeping and surfacing outages — including an unreachable database, since health returns 503 then — as red Actions runs. Target overridable via an `ALLODATA_URL` repository secret. *(cycle: Y7)* `code: .github/workflows/keepalive.yml`, `backend/main.py` (`health`).
 
 ---
 

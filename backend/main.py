@@ -8,8 +8,17 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from backend.api import (
-    auth, content, courses, datasets, execute, forks, graph, merge_back,
-    progress, topics, users,
+    auth,
+    content,
+    courses,
+    datasets,
+    execute,
+    forks,
+    graph,
+    merge_back,
+    progress,
+    topics,
+    users,
 )
 from backend.config import settings
 
@@ -81,7 +90,27 @@ app.include_router(merge_back.router, prefix="/api/merge-backs", tags=["merge-ba
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok"}
+    """Liveness + database reachability.
+
+    The keep-alive cron (`.github/workflows/keepalive.yml`) pings this every
+    30 minutes to keep the Hugging Face Space awake; it also doubles as the
+    "is the database actually reachable" probe for an external-Postgres
+    deployment — 503 with the detail when the DB round-trip fails.
+    """
+    from sqlalchemy import text
+
+    from backend.database import engine
+
+    try:
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+    except Exception:
+        logger.exception("Health check: database unreachable")
+        raise HTTPException(
+            status_code=503,
+            detail={"status": "degraded", "database": "unreachable"},
+        )
+    return {"status": "ok", "database": "ok"}
 
 
 # ── Serve the built frontend (single-container / Hugging Face deploy) ──
