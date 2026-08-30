@@ -116,11 +116,10 @@ or [Supabase]):
    `postgresql://user:password@ep-xyz.eu-central-1.aws.neon.tech/dbname`
 2. AllData uses the async driver, so change the scheme to
    `postgresql+asyncpg://…` and add `?sslmode=require` at the end.
-   **Neon's copy button appends `&channel_binding=require` — delete that
-   part.** asyncpg forwards unknown query params to the server as settings,
-   and Postgres rejects `channel_binding` with `unrecognized configuration
-   parameter`, which breaks every connection. The value should end with
-   just `?sslmode=require`.
+   **Neon's copy button also appends `&channel_binding=require` — you can
+   delete it, but you don't have to:** AllData translates `sslmode` for
+   asyncpg and drops `channel_binding` automatically (a warning appears in
+   the Space logs when it does). Either way the connection is encrypted.
 3. In your Space: **Settings → Variables and secrets → New secret**
    - Name: `DATABASE_URL`
    - Value: `postgresql+asyncpg://user:password@…?sslmode=require`

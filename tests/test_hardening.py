@@ -104,6 +104,43 @@ class TestSandboxEnv:
         assert env["MPLBACKEND"] == "Agg"
 
 
+class TestAsyncpgSslTranslation:
+    """Y8: SQLAlchemy forwards URL query params to asyncpg.connect() as
+    kwargs; asyncpg has no `sslmode` kwarg, so the URL must be translated
+    before the engine is built. Regression for the Space's
+    `TypeError: connect() got an unexpected keyword argument 'sslmode'`."""
+
+    def test_sslmode_translated_to_ssl_arg(self):
+
+        from backend.database import _engine_setup
+
+        url, kwargs = _engine_setup(
+            "postgresql+asyncpg://u:p@ep-x.aws.neon.tech/neondb?sslmode=require"
+        )
+        assert "sslmode" not in str(url)  # moved out of the URL
+        assert kwargs["connect_args"]["ssl"] is not None
+        ctx = kwargs["connect_args"]["ssl"]
+        # libpq 'require' semantics: encrypt, no verification
+        assert ctx.verify_mode == __import__("ssl").CERT_NONE
+
+    def test_channel_binding_dropped(self):
+        from backend.database import _engine_setup
+
+        url, _ = _engine_setup(
+            "postgresql+asyncpg://u:p@ep-x.aws.neon.tech/neondb"
+            "?sslmode=require&channel_binding=require"
+        )
+        assert "channel_binding" not in str(url)
+
+    def test_sqlite_url_untouched(self):
+        from backend.database import _engine_setup
+
+        url, kwargs = _engine_setup("sqlite+aiosqlite:///./test.db")
+        assert str(url) == "sqlite+aiosqlite:///./test.db"
+        assert "connect_args" not in kwargs
+        assert kwargs == {"echo": False}
+
+
 class TestLocalFallbackSmoke:
     """The hardened Popen path still runs real code end-to-end.
 
