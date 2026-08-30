@@ -1,7 +1,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy import select
@@ -55,3 +55,17 @@ def require_role(*roles: UserRole):
         return user
 
     return Depends(check_role)
+
+
+def client_ip(request: Request) -> str:
+    """Y1: best-effort client IP for rate-limit keys.
+
+    Behind the Hugging Face proxy (and any reverse proxy) the socket peer is
+    the proxy, so `X-Forwarded-For`'s first entry wins when present. The
+    socket peer is the honest fallback; `unknown` for tests/exotic transports.
+    Rate-limit keys only — never log this as a precise identity.
+    """
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"

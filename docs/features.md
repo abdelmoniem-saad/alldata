@@ -504,7 +504,7 @@ Visit any topic with this query string. Blocks the user has flagged with the con
 | `GET /api/topics` | List topics (filterable). | seed-era |
 | `GET /api/topics/{slug}` | Single topic + all content blocks + misconceptions. | seed-era |
 | `GET /api/topics/search?q=` | Alt-search (keyword-literal). | seed-era |
-| `POST /api/execute` | Run Python or R in the sandbox, return stdout / stderr / images. Auth-required + per-user rate limit. | seed-era; S1, hardened |
+| `POST /api/execute` | Run Python or R in the sandbox, return stdout / stderr / images. Auth-required + per-user rate limit + per-IP dam + global concurrency gate. | seed-era; S1, hardened; Y2/Y3 |
 | `GET /api/execute/capabilities` | `{python, r}`, which languages are runnable here; gates the R toggle. No auth. | V0 |
 | `GET /api/datasets` | Manifest + reverse index of topics-per-dataset. | K5 |
 | `GET /api/datasets/{name}` | Stream the CSV file. | K5 |
@@ -512,7 +512,7 @@ Visit any topic with this query string. Blocks the user has flagged with the con
 | `GET /api/users/me/progress` | Full snapshot of the authenticated user's progress (bundle of per-topic slices). | M1 |
 | `PUT /api/users/me/progress/{slug}` | Upsert one topic's full progress slice. Last-write-wins on `client_updated_at`. | M1 |
 | `POST /api/users/me/progress/batch` | Batch upsert N topics, used on login when local storage is non-empty. | M1 |
-| `POST /api/auth/login` / `POST /api/auth/register` / `GET /api/auth/me` | Account flows. Login/register wired into the navbar's `AuthMenu` in M1; `/me` returns the JWT-validated current user. | seed-era; M1, UI wired |
+| `POST /api/auth/login` / `POST /api/auth/register` / `GET /api/auth/me` | Account flows. Login/register wired into the navbar's `AuthMenu` in M1; `/me` returns the JWT-validated current user; login/register are per-IP rate-limited. | seed-era; M1, UI wired; Y1 |
 | `POST /api/forks` | Create a fork of a topic, seeded from its `content.md`. 409 if the caller already forked it. | N |
 | `GET /api/forks/me` | The caller's forks. | N |
 | `GET /api/forks/{username}` | A user's public fork listing. | N |
@@ -525,6 +525,22 @@ Visit any topic with this query string. Blocks the user has flagged with the con
 | `GET /api/merge-backs/{id}` | ADMIN/EDITOR. One suggestion + `master_markdown` (current) + `suggested_markdown` for the diff. | O1 |
 | `POST /api/merge-backs/{id}/accept` | ADMIN/EDITOR. Replace master topic's blocks + rewrite seed `content.md`. | O1 |
 | `POST /api/merge-backs/{id}/reject` | ADMIN/EDITOR. Close the suggestion with an optional note. | O1 |
+
+---
+
+## Security hardening
+
+### Auth per-IP rate limiting
+`POST /api/auth/login` (10/min) and `POST /api/auth/register` (5/min) are gated per client IP with 429 + `Retry-After`, before any DB work. Every attempt counts, success or not. Separate limiter instances so a registration burst can't eat the login budget. *(cycle: Y1)* `code: backend/api/auth.py` (`login_limiter`, `register_limiter`, `_ip_gate`).
+
+### Execute per-IP dam
+`POST /api/execute` carries a per-IP limit (30/min) in addition to the S1 per-user limit — accounts are free on an open-registration host, so the IP is the real resource bound. `deps.client_ip` prefers `X-Forwarded-For` (the HF proxy masks the socket peer). *(cycle: Y2)* `code: backend/api/execute.py`, `backend/deps.py` (`client_ip`).
+
+### Local-fallback execution hardening
+When Docker isn't reachable (the HF Space can't nest it), submitted code runs on the host interpreter. Y3 shrinks what that code can do: an **allow-list environment** (no `SECRET_KEY` / `DATABASE_URL` / `REDIS_URL`; `HOME` is the run's temp dir), POSIX rlimits (CPU ≈ timeout, 64 MB file size, 64 processes, Linux-only 512 MB address space), own process group killed whole on timeout, `sys.executable` instead of a bare `python`, and a global concurrency semaphore (`execution_max_concurrent=2`) across all dispatch paths. *(cycle: Y3)* `code: backend/services/execution_service.py` (`_sandbox_env`, `_child_hardening_kwargs`, `_kill_process_group`, `_execution_slots`).
+
+### Dataset resolution in executed code
+The injected `load(name)` helper resolves `seed/datasets/{name}.csv` via the `ALLODATA_DATASET_DIR` env var (set by both the local fallback and, with a read-only mount, the Docker sandbox) instead of walking up from a cwd it doesn't control — datasets now load in every execution environment. *(cycle: Y4)* `code: backend/services/execution_service.py` (`_wrap_python_code`, `_DATASET_DIR`).
 
 ---
 

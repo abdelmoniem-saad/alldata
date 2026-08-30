@@ -38,6 +38,16 @@ class Settings(BaseSettings):
     sandbox_r_enabled: bool = False
     execution_rate_limit_learner: int = 10  # per minute
     execution_rate_limit_professor: int = 60  # per minute
+    # Y1: auth endpoints are IP-limited (brute-force dam — there is no email
+    # path yet, so password guessing is otherwise unthrottled). Execution is
+    # additionally IP-limited so one host can't rotate accounts to evade the
+    # per-user cap, and the local-fallback executor has a global concurrency
+    # gate plus per-child POSIX rlimits.
+    auth_rate_limit_login: int = 10  # per minute per IP
+    auth_rate_limit_register: int = 5  # per minute per IP
+    execution_ip_rate_limit: int = 30  # per minute per IP
+    execution_max_concurrent: int = 2  # global, all users, local-fallback path
+    sandbox_local_memory_mb: int = 512  # RLIMIT_AS for the POSIX local fallback
 
     model_config = {"env_prefix": "", "case_sensitive": False}
 

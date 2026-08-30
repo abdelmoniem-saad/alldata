@@ -47,6 +47,10 @@ class SlidingWindowLimiter:
             self._hits.pop(key, None)
 
 
-# Module-level instance shared by the execute endpoint. Per-process state,
+# Module-level instances shared by the execute endpoint. Per-process state,
 # see the module docstring for the multi-process upgrade path.
 execution_limiter = SlidingWindowLimiter(window_seconds=60.0)
+# R1: per-IP dam on /api/execute. The per-user limit above is easy to evade
+# by rotating throwaway accounts; this bounds one host regardless of how
+# many accounts it creates.
+execution_ip_limiter = SlidingWindowLimiter(window_seconds=60.0)

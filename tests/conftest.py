@@ -1,10 +1,7 @@
 """Test configuration, in-memory SQLite for fast tests."""
 
-import asyncio
-import uuid
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
-import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -12,7 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from backend.database import Base, get_db
 from backend.main import app
 from backend.models.user import User, UserRole
-
 
 # Use SQLite for tests (no PostgreSQL dependency)
 TEST_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
@@ -26,6 +22,13 @@ async def setup_db():
     """Create tables before each test, drop after."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    # Y1: rate limiters are module-level globals (per-process state); reset
+    # them per test so the per-IP dams don't leak state across the suite.
+    from backend.api.auth import login_limiter, register_limiter
+    from backend.services.rate_limit import execution_ip_limiter, execution_limiter
+
+    for limiter in (login_limiter, register_limiter, execution_ip_limiter, execution_limiter):
+        limiter.reset()
     yield
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
@@ -72,6 +75,7 @@ async def test_user(db: AsyncSession) -> User:
 async def auth_headers(test_user: User) -> dict[str, str]:
     """Generate auth headers for the test user."""
     from jose import jwt
+
     from backend.config import settings
 
     token = jwt.encode(

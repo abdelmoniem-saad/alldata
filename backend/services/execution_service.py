@@ -1,4 +1,4 @@
-"""Code execution service, Docker-based sandboxed code execution.
+"""Code execution service — Docker-based sandboxed code execution.
 
 Architecture:
 1. User submits code via API
@@ -6,20 +6,117 @@ Architecture:
 3. A Docker container runs the code with strict resource limits
 4. stdout/stderr are captured and returned
 5. Any generated plot images are captured as base64
+
+When Docker isn't reachable, execution falls back to running on the host
+interpreter (the Hugging Face Space can't nest Docker). Y1 hardens that
+fallback: a scrubbed environment (no SECRET_KEY / DATABASE_URL / tokens),
+an absolute dataset dir so `load(name)` works without a favorable cwd,
+POSIX rlimits + process-group kill on timeout, and a global concurrency
+gate so heavy runs can't starve the single-process host.
 """
 
 import asyncio
 import base64
 import os
 import shutil
+import signal
+import sys
 import tempfile
 import time
 from pathlib import Path
 
 from backend.config import settings
 
-
 MAX_OUTPUT_LENGTH = 50_000  # Characters
+
+# ── Y1: local-fallback hardening ─────────────────────────────────────────
+# Absolute path to the curated CSVs, passed to the child via env so the
+# injected `load(name)` helper resolves datasets regardless of the process
+# cwd (the fallback runs in a throwaway temp dir).
+_DATASET_DIR = Path(__file__).resolve().parent.parent.parent / "seed" / "datasets"
+
+
+def _sandbox_env(home: str) -> dict[str, str]:
+    """Allow-list environment for the local-fallback child process.
+
+    The child must never see server secrets (SECRET_KEY, DATABASE_URL,
+    REDIS_URL, proxy credentials) — it's running untrusted code on this
+    host. Only the keys the interpreter and matplotlib genuinely need are
+    inherited; everything else is dropped.
+    """
+    env = {
+        "PATH": os.environ.get("PATH", os.defpath),
+        "HOME": home,
+        "MPLBACKEND": "Agg",
+        "PYTHONUNBUFFERED": "1",
+        "ALLODATA_DATASET_DIR": str(_DATASET_DIR),
+    }
+    for key in (
+        "SYSTEMROOT", "SYSTEMDRIVE", "WINDIR", "COMSPEC", "PATHEXT",
+        "APPDATA", "LOCALAPPDATA", "USERPROFILE", "HOMEDRIVE", "HOMEPATH",
+        "LANG", "LC_ALL",
+    ):
+        if key in os.environ:
+            env[key] = os.environ[key]
+    return env
+
+
+def _child_hardening_kwargs(timeout: int) -> dict:
+    """POSIX-only pre-exec hardening for the local-fallback subprocess.
+
+    CPU time is capped just above the wall-clock timeout (the kernel sends
+    SIGKILL even if our own timeout bookkeeping loses the race), file size
+    is capped so a write loop can't fill the disk, and (Linux only) address
+    space is capped — RLIMIT_AS misbehaves on macOS with modern CPython.
+    `start_new_session` puts the child in its own process group so the
+    timeout killer can take down grandchildren, not just the direct child.
+    """
+    if os.name != "posix":
+        return {}
+    import resource  # POSIX only
+
+    limits: list[tuple[int, tuple[int, int]]] = [
+        (resource.RLIMIT_CPU, (timeout, timeout + 1)),
+        (resource.RLIMIT_FSIZE, (64 * 1024 * 1024, 64 * 1024 * 1024)),
+        (resource.RLIMIT_NPROC, (64, 64)),
+    ]
+    if sys.platform == "linux":
+        mem = int(settings.sandbox_local_memory_mb) * 1024 * 1024
+        limits.append((resource.RLIMIT_AS, (mem, mem)))
+
+    def _preexec():  # pragma: no cover — runs in the forked child
+        for res, (soft, hard) in limits:
+            try:
+                resource.setrlimit(res, (soft, hard))
+            except (ValueError, OSError):
+                pass
+
+    return {"preexec_fn": _preexec, "start_new_session": True}
+
+
+def _kill_process_group(proc) -> None:
+    """Y1: kill the whole process group, not just the direct child, so a
+    forked grandchild can't outlive the timeout."""
+    try:
+        if hasattr(os, "killpg"):
+            # start_new_session ⇒ the child is its own group leader, so its
+            # pid doubles as the pgid.
+            os.killpg(proc.pid, signal.SIGKILL)
+        else:
+            proc.kill()
+    except (ProcessLookupError, PermissionError, OSError):
+        try:
+            proc.kill()
+        except OSError:
+            pass
+
+
+# Y1: one global concurrency gate. The Docker sandbox already bounds each
+# run; this bounds how many runs the *host* executes at once, which matters
+# on the single-CPU Hugging Face tier where the local fallback competes with
+# uvicorn itself. Created at import; asyncio primitives bind their loop lazily.
+_execution_slots = asyncio.Semaphore(settings.execution_max_concurrent)
+
 
 
 def runtime_capabilities() -> dict:
@@ -62,22 +159,26 @@ async def execute_code(
     """Execute code in an isolated Docker container.
 
     Returns dict with: stdout, stderr, exit_code, execution_time_ms, images, truncated
-    """
-    timeout = timeout or settings.sandbox_timeout_seconds
 
-    if language == "python":
-        return await _execute_python(code, timeout, theme)
-    elif language == "r":
-        return await _execute_r(code, timeout, theme)
-    else:
-        return {
-            "stdout": "",
-            "stderr": f"Unsupported language: {language}",
-            "exit_code": 1,
-            "execution_time_ms": 0,
-            "images": [],
-            "truncated": False,
-        }
+    Y1: all dispatch paths run under the global concurrency gate so a burst
+    of heavy runs can't starve the host process.
+    """
+    async with _execution_slots:
+        timeout = timeout or settings.sandbox_timeout_seconds
+
+        if language == "python":
+            return await _execute_python(code, timeout, theme)
+        elif language == "r":
+            return await _execute_r(code, timeout, theme)
+        else:
+            return {
+                "stdout": "",
+                "stderr": f"Unsupported language: {language}",
+                "exit_code": 1,
+                "execution_time_ms": 0,
+                "images": [],
+                "truncated": False,
+            }
 
 
 async def _execute_python(code: str, timeout: int, theme: str = "dark") -> dict:
@@ -105,6 +206,11 @@ async def _execute_python(code: str, timeout: int, theme: str = "dark") -> dict:
                 f"--cpus={settings.sandbox_cpu_limit}",
                 "--read-only",
                 "--tmpfs", "/tmp:size=50m",
+                # Y1: curated datasets, read-only, so the injected `load(name)`
+                # helper works inside the sandbox too (previously it only
+                # worked when the cwd happened to contain seed/datasets).
+                "-v", f"{_DATASET_DIR}:/home/sandbox/datasets:ro",
+                "-e", "ALLODATA_DATASET_DIR=/home/sandbox/datasets",
                 "-v", f"{code_path}:/home/sandbox/script.py:ro",
                 "-v", f"{output_dir}:/home/sandbox/output",
                 settings.sandbox_image,
@@ -117,7 +223,7 @@ async def _execute_python(code: str, timeout: int, theme: str = "dark") -> dict:
                 stdout, stderr = await asyncio.wait_for(
                     proc.communicate(), timeout=timeout
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 proc.kill()
                 await proc.wait()
                 return {
@@ -162,9 +268,12 @@ async def _execute_python(code: str, timeout: int, theme: str = "dark") -> dict:
 
 
 async def _execute_local_python(code: str, timeout: int, theme: str = "dark") -> dict:
-    """Fallback: execute Python locally when Docker is not available (dev mode).
+    """Fallback: execute Python locally when Docker is not available (dev mode / HF).
 
-    Uses subprocess.run in a thread to avoid asyncio subprocess issues on Windows.
+    Uses subprocess.Popen in a thread to avoid asyncio subprocess issues on
+    Windows. Y1: the child runs with a scrubbed environment, POSIX rlimits,
+    its own process group (killed whole-group on timeout), and `sys.executable`
+    so it's guaranteed to be the same interpreter/venv the server runs on.
     """
     import subprocess as sp
 
@@ -179,12 +288,20 @@ async def _execute_local_python(code: str, timeout: int, theme: str = "dark") ->
         start_time = time.monotonic()
 
         def _run():
-            return sp.run(
-                ["python", str(code_path)],
-                capture_output=True,
-                timeout=timeout,
+            proc = sp.Popen(
+                [sys.executable, str(code_path)],
+                stdout=sp.PIPE,
+                stderr=sp.PIPE,
                 cwd=tmpdir,
+                env=_sandbox_env(home=tmpdir),
+                **_child_hardening_kwargs(timeout),
             )
+            try:
+                stdout, stderr = proc.communicate(timeout=timeout)
+            except sp.TimeoutExpired:
+                _kill_process_group(proc)
+                raise
+            return sp.CompletedProcess(proc.args, proc.returncode, stdout, stderr)
 
         loop = asyncio.get_event_loop()
         try:
@@ -192,7 +309,7 @@ async def _execute_local_python(code: str, timeout: int, theme: str = "dark") ->
                 loop.run_in_executor(None, _run),
                 timeout=timeout + 2,
             )
-        except (asyncio.TimeoutError, sp.TimeoutExpired):
+        except (TimeoutError, sp.TimeoutExpired):
             return {
                 "stdout": "",
                 "stderr": f"Execution timed out after {timeout} seconds",
@@ -266,7 +383,7 @@ async def _execute_r(code: str, timeout: int, theme: str = "dark") -> dict:
                 stdout, stderr = await asyncio.wait_for(
                     proc.communicate(), timeout=timeout
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 proc.kill()
                 await proc.wait()
                 return {
@@ -312,6 +429,8 @@ async def _execute_local_r(code: str, timeout: int, theme: str = "dark") -> dict
     """Fallback: execute R code locally via Rscript when Docker isn't available.
 
     Requires `Rscript` on PATH. Returns a helpful setup hint if R isn't installed.
+    Y1: scrubbed environment + POSIX rlimits + process-group kill, matching the
+    Python fallback.
     """
     import subprocess as sp
 
@@ -326,12 +445,20 @@ async def _execute_local_r(code: str, timeout: int, theme: str = "dark") -> dict
         start_time = time.monotonic()
 
         def _run():
-            return sp.run(
+            proc = sp.Popen(
                 ["Rscript", str(code_path)],
-                capture_output=True,
-                timeout=timeout,
+                stdout=sp.PIPE,
+                stderr=sp.PIPE,
                 cwd=tmpdir,
+                env=_sandbox_env(home=tmpdir),
+                **_child_hardening_kwargs(timeout),
             )
+            try:
+                stdout, stderr = proc.communicate(timeout=timeout)
+            except sp.TimeoutExpired:
+                _kill_process_group(proc)
+                raise
+            return sp.CompletedProcess(proc.args, proc.returncode, stdout, stderr)
 
         loop = asyncio.get_event_loop()
         try:
@@ -339,7 +466,7 @@ async def _execute_local_r(code: str, timeout: int, theme: str = "dark") -> dict
                 loop.run_in_executor(None, _run),
                 timeout=timeout + 2,
             )
-        except (asyncio.TimeoutError, sp.TimeoutExpired):
+        except (TimeoutError, sp.TimeoutExpired):
             return {
                 "stdout": "",
                 "stderr": f"Execution timed out after {timeout} seconds",
@@ -425,11 +552,13 @@ tryCatch({{
 """
 
 
-def _wrap_python_code(code: str, output_dir: str = "/home/sandbox/output", theme: str = "dark") -> str:
+def _wrap_python_code(
+    code: str, output_dir: str = "/home/sandbox/output", theme: str = "dark"
+) -> str:
     """Wrap user code to capture matplotlib plots automatically."""
     # Normalize path separators for the target OS
     safe_dir = output_dir.replace("\\", "/")
-    
+
     # Theme parameters
     is_light = theme == "light"
     face_color = "#fdfdfd" if is_light else "#050505"
@@ -472,7 +601,11 @@ _original_show = plt.show
 def _capture_show(*args, **kwargs):
     global _plot_counter
     _plot_counter += 1
-    plt.savefig(os.path.join(_output_dir, f'plot_{{_plot_counter:03d}}.png'), dpi=100, bbox_inches='tight')
+    plt.savefig(
+        os.path.join(_output_dir, f'plot_{{_plot_counter:03d}}.png'),
+        dpi=100,
+        bbox_inches='tight',
+    )
     plt.close()
 
 plt.show = _capture_show
@@ -486,7 +619,12 @@ def load(name):
     if not _re_load.fullmatch(r"[A-Za-z0-9_-]+", str(name)):
         raise ValueError("Invalid dataset name: " + repr(name))
     candidates = []
-    for d in (os.getcwd(), "/app", "/work"):
+    # Y1: the runner tells us exactly where the curated CSVs live (local
+    # fallback runs in a temp cwd; the Docker sandbox mounts them read-only).
+    _dataset_dir = os.environ.get("ALLODATA_DATASET_DIR")
+    if _dataset_dir:
+        candidates.append(os.path.join(_dataset_dir, str(name) + ".csv"))
+    for d in (os.getcwd(), "/app", "/work", "/home/sandbox/datasets"):
         candidates.append(os.path.join(d, "seed", "datasets", str(name) + ".csv"))
     p = os.getcwd()
     for _ in range(4):
