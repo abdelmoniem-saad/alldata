@@ -9,7 +9,6 @@ from collections import defaultdict, deque
 
 from sqlalchemy import case, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from backend.models.content_block import ContentBlock
 from backend.models.edge import EdgeType, TopicEdge
@@ -525,60 +524,42 @@ async def search_graph_nodes(
     body text: title matches rank first, then body matches (each carrying
     `matched_in="body"` and a short `snippet`).
 
-    Originally used `pg_trgm.similarity()` for Postgres deployments, but
-    the dev/test stack runs SQLite which doesn't expose that function.
-    L4 makes this dialect-portable:
-      - Postgres: still uses `similarity()` for trigram ranking + ILIKE fallback
-      - SQLite (and anything else): falls back to LIKE-based prefix/substring
-        match, ordering by where in the title the match occurs (prefix > word
-        boundary > anywhere) so a query like "bay" surfaces "Bayes' Theorem"
-        ahead of "Bayesian Inference" only when that's the more relevant order.
+    A single dialect-portable ILIKE implementation for all backends — the
+    original Postgres branch used `pg_trgm.similarity()`, which silently
+    requires the `pg_trgm` extension; on a fresh Neon database (or any
+    Postgres without it) every search 500'd with "function similarity(...)
+    does not exist" while the SQLite dev stack stayed green. At this
+    catalog scale the trigram ranking bought nothing over the ranked-ILIKE
+    ordering below (prefix > word boundary > anywhere), so the extension
+    dependency is gone.
     """
     q = query.strip()
     if not q:
         return []
 
-    is_postgres = db.bind and db.bind.dialect.name == "postgresql"
     q_like = f"%{q}%"
     q_prefix = f"{q}%"
     q_space_prefix = f"% {q}%"
 
-    if is_postgres:
-        # Trigram similarity ranking. Fall back to ILIKE match so queries
-        # shorter than the trigram threshold (very short prefixes) still
-        # return results.
-        stmt = (
-            select(Topic, func.similarity(Topic.title, q).label("sim"))
-            .where(Topic.status == "published")
-            .where(
-                (func.similarity(Topic.title, q) > 0.15)
-                | Topic.title.ilike(q_like)
-            )
-            .order_by(text("sim DESC"), Topic.title.asc())
-            .limit(limit)
-        )
-        result = await db.execute(stmt)
-        topics = [row[0] for row in result.all()]
-    else:
-        # SQLite path: rank by where the match lands.
-        #   case 0, title starts with q                  (best)
-        #   case 1, q follows a space (word boundary)    (good)
-        #   case 2, substring match anywhere              (fallback)
-        # `LIKE` in SQLite is case-insensitive for ASCII by default.
-        rank = case(
-            (Topic.title.ilike(q_prefix), 0),
-            (Topic.title.ilike(q_space_prefix), 1),
-            else_=2,
-        ).label("rank")
-        stmt = (
-            select(Topic, rank)
-            .where(Topic.status == "published")
-            .where(Topic.title.ilike(q_like))
-            .order_by(text("rank ASC"), Topic.title.asc())
-            .limit(limit)
-        )
-        result = await db.execute(stmt)
-        topics = [row[0] for row in result.all()]
+    # Rank by where the match lands in the title.
+    #   case 0, title starts with q                  (best)
+    #   case 1, q follows a space (word boundary)    (good)
+    #   case 2, substring match anywhere              (fallback)
+    # `ILIKE` is case-insensitive on both Postgres and SQLite.
+    rank = case(
+        (Topic.title.ilike(q_prefix), 0),
+        (Topic.title.ilike(q_space_prefix), 1),
+        else_=2,
+    ).label("rank")
+    stmt = (
+        select(Topic, rank)
+        .where(Topic.status == "published")
+        .where(Topic.title.ilike(q_like))
+        .order_by(text("rank ASC"), Topic.title.asc())
+        .limit(limit)
+    )
+    result = await db.execute(stmt)
+    topics = [row[0] for row in result.all()]
 
     # A1: body-text matches fill the slots title matches didn't take.
     matched_in: dict = {t.id: "title" for t in topics}
