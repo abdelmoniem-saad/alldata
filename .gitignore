@@ -216,3 +216,6 @@ node_modules/
 frontend/dist/
 .idea/
 .claude/
+# B2: playwright artifacts
+playwright-report/
+test-results/

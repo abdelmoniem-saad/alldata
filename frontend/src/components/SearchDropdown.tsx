@@ -53,24 +53,30 @@ export default function SearchDropdown({
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<GraphNode[]>([])
   const [selectedIdx, setSelectedIdx] = useState(0)
+  // B1: a failed search used to be indistinguishable from an empty one —
+  // the reader saw "No topics found" while the endpoint was 500ing (the
+  // pg_trgm incident). Track fetch failure explicitly and say so.
+  const [failed, setFailed] = useState(false)
 
   useEffect(() => {
     if (autoFocus) inputRef.current?.focus()
   }, [autoFocus])
 
-  // Debounced search. Bail on short queries, the trigram fuzzy is noisy
+  // Debounced search. Bail on short queries, the fuzzy ranking is noisy
   // for 1-character inputs.
   const search = useCallback((q: string) => {
     setQuery(q)
     setSelectedIdx(0)
     if (debounceRef.current) window.clearTimeout(debounceRef.current)
-    if (q.length < 2) { setResults([]); return }
+    if (q.length < 2) { setResults([]); setFailed(false); return }
     debounceRef.current = window.setTimeout(async () => {
       try {
         const res = await api.searchTopics(q)
         setResults(res)
+        setFailed(false)
       } catch {
         setResults([])
+        setFailed(true)
       }
     }, 200)
   }, [])
@@ -102,8 +108,8 @@ export default function SearchDropdown({
   }
 
   const showEmptyState = useMemo(
-    () => query.length >= 2 && results.length === 0,
-    [query, results.length],
+    () => query.length >= 2 && results.length === 0 && !failed,
+    [query, results.length, failed],
   )
 
   return (
@@ -149,6 +155,14 @@ export default function SearchDropdown({
           border: variant === 'inline' ? '1px solid var(--color-border-subtle)' : 'none',
           borderRadius: variant === 'inline' ? 'var(--radius-lg)' : 0,
         }}>
+          {failed && (
+            <div style={{
+              padding: 24, textAlign: 'center',
+              color: 'var(--color-advanced, #ef4444)', fontSize: 13,
+            }}>
+              Search is temporarily unavailable. Try again in a moment.
+            </div>
+          )}
           {showEmptyState && (
             <div style={{
               padding: 24, textAlign: 'center',

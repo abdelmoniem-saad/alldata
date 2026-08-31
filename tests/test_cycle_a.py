@@ -10,6 +10,7 @@ from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.models.content_block import ContentBlock
+from backend.models.progress import UserProgress
 from backend.models.topic import Topic
 from backend.models.user import User, UserRole
 
@@ -37,6 +38,24 @@ def _headers(user: User) -> dict[str, str]:
 
     token = jwt.encode({"sub": str(user.id)}, settings.secret_key, algorithm=settings.algorithm)
     return {"Authorization": f"Bearer {token}"}
+
+
+async def _author(db: AsyncSession) -> User:
+    """Get-or-create a topic author for content-search/snapshot fixtures."""
+    from sqlalchemy import select
+
+    existing = (await db.execute(
+        select(User).where(User.email == "author@tests.dev")
+    )).scalars().first()
+    if existing:
+        return existing
+    author = User(
+        email="author@tests.dev", display_name="Test Author",
+        hashed_password=pwd.hash("nopass123"), role=UserRole.ADMIN.value,
+    )
+    db.add(author)
+    await db.flush()
+    return author
 
 
 class TestAccountSettings:
@@ -198,16 +217,7 @@ class TestBodySearch:
     async def _topic_with_content(
         self, db: AsyncSession, slug: str, title: str, body: str
     ) -> Topic:
-        author = (await db.execute(
-            __import__("sqlalchemy").select(User).where(User.email == "system@alldata.dev")
-        )).scalars().first()
-        if author is None:
-            author = User(
-                email="system@alldata.dev", display_name="System",
-                hashed_password=pwd.hash("nopass123"), role=UserRole.ADMIN.value,
-            )
-            db.add(author)
-            await db.flush()
+        author = await _author(db)
         topic = Topic(
             slug=slug, title=title, domain="probability-foundations",
             difficulty="intermediate", status="published", depth=1,
@@ -252,3 +262,46 @@ class TestBodySearch:
     async def test_no_match_empty(self, client: AsyncClient):
         results = (await client.get("/api/graph/search", params={"q": "zzzqqqxxx"})).json()
         assert results == []
+
+
+class TestSnapshotEndpoint:
+    """A retro follow-up: the K7 snapshot endpoint had no coverage — ruff's
+    F821 flags caught its broken imports after a refactor, pytest didn't.
+    These tests pin its contract."""
+
+    async def test_snapshot_aggregates_progress(self, client: AsyncClient, db: AsyncSession):
+        from sqlalchemy import select
+
+        user = await _make_user(db, "snapshotted@example.com")
+        author = (await db.execute(
+            select(User).where(User.email == "author@tests.dev")
+        )).scalars().first() or await _author(db)
+        topic_done = Topic(
+            slug="snap-done", title="Snap Done", domain="probability-foundations",
+            difficulty="intermediate", status="published", depth=1, created_by=author.id,
+        )
+        topic_wip = Topic(
+            slug="snap-wip", title="Snap Wip", domain="probability-foundations",
+            difficulty="intermediate", status="published", depth=1, created_by=author.id,
+        )
+        db.add_all([topic_done, topic_wip])
+        await db.flush()
+        db.add_all([
+            UserProgress(user_id=user.id, topic_id=topic_done.id, status="completed"),
+            UserProgress(user_id=user.id, topic_id=topic_wip.id, status="in_progress"),
+        ])
+        await db.flush()
+
+        resp = await client.get("/api/users/Snapshotted/snapshot")
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["display_name"] == user.display_name
+        assert body["completed_slugs"] == ["snap-done"]
+        assert body["in_progress_slugs"] == ["snap-wip"]
+        # Private sidecars never leak through the public surface.
+        assert "decision_events" not in body
+        assert "recovery_code_hash" not in body
+
+    async def test_snapshot_unknown_user_404(self, client: AsyncClient):
+        resp = await client.get("/api/users/nobody-here/snapshot")
+        assert resp.status_code == 404
