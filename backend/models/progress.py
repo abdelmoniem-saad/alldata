@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import ForeignKey, JSON, String, UniqueConstraint, func
+from sqlalchemy import JSON, ForeignKey, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.database import Base
@@ -44,14 +44,18 @@ class UserProgress(Base):
     # confusion_flags: { block_id: int (0 or 1 per session) }
     #
     # Default '{}' so self-heal column-adds land cleanly without backfill.
+    # NOTE: `server_default` strings are rendered verbatim into DDL — write
+    # plain `{}` (SQLAlchemy adds the SQL quotes). An embedded `"'{}'"` made
+    # SQLite tolerate `DEFAULT '''{}'''` but Postgres rejects it as invalid
+    # JSON (`Token "'" is invalid`), which broke the first external-DB boot.
     decision_events: Mapped[dict[str, Any]] = mapped_column(
-        JSON, default=dict, server_default="'{}'"
+        JSON, default=dict, server_default="{}"
     )
     review_schedule: Mapped[dict[str, Any] | None] = mapped_column(
         JSON, nullable=True, default=None
     )
     confusion_flags: Mapped[dict[str, Any]] = mapped_column(
-        JSON, default=dict, server_default="'{}'"
+        JSON, default=dict, server_default="{}"
     )
 
     started_at: Mapped[datetime | None] = mapped_column(nullable=True)

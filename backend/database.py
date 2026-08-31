@@ -57,7 +57,7 @@ def _engine_setup(database_url: str) -> tuple[object, dict]:
     if url.drivername.startswith("sqlite"):
         return url, kwargs
 
-    kwargs.update({"pool_size": 20, "max_overflow": 10})
+    kwargs.update({"pool_size": 20, "max_overflow": 10, "pool_pre_ping": True})
 
     query = dict(url.query)
     sslmode = query.pop("sslmode", None)

@@ -35,9 +35,11 @@ class TopicFork(Base):
 
     # N0: the editable source of truth. Seeded at fork time from the master
     # topic's content.md; the fork editor (PUT /api/forks/...) overwrites it.
-    # `server_default="''"` so the J3 self-heal can ALTER ADD the column on
-    # an existing SQLite DB without a backfill step.
-    markdown_source: Mapped[str] = mapped_column(Text, server_default="''")
+    # `server_default=""` so the J3 self-heal can ALTER ADD the column on
+    # an existing DB without a backfill step. (SQLAlchemy quotes the literal
+    # itself; an embedded `''` rendered `DEFAULT ''''''`-style DDL that
+    # Postgres parsed as a one-quote-char string rather than empty.)
+    markdown_source: Mapped[str] = mapped_column(Text, server_default="")
 
     # O3: `content_snapshot` (a K-era JSON cache of parsed blocks) was
     # removed here. Nothing read it, the N endpoints re-parse
