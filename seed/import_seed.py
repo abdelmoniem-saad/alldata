@@ -17,6 +17,7 @@ import yaml
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.config import settings
 from backend.database import Base, async_session, engine
 from backend.models.content_block import ContentBlock, ExplanationLayer
 from backend.models.edge import EdgeType, TopicEdge
@@ -1261,6 +1262,29 @@ async def import_schema(db: AsyncSession, user: User):
         print(f"Imported {len(domain_topics)} domains, {len(topic_map)} topics, content for {content_added}")
 
 
+async def _promote_admin_email(db: AsyncSession) -> None:
+    """A3: promote the ADMIN_EMAIL account to ADMIN, idempotently.
+
+    This is the documented answer to "how does the first admin exist": the
+    operator registers normally on the site, sets ADMIN_EMAIL (env var or
+    HF Space variable) to that address, and the next boot promotes it. A
+    no-op when unset or when the email hasn't registered yet.
+    """
+    admin_email = (settings.admin_email or "").strip().lower()
+    if not admin_email:
+        return
+    result = await db.execute(select(User).where(User.email == admin_email))
+    user = result.scalar_one_or_none()
+    if user is None:
+        print(f"ADMIN_EMAIL {admin_email} has not registered yet; skipping promotion")
+        return
+    if user.role != UserRole.ADMIN.value:
+        user.role = UserRole.ADMIN.value
+        print(f"Promoted {admin_email} to ADMIN")
+    else:
+        print(f"ADMIN_EMAIL {admin_email} is already an admin")
+
+
 async def main(strict: bool = False) -> int:
     """Run the importer end-to-end.
 
@@ -1280,6 +1304,7 @@ async def main(strict: bool = False) -> int:
         print("Importing schema and content...")
         await import_schema(db, user)
 
+        await _promote_admin_email(db)
         await db.commit()
         print("Done!")
 

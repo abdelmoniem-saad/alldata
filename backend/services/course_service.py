@@ -6,7 +6,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from backend.models.content_block import ContentBlock
 from backend.models.course import Course, CourseTopicMapping
 from backend.models.fork import TopicFork
 from backend.models.topic import Topic

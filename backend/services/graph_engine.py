@@ -517,11 +517,13 @@ def _topological_sort(
 async def search_graph_nodes(
     db: AsyncSession, query: str, limit: int = 8
 ) -> list[GraphNode]:
-    """H6 / L4: fuzzy-ish search over published topic titles.
+    """H6 / L4: fuzzy-ish search over published topic titles; A1: + body text.
 
     Returns the top `limit` matches as `GraphNode`s so the search surfaces
     can navigate straight to the node without a second round-trip for the
-    rest of the topic metadata.
+    rest of the topic metadata. A1 extends matching into `content_blocks`
+    body text: title matches rank first, then body matches (each carrying
+    `matched_in="body"` and a short `snippet`).
 
     Originally used `pg_trgm.similarity()` for Postgres deployments, but
     the dev/test stack runs SQLite which doesn't expose that function.
@@ -578,6 +580,30 @@ async def search_graph_nodes(
         result = await db.execute(stmt)
         topics = [row[0] for row in result.all()]
 
+    # A1: body-text matches fill the slots title matches didn't take.
+    matched_in: dict = {t.id: "title" for t in topics}
+    snippets: dict = {}
+    if len(topics) < limit:
+        seen = {t.id for t in topics}
+        body_stmt = (
+            select(Topic, ContentBlock.content)
+            .join(ContentBlock, ContentBlock.topic_id == Topic.id)
+            .where(Topic.status == "published")
+            .where(ContentBlock.content.ilike(q_like))
+            .order_by(Topic.title.asc())
+            .limit(200)  # generous scan cap; dedupe below
+        )
+        body_result = await db.execute(body_stmt)
+        for topic, content in body_result.all():
+            if topic.id in seen:
+                continue
+            seen.add(topic.id)
+            topics.append(topic)
+            matched_in[topic.id] = "body"
+            snippets[topic.id] = _snippet(content, q)
+            if len(topics) >= limit:
+                break
+
     if not topics:
         return []
 
@@ -596,6 +622,22 @@ async def search_graph_nodes(
             status=t.status,
             has_content=content_counts.get(t.id, 0) > 0,
             misconception_count=misconception_counts.get(t.id, 0),
+            matched_in=matched_in.get(t.id),
+            snippet=snippets.get(t.id),
         )
         for t in topics
     ]
+
+
+def _snippet(content: str, q: str, radius: int = 60) -> str:
+    """Build a short context window around the first (case-insensitive) hit."""
+    text_lower = content.lower()
+    idx = text_lower.find(q.lower())
+    if idx < 0:
+        return ""
+    start = max(0, idx - radius)
+    end = min(len(content), idx + len(q) + radius)
+    window = " ".join(content[start:end].split())
+    prefix = "…" if start > 0 else ""
+    suffix = "…" if end < len(content) else ""
+    return f"{prefix}{window}{suffix}"

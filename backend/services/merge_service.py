@@ -27,8 +27,7 @@ from __future__ import annotations
 
 import logging
 import uuid
-from datetime import datetime, timezone
-from pathlib import Path
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import delete, desc, select
@@ -296,7 +295,7 @@ async def accept_suggestion(
 
     suggestion.status = "accepted"
     suggestion.reviewed_by = reviewer_id
-    suggestion.reviewed_at = datetime.now(timezone.utc).replace(tzinfo=None)
+    suggestion.reviewed_at = datetime.now(UTC).replace(tzinfo=None)
     await db.flush()
 
 
@@ -309,5 +308,5 @@ async def reject_suggestion(
     suggestion.status = "rejected"
     suggestion.review_note = note
     suggestion.reviewed_by = reviewer_id
-    suggestion.reviewed_at = datetime.now(timezone.utc).replace(tzinfo=None)
+    suggestion.reviewed_at = datetime.now(UTC).replace(tzinfo=None)
     await db.flush()

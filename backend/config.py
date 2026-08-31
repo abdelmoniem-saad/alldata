@@ -48,6 +48,10 @@ class Settings(BaseSettings):
     execution_ip_rate_limit: int = 30  # per minute per IP
     execution_max_concurrent: int = 2  # global, all users, local-fallback path
     sandbox_local_memory_mb: int = 512  # RLIMIT_AS for the POSIX local fallback
+    # A3: the first-admin bootstrap. Set ADMIN_EMAIL to an account that has
+    # registered; the seed importer promotes it to ADMIN on every boot
+    # (idempotent). Leave empty for deployments that don't need one.
+    admin_email: str | None = None
 
     model_config = {"env_prefix": "", "case_sensitive": False}
 

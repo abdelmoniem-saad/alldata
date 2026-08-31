@@ -9,6 +9,7 @@ fork-owner actions.
 import uuid
 
 from fastapi import APIRouter, HTTPException, Query
+from sqlalchemy import select
 
 from backend.deps import DB, CurrentUser
 from backend.models.merge_back import MergeBackSuggestion
@@ -19,7 +20,6 @@ from backend.schemas.merge_back import (
     MergeBackSummary,
 )
 from backend.services import merge_service
-from sqlalchemy import select
 
 router = APIRouter()
 

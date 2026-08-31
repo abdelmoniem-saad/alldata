@@ -27,6 +27,11 @@ class User(Base):
     institution: Mapped[str | None] = mapped_column(String(256), nullable=True)
     bio: Mapped[str | None] = mapped_column(nullable=True)
     is_active: Mapped[bool] = mapped_column(default=True)
+    # A2: no email infrastructure exists, so password recovery is a single-use
+    # code the user generates in settings and stores themselves. Only the
+    # bcrypt hash is kept; the code is nulled on use.
+    recovery_code_hash: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    recovery_code_generated_at: Mapped[datetime | None] = mapped_column(nullable=True)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
 

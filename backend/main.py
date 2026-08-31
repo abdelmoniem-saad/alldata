@@ -8,6 +8,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from backend.api import (
+    admin,
     auth,
     content,
     courses,
@@ -68,6 +69,8 @@ app.add_middleware(
 
 # Register routers
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+# T3: ADMIN-only user management (roles, activation).
+app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 app.include_router(topics.router, prefix="/api/topics", tags=["topics"])
 app.include_router(graph.router, prefix="/api/graph", tags=["graph"])
 app.include_router(content.router, prefix="/api/content", tags=["content"])

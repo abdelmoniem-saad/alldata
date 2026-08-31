@@ -52,6 +52,10 @@ export interface GraphNode {
    * badge. Backend default is 0 for endpoints that don't populate it.
    */
   misconception_count: number
+  /** A1: where the search query matched ("title" | "body"); search only. */
+  matched_in?: string | null
+  /** A1: short context window around a body match; search only. */
+  snippet?: string | null
 }
 
 export interface GraphEdge {
@@ -345,6 +349,40 @@ export const api = {
   // Y: current user from the token. Called on boot so server-side changes
   // (e.g. a role promotion to editor/admin) propagate without a re-login.
   getMe: () => request<{ id: string; email: string; display_name: string; role?: string }>('/auth/me'),
+
+  // A2: account settings + recovery.
+  updateMe: (data: { display_name?: string; bio?: string; institution?: string }) =>
+    request<any>('/users/me', { method: 'PATCH', body: JSON.stringify(data) }),
+
+  changePassword: (current_password: string, new_password: string) =>
+    request<any>('/users/me/password', {
+      method: 'PATCH',
+      body: JSON.stringify({ current_password, new_password }),
+    }),
+
+  generateRecoveryCode: () =>
+    request<{ recovery_code: string; generated_at: string }>('/users/me/recovery-code', {
+      method: 'POST',
+    }),
+
+  recover: (email: string, code: string) =>
+    request<{ access_token: string; user: any }>('/auth/recover', {
+      method: 'POST',
+      body: JSON.stringify({ email, code }),
+    }),
+
+  // A3: admin user management.
+  adminListUsers: () => request<any[]>('/admin/users'),
+
+  adminSetRole: (userId: string, role: string) =>
+    request<any>(`/admin/users/${userId}/role?role=${encodeURIComponent(role)}`, {
+      method: 'PATCH',
+    }),
+
+  adminSetActive: (userId: string, active: boolean) =>
+    request<any>(`/admin/users/${userId}/active?active=${active}`, {
+      method: 'PATCH',
+    }),
 
   // M1: progress sync
   //

@@ -128,6 +128,36 @@ export default function AuthMenu() {
             >
               My forks
             </Link>
+            {/* A2: profile, password, recovery code. */}
+            <Link
+              to="/settings"
+              onClick={() => setPopoverOpen(false)}
+              style={{
+                display: 'block',
+                padding: '8px 10px',
+                fontSize: 12,
+                color: 'var(--color-text-secondary)',
+                borderRadius: 6,
+              }}
+            >
+              Account settings
+            </Link>
+            {/* A3: admin user management, ADMIN only (route self-gates). */}
+            {user.role === 'admin' && (
+              <Link
+                to="/admin/users"
+                onClick={() => setPopoverOpen(false)}
+                style={{
+                  display: 'block',
+                  padding: '8px 10px',
+                  fontSize: 12,
+                  color: 'var(--color-text-secondary)',
+                  borderRadius: 6,
+                }}
+              >
+                Manage users
+              </Link>
+            )}
             {/* O1: review queue, ADMIN/EDITOR only. The route also
                 self-gates so a direct visit shows a clear "not authorized"
                 state for non-reviewers; the popover link hides for cleaner
@@ -201,10 +231,13 @@ export default function AuthMenu() {
 }
 
 function AuthModal({ onClose }: { onClose: () => void }) {
-  const { login, register } = useAuthStore()
-  const [mode, setMode] = useState<'login' | 'register'>('login')
+  const { login, register, recover } = useAuthStore()
+  // A2: 'recover' — email + single-use recovery code, the no-email password
+  // reset path. Reached via the "Forgot password?" toggle on the login form.
+  const [mode, setMode] = useState<'login' | 'register' | 'recover'>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [recoveryCode, setRecoveryCode] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
@@ -216,6 +249,8 @@ function AuthModal({ onClose }: { onClose: () => void }) {
     try {
       if (mode === 'login') {
         await login(email, password)
+      } else if (mode === 'recover') {
+        await recover(email, recoveryCode)
       } else {
         await register(email, displayName || email.split('@')[0], password)
       }
@@ -266,7 +301,7 @@ function AuthModal({ onClose }: { onClose: () => void }) {
             color: 'var(--color-text)',
             margin: 0,
           }}>
-            {mode === 'login' ? 'Sign in' : 'Create an account'}
+            {mode === 'login' ? 'Sign in' : mode === 'recover' ? 'Recover account' : 'Create an account'}
           </h2>
           <button
             onClick={onClose}
@@ -312,15 +347,25 @@ function AuthModal({ onClose }: { onClose: () => void }) {
             autoComplete="email"
             required
           />
-          <Field
-            label="Password"
-            type="password"
-            value={password}
-            onChange={setPassword}
-            autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-            required
-            minLength={6}
-          />
+          {mode === 'recover' ? (
+            <Field
+              label="Recovery code"
+              type="text"
+              value={recoveryCode}
+              onChange={setRecoveryCode}
+              required
+            />
+          ) : (
+            <Field
+              label="Password"
+              type="password"
+              value={password}
+              onChange={setPassword}
+              autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+              required
+              minLength={6}
+            />
+          )}
           {err && (
             <div style={{
               padding: '8px 10px',
@@ -335,7 +380,12 @@ function AuthModal({ onClose }: { onClose: () => void }) {
           )}
           <button
             type="submit"
-            disabled={busy || !email || !password || (mode === 'register' && !displayName)}
+            disabled={
+              busy
+              || !email
+              || (mode === 'recover' ? !recoveryCode : !password)
+              || (mode === 'register' && !displayName)
+            }
             style={{
               marginTop: 4,
               padding: '10px 14px',
@@ -349,7 +399,11 @@ function AuthModal({ onClose }: { onClose: () => void }) {
               opacity: busy ? 0.7 : 1,
             }}
           >
-            {busy ? 'Working…' : mode === 'login' ? 'Sign in' : 'Create account'}
+            {busy
+              ? 'Working…'
+              : mode === 'login' ? 'Sign in'
+              : mode === 'recover' ? 'Recover and sign in'
+              : 'Create account'}
           </button>
           <button
             type="button"
@@ -372,6 +426,48 @@ function AuthModal({ onClose }: { onClose: () => void }) {
               ? "Don't have an account? Create one."
               : 'Already have an account? Sign in.'}
           </button>
+          {mode === 'login' && (
+            <button
+              type="button"
+              onClick={() => {
+                setMode('recover')
+                setErr(null)
+              }}
+              style={{
+                marginTop: -6,
+                padding: '6px 10px',
+                fontSize: 12,
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--color-text-muted)',
+                cursor: 'pointer',
+                textAlign: 'center',
+              }}
+            >
+              Forgot password? Use a recovery code.
+            </button>
+          )}
+          {mode === 'recover' && (
+            <button
+              type="button"
+              onClick={() => {
+                setMode('login')
+                setErr(null)
+              }}
+              style={{
+                marginTop: -6,
+                padding: '6px 10px',
+                fontSize: 12,
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--color-text-muted)',
+                cursor: 'pointer',
+                textAlign: 'center',
+              }}
+            >
+              Back to sign in.
+            </button>
+          )}
         </form>
       </div>
     </div>

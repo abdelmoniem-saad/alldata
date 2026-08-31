@@ -35,6 +35,11 @@ class GraphNode(BaseModel):
     # ForceGraph renders a small "!" marker when > 0 so the
     # "misconception-aware" identity claim is visible before entering a topic.
     misconception_count: int = 0
+    # A1: search results carry where the query matched and, for body matches,
+    # a short context window. Absent (None) on graph endpoints that build
+    # GraphNode outside of search.
+    matched_in: str | None = None
+    snippet: str | None = None
 
 
 class GraphEdge(BaseModel):

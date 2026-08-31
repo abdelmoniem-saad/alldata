@@ -23,6 +23,9 @@ export interface AuthUser {
   email: string
   display_name: string
   role?: string
+  /** A2: surfaced in /settings as placeholders for the profile form. */
+  bio?: string | null
+  institution?: string | null
 }
 
 interface AuthState {
@@ -37,6 +40,8 @@ interface AuthState {
 
   login: (email: string, password: string) => Promise<void>
   register: (email: string, display_name: string, password: string) => Promise<void>
+  /** A2: recovery-code sign-in (email + single-use code). */
+  recover: (email: string, code: string) => Promise<void>
   logout: () => void
   /** Y: re-fetch the signed-in user so role/profile changes reflect on reload. */
   refreshUser: () => Promise<void>
@@ -62,6 +67,13 @@ export const useAuthStore = create<AuthState>()(
 
       register: async (email, display_name, password) => {
         const r = await api.register(email, display_name, password)
+        localStorage.setItem('token', r.access_token)
+        set({ token: r.access_token, user: r.user, authModalOpen: false })
+      },
+
+      /** A2: recovery-code sign-in — same contract as login. */
+      recover: async (email, code) => {
+        const r = await api.recover(email, code)
         localStorage.setItem('token', r.access_token)
         set({ token: r.access_token, user: r.user, authModalOpen: false })
       },

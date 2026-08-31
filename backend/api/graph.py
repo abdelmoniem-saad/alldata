@@ -1,6 +1,5 @@
 """Graph routes, visualization, paths, prerequisites, edges."""
 
-import uuid
 
 from fastapi import APIRouter, HTTPException, Query, status
 

@@ -6,9 +6,9 @@ exercised through `test_api.py`-style flows manually; the window mechanics
 live here.
 """
 
-from backend.services.rate_limit import SlidingWindowLimiter
-from backend.services.execution_service import runtime_capabilities
 from backend.config import settings
+from backend.services.execution_service import runtime_capabilities
+from backend.services.rate_limit import SlidingWindowLimiter
 
 
 class TestRuntimeCapabilities:

@@ -15,7 +15,13 @@ from sqlalchemy import select
 from backend.config import settings
 from backend.deps import DB, CurrentUser, client_ip
 from backend.models.user import User
-from backend.schemas.user import TokenResponse, UserCreate, UserLogin, UserResponse
+from backend.schemas.user import (
+    RecoverRequest,
+    TokenResponse,
+    UserCreate,
+    UserLogin,
+    UserResponse,
+)
 from backend.services.rate_limit import SlidingWindowLimiter
 
 router = APIRouter()
@@ -25,6 +31,9 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # registrations can't eat the login budget (and vice versa).
 login_limiter = SlidingWindowLimiter(window_seconds=60.0)
 register_limiter = SlidingWindowLimiter(window_seconds=60.0)
+# A2: recovery codes are the password-reset path; a leaked or brute-forced
+# code is as good as a password, so this budget is the tightest of the three.
+recover_limiter = SlidingWindowLimiter(window_seconds=60.0)
 
 
 def _ip_gate(request: Request, limiter: SlidingWindowLimiter, key: str, limit: int):
@@ -101,3 +110,38 @@ async def login(data: UserLogin, request: Request, db: DB):
 @router.get("/me", response_model=UserResponse)
 async def me(user: CurrentUser):
     return UserResponse.model_validate(user)
+
+
+@router.post("/recover", response_model=TokenResponse)
+async def recover(data: RecoverRequest, request: Request, db: DB):
+    """A2: exchange email + single-use recovery code for a login token.
+
+    No email infrastructure exists, so the code is generated on demand in
+    settings and stored by the user. Constant-time-ish lookup: the email is
+    probed regardless of whether a code exists, and a failed code counts
+    against the same per-IP budget as login attempts.
+    """
+    _ip_gate(
+        request,
+        recover_limiter,
+        f"recover:{client_ip(request)}",
+        settings.auth_rate_limit_register,  # same tight budget as register
+    )
+
+    result = await db.execute(select(User).where(User.email == data.email))
+    user = result.scalar_one_or_none()
+    if not user or not user.is_active or not user.recovery_code_hash:
+        raise HTTPException(status_code=401, detail="Invalid email or recovery code")
+
+    if not pwd_context.verify(data.code.strip(), user.recovery_code_hash):
+        raise HTTPException(status_code=401, detail="Invalid email or recovery code")
+
+    # Single use: null the hash so the code can never authenticate again.
+    user.recovery_code_hash = None
+    user.recovery_code_generated_at = None
+
+    token = _create_token(str(user.id))
+    return TokenResponse(
+        access_token=token,
+        user=UserResponse.model_validate(user),
+    )

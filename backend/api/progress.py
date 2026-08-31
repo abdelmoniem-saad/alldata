@@ -16,7 +16,7 @@ Endpoints:
   POST   /api/users/me/progress/batch
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import select
@@ -47,8 +47,8 @@ def _row_to_out(row: UserProgress, slug: str) -> TopicProgressOut:
         decision_events=row.decision_events or {},
         review_schedule=row.review_schedule,
         confusion_flags=row.confusion_flags or {},
-        client_updated_at=int(row.updated_at.replace(tzinfo=timezone.utc).timestamp() * 1000),
-        server_updated_at=int(row.updated_at.replace(tzinfo=timezone.utc).timestamp() * 1000),
+        client_updated_at=int(row.updated_at.replace(tzinfo=UTC).timestamp() * 1000),
+        server_updated_at=int(row.updated_at.replace(tzinfo=UTC).timestamp() * 1000),
     )
 
 
@@ -80,7 +80,7 @@ async def _upsert_one(
     row = existing_q.scalar_one_or_none()
 
     if row is not None:
-        server_ms = int(row.updated_at.replace(tzinfo=timezone.utc).timestamp() * 1000)
+        server_ms = int(row.updated_at.replace(tzinfo=UTC).timestamp() * 1000)
         if payload.client_updated_at < server_ms:
             # Server wins, return its state unchanged.
             return _row_to_out(row, payload.topic_slug)
@@ -95,7 +95,7 @@ async def _upsert_one(
         )
         row.confusion_flags = dict(payload.confusion_flags)
         if payload.status == "completed" and row.completed_at is None:
-            row.completed_at = datetime.now(timezone.utc).replace(tzinfo=None)
+            row.completed_at = datetime.now(UTC).replace(tzinfo=None)
         # updated_at auto-updates via the model's onupdate=func.now()
     else:
         row = UserProgress(
@@ -108,9 +108,9 @@ async def _upsert_one(
                 payload.review_schedule.model_dump() if payload.review_schedule else None
             ),
             confusion_flags=dict(payload.confusion_flags),
-            started_at=datetime.now(timezone.utc).replace(tzinfo=None),
+            started_at=datetime.now(UTC).replace(tzinfo=None),
             completed_at=(
-                datetime.now(timezone.utc).replace(tzinfo=None)
+                datetime.now(UTC).replace(tzinfo=None)
                 if payload.status == "completed"
                 else None
             ),

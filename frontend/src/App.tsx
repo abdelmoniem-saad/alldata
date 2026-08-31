@@ -19,6 +19,8 @@ const ForkView = lazy(() => import('./pages/ForkView'))
 const ForkEditor = lazy(() => import('./pages/ForkEditor'))
 const UserForks = lazy(() => import('./pages/UserForks'))
 const ReviewQueue = lazy(() => import('./pages/ReviewQueue'))
+const AccountSettings = lazy(() => import('./pages/AccountSettings'))
+const AdminUsers = lazy(() => import('./pages/AdminUsers'))
 
 export default function App() {
   // M1: bootstrap the progress-sync orchestrator once on mount. It owns the
@@ -55,6 +57,11 @@ export default function App() {
             and shows a "not authorized" state to non-reviewers, so the
             route is registered open and self-gates. */}
         <Route path="/review" element={<ReviewQueue />} />
+        {/* A2/A3: account settings + admin user management. Both self-gate;
+            /admin/users renders a "not authorized" state for non-admins
+            like /review does. */}
+        <Route path="/settings" element={<AccountSettings />} />
+        <Route path="/admin/users" element={<AdminUsers />} />
       </Route>
     </Routes>
   )

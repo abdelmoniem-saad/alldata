@@ -165,9 +165,7 @@ export default function SearchDropdown({
                 onClick={() => handleSelect(r)}
                 onMouseEnter={() => setSelectedIdx(i)}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
+                  display: 'block',
                   width: '100%',
                   padding: '10px 12px',
                   borderRadius: 8,
@@ -180,15 +178,29 @@ export default function SearchDropdown({
                   transition: 'background var(--transition-fast)',
                 }}
               >
-                <span style={{
-                  width: 8, height: 8, borderRadius: '50%',
-                  background: domainColor,
-                  flexShrink: 0,
-                }} />
-                <span style={{ fontWeight: 500 }}>{r.title}</span>
-                {r.difficulty && (
-                  <span className={`badge badge-${r.difficulty}`} style={{ marginLeft: 'auto' }}>
-                    {r.difficulty}
+                <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{
+                    width: 8, height: 8, borderRadius: '50%',
+                    background: domainColor,
+                    flexShrink: 0,
+                  }} />
+                  <span style={{ fontWeight: 500 }}>{r.title}</span>
+                  {r.difficulty && (
+                    <span className={`badge badge-${r.difficulty}`} style={{ marginLeft: 'auto' }}>
+                      {r.difficulty}
+                    </span>
+                  )}
+                </span>
+                {r.snippet && (
+                  <span style={{
+                    display: 'block',
+                    marginTop: 4,
+                    marginLeft: 18,
+                    fontSize: 12,
+                    lineHeight: 1.4,
+                    color: 'var(--color-text-muted)',
+                  }}>
+                    {r.snippet}
                   </span>
                 )}
               </button>

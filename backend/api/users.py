@@ -1,25 +1,94 @@
-"""User snapshot routes, K7 (M1: wired to real progress).
+"""User routes, A2 account settings + K7/M1 public snapshot.
 
-Returns a public graph snapshot for a named user: their completed and
-in-progress slug sets, plus public profile metadata (display_name only).
-
-K7 shipped this endpoint as a stub returning empty progress because
-server-side sync wasn't yet wired. M1 (progress sync) replaced the stub
-with a real read from `UserProgress`. The endpoint signature is unchanged
-so existing frontend code keeps working; only the body of the response
-changed from "always empty" to "what the user has synced so far."
+- `GET  /{username}/snapshot` — public, read-only graph snapshot (K7/M1).
+- `PATCH /me`                — update profile fields, optionally the password
+                               (requires the current password).
+- `POST /me/recovery-code`   — A2: generate/rotate the single-use recovery
+                               code; returned in plaintext exactly once.
 """
+
+import secrets
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
-from sqlalchemy import select, or_, func
+from passlib.context import CryptContext
+from sqlalchemy import func, or_, select
 
-from backend.deps import DB
+from backend.deps import DB, CurrentUser
 from backend.models.progress import UserProgress
 from backend.models.topic import Topic
 from backend.models.user import User
+from backend.schemas.user import (
+    PasswordChange,
+    RecoveryCodeResponse,
+    UserResponse,
+    UserUpdate,
+)
 
 router = APIRouter()
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# A2: password floor. Deliberately modest — this is a learning site, not a
+# bank — but something better than "1".
+MIN_PASSWORD_LENGTH = 8
+
+
+@router.patch("/me", response_model=UserResponse)
+async def update_me(data: UserUpdate, user: CurrentUser, db: DB):
+    """Update the caller's profile. Fields left as None stay unchanged."""
+    if data.display_name is not None:
+        name = data.display_name.strip()
+        if not name:
+            raise HTTPException(status_code=422, detail="Display name cannot be empty")
+        if len(name) > 256:
+            raise HTTPException(status_code=422, detail="Display name too long")
+        user.display_name = name
+    if data.bio is not None:
+        if len(data.bio) > 2000:
+            raise HTTPException(status_code=422, detail="Bio too long")
+        user.bio = data.bio
+    if data.institution is not None:
+        if len(data.institution) > 256:
+            raise HTTPException(status_code=422, detail="Institution too long")
+        user.institution = data.institution
+    return UserResponse.model_validate(user)
+
+
+@router.patch("/me/password", response_model=UserResponse)
+async def change_password(data: PasswordChange, user: CurrentUser, db: DB):
+    """Change the password. Requires the current password — the one secret
+    an attacker with a stolen session token doesn't have."""
+    if len(data.new_password) < MIN_PASSWORD_LENGTH:
+        raise HTTPException(
+            status_code=422,
+            detail=f"New password must be at least {MIN_PASSWORD_LENGTH} characters",
+        )
+    if not pwd_context.verify(data.current_password, user.hashed_password):
+        raise HTTPException(status_code=403, detail="Current password is incorrect")
+
+    user.hashed_password = pwd_context.hash(data.new_password)
+    # A password change invalidates any outstanding recovery code.
+    user.recovery_code_hash = None
+    user.recovery_code_generated_at = None
+    return UserResponse.model_validate(user)
+
+
+@router.post("/me/recovery-code", response_model=RecoveryCodeResponse)
+async def generate_recovery_code(user: CurrentUser, db: DB):
+    """Generate (or rotate) the single-use recovery code.
+
+    The code is returned in plaintext exactly once — the server stores only
+    the bcrypt hash. Generating a new code invalidates the previous one.
+    """
+    code = "-".join(secrets.token_hex(2) for _ in range(4))  # xxxx-xxxx-xxxx-xxxx
+    user.recovery_code_hash = pwd_context.hash(code)
+    # Column is TIMESTAMP WITHOUT TIME ZONE (asyncpg maps that to offset-naïve
+    # datetime), so store naive UTC explicitly rather than depending on how
+    # the driver happens to handle an aware value in a naive column.
+    user.recovery_code_generated_at = datetime.now(UTC).replace(tzinfo=None)
+    return RecoveryCodeResponse(recovery_code=code, generated_at=user.recovery_code_generated_at)
 
 
 @router.get("/{username}/snapshot")

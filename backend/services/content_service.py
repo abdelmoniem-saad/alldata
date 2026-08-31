@@ -2,15 +2,14 @@
 
 import uuid
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from backend.models.content_block import ContentBlock
-from backend.models.edge import TopicEdge
 from backend.models.misconception import Misconception
 from backend.models.topic import Topic
-from backend.schemas.topic import ContentBlockCreate, MisconceptionCreate, TopicCreate, TopicUpdate
+from backend.schemas.topic import ContentBlockCreate, TopicCreate, TopicUpdate
 
 
 async def get_topics(

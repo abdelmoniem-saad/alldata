@@ -11,7 +11,7 @@ from pathlib import Path
 
 import yaml
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import PlainTextResponse, JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from sqlalchemy import select
 
 from backend.deps import DB

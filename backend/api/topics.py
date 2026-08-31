@@ -1,13 +1,12 @@
 """Topic routes, CRUD, search, and children."""
 
-import uuid
 
 from fastapi import APIRouter, HTTPException, Query, status
 
 from backend.deps import DB, CurrentUser
 from backend.models.user import UserRole
-from backend.services import content_service
 from backend.schemas.topic import TopicCreate, TopicDetail, TopicSummary, TopicUpdate
+from backend.services import content_service
 
 router = APIRouter()
 
@@ -85,6 +84,7 @@ async def get_children(slug: str, db: DB):
         raise HTTPException(status_code=404, detail="Topic not found")
 
     from sqlalchemy import select
+
     from backend.models.topic import Topic
 
     result = await db.execute(
