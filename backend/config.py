@@ -47,7 +47,14 @@ class Settings(BaseSettings):
     auth_rate_limit_register: int = 5  # per minute per IP
     execution_ip_rate_limit: int = 30  # per minute per IP
     execution_max_concurrent: int = 2  # global, all users, local-fallback path
-    sandbox_local_memory_mb: int = 512  # RLIMIT_AS for the POSIX local fallback
+    # A7: RLIMIT_AS counts *virtual* address space, and the scientific stack
+    # (numpy → OpenBLAS, scipy, pandas, matplotlib) maps far more virtual
+    # memory than it touches resident. 512 MB killed every simulation with
+    # "OpenBLAS error: Memory allocation still failed after 10 retries";
+    # 2 GB fits the stack with single-threaded BLAS while still capping a
+    # memory bomb. Resident memory on the Space remains bounded by the
+    # 16 GB tier + the wall-clock timeout.
+    sandbox_local_memory_mb: int = 2048
     # A3: the first-admin bootstrap. Set ADMIN_EMAIL to an account that has
     # registered; the seed importer promotes it to ADMIN on every boot
     # (idempotent). Leave empty for deployments that don't need one.

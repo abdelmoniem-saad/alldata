@@ -50,6 +50,16 @@ def _sandbox_env(home: str) -> dict[str, str]:
         "MPLBACKEND": "Agg",
         "PYTHONUNBUFFERED": "1",
         "ALLODATA_DATASET_DIR": str(_DATASET_DIR),
+        # Y3/A7: single-threaded BLAS/OpenMP inside the fallback. OpenBLAS
+        # reserves large *virtual* mappings per thread, which (a) blows
+        # through the RLIMIT_AS cap and dies with "OpenBLAS error: Memory
+        # allocation still failed after 10 retries", and (b) oversubscribes
+        # the Space's few vCPUs — the concurrency gate already bounds how
+        # many simulations run at once.
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
     }
     for key in (
         "SYSTEMROOT", "SYSTEMDRIVE", "WINDIR", "COMSPEC", "PATHEXT",
@@ -211,6 +221,11 @@ async def _execute_python(code: str, timeout: int, theme: str = "dark") -> dict:
                 # worked when the cwd happened to contain seed/datasets).
                 "-v", f"{_DATASET_DIR}:/home/sandbox/datasets:ro",
                 "-e", "ALLODATA_DATASET_DIR=/home/sandbox/datasets",
+                # A7: same BLAS-thread pinning as the local fallback — under
+                # --cpus=0.5, a 64-thread OpenBLAS pool is pure overhead.
+                "-e", "OPENBLAS_NUM_THREADS=1",
+                "-e", "OMP_NUM_THREADS=1",
+                "-e", "MKL_NUM_THREADS=1",
                 "-v", f"{code_path}:/home/sandbox/script.py:ro",
                 "-v", f"{output_dir}:/home/sandbox/output",
                 settings.sandbox_image,

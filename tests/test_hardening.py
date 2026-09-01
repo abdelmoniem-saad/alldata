@@ -103,6 +103,21 @@ class TestSandboxEnv:
         assert env["HOME"] == "/tmp/run-abc"
         assert env["MPLBACKEND"] == "Agg"
 
+    def test_blas_threads_pinned(self):
+        # A7: OpenBLAS per-thread virtual mappings blew through RLIMIT_AS
+        # ("Memory allocation still failed after 10 retries"); also prevents
+        # CPU oversubscription under the concurrency gate.
+        env = _sandbox_env(home="/tmp/run")
+        assert env["OPENBLAS_NUM_THREADS"] == "1"
+        assert env["OMP_NUM_THREADS"] == "1"
+        assert env["MKL_NUM_THREADS"] == "1"
+        assert env["NUMEXPR_NUM_THREADS"] == "1"
+
+    def test_memory_budget_covers_scientific_stack(self):
+        # The stack maps ~1 GB+ virtual (RLIMIT_AS counts virtual, not
+        # resident); 512 MB killed every simulation. Guard the floor.
+        assert settings.sandbox_local_memory_mb >= 2048
+
 
 class TestAsyncpgSslTranslation:
     """Y8: SQLAlchemy forwards URL query params to asyncpg.connect() as
