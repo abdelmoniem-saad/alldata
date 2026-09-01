@@ -558,6 +558,12 @@ A failed search request renders "Search is temporarily unavailable." instead of 
 ### Content coverage lens
 `coverage_service.build_coverage_report` computes per-topic interactive-block coverage (decision / playground / code / plot), prerequisite-edge connectivity (`required_by_count`; "orphan" = published topic nothing builds on), metadata completeness, and domain/difficulty/dataset distributions. Two consumers: `python -m seed.import_seed --report` (ASCII-safe CLI output) and `GET /api/admin/coverage` → the ADMIN-only `/admin/coverage` page (stat cards, gap lists deep-linking to topics, per-topic ✓/✗ table). *(cycle: A6)* `code: backend/services/coverage_service.py`, `backend/api/admin.py`, `seed/import_seed.py` (`--report`), `frontend/src/pages/AdminCoverage.tsx`.
 
+### Topic meta injection (SEO)
+`/topic/{slug}` responses get the topic's own `<title>`, description, OG/Twitter tags (`og:type=article`), `og:url`, and a canonical link injected into the SPA head — crawlers and link previews see real content without SSR. Unpublished slugs fall back to the default tags (no existence leak). *(cycle: A8)* `code: backend/main.py` (SPA fallback), `backend/services/seo_service.py` (`inject_topic_meta`).
+
+### sitemap.xml + robots.txt
+`/sitemap.xml` lists static routes + every published topic outside `_meta` domains (5-min cache); `/robots.txt` disallows `/api/`, `/admin/`, `/review/`, `/settings/` and references the sitemap. Canonical origin: `SITE_URL` env, else forwarded-header derivation. *(cycle: A8)* `code: backend/services/seo_service.py` (`build_sitemap`, `base_url`), `backend/main.py`.
+
 ---
 
 ## Pages & routes

@@ -55,6 +55,10 @@ class Settings(BaseSettings):
     # memory bomb. Resident memory on the Space remains bounded by the
     # 16 GB tier + the wall-clock timeout.
     sandbox_local_memory_mb: int = 2048
+    # B4: canonical origin for sitemap/canonical/og:url. Leave empty to
+    # derive from request headers (fine behind HF's proxy); set explicitly
+    # (e.g. https://amoniem-alldata.hf.space) when behind unusual proxies.
+    site_url: str | None = None
     # A3: the first-admin bootstrap. Set ADMIN_EMAIL to an account that has
     # registered; the seed importer promotes it to ADMIN on every boot
     # (idempotent). Leave empty for deployments that don't need one.

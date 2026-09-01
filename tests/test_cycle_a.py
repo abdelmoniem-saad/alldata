@@ -5,6 +5,7 @@ search snippets) are exercised manually + by the typecheck/build gate.
 """
 
 
+import pytest
 from httpx import AsyncClient
 from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -56,6 +57,19 @@ async def _author(db: AsyncSession) -> User:
     db.add(author)
     await db.flush()
     return author
+
+
+async def _topic(db: AsyncSession, slug: str, title: str) -> Topic:
+    """Published topic fixture with a summary (used by search/SEO tests)."""
+    author = await _author(db)
+    topic = Topic(
+        slug=slug, title=title, domain="probability-foundations",
+        difficulty="intermediate", status="published", depth=1,
+        created_by=author.id, summary=f"Summary of {title}",
+    )
+    db.add(topic)
+    await db.flush()
+    return topic
 
 
 class TestAccountSettings:
@@ -305,3 +319,77 @@ class TestSnapshotEndpoint:
     async def test_snapshot_unknown_user_404(self, client: AsyncClient):
         resp = await client.get("/api/users/nobody-here/snapshot")
         assert resp.status_code == 404
+
+
+class TestSeo:
+    """B4: crawler surfaces — topic meta injection, sitemap, robots.
+
+    The SPA routes (meta injection, SPA fallback) only exist when
+    `frontend/dist` is built; CI's backend job doesn't build it, so the
+    dist-dependent tests skip cleanly there.
+    """
+
+    @pytest.fixture(autouse=True)
+    def _seo_env(self, monkeypatch):
+        """Point the endpoints' own sessions at the test DB and clear the
+        sitemap cache per test (it's module-level with a 5-min TTL)."""
+        from tests.conftest import TestSession
+
+        monkeypatch.setattr("backend.database.async_session", TestSession)
+        import backend.services.seo_service as seo
+
+        seo._sitemap_cache = None
+        yield
+
+    def _dist_built(self) -> bool:
+        from backend.main import _DIST
+
+        return (_DIST / "index.html").is_file()
+
+    async def test_topic_meta_injected(self, client: AsyncClient, db: AsyncSession):
+        if not self._dist_built():
+            pytest.skip("frontend/dist not built")
+        topic = await _topic(db, "seo-topic", "SEO Check Topic")
+        await db.commit()
+
+        resp = await client.get(f"/topic/{topic.slug}")
+        assert resp.status_code == 200
+        html = resp.text
+        assert "<title>SEO Check Topic — AllData</title>" in html
+        assert 'property="og:title" content="SEO Check Topic — AllData"' in html
+        assert "Summary of SEO Check Topic" in html
+        assert 'rel="canonical" href="http://test/topic/' in html
+        # The SPA shell is still the body — the app boots on top of the head.
+        assert '<div id="root">' in html
+
+    async def test_unknown_topic_gets_default_tags(self, client: AsyncClient):
+        if not self._dist_built():
+            pytest.skip("frontend/dist not built")
+        html = (await client.get("/topic/not-a-real-slug")).text
+        assert "AllData, Statistics is a graph" in html
+        assert "SEO Check Topic" not in html
+
+    async def test_sitemap_lists_published_topics(self, client: AsyncClient, db: AsyncSession):
+        topic = await _topic(db, "sitemap-topic", "Sitemap Topic")
+        await db.commit()
+        resp = await client.get("/sitemap.xml")
+        assert resp.status_code == 200
+        assert "application/xml" in resp.headers["content-type"]
+        assert f"<loc>http://test/topic/{topic.slug}</loc>" in resp.text
+
+    async def test_sitemap_excludes_hidden_domains(self, client: AsyncClient, db: AsyncSession):
+        author = await _author(db)
+        hidden = Topic(
+            slug="hidden-seo", title="Hidden", domain="_meta",
+            status="published", depth=1, created_by=author.id,
+        )
+        db.add(hidden)
+        await db.commit()
+        resp = await client.get("/sitemap.xml")
+        assert "/topic/hidden-seo" not in resp.text
+
+    async def test_robots_references_sitemap(self, client: AsyncClient):
+        resp = await client.get("/robots.txt")
+        assert resp.status_code == 200
+        assert "Sitemap: http://test/sitemap.xml" in resp.text
+        assert "Disallow: /admin/" in resp.text

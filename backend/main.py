@@ -2,10 +2,11 @@ import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import select
 
 from backend.api import (
     admin,
@@ -22,6 +23,8 @@ from backend.api import (
     users,
 )
 from backend.config import settings
+from backend.models.topic import Topic
+from backend.services import seo_service
 
 logger = logging.getLogger("alldata")
 
@@ -116,6 +119,31 @@ async def health():
     return {"status": "ok", "database": "ok"}
 
 
+# ── B4: crawler surfaces ─────────────────────────────────────────────────
+# Registered before the SPA catch-all below (route order matters).
+@app.get("/robots.txt", include_in_schema=False)
+async def robots(request: Request):
+    base = seo_service.base_url(request)
+    return PlainTextResponse(
+        "User-agent: *\n"
+        "Disallow: /api/\n"
+        "Disallow: /admin/\n"
+        "Disallow: /review/\n"
+        "Disallow: /settings/\n"
+        f"Sitemap: {base}/sitemap.xml\n"
+    )
+
+
+@app.get("/sitemap.xml", include_in_schema=False)
+async def sitemap(request: Request):
+    from backend.database import async_session
+
+    # One-off session: crawlers hit this rarely and it's cached for 5 min.
+    async with async_session() as db:
+        xml = await seo_service.build_sitemap(db, seo_service.base_url(request))
+    return HTMLResponse(xml, media_type="application/xml")
+
+
 # ── Serve the built frontend (single-container / Hugging Face deploy) ──
 # In local dev the Vite server serves the SPA and this block is a no-op
 # (frontend/dist is absent). In the container, FastAPI serves the built assets
@@ -127,9 +155,11 @@ if (_DIST / "assets").is_dir():
     app.mount("/assets", StaticFiles(directory=_DIST / "assets"), name="assets")
 
 if _DIST.is_dir():
+    # B4: read the built index.html once; topic routes get meta injected.
+    _INDEX_TEMPLATE = seo_service.load_index_template(_DIST)
 
     @app.get("/{full_path:path}", include_in_schema=False)
-    async def spa(full_path: str):
+    async def spa(full_path: str, request: Request):
         # API + docs are matched by their own routes first; an unmatched
         # `/api/...` is a real 404, anything else is a client-side route.
         if full_path.startswith("api/"):
@@ -137,6 +167,30 @@ if _DIST.is_dir():
         candidate = _DIST / full_path
         if full_path and candidate.is_file():
             return FileResponse(candidate)
+
+        # B4: topic routes get the topic's own title/description/OG tags
+        # injected into the head so crawlers and link previews see real
+        # content (the SPA itself renders identically on top of it).
+        if _INDEX_TEMPLATE and full_path.startswith("topic/"):
+            slug = full_path.split("/")[1].strip("/")
+            if slug:
+                from backend.database import async_session
+
+                async with async_session() as db:
+                    topic = (await db.execute(
+                        select(Topic.title, Topic.summary).where(
+                            Topic.slug == slug, Topic.status == "published"
+                        )
+                    )).first()
+                if topic:
+                    html = seo_service.inject_topic_meta(
+                        _INDEX_TEMPLATE,
+                        title=f"{topic.title} — AllData",
+                        description=topic.summary or "A guided simulation on AllData.",
+                        canonical_url=f"{seo_service.base_url(request)}/topic/{slug}",
+                    )
+                    return HTMLResponse(html)
+
         return FileResponse(_DIST / "index.html")
 
 else:
