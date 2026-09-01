@@ -1285,12 +1285,13 @@ async def _promote_admin_email(db: AsyncSession) -> None:
         print(f"ADMIN_EMAIL {admin_email} is already an admin")
 
 
-async def main(strict: bool = False) -> int:
+async def main(strict: bool = False, report: bool = False) -> int:
     """Run the importer end-to-end.
 
     Returns a process-style exit code: 0 on clean, 1 on any warning when
     `strict=True`. CI invokes this with `--strict` to fail builds on author
     errors that would otherwise silently degrade the topic page.
+    `--report` prints the B3 content-coverage report after the import.
     """
     _WARNINGS.clear()
 
@@ -1315,6 +1316,13 @@ async def main(strict: bool = False) -> int:
         if strict:
             print("\n--strict mode: failing because of warnings above.")
             return 1
+
+    if report:
+        from backend.services.coverage_service import build_coverage_report, format_report_text
+
+        async with async_session() as db:
+            print(format_report_text(await build_coverage_report(db)))
+
     return 0
 
 
@@ -1327,5 +1335,11 @@ if __name__ == "__main__":
              "block fails to parse, references a non-existent decision, uses an "
              "unknown plot spec, or binds an undeclared state key.",
     )
+    parser.add_argument(
+        "--report",
+        action="store_true",
+        help="Print the content-coverage report (interactive-block coverage, "
+             "graph orphans, metadata gaps, distributions) after the import.",
+    )
     args = parser.parse_args()
-    sys.exit(asyncio.run(main(strict=args.strict)))
+    sys.exit(asyncio.run(main(strict=args.strict, report=args.report)))

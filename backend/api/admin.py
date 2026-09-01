@@ -12,9 +12,10 @@ import uuid
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import func, select
 
-from backend.deps import CurrentUser, DB, require_role
+from backend.deps import DB, CurrentUser, require_role
 from backend.models.user import User, UserRole
 from backend.schemas.user import UserResponse
+from backend.services.coverage_service import build_coverage_report
 
 logger = logging.getLogger("alldata")
 
@@ -32,6 +33,14 @@ async def _active_admin_count(db: DB, exclude_user_id: uuid.UUID) -> int:
         .where(User.id != exclude_user_id)
     )
     return result.scalar_one()
+
+
+@router.get("/coverage")
+async def get_coverage(db: DB):
+    """B3: content-coverage report — interactive-block coverage, graph
+    orphans, metadata gaps, and distributions. Read-only authoring lens;
+    the same computation `seed.import_seed --report` prints."""
+    return await build_coverage_report(db)
 
 
 @router.get("/users", response_model=list[UserResponse])

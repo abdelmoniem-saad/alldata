@@ -374,6 +374,36 @@ export const api = {
   // A3: admin user management.
   adminListUsers: () => request<any[]>('/admin/users'),
 
+  // B3: content coverage report.
+  adminCoverage: () =>
+    request<{
+      summary: {
+        topics_total: number
+        domains_total: number
+        published_total: number
+        content_topics: number
+        domain_roots: number
+        by_domain: Record<string, number>
+        by_difficulty: Record<string, number>
+        datasets_in_use: string[]
+        coverage: Record<string, string>
+        gap_counts: Record<string, number>
+      }
+      gaps: Record<string, string[]>
+      topics: Array<{
+        slug: string
+        title: string
+        domain: string | null
+        difficulty: string | null
+        status: string
+        has_decision: boolean
+        has_playground: boolean
+        has_code: boolean
+        has_recall_prompt: boolean
+        required_by_count: number
+      }>
+    }>('/admin/coverage'),
+
   adminSetRole: (userId: string, role: string) =>
     request<any>(`/admin/users/${userId}/role?role=${encodeURIComponent(role)}`, {
       method: 'PATCH',

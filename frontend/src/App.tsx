@@ -21,6 +21,7 @@ const UserForks = lazy(() => import('./pages/UserForks'))
 const ReviewQueue = lazy(() => import('./pages/ReviewQueue'))
 const AccountSettings = lazy(() => import('./pages/AccountSettings'))
 const AdminUsers = lazy(() => import('./pages/AdminUsers'))
+const AdminCoverage = lazy(() => import('./pages/AdminCoverage'))
 
 export default function App() {
   // M1: bootstrap the progress-sync orchestrator once on mount. It owns the
@@ -62,6 +63,7 @@ export default function App() {
             like /review does. */}
         <Route path="/settings" element={<AccountSettings />} />
         <Route path="/admin/users" element={<AdminUsers />} />
+        <Route path="/admin/coverage" element={<AdminCoverage />} />
       </Route>
     </Routes>
   )

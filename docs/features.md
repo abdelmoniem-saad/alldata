@@ -549,6 +549,15 @@ The injected `load(name)` helper resolves `seed/datasets/{name}.csv` via the `AL
 ### Keep-alive cron
 `.github/workflows/keepalive.yml` pings `/api/health` every 30 minutes (GitHub Actions cron + manual trigger), keeping the free Space from sleeping and surfacing outages — including an unreachable database, since health returns 503 then — as red Actions runs. Target overridable via an `ALLODATA_URL` repository secret. *(cycle: Y7)* `code: .github/workflows/keepalive.yml`, `backend/main.py` (`health`).
 
+### Search error surfacing
+A failed search request renders "Search is temporarily unavailable." instead of the misleading "No topics found" (which is what every search surface showed during the pg_trgm outage). *(cycle: A4)* `code: frontend/src/components/SearchDropdown.tsx` (`failed` state).
+
+### Playwright e2e harness
+`frontend/e2e/` + `npm run e2e`: production-shaped stack (built SPA served by uvicorn with a seeded throwaway SQLite DB), 8 specs covering home/graph rendering, both search surfaces navigating to topics, the body-search API contract, and the full account lifecycle (register → settings → recovery code → sign out → recover-and-sign-in). One-time browser install: `npx playwright install chromium`. *(cycle: A5)* `code: frontend/playwright.config.ts`, `frontend/e2e/`.
+
+### Content coverage lens
+`coverage_service.build_coverage_report` computes per-topic interactive-block coverage (decision / playground / code / plot), prerequisite-edge connectivity (`required_by_count`; "orphan" = published topic nothing builds on), metadata completeness, and domain/difficulty/dataset distributions. Two consumers: `python -m seed.import_seed --report` (ASCII-safe CLI output) and `GET /api/admin/coverage` → the ADMIN-only `/admin/coverage` page (stat cards, gap lists deep-linking to topics, per-topic ✓/✗ table). *(cycle: A6)* `code: backend/services/coverage_service.py`, `backend/api/admin.py`, `seed/import_seed.py` (`--report`), `frontend/src/pages/AdminCoverage.tsx`.
+
 ---
 
 ## Pages & routes

@@ -158,6 +158,22 @@ export default function AuthMenu() {
                 Manage users
               </Link>
             )}
+            {/* B3: content coverage lens, ADMIN only. */}
+            {user.role === 'admin' && (
+              <Link
+                to="/admin/coverage"
+                onClick={() => setPopoverOpen(false)}
+                style={{
+                  display: 'block',
+                  padding: '8px 10px',
+                  fontSize: 12,
+                  color: 'var(--color-text-secondary)',
+                  borderRadius: 6,
+                }}
+              >
+                Content coverage
+              </Link>
+            )}
             {/* O1: review queue, ADMIN/EDITOR only. The route also
                 self-gates so a direct visit shows a clear "not authorized"
                 state for non-reviewers; the popover link hides for cleaner
