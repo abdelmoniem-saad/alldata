@@ -630,9 +630,12 @@ def _capture_show(*args, **kwargs):
 
 plt.show = _capture_show
 
-# K5: load(name), read a curated dataset by name. Returns a pandas
-# DataFrame when pandas is available, otherwise a list of dicts. Path is
-# resolved relative to wherever uvicorn runs from, matching
+# K5: load(name), read a curated dataset by name. Returns the rows as a
+# list of dicts, one dict per CSV row, with real bools and numbers where
+# the CSV allows it. One shape for topic code regardless of whether pandas
+# is installed: iterating gives rows, row["col"] works, and
+# pd.DataFrame(load(name)) still builds a DataFrame. Path is resolved
+# relative to wherever uvicorn runs from, matching
 # seed/datasets/{{name}}.csv. Slug-shaped names only.
 import re as _re_load
 def load(name):
@@ -654,12 +657,37 @@ def load(name):
         if os.path.exists(path):
             try:
                 import pandas as _pd
-                return _pd.read_csv(path)
+                # to_dict("records") yields real Python scalars per row
+                # (True stays True, 3 stays 3), which the CSV fallback
+                # below recreates with _coerce_cell for the no-pandas path.
+                return _pd.read_csv(path).to_dict("records")
             except ImportError:
                 import csv as _csv
                 with open(path, encoding="utf-8") as _f:
-                    return list(_csv.DictReader(_f))
+                    rows = list(_csv.DictReader(_f))
+                for _row in rows:
+                    for _k in _row:
+                        _row[_k] = _coerce_cell(_row[_k])
+                return rows
     raise FileNotFoundError("Dataset " + repr(name) + " not found")
+
+def _coerce_cell(val):
+    # Match pandas' dtype inference closely enough for topic code:
+    # booleans as real bools, numeric strings as numbers, else the string.
+    if val is None:
+        return None
+    if val == "True":
+        return True
+    if val == "False":
+        return False
+    try:
+        return int(val)
+    except (TypeError, ValueError):
+        pass
+    try:
+        return float(val)
+    except (TypeError, ValueError):
+        return val
 
 # Run user code
 {code}

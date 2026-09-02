@@ -66,8 +66,8 @@ class TestUpdateFork:
 
 
 class TestMergeBack:
-    async def _forked(self, db, user, slug: str = "mergeable"):
-        topic = await _topic(db, slug, user.id)
+    async def _forked(self, db, user, slug: str = "mergeable", domain: str = "test"):
+        topic = await _topic(db, slug, user.id, domain=domain)
         fork, _ = await fork_service.create_fork(db, user.id, slug)
         await fork_service.update_fork_source(db, fork, "# Proposed rewrite\n\nBetter prose.")
         return topic, fork
@@ -98,3 +98,39 @@ class TestMergeBack:
         assert queue[0]["status"] == "pending"
         assert queue[0]["topic_slug"] == "mergeable"
         assert queue[0]["suggester_display_name"] == test_user.display_name
+
+    async def test_accept_carries_review_note(self, db, test_user):
+        """B2: notes work on accept, not only on reject. domain='' keeps
+        the best-effort disk write off this synthetic topic."""
+        _, fork = await self._forked(db, test_user, domain="")
+        sug = await merge_service.suggest_from_fork(db, fork, test_user.id)
+        await merge_service.accept_suggestion(db, sug, test_user.id, note="Merged, thanks.")
+        assert sug.status == "accepted"
+        assert sug.review_note == "Merged, thanks."
+        assert sug.reviewed_by == test_user.id
+
+    async def test_latest_review_surfaces_accept_note(self, db, test_user):
+        """B2: the author sees the note on accept and reject alike; a
+        thank-you note is a valid review outcome."""
+        _, fork = await self._forked(db, test_user, domain="")
+        sug = await merge_service.suggest_from_fork(db, fork, test_user.id)
+        # A pending suggestion has nothing to show yet.
+        assert await merge_service.latest_review_for_fork(db, fork.id) is None
+
+        await merge_service.accept_suggestion(db, sug, test_user.id, note="Merged, thanks.")
+        review = await merge_service.latest_review_for_fork(db, fork.id)
+        assert review is not None
+        assert review["status"] == "accepted"
+        assert review["note"] == "Merged, thanks."
+        assert review["reviewer_name"] == test_user.display_name
+        assert review["reviewed_at"] is not None
+
+    async def test_latest_review_surfaces_reject_note(self, db, test_user):
+        _, fork = await self._forked(db, test_user, domain="")
+        sug = await merge_service.suggest_from_fork(db, fork, test_user.id)
+        await merge_service.reject_suggestion(db, sug, test_user.id, "Needs a worked example.")
+        review = await merge_service.latest_review_for_fork(db, fork.id)
+        assert review is not None
+        assert review["status"] == "rejected"
+        assert review["note"] == "Needs a worked example."
+        assert review["reviewer_name"] == test_user.display_name

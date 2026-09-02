@@ -180,3 +180,29 @@ class TestLocalFallbackSmoke:
         result = await es._execute_local_python("import time; time.sleep(30)", timeout=2)
         assert result["exit_code"] == -1
         assert "timed out" in result["stderr"].lower()
+
+    async def test_load_returns_record_rows(self):
+        """B2: load() yields one dict per CSV row, never a pandas
+        DataFrame. Iterating a DataFrame yields column names, so the
+        monty-hall topic's `g["stay_wins"]` crashed with TypeError on the
+        pandas-installed branch while the no-pandas branch stayed green.
+        The CSV stores 1/0, so the column arrives as ints (truthy/falsy
+        is what the topic code relies on)."""
+        pytest.importorskip("matplotlib")
+        from backend.services import execution_service as es
+
+        code = (
+            'rows = load("monty-hall-runs")\n'
+            "assert isinstance(rows, list) and rows, type(rows)\n"
+            'assert isinstance(rows[0], dict), type(rows[0])\n'
+            'assert isinstance(rows[0]["stay_wins"], int), rows[0]\n'
+            'tally = {"stay": 0, "switch": 0}\n'
+            "for g in rows:\n"
+            '    tally["stay" if g["stay_wins"] else "switch"] += 1\n'
+            'print("load-ok", len(rows), tally)\n'
+        )
+        result = await es._execute_local_python(code, timeout=30)
+        assert result["exit_code"] == 0, result["stderr"]
+        assert "load-ok" in result["stdout"]
+        # The 2/3 vs 1/3 split the topic teaches must survive the contract.
+        assert "1000" in result["stdout"]

@@ -1197,7 +1197,7 @@ async def import_schema(db: AsyncSession, user: User):
                     print(f"  Warning: topic '{slug}' not in schema")
                     continue
 
-                # Update topic with meta info — BEFORE the content-existence
+                # Update topic with meta info BEFORE the content-existence
                 # skip below. meta.yaml is the source of truth (principle 7):
                 # edits to recall_prompt/dataset/layers/tour for already-shipped
                 # topics must propagate on reimport, not only on first import.

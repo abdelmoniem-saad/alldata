@@ -15,6 +15,7 @@ from backend.deps import DB, CurrentUser
 from backend.models.merge_back import MergeBackSuggestion
 from backend.models.user import UserRole
 from backend.schemas.merge_back import (
+    MergeBackAcceptRequest,
     MergeBackDetail,
     MergeBackRejectRequest,
     MergeBackSummary,
@@ -55,7 +56,12 @@ async def get_review_detail(suggestion_id: uuid.UUID, db: DB, user: CurrentUser)
 
 
 @router.post("/{suggestion_id}/accept", response_model=MergeBackDetail)
-async def accept(suggestion_id: uuid.UUID, db: DB, user: CurrentUser):
+async def accept(
+    suggestion_id: uuid.UUID,
+    db: DB,
+    user: CurrentUser,
+    payload: MergeBackAcceptRequest | None = None,
+):
     _ensure_reviewer(user)
     row = await db.execute(
         select(MergeBackSuggestion).where(MergeBackSuggestion.id == suggestion_id)
@@ -68,7 +74,12 @@ async def accept(suggestion_id: uuid.UUID, db: DB, user: CurrentUser):
             status_code=409,
             detail=f"Suggestion already {suggestion.status}",
         )
-    await merge_service.accept_suggestion(db, suggestion, user.id)
+    # B2: an optional note rides along on accept too, so the author can
+    # receive a thank-you or context on what was merged. Body-less calls
+    # (the old contract) keep working.
+    await merge_service.accept_suggestion(
+        db, suggestion, user.id, payload.note if payload else None
+    )
     detail = await merge_service.get_review_detail(db, suggestion_id)
     assert detail is not None
     return MergeBackDetail(**detail)

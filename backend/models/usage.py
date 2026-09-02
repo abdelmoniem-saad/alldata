@@ -1,6 +1,6 @@
 """Usage analytics model, A10.
 
-One row per (day, kind, slug) with a hit counter — upserted on every
+One row per (day, kind, slug) with a hit counter, upserted on every
 event, so the table stays tiny (topics × kinds × days) and contains
 nothing personal: no IPs, no user IDs, no sessions. This is a first-party
 pageview/run counter, deliberately not a tracker.

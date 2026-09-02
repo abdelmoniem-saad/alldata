@@ -74,7 +74,7 @@ export default function Datasets() {
           borderRadius: 5,
           fontSize: 13,
           color: 'var(--color-accent)',
-        }}>load("name")</code> in any code block to pull one into a DataFrame.
+        }}>load("name")</code> in any code block to get the rows as records (one dict per row; wrap them in a DataFrame when you want one).
       </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>

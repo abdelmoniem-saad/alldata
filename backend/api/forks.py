@@ -137,6 +137,9 @@ async def _fork_detail(
     # O1: surface the latest merge-back status so the frontend doesn't need
     # a second round trip to render the status chip.
     suggestion_status = await merge_service.latest_status_for_fork(db, fork.id)
+    # B2: the author-facing review outcome (note visible on accept and
+    # reject alike), fetched in the same round trip.
+    review = await merge_service.latest_review_for_fork(db, fork.id)
     return ForkDetail(
         **_fork_out(fork, topic, owner).model_dump(),
         owner_display_name=owner.display_name,
@@ -144,6 +147,9 @@ async def _fork_detail(
         misconceptions=misconceptions,
         original_topic=TopicSummary.model_validate(topic),
         suggestion_status=suggestion_status,
+        suggestion_review_note=review["note"] if review else None,
+        suggestion_reviewer_name=review["reviewer_name"] if review else None,
+        suggestion_reviewed_at=review["reviewed_at"] if review else None,
     )
 
 

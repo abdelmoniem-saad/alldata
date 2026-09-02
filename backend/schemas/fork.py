@@ -97,6 +97,12 @@ class ForkDetail(ForkOut):
     # Drives the status chip on `ForkView` / `ForkEditor`. None when the
     # fork has never been suggested.
     suggestion_status: str | None = None
+    # B2: the latest resolved suggestion's reviewer note, surfaced to the
+    # fork author on accept AND reject (a thank-you note is a valid review
+    # outcome). None when nothing was reviewed yet or no note was left.
+    suggestion_review_note: str | None = None
+    suggestion_reviewer_name: str | None = None
+    suggestion_reviewed_at: datetime | None = None
 
 
 class ForkPreviewOut(BaseModel):

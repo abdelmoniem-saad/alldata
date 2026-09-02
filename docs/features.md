@@ -59,7 +59,10 @@ Concept edges (prereq → topic) get a small pill near the midpoint with the rel
 Top-left strip: "All / Probability / Distributions / …" toggles. Clicking a pill filters the graph to nodes in that domain plus their immediate prereq / leads-to neighbors. URL stays in sync via `?domain=` *(cycle: H9)*. `code: frontend/src/pages/GraphExplorer.tsx` (search "DOMAIN_SLUGS").
 
 ### Floating search chip
-Top-right pill. Click or press `/` to expand into a fuzzy search combobox. Selecting a result pans and zooms the canvas onto that node (it doesn't navigate away). *(cycle: H6)* `code: frontend/src/pages/GraphExplorer.tsx` (`GraphSearchChip`). See also [Search](#search).
+Top-right pill. Click or press `/` to expand into a fuzzy search combobox over titles and slugs; when nothing matches locally it falls back to the full-text search and lists "Content matches" with snippets, so concept searches still land. Selecting a result pans and zooms the canvas onto that node (it doesn't navigate away). *(cycle: H6; B2, content-match fallback)* `code: frontend/src/pages/GraphExplorer.tsx` (`GraphSearchChip`). See also [Search](#search).
+
+### Family anchor links (domain-filtered view)
+While a domain filter is active, members with no visible edges (e.g. the monty-hall capstone) get a dashed, faint, visual-only link to that family's root, so nothing floats alone in the filtered canvas. Client-side only: not persisted, not a prerequisite, invisible to learning paths, readiness, and coverage, and only that family's root stays visible while filtering. *(cycle: B2)* `code: frontend/src/pages/GraphExplorer.tsx` (filtered-edges memo), `frontend/src/components/graph/ForceGraph.tsx` (`family` edge style).
 
 ### "Start here" link
 Quiet chip below the search trigger, top-right. Routes to `/topic/shape-of-statistics`, the 8-minute intro tour. *(cycle: K2)* `code: frontend/src/pages/GraphExplorer.tsx` (search "Start here").
@@ -290,7 +293,7 @@ In-prose attribution chip; see [`dataset` block type](#dataset).
 Flat catalog of every shipped dataset. Each card shows title, description, source, columns, rows, synthetic flag, and the topics that declare this dataset in their `meta.yaml`. Reads `GET /api/datasets`. *(cycle: K5)* `code: frontend/src/pages/Datasets.tsx`.
 
 ### `load(name)` helper
-Injected into the Python execution context. Reads `seed/datasets/{name}.csv` from disk; returns a `pandas.DataFrame` if pandas is available, otherwise a list of dicts. Slug-shaped names only, guards against path traversal. *(cycle: K5)* `code: backend/services/execution_service.py` (search `def load`).
+Injected into the Python execution context. Reads `seed/datasets/{name}.csv` from disk and returns the rows as a **list of dicts** (one dict per row, real bools/numbers), the same shape whether or not pandas is installed; `pd.DataFrame(load(name))` still works. Slug-shaped names only, guards against path traversal. *(cycle: K5; B2, records contract)* `code: backend/services/execution_service.py` (search `def load`).
 
 ### Curated CSVs (initial 4)
 - `coin-flips-1000`, synthetic, 1,000 fair-coin trials.
@@ -524,7 +527,7 @@ Visit any topic with this query string. Blocks the user has flagged with the con
 | `POST /api/forks/{username}/{slug}/suggest` | Owner-only. Create / refresh the fork's pending merge-back suggestion; snapshots `markdown_source`. | O1 |
 | `GET /api/merge-backs` | ADMIN/EDITOR. Review queue, pending suggestions first, then resolved. | O1 |
 | `GET /api/merge-backs/{id}` | ADMIN/EDITOR. One suggestion + `master_markdown` (current) + `suggested_markdown` for the diff. | O1 |
-| `POST /api/merge-backs/{id}/accept` | ADMIN/EDITOR. Replace master topic's blocks + rewrite seed `content.md`. | O1 |
+| `POST /api/merge-backs/{id}/accept` | ADMIN/EDITOR. Replace master topic's blocks + rewrite seed `content.md`. Optional `{ note }` reaches the author. | O1; B2, note |
 | `POST /api/merge-backs/{id}/reject` | ADMIN/EDITOR. Close the suggestion with an optional note. | O1 |
 
 ---
@@ -559,10 +562,10 @@ A failed search request renders "Search is temporarily unavailable." instead of 
 `coverage_service.build_coverage_report` computes per-topic interactive-block coverage (decision / playground / code / plot), prerequisite-edge connectivity (`required_by_count`; "orphan" = published topic nothing builds on), metadata completeness, and domain/difficulty/dataset distributions. Two consumers: `python -m seed.import_seed --report` (ASCII-safe CLI output) and `GET /api/admin/coverage` → the ADMIN-only `/admin/coverage` page (stat cards, gap lists deep-linking to topics, per-topic ✓/✗ table). *(cycle: A6)* `code: backend/services/coverage_service.py`, `backend/api/admin.py`, `seed/import_seed.py` (`--report`), `frontend/src/pages/AdminCoverage.tsx`.
 
 ### First-party usage analytics
-`POST /api/track` records (day, kind, slug) counters — kinds: topic_view / run_click / decision_pick. No auth (anonymous readers count), no PII (no IPs, no user IDs — asserted by test), per-IP dam at 120/min, unknown slugs 404. `GET /api/admin/analytics` aggregates per-topic views/runs/picks over a 1–90 day window, rendered on `/admin/coverage` as a "Readers (last 30 days)" section. Beacons fire from TopicView (post-fetch), CodeRunner (post-auth-gate), and DecisionBlock, via a `keepalive` fetch that can never surface an error. *(cycle: A10)* `code: backend/api/track.py`, `backend/services/analytics_service.py`, `backend/models/usage.py`, `frontend/src/api/client.ts` (`track`, `trackCurrent`).
+`POST /api/track` records (day, kind, slug) counters: topic_view / run_click / decision_pick. No auth (anonymous readers count), no PII (no IPs, no user IDs, asserted by test), per-IP dam at 120/min, unknown slugs 404. `GET /api/admin/analytics` aggregates per-topic views/runs/picks over a 1 to 90 day window, rendered on `/admin/coverage` as a "Readers (last 30 days)" section. Beacons fire from TopicView (post-fetch), CodeRunner (post-auth-gate), and DecisionBlock, via a `keepalive` fetch that can never surface an error. *(cycle: A10)* `code: backend/api/track.py`, `backend/services/analytics_service.py`, `backend/models/usage.py`, `frontend/src/api/client.ts` (`track`, `trackCurrent`).
 
 ### Importer propagates meta edits
-The seed importer updated meta fields (recall_prompt, dataset, layers, tour) only for topics *receiving new content* — the block sat after the skip-if-content-exists `continue`, so edits to shipped topics' `meta.yaml` never reached the DB. The update now runs before the skip, honoring principle 7 (meta.yaml is the source of truth; reimport is the migration story). *(cycle: A11)* `code: seed/import_seed.py` (content-import loop).
+The seed importer updated meta fields (recall_prompt, dataset, layers, tour) only for topics *receiving new content*: the block sat after the skip-if-content-exists `continue`, so edits to shipped topics' `meta.yaml` never reached the DB. The update now runs before the skip, honoring principle 7 (meta.yaml is the source of truth; reimport is the migration story). *(cycle: A11)* `code: seed/import_seed.py` (content-import loop).
 
 ### Timeout-safe temp cleanup
 The local-fallback executor's temp dirs use `TemporaryDirectory(ignore_cleanup_errors=True)`: after a timeout process-group kill, the dying child may hold handles briefly, and the cleanup error would otherwise 500 the execute response *after* the result was computed. *(cycle: A11)* `code: backend/services/execution_service.py` (`_execute_local_python`, `_execute_local_r`).

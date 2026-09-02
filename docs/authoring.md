@@ -64,6 +64,16 @@ Gear markers are pure metadata. The reader sees only the `label:` text, a quiet 
 
 Pick *one* mechanic for Gear 3, observational (playground) or commitment (decision). Mixing both in one topic dilutes the felt experience.
 
+### Anti-template rules (B2)
+
+The scaffold exists so a topic is *complete*, not so all topics *sound the same*. A reader who notices the template is a reader getting bored. When writing or retrofitting a topic:
+
+1. **Openings must not repeat across adjacent topics.** No two topics a reader is likely to visit back-to-back may start with the same rhetorical move (question, scenario, claim, surprising number, "imagine you..."). Vary the entry: a story, a result first, a wrong answer to attack, a picture to stare at.
+2. **Decision verdicts may not share sentence shapes across a domain.** If bayes-theorem's correct verdict begins "Exactly." then no other topic in that family begins its verdict the same way. Wrong-answer verdicts describe what the reader is now *seeing*, and each topic should do that with its own visual vocabulary, not a shared formula.
+3. **Gear labels name the section's idea, not the gear.** (See the warning above.) A label like "The counting argument" teaches; a label like "Formalism" files.
+4. **Prose length is a variable, not a constant.** A gear can be two sentences or five paragraphs. If a section's content fits in three sentences, three sentences it is; padding to "look complete" is the template leak the scaffold exists to prevent.
+5. **Every decision must earn its click.** If the options don't map to visibly different consequences on the plot/state, cut the decision or redesign the options. A ritual pick is worse than no pick.
+
 ---
 
 ## Immersive tour mode

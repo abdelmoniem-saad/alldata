@@ -42,3 +42,13 @@ class MergeBackRejectRequest(BaseModel):
     """Body for POST /merge-backs/{id}/reject. `note` is optional."""
 
     note: str | None = None
+
+
+class MergeBackAcceptRequest(BaseModel):
+    """Body for POST /merge-backs/{id}/accept. `note` is optional.
+
+    B2: notes work in both directions. An accept note reaches the author
+    too ("merged, thanks" is a valid review outcome), so the note field on
+    the suggestion is no longer reject-only."""
+
+    note: str | None = None

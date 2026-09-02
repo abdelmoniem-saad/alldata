@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import ForceGraph, { ForceGraphHandle } from '../components/graph/ForceGraph'
 import GraphSidebar from '../components/graph/GraphSidebar'
 import { useGraphStore } from '../stores/graphStore'
-import { api, GraphNode } from '../api/client'
+import { api, GraphNode, GraphEdge } from '../api/client'
 import {
   DOMAIN_SLUGS, DIFFICULTY_DASH, NODE_STROKE_WIDTH,
   domainVar, domainLabel, domainTick,
@@ -55,14 +55,44 @@ export default function GraphExplorer() {
     }, { replace: true })
   }, [activeDomain, setSearchParams])
 
-  // Filter nodes by domain
+  // Filter nodes by domain. While a filter is active only that family's
+  // root stays visible (previously every depth-0 root survived, leaving
+  // five stray hubs on screen).
+  const activeRoot = activeDomain
+    ? nodes.find(n => n.depth === 0 && n.domain === activeDomain)
+    : undefined
   const filteredNodes = activeDomain
-    ? nodes.filter(n => n.domain === activeDomain || n.depth === 0)
+    ? nodes.filter(n => n.domain === activeDomain || n.id === activeRoot?.id)
     : nodes
   const filteredNodeIds = new Set(filteredNodes.map(n => n.id))
-  const filteredEdges = activeDomain
+  let filteredEdges: GraphEdge[] = activeDomain
     ? edges.filter(e => filteredNodeIds.has(e.source_id) && filteredNodeIds.has(e.target_id))
     : edges
+  // B2: anchor members with no visible edges to their family root with a
+  // dashed visual-only link, so an applied capstone (monty-hall) doesn't
+  // float alone inside its domain view. Not persisted, not a prerequisite:
+  // learning paths, readiness, and coverage never see it, and the full
+  // graph still shows the node's real (cross-family) connections.
+  if (activeRoot) {
+    const connected = new Set<string>()
+    for (const e of filteredEdges) {
+      connected.add(e.source_id)
+      connected.add(e.target_id)
+    }
+    for (const n of filteredNodes) {
+      if (n.depth === 0 || connected.has(n.id)) continue
+      filteredEdges = [
+        ...filteredEdges,
+        {
+          source_id: activeRoot.id,
+          target_id: n.id,
+          edge_type: 'family',
+          weight: 0.1,
+          description: null,
+        },
+      ]
+    }
+  }
 
   const handleNodeClick = useCallback(async (node: GraphNode) => {
     selectNode(node)
@@ -608,6 +638,39 @@ function GraphSearchChip({ nodes, onSelect }: {
     return scored.slice(0, 8).map(s => s.node)
   }, [nodes, query])
 
+  // B2: full-text fallback. Local matching covers titles/slugs only, which
+  // is right for camera-jumping but dead-ends concept searches ("posterior").
+  // When local matching finds nothing, hit the A1 full-text search so body
+  // matches with snippets show up under a "Content matches" section.
+  const [remoteResults, setRemoteResults] = useState<GraphNode[]>([])
+  useEffect(() => {
+    const q = query.trim()
+    if (!open || q.length < 2 || results.length > 0) {
+      setRemoteResults([])
+      return
+    }
+    let cancelled = false
+    const t = window.setTimeout(async () => {
+      try {
+        const res = await api.searchTopics(q)
+        if (!cancelled) setRemoteResults(res)
+      } catch {
+        if (!cancelled) setRemoteResults([])
+      }
+    }, 250)
+    return () => {
+      cancelled = true
+      window.clearTimeout(t)
+    }
+  }, [query, open, results])
+
+  // Keyboard nav walks the combined list: local title matches first, then
+  // any full-text content matches.
+  const combinedResults = useMemo(
+    () => [...results, ...remoteResults],
+    [results, remoteResults],
+  )
+
   const choose = (node: GraphNode) => {
     onSelect(node)
     setOpen(false)
@@ -687,13 +750,13 @@ function GraphSearchChip({ nodes, onSelect }: {
           if (e.key === 'Escape') { setOpen(false); setQuery('') }
           else if (e.key === 'ArrowDown') {
             e.preventDefault()
-            setFocusedIndex(i => Math.min(results.length - 1, i + 1))
+            setFocusedIndex(i => Math.min(combinedResults.length - 1, i + 1))
           } else if (e.key === 'ArrowUp') {
             e.preventDefault()
             setFocusedIndex(i => Math.max(0, i - 1))
           } else if (e.key === 'Enter') {
             e.preventDefault()
-            const target = focusedIndex >= 0 ? results[focusedIndex] : results[0]
+            const target = focusedIndex >= 0 ? combinedResults[focusedIndex] : combinedResults[0]
             if (target) choose(target)
           }
         }}
@@ -709,8 +772,8 @@ function GraphSearchChip({ nodes, onSelect }: {
           outline: 'none',
         }}
       />
-      {results.length > 0 && (
-        <div style={{ marginTop: 6, maxHeight: 280, overflowY: 'auto' }}>
+      {(results.length > 0 || remoteResults.length > 0) && (
+        <div style={{ marginTop: 6, maxHeight: 320, overflowY: 'auto' }}>
           {results.map((node, i) => {
             const dColor = domainVar(node.domain)
             const isFocused = i === focusedIndex
@@ -756,9 +819,70 @@ function GraphSearchChip({ nodes, onSelect }: {
               </button>
             )
           })}
+          {remoteResults.length > 0 && (
+            <>
+              <div style={{
+                padding: '6px 8px 2px',
+                fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
+                letterSpacing: '0.4px',
+                color: 'var(--color-text-muted)',
+              }}>
+                Content matches
+              </div>
+              {remoteResults.map((node, j) => {
+                const i = results.length + j
+                const dColor = domainVar(node.domain)
+                const isFocused = i === focusedIndex
+                return (
+                  <button
+                    key={`body-${node.id}`}
+                    onMouseDown={e => {
+                      e.preventDefault()
+                      choose(node)
+                    }}
+                    onMouseEnter={() => setFocusedIndex(i)}
+                    style={{
+                      width: '100%',
+                      display: 'block',
+                      padding: '6px 8px',
+                      border: 'none',
+                      borderRadius: 6,
+                      background: isFocused ? 'var(--color-surface-hover)' : 'transparent',
+                      color: 'var(--color-text)',
+                      fontSize: 13,
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span
+                        className="domain-tick"
+                        style={{ color: dColor, flexShrink: 0, fontStyle: 'normal' }}
+                        aria-hidden="true"
+                      >
+                        {domainTick(node.domain)}
+                      </span>
+                      <span style={{ flex: 1 }}>{node.title}</span>
+                    </span>
+                    {node.snippet && (
+                      <span style={{
+                        display: 'block',
+                        marginTop: 2,
+                        paddingLeft: 22,
+                        fontSize: 11,
+                        color: 'var(--color-text-muted)',
+                      }}>
+                        {node.snippet}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </>
+          )}
         </div>
       )}
-      {query.trim() && results.length === 0 && (
+      {query.trim() && results.length === 0 && remoteResults.length === 0 && (
         <div style={{
           marginTop: 8, padding: '8px 10px',
           fontSize: 12, color: 'var(--color-text-muted)',

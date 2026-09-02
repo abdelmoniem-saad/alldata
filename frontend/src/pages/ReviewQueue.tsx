@@ -26,7 +26,7 @@ export default function ReviewQueue() {
   const [detail, setDetail] = useState<MergeBackDetail | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const [rejectNote, setRejectNote] = useState('')
+  const [note, setNote] = useState('')
 
   // Role gate. The route is registered without a guard so an anonymous
   // visitor still gets a clear "sign in" message instead of a redirect
@@ -89,29 +89,32 @@ export default function ReviewQueue() {
     setBusy(true)
     setError(null)
     try {
-      await api.acceptMergeBack(detail.id)
+      // B2: the note rides along on accept too, so the author can get a
+      // thank-you or merge context, not just a reject reason.
+      await api.acceptMergeBack(detail.id, note.trim() || null)
+      setNote('')
       await refresh()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Accept failed.')
     } finally {
       setBusy(false)
     }
-  }, [detail, busy, refresh])
+  }, [detail, busy, note, refresh])
 
   const onReject = useCallback(async () => {
     if (!detail || busy) return
     setBusy(true)
     setError(null)
     try {
-      await api.rejectMergeBack(detail.id, rejectNote.trim() || null)
-      setRejectNote('')
+      await api.rejectMergeBack(detail.id, note.trim() || null)
+      setNote('')
       await refresh()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Reject failed.')
     } finally {
       setBusy(false)
     }
-  }, [detail, busy, rejectNote, refresh])
+  }, [detail, busy, note, refresh])
 
   // ─── render ──────────────────────────────────────────────────────────
 
@@ -290,9 +293,9 @@ export default function ReviewQueue() {
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <input
                     type="text"
-                    value={rejectNote}
-                    onChange={e => setRejectNote(e.target.value)}
-                    placeholder="Optional reject note (visible to the suggester)"
+                    value={note}
+                    onChange={e => setNote(e.target.value)}
+                    placeholder="Optional note to the author (they see it on accept or reject)"
                     style={{
                       padding: '7px 10px',
                       fontSize: 12,

@@ -1,6 +1,6 @@
 """Usage tracking endpoint, A10.
 
-POST /api/track — fire-and-forget beacon from the frontend. No auth
+POST /api/track, a fire-and-forget beacon from the frontend. No auth
 (anonymous readers count), no PII (only {kind, slug}), per-IP rate
 limited. Unknown slugs 404 so the counter can't be polluted with garbage
 entries; a beacon that 404s is simply dropped by the client.

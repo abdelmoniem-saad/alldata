@@ -169,6 +169,33 @@ async def latest_status_for_fork(
     return row.scalar_one_or_none()
 
 
+async def latest_review_for_fork(
+    db: AsyncSession, fork_id: uuid.UUID
+) -> dict | None:
+    """B2: the latest suggestion's review outcome for the fork author.
+    Returns {status, note, reviewer_name, reviewed_at} or None. The note
+    is visible on accept and reject alike, so a thank-you note works."""
+    row = await db.execute(
+        select(MergeBackSuggestion)
+        .where(MergeBackSuggestion.fork_id == fork_id)
+        .where(MergeBackSuggestion.status != "pending")
+        .order_by(desc(MergeBackSuggestion.created_at))
+        .limit(1)
+    )
+    sug = row.scalar_one_or_none()
+    if sug is None or sug.reviewed_by is None:
+        return None
+    reviewer_name_row = await db.execute(
+        select(User.display_name).where(User.id == sug.reviewed_by)
+    )
+    return {
+        "status": sug.status,
+        "note": sug.review_note,
+        "reviewer_name": reviewer_name_row.scalar_one_or_none(),
+        "reviewed_at": sug.reviewed_at,
+    }
+
+
 async def suggest_from_fork(
     db: AsyncSession, fork: TopicFork, user_id: uuid.UUID
 ) -> MergeBackSuggestion:
@@ -277,12 +304,16 @@ async def get_review_detail(
 
 
 async def accept_suggestion(
-    db: AsyncSession, suggestion: MergeBackSuggestion, reviewer_id: uuid.UUID
+    db: AsyncSession,
+    suggestion: MergeBackSuggestion,
+    reviewer_id: uuid.UUID,
+    note: str | None = None,
 ) -> None:
     """Apply the suggestion to the master topic: replace blocks +
     misconceptions in the DB, then write the seed file. The DB update is
     inside the request transaction; the disk write is best-effort (logs
-    on failure but doesn't roll back)."""
+    on failure but doesn't roll back). `note` is an optional reviewer
+    note, surfaced to the author like a reject note (B2)."""
     topic_row = await db.execute(
         select(Topic)
         .where(Topic.id == suggestion.topic_id)
@@ -294,6 +325,7 @@ async def accept_suggestion(
     write_topic_source(topic, suggestion.suggested_markdown)
 
     suggestion.status = "accepted"
+    suggestion.review_note = note
     suggestion.reviewed_by = reviewer_id
     suggestion.reviewed_at = datetime.now(UTC).replace(tzinfo=None)
     await db.flush()

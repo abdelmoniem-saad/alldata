@@ -232,6 +232,12 @@ export interface ForkDetail extends ForkOut {
     depth: number
   }
   suggestion_status: MergeBackStatus | null
+  /** B2: the latest resolved suggestion's reviewer note, visible to the
+   * author on accept AND reject. Null when nothing was reviewed or no
+   * note was left. */
+  suggestion_review_note: string | null
+  suggestion_reviewer_name: string | null
+  suggestion_reviewed_at: string | null
 }
 
 /**
@@ -334,7 +340,7 @@ export const api = {
     request<{ python: boolean; r: boolean }>('/execute/capabilities'),
 
   // A10: first-party usage beacon. Fire-and-forget (`keepalive` survives
-  // navigation), no PII ({kind, slug} only), errors swallowed — analytics
+  // navigation), no PII ({kind, slug} only), errors swallowed: analytics
   // must never surface to the reader.
   track: (kind: 'topic_view' | 'run_click' | 'decision_pick', slug: string) => {
     try {
@@ -349,8 +355,8 @@ export const api = {
     }
   },
 
-  /** A10: beacon with the slug derived from the current /topic/:slug route —
-   * lets deep components (CodeRunner, DecisionBlock) instrument themselves
+  /** A10: beacon with the slug derived from the current /topic/:slug route,
+   * so deep components (CodeRunner, DecisionBlock) can instrument themselves
    * without prop-drilling the slug. */
   trackCurrent: (kind: 'topic_view' | 'run_click' | 'decision_pick') => {
     const slug = window.location.pathname.split('/')[2]
@@ -530,10 +536,10 @@ export const api = {
   getMergeBack: (id: string) =>
     request<MergeBackDetail>(`/merge-backs/${encodeURIComponent(id)}`),
 
-  acceptMergeBack: (id: string) =>
+  acceptMergeBack: (id: string, note: string | null = null) =>
     request<MergeBackDetail>(
       `/merge-backs/${encodeURIComponent(id)}/accept`,
-      { method: 'POST' },
+      { method: 'POST', body: JSON.stringify({ note }) },
     ),
 
   rejectMergeBack: (id: string, note: string | null) =>

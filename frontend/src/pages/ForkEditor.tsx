@@ -21,6 +21,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { api, ContentBlock, Misconception } from '../api/client'
 import ScrollReader from '../components/topic/ScrollReader'
 import ForkEditorToolbar from '../components/topic/ForkEditorToolbar'
+import ReviewerNotePanel from '../components/ReviewerNotePanel'
 import PlotPicker from '../components/topic/PlotPicker'
 import BlockListEditor from '../components/topic/BlockListEditor'
 import { useAuthStore } from '../stores/authStore'
@@ -52,6 +53,10 @@ export default function ForkEditor() {
   // O1: merge-back status of this fork. Driven by `suggestion_status` on
   // the ForkDetail response; refreshed when the owner suggests.
   const [suggestionStatus, setSuggestionStatus] = useState<'pending' | 'accepted' | 'rejected' | null>(null)
+  // B2: the author-facing reviewer note (accept or reject), loaded with
+  // the fork and re-read from the server after save/suggest refreshes.
+  const [reviewNote, setReviewNote] = useState<string | null>(null)
+  const [reviewNoteMeta, setReviewNoteMeta] = useState<{ name: string | null; at: string | null }>({ name: null, at: null })
   const [suggesting, setSuggesting] = useState(false)
   // W2: the plot/graph picker modal (Source mode).
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -122,6 +127,8 @@ export default function ForkEditor() {
         setTopicTitle(fork.topic_title)
         setMasterSlug(fork.original_topic.slug)
         setSuggestionStatus(fork.suggestion_status ?? null)
+        setReviewNote(fork.suggestion_review_note ?? null)
+        setReviewNoteMeta({ name: fork.suggestion_reviewer_name, at: fork.suggestion_reviewed_at })
       })
       .catch(err => setError(err instanceof Error ? err.message : 'Fork not found'))
       .finally(() => setLoading(false))
@@ -335,6 +342,19 @@ export default function ForkEditor() {
           </button>
         </div>
       </div>
+
+      {/* B2: the author-facing reviewer note, under the bar so it reads
+          as context, not as another control. Accept or reject alike. */}
+      {reviewNote && (
+        <div style={{ padding: '0 16px' }}>
+          <ReviewerNotePanel
+            note={reviewNote}
+            reviewerName={reviewNoteMeta.name}
+            reviewedAt={reviewNoteMeta.at}
+            status={suggestionStatus}
+          />
+        </div>
+      )}
 
       {/* Two panes */}
       <div className="fork-editor__panes">

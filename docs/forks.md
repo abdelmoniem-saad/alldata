@@ -143,7 +143,9 @@ A fork owner can suggest their fork's content replace the master topic's. An ADM
 
 - `POST /api/forks/{username}/{slug}/suggest`, owner only.
 - `GET  /api/merge-backs` / `GET /api/merge-backs/{id}`, reviewer queue + detail.
-- `POST /api/merge-backs/{id}/accept` / `/reject`, apply or close.
+- `POST /api/merge-backs/{id}/accept` / `/reject`, apply or close. Both take an optional note (B2).
+
+**Reviewer notes reach the author in both directions.** The note a reviewer leaves (on accept or reject) is surfaced on `ForkView`'s lineage banner and in `ForkEditor` under the top bar, so a thank-you note is a valid review outcome. `ForkDetail` carries `suggestion_review_note` / `suggestion_reviewer_name` / `suggestion_reviewed_at`. *(cycle: B2)*
 
 **Fork surfaces show suggestion status** via a chip in the lineage banner on `ForkView` and in `ForkEditor`'s top bar. The chip reads "In review" / "Merged" / "Declined" based on the *latest* `MergeBackSuggestion` for that fork; null when the fork has never been suggested.
 

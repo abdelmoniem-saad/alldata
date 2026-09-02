@@ -272,8 +272,13 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
       const targetHot = target.glow > 0.1 || highlightedNode === target.data.slug
       const edgeHot = sourceHot || targetHot
 
-      const baseAlpha = link.data.edge_type === 'prerequisite' ? (isLight ? 0.25 : 0.18) : (isLight ? 0.12 : 0.08)
-      const alpha = (edgeHot ? 0.5 : baseAlpha) * ambientAlpha
+      // B2: family links are visual-only anchors (domain view, edge-less
+      // member to its root); keep them the quietest thing on the canvas.
+      const isFamily = link.data.edge_type === 'family'
+      const baseAlpha = isFamily
+        ? (isLight ? 0.08 : 0.06)
+        : link.data.edge_type === 'prerequisite' ? (isLight ? 0.25 : 0.18) : (isLight ? 0.12 : 0.08)
+      const alpha = (edgeHot ? (isFamily ? 0.3 : 0.5) : baseAlpha) * ambientAlpha
 
       const color = getNodeColor(source.data, source.glow)
 
@@ -292,9 +297,11 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
       ctx.strokeStyle = edgeHot
         ? color + Math.round(alpha * 255).toString(16).padStart(2, '0')
         : isLight ? `rgba(100, 110, 160, ${alpha * 0.8})` : `rgba(100, 110, 160, ${alpha})`
-      ctx.lineWidth = edgeHot ? 1.8 : 0.8
+      ctx.lineWidth = isFamily ? (edgeHot ? 1.2 : 0.6) : edgeHot ? 1.8 : 0.8
 
-      if (link.data.edge_type === 'related') {
+      if (isFamily) {
+        ctx.setLineDash([2, 5])
+      } else if (link.data.edge_type === 'related') {
         ctx.setLineDash([4, 6])
       } else if (link.data.edge_type === 'extends') {
         ctx.setLineDash([8, 4])
@@ -667,10 +674,12 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
           const e = d as SimLink
           if (e.data.edge_type === 'prerequisite') return 120
           if (e.data.edge_type === 'related') return 180
+          if (e.data.edge_type === 'family') return 140
           return 160
         })
         .strength(d => {
           const e = d as SimLink
+          if (e.data.edge_type === 'family') return 0.2
           return e.data.edge_type === 'prerequisite' ? 0.7 : 0.3
         })
       )

@@ -1,7 +1,7 @@
 """First-party usage analytics, A10.
 
 One job: record (day, kind, slug) counters and aggregate them for the
-admin surface. Deliberately minimal — no IPs, no user IDs, no sessions,
+admin surface. Deliberately minimal: no IPs, no user IDs, no sessions,
 no fingerprints. The only thing this can answer is "which topics do
 readers open and run, and when", which is what steers the content push.
 

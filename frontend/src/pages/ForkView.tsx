@@ -23,6 +23,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom'
 
 import { api, ForkDetail } from '../api/client'
 import ScrollReader from '../components/topic/ScrollReader'
+import ReviewerNotePanel from '../components/ReviewerNotePanel'
 import { useAuthStore } from '../stores/authStore'
 
 type Layer = 'intuition' | 'formal' | 'both'
@@ -157,6 +158,26 @@ export default function ForkView() {
                 {/* O1: merge-back status of this fork, when present. */}
                 {fork.suggestion_status && <ForkStatusChip status={fork.suggestion_status} />}
               </div>
+              {/* B2: the author sees the reviewer's note on accept and
+                  reject alike, so a thank-you note can land too. */}
+              {fork.suggestion_review_note && (
+                <ReviewerNotePanel
+                  note={fork.suggestion_review_note}
+                  reviewerName={fork.suggestion_reviewer_name}
+                  reviewedAt={fork.suggestion_reviewed_at}
+                  status={fork.suggestion_status}
+                />
+              )}
+              {/* B2: the author sees the reviewer's note on accept and
+                  reject alike, so a thank-you note can land too. */}
+              {fork.suggestion_review_note && (
+                <ReviewerNotePanel
+                  note={fork.suggestion_review_note}
+                  reviewerName={fork.suggestion_reviewer_name}
+                  reviewedAt={fork.suggestion_reviewed_at}
+                  status={fork.suggestion_status}
+                />
+              )}
               <h1 style={{
                 fontSize: 'clamp(32px, 5vw, 56px)',
                 fontWeight: 700,
