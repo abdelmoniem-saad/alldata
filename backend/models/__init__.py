@@ -6,6 +6,7 @@ from backend.models.merge_back import MergeBackSuggestion
 from backend.models.misconception import Misconception
 from backend.models.progress import UserProgress
 from backend.models.topic import Topic
+from backend.models.usage import UsageEvent
 from backend.models.user import User
 
 __all__ = [
@@ -19,4 +20,5 @@ __all__ = [
     "MergeBackSuggestion",
     "Misconception",
     "UserProgress",
+    "UsageEvent",
 ]

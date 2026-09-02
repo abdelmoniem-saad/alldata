@@ -14,6 +14,7 @@ import { api } from '../api/client'
 import { useAuthStore } from '../stores/authStore'
 
 type CoverageReport = Awaited<ReturnType<typeof api.adminCoverage>>
+type AnalyticsReport = Awaited<ReturnType<typeof api.adminAnalytics>>
 
 const card: React.CSSProperties = {
   padding: 20,
@@ -36,12 +37,14 @@ export default function AdminCoverage() {
   const isAdmin = user?.role === 'admin'
 
   const [report, setReport] = useState<CoverageReport | null>(null)
+  const [analytics, setAnalytics] = useState<AnalyticsReport | null>(null)
   const [err, setErr] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setErr(null)
     try {
       setReport(await api.adminCoverage())
+      setAnalytics(await api.adminAnalytics())
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Failed to load coverage report')
     }
@@ -116,6 +119,36 @@ export default function AdminCoverage() {
                 <Stat key={label} label={label} value={value} />
               ))}
             </div>
+          </section>
+
+          <section style={card}>
+            <h2 style={{ fontSize: 14, margin: '0 0 12px', color: 'var(--color-text)' }}>
+              Readers (last 30 days, first-party)
+            </h2>
+            {analytics && analytics.topics.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>
+                  Total: {analytics.totals.topic_view} topic views ·{' '}
+                  {analytics.totals.run_click} runs · {analytics.totals.decision_pick} decisions
+                </div>
+                {analytics.topics.slice(0, 10).map(t => (
+                  <div key={t.slug} style={{ display: 'flex', gap: 12, fontSize: 12, alignItems: 'baseline' }}>
+                    <a href={`/topic/${t.slug}`} style={{ color: 'var(--color-accent)', flex: 1 }}>
+                      {t.slug}
+                    </a>
+                    <span style={{ color: 'var(--color-text-secondary)' }}>
+                      {t.views} views · {t.runs} runs · {t.picks} picks
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p style={{ fontSize: 12, color: 'var(--color-text-muted)', margin: 0 }}>
+                {analytics
+                  ? 'No reader activity recorded in the last 30 days.'
+                  : 'Loading analytics…'}
+              </p>
+            )}
           </section>
 
           <section style={card}>

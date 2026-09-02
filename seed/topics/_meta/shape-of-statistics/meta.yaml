@@ -8,5 +8,6 @@ has_intuition_layer: true
 has_formal_layer: false
 estimated_minutes: 8
 cycle_ported: K
+recall_prompt: "Can you sketch the map - which domain feeds which, and where inference sits?"
 # M: immersive tour rendering, the graph is the background.
 tour: true

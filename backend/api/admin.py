@@ -15,6 +15,7 @@ from sqlalchemy import func, select
 from backend.deps import DB, CurrentUser, require_role
 from backend.models.user import User, UserRole
 from backend.schemas.user import UserResponse
+from backend.services.analytics_service import top_events as top_analytics
 from backend.services.coverage_service import build_coverage_report
 
 logger = logging.getLogger("alldata")
@@ -41,6 +42,14 @@ async def get_coverage(db: DB):
     orphans, metadata gaps, and distributions. Read-only authoring lens;
     the same computation `seed.import_seed --report` prints."""
     return await build_coverage_report(db)
+
+
+@router.get("/analytics")
+async def get_analytics(db: DB, days: int = 30):
+    """A10: first-party usage analytics — per-topic views/runs/picks over
+    the last N days. Read-only; see analytics_service for the privacy
+    posture (no IPs, no user IDs, aggregate counters only)."""
+    return await top_analytics(db, days=min(max(days, 1), 90))
 
 
 @router.get("/users", response_model=list[UserResponse])

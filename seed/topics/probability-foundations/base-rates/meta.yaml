@@ -1,0 +1,11 @@
+title: "Base Rates and False Positives"
+slug: base-rates
+domain: probability-foundations
+difficulty: intro
+summary: Why a 99% accurate test is wrong most of the time for rare conditions - prevalence does the heavy lifting.
+prerequisites: [bayes-theorem]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 9
+dataset: medical-test-results
+recall_prompt: "A 99% accurate test on a 1-in-1000 condition comes back positive. What's the chance it's real?"

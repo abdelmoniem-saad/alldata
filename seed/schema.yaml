@@ -321,6 +321,21 @@ topics:
     summary: Handling incomplete datasets, when values are absent and why it matters.
     prerequisites: [exploratory-data-analysis, point-estimation]
 
+  # A11 content batch 1 - decision-driven topics around the unused datasets.
+  - slug: monty-hall
+    title: The Monty Hall Problem
+    domain: data-science-practice
+    difficulty: intro
+    summary: The famous door puzzle - conditional probability you can play, and why switching doubles your chances.
+    prerequisites: [conditional-probability]
+
+  - slug: base-rates
+    title: Base Rates and False Positives
+    domain: probability-foundations
+    difficulty: intro
+    summary: Why a 99% accurate test is wrong most of the time for rare conditions - prevalence does the heavy lifting.
+    prerequisites: [bayes-theorem]
+
   # ── Navigation (hidden from the public graph) ────────────────
   - slug: shape-of-statistics
     title: The Shape of Statistics

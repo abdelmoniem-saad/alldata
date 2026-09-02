@@ -292,7 +292,12 @@ async def _execute_local_python(code: str, timeout: int, theme: str = "dark") ->
     """
     import subprocess as sp
 
-    with tempfile.TemporaryDirectory() as tmpdir:
+    # ignore_cleanup_errors: after a timeout kill, the dying child may still
+    # hold handles in its (own) temp dir for a beat — Windows raises
+    # PermissionError on cleanup, which would otherwise 500 the response
+    # *after* the result was already computed. The dir lives in %TEMP% and
+    # the OS reaps it.
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
         output_dir = Path(tmpdir) / "output"
         output_dir.mkdir()
 
@@ -449,7 +454,7 @@ async def _execute_local_r(code: str, timeout: int, theme: str = "dark") -> dict
     """
     import subprocess as sp
 
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
         output_dir = Path(tmpdir) / "output"
         output_dir.mkdir()
 

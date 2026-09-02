@@ -1197,16 +1197,10 @@ async def import_schema(db: AsyncSession, user: User):
                     print(f"  Warning: topic '{slug}' not in schema")
                     continue
 
-                # Check if topic already has content blocks
-                existing_blocks = await db.scalar(
-                    select(func.count(ContentBlock.id)).where(
-                        ContentBlock.topic_id == topic.id
-                    )
-                )
-                if existing_blocks and existing_blocks > 0:
-                    continue  # Skip topics that already have content
-
-                # Update topic with meta info
+                # Update topic with meta info — BEFORE the content-existence
+                # skip below. meta.yaml is the source of truth (principle 7):
+                # edits to recall_prompt/dataset/layers/tour for already-shipped
+                # topics must propagate on reimport, not only on first import.
                 if meta.get("has_formal_layer"):
                     topic.has_formal_layer = True
                     topic.has_intuition_layer = True
@@ -1223,6 +1217,15 @@ async def import_schema(db: AsyncSession, user: User):
                 # M: immersive tour rendering flag.
                 if "tour" in meta:
                     topic.tour = bool(meta["tour"])
+
+                # Check if topic already has content blocks
+                existing_blocks = await db.scalar(
+                    select(func.count(ContentBlock.id)).where(
+                        ContentBlock.topic_id == topic.id
+                    )
+                )
+                if existing_blocks and existing_blocks > 0:
+                    continue  # Skip topics that already have content
 
                 # Parse and add content blocks
                 blocks = parse_content_file(content_path)

@@ -20,6 +20,7 @@ from backend.api import (
     merge_back,
     progress,
     topics,
+    track,
     users,
 )
 from backend.config import settings
@@ -74,6 +75,8 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 # T3: ADMIN-only user management (roles, activation).
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
+# A10: first-party usage beacons (no auth, no PII).
+app.include_router(track.router, prefix="/api/track", tags=["track"])
 app.include_router(topics.router, prefix="/api/topics", tags=["topics"])
 app.include_router(graph.router, prefix="/api/graph", tags=["graph"])
 app.include_router(content.router, prefix="/api/content", tags=["content"])

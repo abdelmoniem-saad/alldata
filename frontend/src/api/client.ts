@@ -333,6 +333,30 @@ export const api = {
   getExecuteCapabilities: () =>
     request<{ python: boolean; r: boolean }>('/execute/capabilities'),
 
+  // A10: first-party usage beacon. Fire-and-forget (`keepalive` survives
+  // navigation), no PII ({kind, slug} only), errors swallowed — analytics
+  // must never surface to the reader.
+  track: (kind: 'topic_view' | 'run_click' | 'decision_pick', slug: string) => {
+    try {
+      void fetch('/api/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind, slug }),
+        keepalive: true,
+      }).catch(() => {})
+    } catch {
+      /* beacons are best-effort by contract */
+    }
+  },
+
+  /** A10: beacon with the slug derived from the current /topic/:slug route —
+   * lets deep components (CodeRunner, DecisionBlock) instrument themselves
+   * without prop-drilling the slug. */
+  trackCurrent: (kind: 'topic_view' | 'run_click' | 'decision_pick') => {
+    const slug = window.location.pathname.split('/')[2]
+    if (slug) api.track(kind, decodeURIComponent(slug))
+  },
+
   // Auth
   login: (email: string, password: string) =>
     request<{ access_token: string; user: any }>('/auth/login', {
@@ -403,6 +427,14 @@ export const api = {
         required_by_count: number
       }>
     }>('/admin/coverage'),
+
+  // A10: usage analytics (30-day window).
+  adminAnalytics: () =>
+    request<{
+      days: number
+      totals: { topic_view: number; run_click: number; decision_pick: number }
+      topics: Array<{ slug: string; views: number; runs: number; picks: number }>
+    }>('/admin/analytics'),
 
   adminSetRole: (userId: string, role: string) =>
     request<any>(`/admin/users/${userId}/role?role=${encodeURIComponent(role)}`, {

@@ -66,6 +66,8 @@ export default function CodeRunner({
       setShowOutput(true)
       return
     }
+    // A10: count actual runs (post-auth-gate), never page noise.
+    api.trackCurrent('run_click')
     setNeedsSignIn(false)
     setRunning(true)
     setResult(null)

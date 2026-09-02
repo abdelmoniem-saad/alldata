@@ -45,6 +45,9 @@ class Settings(BaseSettings):
     # gate plus per-child POSIX rlimits.
     auth_rate_limit_login: int = 10  # per minute per IP
     auth_rate_limit_register: int = 5  # per minute per IP
+    # A10: usage-tracking beacons are tiny but frequent (every topic view);
+    # the budget is generous per IP and the payload carries no PII.
+    track_rate_limit: int = 120  # per minute per IP
     execution_ip_rate_limit: int = 30  # per minute per IP
     execution_max_concurrent: int = 2  # global, all users, local-fallback path
     # A7: RLIMIT_AS counts *virtual* address space, and the scientific stack

@@ -1,0 +1,11 @@
+title: "The Monty Hall Problem"
+slug: monty-hall
+domain: data-science-practice
+difficulty: intro
+summary: The famous door puzzle - conditional probability you can play, and why switching doubles your chances.
+prerequisites: [conditional-probability]
+has_intuition_layer: true
+has_formal_layer: false
+estimated_minutes: 8
+dataset: monty-hall-runs
+recall_prompt: "Monty opens a goat door. Why does switching win two-thirds of the time?"

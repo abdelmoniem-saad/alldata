@@ -558,6 +558,15 @@ A failed search request renders "Search is temporarily unavailable." instead of 
 ### Content coverage lens
 `coverage_service.build_coverage_report` computes per-topic interactive-block coverage (decision / playground / code / plot), prerequisite-edge connectivity (`required_by_count`; "orphan" = published topic nothing builds on), metadata completeness, and domain/difficulty/dataset distributions. Two consumers: `python -m seed.import_seed --report` (ASCII-safe CLI output) and `GET /api/admin/coverage` → the ADMIN-only `/admin/coverage` page (stat cards, gap lists deep-linking to topics, per-topic ✓/✗ table). *(cycle: A6)* `code: backend/services/coverage_service.py`, `backend/api/admin.py`, `seed/import_seed.py` (`--report`), `frontend/src/pages/AdminCoverage.tsx`.
 
+### First-party usage analytics
+`POST /api/track` records (day, kind, slug) counters — kinds: topic_view / run_click / decision_pick. No auth (anonymous readers count), no PII (no IPs, no user IDs — asserted by test), per-IP dam at 120/min, unknown slugs 404. `GET /api/admin/analytics` aggregates per-topic views/runs/picks over a 1–90 day window, rendered on `/admin/coverage` as a "Readers (last 30 days)" section. Beacons fire from TopicView (post-fetch), CodeRunner (post-auth-gate), and DecisionBlock, via a `keepalive` fetch that can never surface an error. *(cycle: A10)* `code: backend/api/track.py`, `backend/services/analytics_service.py`, `backend/models/usage.py`, `frontend/src/api/client.ts` (`track`, `trackCurrent`).
+
+### Importer propagates meta edits
+The seed importer updated meta fields (recall_prompt, dataset, layers, tour) only for topics *receiving new content* — the block sat after the skip-if-content-exists `continue`, so edits to shipped topics' `meta.yaml` never reached the DB. The update now runs before the skip, honoring principle 7 (meta.yaml is the source of truth; reimport is the migration story). *(cycle: A11)* `code: seed/import_seed.py` (content-import loop).
+
+### Timeout-safe temp cleanup
+The local-fallback executor's temp dirs use `TemporaryDirectory(ignore_cleanup_errors=True)`: after a timeout process-group kill, the dying child may hold handles briefly, and the cleanup error would otherwise 500 the execute response *after* the result was computed. *(cycle: A11)* `code: backend/services/execution_service.py` (`_execute_local_python`, `_execute_local_r`).
+
 ### Topic meta injection (SEO)
 `/topic/{slug}` responses get the topic's own `<title>`, description, OG/Twitter tags (`og:type=article`), `og:url`, and a canonical link injected into the SPA head — crawlers and link previews see real content without SSR. Unpublished slugs fall back to the default tags (no existence leak). *(cycle: A8)* `code: backend/main.py` (SPA fallback), `backend/services/seo_service.py` (`inject_topic_meta`).
 

@@ -91,6 +91,12 @@ export default function TopicView() {
       .finally(() => setLoading(false))
   }, [slug, markInProgress])
 
+  // A10: count the topic view once the fetch succeeded (a beacon on a 404
+  // would be noise). Fires on slug change; anonymous readers count too.
+  useEffect(() => {
+    if (slug && topic) api.track('topic_view', slug)
+  }, [slug, topic])
+
   // Reset slide index when the layer toggle shrinks the visible set.
   useEffect(() => {
     setSlideIdx(0)

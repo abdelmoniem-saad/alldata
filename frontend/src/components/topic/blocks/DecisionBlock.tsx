@@ -31,6 +31,7 @@ import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
 import { useTopicStateStore, StateValue } from '../../../stores/topicState'
 import { useProgressStore } from '../../../stores/progressStore'
+import { api } from '../../../api/client'
 
 interface DecisionOption {
   id: string
@@ -83,6 +84,8 @@ export default function DecisionBlock({ slug, anchor, meta }: Props) {
     recordDecision(slug, anchor, opt.id)
     selectDecision(slug, anchor, opt.id)
     if (opt.writes) patchState(slug, opt.writes)
+    // A10: count decisions made (the core ask → act → explain mechanic).
+    api.trackCurrent('decision_pick')
     setChosen(opt.id)
   }
 

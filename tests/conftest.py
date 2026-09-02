@@ -24,10 +24,12 @@ async def setup_db():
         await conn.run_sync(Base.metadata.create_all)
     # Y1: rate limiters are module-level globals (per-process state); reset
     # them per test so the per-IP dams don't leak state across the suite.
-    from backend.api.auth import login_limiter, register_limiter
+    from backend.api.auth import login_limiter, recover_limiter, register_limiter
+    from backend.api.track import track_limiter
     from backend.services.rate_limit import execution_ip_limiter, execution_limiter
 
-    for limiter in (login_limiter, register_limiter, execution_ip_limiter, execution_limiter):
+    for limiter in (login_limiter, register_limiter, recover_limiter, track_limiter,
+                    execution_ip_limiter, execution_limiter):
         limiter.reset()
     yield
     async with engine.begin() as conn:
