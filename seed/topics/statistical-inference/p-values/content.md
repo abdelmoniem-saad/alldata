@@ -22,6 +22,41 @@ The curve on the right is the **null distribution**, what your statistic looks l
 
 Here's what most explanations miss: the p-value depends on the *evidence*, not just the effect. Suppose your observed lift is fixed at $0.4$. The curve is the null distribution of the sample mean, and it tightens as $n$ grows.
 
+<!-- block: decision, anchor: pv-acquittal -->
+question: |
+  A pilot study with n = 10 observes a lift of 0.4 and reports p = 0.69.
+  The team writes: "p = 0.69, so there is no effect." What's wrong with
+  that sentence?
+options:
+  - id: a
+    label: "Nothing: p = 0.69 means no effect"
+    writes: { n: 10 }
+    response: |
+      Watch what that conclusion quietly assumes: that the curve stays
+      this wide. A p of 0.69 says this data would be unremarkable *if the
+      null were true*. It does not say the null is true, and ten
+      observations can barely tell a real 0.4 from noise.
+  - id: b
+    label: "The study is too small to say much either way"
+    writes: { n: 100 }
+    response: |
+      That's the flaw. The identical 0.4 lift, collected a hundred times
+      over, now sits deep in the tail: the null has tightened to
+      $1/\sqrt{100}$, and the same effect gives p well under 0.05.
+      Nothing about the effect changed, only the evidence. "Not
+      significant" at n = 10 means "not informative," not "not there."
+  - id: c
+    label: "p = 0.69 actively proves the null"
+    writes: { n: 1 }
+    response: |
+      Proof is the one thing a large p cannot deliver. At n = 1 the null
+      is at its widest and almost any result looks ordinary inside it; a
+      wide null makes data uninformative, not exonerated. Absence of
+      evidence and evidence of absence are different claims, and the
+      curve's width is the difference between them.
+correct: b
+<!-- /block -->
+
 <!-- block: state_reset, anchor: pv-feel -->
 
 <!-- block: playground, anchor: pv-feel -->

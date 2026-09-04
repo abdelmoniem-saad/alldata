@@ -14,7 +14,7 @@ import uuid
 from pathlib import Path
 
 import yaml
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.config import settings
@@ -1288,13 +1288,91 @@ async def _promote_admin_email(db: AsyncSession) -> None:
         print(f"ADMIN_EMAIL {admin_email} is already an admin")
 
 
-async def main(strict: bool = False, report: bool = False) -> int:
+async def _refresh_content(db: AsyncSession) -> int:
+    """B2a: explicit content refresh, the operator's migration story.
+
+    For every topic with a content.md on disk, replace its DB content
+    blocks + misconceptions with a fresh parse of the file. Boot keeps the
+    skip-if-exists default so blocks authored through the content API (not
+    backed by a seed file) survive a Space restart; after editing a shipped
+    content.md, run `python -m seed.import_seed --refresh-content` to push
+    the edit into the DB. Mirrors merge-back's apply semantics: delete +
+    re-insert, one transaction.
+    """
+    topics_dir = SEED_DIR / "topics"
+    if not topics_dir.exists():
+        return 0
+
+    refreshed = 0
+    for domain_dir in topics_dir.iterdir():
+        if not domain_dir.is_dir() or domain_dir.name.startswith("_"):
+            # `_meta`-style hidden domains are rendered via their normal
+            # route but stay outside the standard refresh sweep.
+            continue
+        for topic_dir in domain_dir.iterdir():
+            if not topic_dir.is_dir():
+                continue
+            content_path = topic_dir / "content.md"
+            meta_path = topic_dir / "meta.yaml"
+            if not content_path.exists() or not meta_path.exists():
+                continue
+
+            with open(meta_path, encoding="utf-8") as f:
+                meta = yaml.safe_load(f) or {}
+            slug = meta.get("slug", topic_dir.name)
+            row = await db.execute(select(Topic).where(Topic.slug == slug))
+            topic = row.scalar_one_or_none()
+            if topic is None:
+                continue
+
+            # Mirrors merge_service.apply_markdown_to_topic: clear, then
+            # re-insert from the authoritative markdown.
+            await db.execute(
+                delete(Misconception).where(Misconception.topic_id == topic.id)
+            )
+            await db.execute(
+                delete(ContentBlock).where(ContentBlock.topic_id == topic.id)
+            )
+            for block_data in parse_content_file(content_path):
+                if block_data["block_type"] == "misconception":
+                    db.add(Misconception(
+                        topic_id=topic.id,
+                        title=block_data["title"],
+                        wrong_belief=block_data["wrong_belief"],
+                        correction=block_data["correction"],
+                        why_common=block_data.get("why_common"),
+                    ))
+                else:
+                    db.add(ContentBlock(
+                        topic_id=topic.id,
+                        block_type=block_data["block_type"],
+                        content=block_data.get("content", ""),
+                        sort_order=block_data.get("sort_order", 0),
+                        layer=block_data.get("layer", "both"),
+                        expected_output=block_data.get("expected_output"),
+                        is_editable=block_data.get("is_editable", False),
+                        hint=block_data.get("hint"),
+                        solution=block_data.get("solution"),
+                        anchor=block_data.get("anchor"),
+                        meta=block_data.get("meta"),
+                    ))
+            refreshed += 1
+            print(f"  Refreshed content for: {slug}")
+
+    await db.flush()
+    return refreshed
+
+
+async def main(strict: bool = False, report: bool = False, refresh_content: bool = False) -> int:
     """Run the importer end-to-end.
 
     Returns a process-style exit code: 0 on clean, 1 on any warning when
     `strict=True`. CI invokes this with `--strict` to fail builds on author
     errors that would otherwise silently degrade the topic page.
     `--report` prints the B3 content-coverage report after the import.
+    `--refresh-content` replaces DB content from the on-disk markdown for
+    every seeded topic (the migration story for content.md edits; boot
+    itself never touches existing content).
     """
     _WARNINGS.clear()
 
@@ -1307,6 +1385,11 @@ async def main(strict: bool = False, report: bool = False) -> int:
 
         print("Importing schema and content...")
         await import_schema(db, user)
+
+        if refresh_content:
+            print("Refreshing content from seed files...")
+            count = await _refresh_content(db)
+            print(f"Refreshed {count} topics")
 
         await _promote_admin_email(db)
         await db.commit()
@@ -1344,5 +1427,14 @@ if __name__ == "__main__":
         help="Print the content-coverage report (interactive-block coverage, "
              "graph orphans, metadata gaps, distributions) after the import.",
     )
+    parser.add_argument(
+        "--refresh-content",
+        action="store_true",
+        help="Replace DB content blocks with a fresh parse of every seed "
+             "content.md (the migration story for content.md edits; boot "
+             "keeps the skip-if-exists default).",
+    )
     args = parser.parse_args()
-    sys.exit(asyncio.run(main(strict=args.strict, report=args.report)))
+    sys.exit(asyncio.run(main(
+        strict=args.strict, report=args.report, refresh_content=args.refresh_content,
+    )))

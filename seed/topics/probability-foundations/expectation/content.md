@@ -30,7 +30,44 @@ Same picture, just with a continuous weight density $f(x)$ instead of point mass
 
 ---
 
-<!-- block: gear, n: 3, label: "Feel the balance" -->
+<!-- block: gear, n: 3, label: "Price the game" -->
+
+One ticket, three payout tables. Commit to a pick before computing, then
+watch where the balance point lands.
+
+<!-- block: decision, anchor: exp-ticket -->
+question: |
+  Which ticket has the highest expected value?
+  Ticket A: pays +3 half the time, -1 the other half.
+  Ticket B: pays +10 with probability 0.2, -1 otherwise.
+  Ticket C: pays +1 every single round.
+options:
+  - id: a
+    label: "Ticket A"
+    writes: { mu: 1.0 }
+    response: |
+      A's expectation is 0.5(3) + 0.5(-1) = 1.0, and the balance point on
+      the curve has slid there. But B's expectation is higher: 1.2. A's
+      bigger swings are variance, not value; that's the orthogonal axis,
+      and [variance](/topic/variance) is its topic.
+  - id: b
+    label: "Ticket B"
+    writes: { mu: 1.2 }
+    response: |
+      Right. B's expectation is 0.2(10) + 0.8(-1) = 1.2, the highest of the
+      three, and the balance point sits farthest right. It wins on
+      expectation even though it pays nothing 80% of the time: the mean of
+      a distribution can be a value that distribution rarely visits.
+  - id: c
+    label: "Ticket C"
+    writes: { mu: 1.0 }
+    response: |
+      C pays +1 always, so its expectation is exactly 1.0, the same as
+      Ticket A's. Look at the curve: identical balance point, very
+      different games. Expectation alone can't tell A from C; that's the
+      gap [variance](/topic/variance) fills.
+correct: b
+<!-- /block -->
 
 <!-- block: state_reset, anchor: expectation-feel -->
 

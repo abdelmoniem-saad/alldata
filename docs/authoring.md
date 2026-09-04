@@ -62,7 +62,7 @@ Gear markers are pure metadata. The reader sees only the `label:` text, a quiet 
 - A pure derivation topic might skip the Spark + Intuition (1 + 2) and lead with the equation.
 - Don't skip Connections (gear 6), that's where the graph stays alive on the page.
 
-Pick *one* mechanic for Gear 3, observational (playground) or commitment (decision). Mixing both in one topic dilutes the felt experience.
+Pick *one* mechanic for Gear 3, observational (playground) or commitment (decision). Mixing both in one topic dilutes the felt experience. The sanctioned pairing is *commit, then explore* (B2): a short decision opens the gear and writes the state the plot shows, then the playground right after it explores the consequence. That stays one manipulation surface as long as the two teach different moves, the decision tests judgment, the playground builds intuition for another axis (in expectation, the ticket decision prices value; the playground separates location from spread). If they'd teach the same move, keep one.
 
 ### Anti-template rules (B2)
 

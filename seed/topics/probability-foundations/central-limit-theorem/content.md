@@ -1,6 +1,6 @@
 <!-- block: state, values: {mu: 0, sigma: 1, n: 1} -->
 
-<!-- block: plot, spec: gaussian_pdf, params: {mu: 0, sigma: 1}, binds: [mu, sigma], anchor: clt-feel, mobile_order: 1 -->
+<!-- block: plot, spec: gaussian_pdf, params: {mu: 0, sigma: 1, n: 1}, binds: [mu, sigma, n], anchor: clt-feel, mobile_order: 1 -->
 
 ---
 
@@ -26,11 +26,45 @@ That's why $\bar{X}$ is approximately normal even when $X$ isn't.
 
 ---
 
-<!-- block: gear, n: 3, label: "Feel n grow" -->
+<!-- block: gear, n: 3, label: "Whose means go bell?" -->
 
 ## The width shrinks as 1/√n
 
 The plot above shows the *sampling distribution* of the mean, what you'd get if you collected $n$ samples, took the average, and repeated forever. Two parameters control it: $\mu$ (same as the population mean) and $\sigma / \sqrt{n}$ (the standard error).
+
+<!-- block: decision, anchor: clt-researchers -->
+question: |
+  Two researchers sample the same heavily skewed population. Researcher P
+  averages 4 draws per sample; Researcher Q averages 100. Whose histogram
+  of sample means looks closest to a perfect bell?
+options:
+  - id: a
+    label: "P (n = 4): averages inherit the skew"
+    writes: { n: 4 }
+    response: |
+      At n = 4 the curve above has tightened only a little, and the
+      lopsidedness is still visible. Averaging four draws irons out *some*
+      of the skew, but the wash is nowhere near done; the bell hasn't
+      arrived yet.
+  - id: b
+    label: "Q (n = 100): the shape washes out"
+    writes: { n: 100 }
+    response: |
+      Right. With n = 100 the curve has tightened to $\sigma/\sqrt{100} =
+      \sigma/10$ and gone bell-shaped, drawn from a population with no
+      trace of a bell in it. That's the theorem: the *average's* shape
+      becomes normal regardless of the population's, and faster than
+      intuition expects.
+  - id: c
+    label: "Neither: skewed data stays skewed"
+    writes: { n: 1 }
+    response: |
+      That's the classic misread (the misconception at the bottom is about
+      exactly this). You're now seeing n = 1: the population itself,
+      skewed and wide. The *sample mean* is a different animal, and by
+      n = 100 it's the bell.
+correct: b
+<!-- /block -->
 
 <!-- block: state_reset, anchor: clt-narrow -->
 
