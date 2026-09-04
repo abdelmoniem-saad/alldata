@@ -24,7 +24,6 @@ import { Link, useParams, useNavigate } from 'react-router-dom'
 import { api, ForkDetail } from '../api/client'
 import ScrollReader from '../components/topic/ScrollReader'
 import ReviewerNotePanel from '../components/ReviewerNotePanel'
-import ReviewerNotePanel from '../components/ReviewerNotePanel'
 import { useAuthStore } from '../stores/authStore'
 
 type Layer = 'intuition' | 'formal' | 'both'
