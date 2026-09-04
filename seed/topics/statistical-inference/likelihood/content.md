@@ -22,6 +22,38 @@ The likelihood $L(p) = P(\text{data} \mid p)$ is read as a function of $p$ with 
 
 The curve is the likelihood for our coin. Drag the observed number of heads and watch the peak slide, the data's best-supported bias tracks the proportion you saw.
 
+<!-- block: decision, anchor: lik-peak -->
+question: |
+  The curve is L(p), the likelihood of a coin bias p after k heads in n
+  flips. Where does its peak sit?
+options:
+  - id: a
+    label: "At 0.5: the fair coin is the neutral default"
+    writes: { successes: 5, trials: 10 }
+    response: |
+      You've moved the data to 5 of 10, and the peak obligingly sits at
+      0.5. That's the tell: the peak goes where the *data* put it, never
+      to a default. Nothing about the likelihood prefers fairness; it
+      ranks biases by how well they explain what you actually saw.
+  - id: b
+    label: "At k/n, the proportion you observed"
+    writes: { successes: 7, trials: 10 }
+    response: |
+      Right: the data's own proportion is the best-explaining bias, and
+      the peak slides to whatever fraction the flips produced. Hold that
+      fact for the next topic, because the argmax of this curve is
+      precisely the maximum likelihood estimate.
+  - id: c
+    label: "Nowhere in particular: it depends on a prior over p"
+    writes: { successes: 9, trials: 10 }
+    response: |
+      The curve at 9 of 10 still peaks, sharply, at 0.9, no prior in
+      sight. Priors enter when the likelihood is *multiplied by beliefs*
+      and renormalized, which is Bayesian territory and a later topic.
+      The bare likelihood needs nothing but the data to have an opinion.
+correct: b
+<!-- /block -->
+
 <!-- block: state_reset, anchor: lik-feel -->
 
 <!-- block: playground, anchor: lik-feel -->

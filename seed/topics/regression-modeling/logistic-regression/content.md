@@ -22,6 +22,39 @@ Logistic regression feeds a familiar linear combination $\beta_0 + \beta_1 x$ th
 
 The dots are 0/1 outcomes. Drag the coefficients so the curve rises through them, low where the 0s pile up, high where the 1s do.
 
+<!-- block: decision, anchor: lr-boundary -->
+question: |
+  The model is β₀ = -2, β₁ = 1. Where does the S-curve cross 0.5, the
+  decision boundary between predicting 0 and predicting 1?
+options:
+  - id: a
+    label: "At x = -2: the boundary is the intercept"
+    writes: { beta0: 2.0, beta1: 1.0 }
+    response: |
+      You've now drawn the β₀ = +2 curve, and sure enough its crossing
+      sits at x = -2. That's the sign flip talking: the boundary solves
+      β₀ + β₁x = 0, so it's -β₀/β₁, the intercept *divided by* the slope
+      and negated, not the intercept itself.
+  - id: b
+    label: "At x = +2: the boundary is -β₀/β₁"
+    writes: { beta0: -2.0, beta1: 1.0 }
+    response: |
+      Right: set the linear score to zero, -2 + x = 0, and the crossing
+      lands at x = 2, exactly where the drawn curve passes 0.5. The
+      slope sets how sharply the probability swings there; the ratio
+      -β₀/β₁ sets where. Two knobs, two different jobs.
+  - id: c
+    label: "At x = 0: the crossing always sits at the origin of x"
+    writes: { beta0: 0.0, beta1: 1.0 }
+    response: |
+      That's only the special case β₀ = 0 (the curve now on screen,
+      crossing exactly at 0). The intercept is what slides the whole
+      S left or right; with β₀ = -2 the halfway point has moved two
+      units right, and a threshold at 0 would misclassify everything
+      below it.
+correct: b
+<!-- /block -->
+
 <!-- block: state_reset, anchor: lr-feel -->
 
 <!-- block: playground, anchor: lr-feel -->

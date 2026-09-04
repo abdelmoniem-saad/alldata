@@ -26,6 +26,41 @@ The fewer the degrees of freedom, the more that matters. At $\nu = 1$ the tails 
 
 Raise the degrees of freedom and watch the solid t-curve climb toward the dashed normal, the tails pull in and the peak rises.
 
+<!-- block: decision, anchor: t-small-sample -->
+question: |
+  You standardize a sample mean using the *sample* standard deviation
+  from n = 5 observations. What distribution does the standardized value
+  actually follow?
+options:
+  - id: a
+    label: "The standard normal: that's what standardizing means"
+    writes: { df: 40 }
+    response: |
+      That's what it would mean *if you knew the true σ*. The curve at
+      df = 40 is what you're approximating. With n = 5 the spread in your
+      own denominator makes genuinely larger outcomes routine, and the
+      normal's thin tails deny them; the picture's fat tails are the
+      correction.
+  - id: b
+    label: "A t with 4 degrees of freedom: the estimate spends one"
+    writes: { df: 4 }
+    response: |
+      Right. Five observations estimate one mean on the way to the sample
+      sd, leaving 4 degrees of freedom, and the solid curve's heavy tails
+      price in exactly that extra noise. Using the normal's 1.96 cutoff
+      here rejects more often than 5%, which is why the wider t cutoff is
+      the honest one at small n.
+  - id: c
+    label: "It depends on the data: no single distribution applies"
+    writes: { df: 1 }
+    response: |
+      It depends on the data only through the degrees of freedom, which is
+      a known number once n is. At df = 1 the tails are at their fattest,
+      so heavy the mean barely exists; the whole family sits between that
+      and the dashed normal, indexed by nothing but n.
+correct: b
+<!-- /block -->
+
 <!-- block: state_reset, anchor: t-feel -->
 
 <!-- block: playground, anchor: t-feel -->

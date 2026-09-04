@@ -25,6 +25,40 @@ The curve on the right is the second one. Right now $n = 1$, so it matches the d
 
 <!-- block: gear, n: 3, label: "Shrink the standard error" -->
 
+<!-- block: decision, anchor: sd-what-shrinks -->
+question: |
+  You grow your sample from n = 10 heights to n = 100. What shrinks?
+options:
+  - id: a
+    label: "The data's own spread, σ: more data tames it"
+    writes: { n: 1 }
+    response: |
+      Look at the wide curve: that's the world at n = 1, the population
+      itself. The spread of individual heights is a fact about people,
+      and no sample size edits it. If this were the thing that shrank,
+      100 people would be more similar to each other than 10 are, which
+      is absurd.
+  - id: b
+    label: "The standard error, σ/√n: your estimate's wobble"
+    writes: { n: 100 }
+    response: |
+      Right, and the collapse you're watching is the entire point of the
+      topic: the distribution of the *average* has pulled in to a tenth
+      of its n = 1 width, while the heights themselves are exactly as
+      scattered as ever. More data buys precision about the mean, never
+      similarity between observations.
+  - id: c
+    label: "Both, but σ only a little"
+    writes: { n: 10 }
+    response: |
+      Tempting middle ground, but it's all or nothing: σ doesn't move at
+      all, it's a population constant. At n = 10 the curve has narrowed
+      only √10-wise; the whole change lives in the standard error. Keep
+      the two spreads in separate mental drawers, data spread and
+      estimate spread, and this family of mistakes disappears.
+correct: b
+<!-- /block -->
+
 <!-- block: state_reset, anchor: sd-feel -->
 
 <!-- block: playground, anchor: sd-feel -->

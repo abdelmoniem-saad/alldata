@@ -22,6 +22,39 @@ The one parameter, the **degrees of freedom** $k$, is just how many squared norm
 
 Drag $k$ up and watch the skew drain out of the curve. At a handful of degrees of freedom it's lopsided; by a dozen it's nearly a bell.
 
+<!-- block: decision, anchor: chi-variance-df -->
+question: |
+  For n = 10 normal observations, the quantity (n−1)s²/σ² (sample
+  variance, rescaled) follows which distribution?
+options:
+  - id: a
+    label: "Chi-squared with 10 df: one per observation"
+    writes: { df: 10 }
+    response: |
+      Close, but one degree of freedom is already spent estimating the
+      mean before the variance can be computed. The curve you're seeing at
+      df = 10 is the no-mean-spent version; the real one is a notch
+      narrower, and using the wrong one skews your tail probabilities.
+  - id: b
+    label: "Chi-squared with 9 df: the mean took one"
+    writes: { df: 9 }
+    response: |
+      Right. Squared deviations from an *estimated* mean have only n − 1 =
+      9 free pieces, and that's the whole story of the "n − 1" in sample
+      variance. The bridge to inference about σ² is this curve: its tail
+      beyond your observed value is the p-value for a variance test.
+  - id: c
+    label: "Roughly normal, mean 9, variance 18: the CLT handles it"
+    writes: { df: 2 }
+    response: |
+      The CLT approximation is real *at large* df, and the moments are
+      right (mean k, variance 2k). But look at df = 2: a sum of two
+      squared normals is sharply right-skewed, nothing like a bell. At
+      n = 10 the normal approximation would misprice exactly the tail a
+      variance test reads.
+correct: b
+<!-- /block -->
+
 <!-- block: state_reset, anchor: chi-feel -->
 
 <!-- block: playground, anchor: chi-feel -->

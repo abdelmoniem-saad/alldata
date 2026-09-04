@@ -24,6 +24,38 @@ A useful rule of thumb lives in $\sigma$: about **68%** of the mass falls within
 
 The dashed curve on the right is a target. Slide $\mu$ and $\sigma$ until your solid curve sits on top of it, you'll feel that center and width move independently.
 
+<!-- block: decision, anchor: normal-squeeze -->
+question: |
+  You double the spread of a normal, from σ = 1 to σ = 2, keeping the
+  same center. What happens to the curve's peak height?
+options:
+  - id: a
+    label: "It halves"
+    writes: { sigma: 2.0 }
+    response: |
+      That's the honest reading of the picture: twice as wide, half as
+      tall. Total area is pinned at 1, so width and height trade exactly
+      against each other. A normal can spread out only by flattening down;
+      there is no third knob to conjure probability from.
+  - id: b
+    label: "It doubles, a wider curve is a taller curve"
+    writes: { sigma: 0.5 }
+    response: |
+      Look again: at σ = 0.5 the curve is now tall and narrow, at σ = 2 it
+      is low and broad. You've seen both ends of the trade. Wider always
+      means flatter here, because the density must integrate to 1 no
+      matter what σ does.
+  - id: c
+    label: "It doesn't change: the peak sits at the mean either way"
+    writes: { sigma: 1.0 }
+    response: |
+      The peak's *location* is fixed by μ, but its *height* is not. Compare
+      the curve at σ = 1 with σ = 2 (or drag σ in the playground below):
+      same center, very different crest. Height carries no meaning on its
+      own, only the shape relative to the fixed area of 1.
+correct: a
+<!-- /block -->
+
 <!-- block: state_reset, anchor: normal-feel -->
 
 <!-- block: playground, anchor: normal-feel -->

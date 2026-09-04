@@ -24,6 +24,39 @@ It's worth holding onto how little structure that is. "Will this email get a cli
 
 The two bars on the right are the whole distribution: the height at 0 is $1-p$, the height at 1 is $p$. Drag $p$ and watch them trade height, they always sum to 1.
 
+<!-- block: decision, anchor: bern-reliability -->
+question: |
+  Two single trials: a sensor that is right 99% of the time (p = 0.99),
+  and a fair coin (p = 0.5). Which trial carries more uncertainty?
+options:
+  - id: a
+    label: "The coin: 99% reliable leaves little doubt"
+    writes: { p: 0.5 }
+    response: |
+      Look at the bars: at p = 0.5 they stand equal, and the outcome is a
+      genuine toss-up. The coin is the *most* uncertain Bernoulli there
+      is, the variance p(1-p) peaks exactly here. Reliability percent is
+      not a measure of surprise, the balance of the two bars is.
+  - id: b
+    label: "The sensor: 99 is a bigger number, so more variance"
+    writes: { p: 0.99 }
+    response: |
+      Watch what 0.99 does: the success bar towers and the failure bar
+      all but vanishes. The sensor is the *predictable* one; its variance
+      is 0.99 x 0.01 = 0.0099, twenty-five times smaller than the coin's
+      0.25. Big p means lopsided, not uncertain.
+  - id: c
+    label: "Identical: both are one yes/no trial"
+    writes: { p: 0.99 }
+    response: |
+      Same distribution family, yes, but the dial setting is the whole
+      story: this topic's only parameter. Slide between the two settings
+      and the bars trade heights; at 0.99 you can nearly call the outcome
+      in advance, at 0.5 you cannot. What differs is p, and p is
+      everything.
+correct: a
+<!-- /block -->
+
 <!-- block: state_reset, anchor: bernoulli-feel -->
 
 <!-- block: playground, anchor: bernoulli-feel -->

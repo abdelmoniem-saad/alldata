@@ -44,6 +44,42 @@ A **continuous** random variable takes values in an interval: $\mathbb{R}$, $[0,
 
 The plot on the right is a continuous distribution. Move the parameters; the *shape* the variable takes follows.
 
+<!-- block: decision, anchor: rv-point-prob -->
+question: |
+  X is a continuous random variable with the density shown. What is
+  P(X = 2.000..., the value exactly)?
+options:
+  - id: a
+    label: "Zero: only intervals carry probability"
+    writes: { sigma: 0.5 }
+    response: |
+      Right, and the curve shows why: probability is *area under the
+      density*, and a single point is a sliver with no width. Squeeze σ
+      as you like, the answer at any exact value stays zero. That's the
+      discrete/continuous divide from gear 2: point masses for counts,
+      densities for measurements, and questions about continuous
+      variables are always interval questions.
+  - id: b
+    label: "Whatever the density's height is at 2"
+    writes: { sigma: 3.0 }
+    response: |
+      Read the axis: at σ = 3 the density's height at any point is well
+      under 1, and heights aren't probabilities. The height f(2) is a
+      *density*, probability per unit length; it only turns into
+      probability once multiplied by an interval's width. At zero width,
+      zero probability, whatever the height.
+  - id: c
+    label: "It can't be computed: continuous variables are approximations"
+    writes: { sigma: 1.0 }
+    response: |
+      It computes exactly: zero. Continuous models aren't vague, they're
+      precise in a different currency, area instead of mass. (A real
+      measurement lands in some interval like [1.999, 2.001], and *that*
+      probability is a genuine sliver of area, which is how the model
+      connects back to data.)
+correct: a
+<!-- /block -->
+
 <!-- block: state_reset, anchor: rv-feel -->
 
 <!-- block: playground, anchor: rv-feel -->

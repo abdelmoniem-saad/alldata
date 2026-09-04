@@ -22,6 +22,41 @@ The rate $\lambda$ is events per unit time; the **mean waiting time** is its rec
 
 Drag $\lambda$ and watch the curve. Crank the rate up and events come thick and fast, the curve crushes toward zero and the mean wait shrinks. Ease it down and the wait stretches out.
 
+<!-- block: decision, anchor: exp-due -->
+question: |
+  Events arrive truly at random (this dial: rate λ = 1, mean wait 1).
+  You have already waited a long time and nothing has happened. The
+  expected *additional* wait is:
+options:
+  - id: a
+    label: "Shorter: after all this, it must be due"
+    writes: { rate: 2.0 }
+    response: |
+      That intuition fits scheduled buses, not random arrivals. Raising
+      the rate (crushing the curve toward zero) is a different *process*,
+      not the passage of time. In the memoryless world the hazard never
+      climbs; the event is no more due now than at the start.
+  - id: b
+    label: "Unchanged: the clock resets every instant"
+    writes: { rate: 1.0 }
+    response: |
+      Right, and the curve is the proof: the density is tallest at zero
+      *right now*, just as it was when you arrived. Conditioning on the
+      wait so far cancels out of the survival function entirely, P(extra >
+      t | already waited s) = P(extra > t). The exponential is the only
+      continuous distribution with this trick.
+  - id: c
+    label: "Longer: your luck has run out"
+    writes: { rate: 0.5 }
+    response: |
+      Lowering the rate stretches every future wait, but that's a change
+      to the process, not a consequence of having waited. The curve's
+      shape at rate 0.5 has the same property as at rate 1: given any wait
+      so far, the remaining wait is a fresh draw from the same
+      distribution.
+correct: b
+<!-- /block -->
+
 <!-- block: state_reset, anchor: exp-feel -->
 
 <!-- block: playground, anchor: exp-feel -->

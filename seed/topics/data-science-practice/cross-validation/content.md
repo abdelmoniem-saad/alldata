@@ -22,6 +22,42 @@ A model graded on the very data it learned from flatters itself, it has already 
 
 Slide complexity to the bottom of the validation curve, the dot, not to where training error is lowest.
 
+<!-- block: decision, anchor: cv-trap -->
+question: |
+  The validation curve bottoms out at complexity 4, but training error
+  keeps falling all the way to 15. A teammate ships complexity 15
+  "because it fits best." What did they ignore?
+options:
+  - id: a
+    label: "Nothing: lowest training error is the right criterion"
+    writes: { complexity: 15 }
+    response: |
+      Look at the gap between the two curves at 15: it's the widest on
+      screen. That gap is memorized noise, error the model will
+      definitely pay on data it hasn't seen. Training error is the one
+      number on this chart that flatters you by construction.
+  - id: b
+    label: "The validation U: past the bottom, held-out error climbs"
+    writes: { complexity: 4 }
+    response: |
+      Right. The held-out folds are the only honest rehearsal for new
+      data, and their curve says complexity 15 is worse than 4: the
+      model has started fitting fold-specific noise that won't
+      reproduce. Ship at the bottom of the validation curve, not the
+      bottom of the training curve. They only coincide when the model
+      is too simple to overfit.
+  - id: c
+    label: "The noise floor: no model can go below it anyway"
+    writes: { complexity: 9 }
+    response: |
+      The irreducible-noise floor is real, but it doesn't choose your
+      complexity, both curves sit above it everywhere and only the
+      *validation* curve tells you which point above it is closest.
+      Picking 9 because "it's near the floor" ignores the actual
+      ranking the held-out errors provide.
+correct: b
+<!-- /block -->
+
 <!-- block: state_reset, anchor: cv-feel -->
 
 <!-- block: playground, anchor: cv-feel -->

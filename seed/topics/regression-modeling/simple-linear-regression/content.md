@@ -26,6 +26,41 @@ But small *how*? You could minimize their absolute sizes, or their squares, or t
 
 Drag the slope and intercept until the line threads the cloud, until the points sit as close to it as you can get them, above and below in balance.
 
+<!-- block: decision, anchor: slr-means-point -->
+question: |
+  Every least-squares line is guaranteed to pass through exactly one
+  special point, whatever the data. Which?
+options:
+  - id: a
+    label: "The origin (0, 0)"
+    writes: { slope: 1.0, intercept: 0.0 }
+    response: |
+      Watch the line pivot through the origin as you'd need it to: only
+      when the data themselves say ȳ = β̂₁x̄ does the fit oblige. In
+      general the intercept is whatever pulls the line through the
+      means, not zero. Forcing it through the origin is a different
+      (and usually wrong) model.
+  - id: b
+    label: "The mean point (x̄, ȳ)"
+    writes: { slope: 0.7, intercept: 0.3 }
+    response: |
+      Right, the line you just placed threads the cloud's center of
+      mass. It falls straight out of the calculus: minimizing squared
+      residuals with respect to the intercept forces β̂₀ = ȳ − β̂₁x̄, so
+      ŷ(x̄) = ȳ exactly. Slope can wobble with the data; this anchor
+      point never does.
+  - id: c
+    label: "The first data point (the anchor of the fit)"
+    writes: { slope: 0.0, intercept: 1.0 }
+    response: |
+      Look at where that flat line sits relative to the leftmost point:
+      nowhere near guaranteed. Least squares listens to *all* the
+      residuals equally, no single observation gets to fix the line.
+      (The closest thing to a privileged point is the means, the
+      balance point from the option above.)
+correct: b
+<!-- /block -->
+
 <!-- block: state_reset, anchor: slr-feel -->
 
 <!-- block: playground, anchor: slr-feel -->

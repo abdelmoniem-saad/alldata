@@ -22,6 +22,41 @@ The picture decomposes error against model complexity. A simple model has **high
 
 Move complexity to minimize total error, the marked dot, where falling bias and rising variance balance.
 
+<!-- block: decision, anchor: bv-diagnose -->
+question: |
+  A model posts near-zero error on its training data and falls apart
+  on new data. Where on the U-curve are you, and which direction do
+  you move?
+options:
+  - id: a
+    label: "Far left, high bias: add flexibility"
+    writes: { complexity: 1 }
+    response: |
+      That's the *opposite* disease. At complexity 1 the model is stiff,
+      it misses on the training set too. Your model aced the training
+      set, which at the far left never happens: bias means it can't even
+      fit what it saw.
+  - id: b
+    label: "Far right, high variance: pull complexity back"
+    writes: { complexity: 15 }
+    response: |
+      Right, and the curve's right arm is your biography: total error
+      climbing while the model chases sample-specific noise. Memorizing
+      the training set is the variance signature. The fix walks left
+      toward the bottom of the U, simplifying until new-data error
+      stops improving.
+  - id: c
+    label: "At the bottom: the tradeoff is already optimal"
+    writes: { complexity: 4 }
+    response: |
+      The bottom of the U is where training error is *higher* than it
+      could be, some training error is deliberately left on the table.
+      Near-zero training error plus bad new-data error is the exact
+      opposite shape of the sweet spot; you're diagnosing the right
+      symptom from the wrong position.
+correct: b
+<!-- /block -->
+
 <!-- block: state_reset, anchor: bv-feel -->
 
 <!-- block: playground, anchor: bv-feel -->

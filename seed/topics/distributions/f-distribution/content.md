@@ -22,6 +22,40 @@ F carries *two* degrees-of-freedom parameters: $d_1$ for the numerator variance,
 
 Drag $d_1$ and $d_2$. With lots of degrees of freedom in both variance estimates, each is measured precisely, so their ratio clusters tightly around 1.
 
+<!-- block: decision, anchor: f-anova-df -->
+question: |
+  An ANOVA compares 4 group means, with 6 observations in each group
+  (24 total). Which (d₁, d₂) does the F statistic carry?
+options:
+  - id: a
+    label: "(4, 24): one df per group, one per observation"
+    writes: { df1: 4, df2: 24 }
+    response: |
+      Both halves are off, and the same oversight drives each: df counts
+      free pieces *after* what was fitted. Four group means carry only
+      3 independent contrasts (the fourth is determined), and the
+      within-group variance was estimated after those 4 means were
+      removed, so 4 df went there too.
+  - id: b
+    label: "(3, 20): between groups has k−1, within has N−k"
+    writes: { df1: 3, df2: 20 }
+    response: |
+      Right. Three independent contrasts distinguish four means, so the
+      between-group variance has 4 − 1 = 3 df; the within-group variance
+      pools 24 observations minus the 4 fitted means, 24 − 4 = 20. Look at
+      how tight F(3, 20) sits around 1: that's what makes even a
+      moderately large F strong evidence.
+  - id: c
+    label: "(4, 20): the numerator keeps one df per group"
+    writes: { df1: 4, df2: 20 }
+    response: |
+      The denominator is right but the numerator overcounts: four means
+      have four deviations, yet they must sum to zero, so only three are
+      free. Every fitted parameter spends a degree of freedom, and the
+      between-group spread of k means always carries k − 1 of them.
+correct: b
+<!-- /block -->
+
 <!-- block: state_reset, anchor: f-feel -->
 
 <!-- block: playground, anchor: f-feel -->

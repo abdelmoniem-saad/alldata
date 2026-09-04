@@ -22,6 +22,41 @@ The picture shows all three for a coin's bias $p$: the **prior** (dashed), the *
 
 Pour in evidence and watch the posterior spike. With little data the prior still visibly shapes the answer; with lots, the data take over.
 
+<!-- block: decision, anchor: bayes-prior-pull -->
+question: |
+  Prior Beta(2, 2), centered at 0.5. Data: 8 heads in 10 flips (80%).
+  Where does the posterior mean land?
+options:
+  - id: a
+    label: "At 0.80: with data in hand, the prior is irrelevant"
+    writes: { prior_a: 1, prior_b: 1, successes: 8, trials: 10 }
+    response: |
+      You've just swapped in a flat prior, Beta(1, 1), and the posterior
+      mean moved to 9/11 ≈ 0.82, nearly the raw data. With the original
+      Beta(2, 2) it sits lower, near 0.71. Ten flips is exactly the regime
+      where the prior still tugs; it fades only as trials accumulate (the
+      playground below runs that experiment).
+  - id: b
+    label: "Between 0.5 and 0.8, closer to the data"
+    writes: { prior_a: 2, prior_b: 2, successes: 8, trials: 10 }
+    response: |
+      Right: the conjugate math puts it at (2+8)/(4+10) ≈ 0.71, a blend
+      of the prior's 0.5 and the data's 0.8 that tilts toward whatever
+      carries more weight. Ten observations outweigh a mild prior but
+      don't erase it. The solid posterior curve sits visibly between the
+      dashed prior and the dotted likelihood.
+  - id: c
+    label: "At 0.5: a Beta prior pins the answer to its own mean"
+    writes: { prior_a: 50, prior_b: 50, successes: 8, trials: 10 }
+    response: |
+      Now the prior is Beta(50, 50), worth 100 phantom observations, and
+      the posterior cowers near 0.53. Notice what that demonstrates: the
+      prior doesn't *pin* anything, it *competes*, and a strong one wins
+      only while the data stay weak. The dial you just turned is the
+      prior's pseudo-count, nothing more mysterious.
+correct: b
+<!-- /block -->
+
 <!-- block: state_reset, anchor: bayes-feel -->
 
 <!-- block: playground, anchor: bayes-feel -->

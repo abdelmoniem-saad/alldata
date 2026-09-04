@@ -22,6 +22,42 @@ The picture shows both worlds at once: the **null** (no effect, gray) centered a
 
 The effect here is fixed and modest. Raise the sample size and watch the alternative slide right until most of it clears the cutoff, that growing teal area is power climbing.
 
+<!-- block: decision, anchor: power-lever -->
+question: |
+  The test currently runs at effect δ = 0.5, n = 16 (power ≈ 0.5). You
+  can change exactly one thing. Which move pushes the alternative curve
+  farther past the cutoff?
+options:
+  - id: a
+    label: "Double n to 32"
+    writes: { n: 32 }
+    response: |
+      A real improvement: the alternative's center is δ√n, so it advances
+      by a factor of √2 ≈ 1.41. Watch the teal area grow. But note what
+      the square root is telling you: doubling the *data* buys only a
+      41% deeper push, which is sample-size planning's diminishing
+      return in one picture.
+  - id: b
+    label: "Double the effect to δ = 1.0"
+    writes: { effect: 1.0 }
+    response: |
+      The bigger jump: δ enters the alternative's center directly, so
+      doubling it shifts the curve twice as far as doubling n would. The
+      catch is the one the formula can't fix: in the wild, δ is a fact
+      about the world, not a knob. That's why the lever you actually buy
+      is n, and why small-effect studies need quadratic sample sizes.
+  - id: c
+    label: "Either one: both double the separation"
+    writes: { n: 16 }
+    response: |
+      Compare the two pictures: at n = 32 (δ still 0.5) the alternative
+      sits at 2.0; at δ = 1.0 (n still 16) it sits at 4.0. Not the same
+      move, n advances the center by √2, the effect by 2. The algebra is
+      one line, power = 1 − Φ(z_α − δ√n), and it prices the two levers
+      differently by design.
+correct: b
+<!-- /block -->
+
 <!-- block: state_reset, anchor: power-feel -->
 
 <!-- block: playground, anchor: power-feel -->

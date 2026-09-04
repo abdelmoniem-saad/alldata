@@ -22,6 +22,41 @@ Give regression many predictors, especially correlated or noisy ones, and it ove
 
 Raise $\lambda$ and watch the coefficient paths shrink. Under lasso they snap to exactly zero, one by one.
 
+<!-- block: decision, anchor: reg-which-penalty -->
+question: |
+  Twenty predictors, most of them noise; you want a model that keeps
+  the two or three real ones and discards the rest outright. Which
+  penalty?
+options:
+  - id: a
+    label: "Ridge, strong: it shrinks everything hard"
+    writes: { penalty: "ridge", lambda: 1.5 }
+    response: |
+      Switch the paths to ridge at λ = 1.5 and watch them: all twenty
+      coefficients bend toward zero, and all twenty *survive*. Shrinking
+      noise predictors is not the same as removing them; ridge buys
+      stability, it never hands you a shortlist.
+  - id: b
+    label: "Lasso, strong: it zeros coefficients outright"
+    writes: { penalty: "lasso", lambda: 1.5 }
+    response: |
+      Right, and the paths show the signature: under lasso the weak
+      coefficients hit *exactly* zero, one by one, until only the real
+      predictors remain. The geometric reason is the penalty's corners
+      (the derivation below), the practical reason is you asked for a
+      shortlist, and corners are what produce one.
+  - id: c
+    label: "Lasso, but gentle: a small penalty keeps options open"
+    writes: { penalty: "lasso", lambda: 0.05 }
+    response: |
+      Look at the paths at λ = 0.05: essentially the unpenalized fit,
+      every noisy predictor still standing. Lasso's selection only
+      happens once λ is large enough to push coefficients onto zero;
+      below that it's lasso in name only. Strength of penalty is not a
+      detail, it's the whole mechanism.
+correct: b
+<!-- /block -->
+
 <!-- block: state_reset, anchor: reg-feel -->
 
 <!-- block: playground, anchor: reg-feel -->

@@ -22,6 +22,40 @@ The curve here is the **log-likelihood**, same peak as the likelihood, but it tu
 
 Drag the data and watch the peak, and the $\hat{p}$ label, move to the new sample proportion. The MLE simply *reads off* where the curve is highest.
 
+<!-- block: decision, anchor: mle-zero -->
+question: |
+  New coin, new data: 0 heads in 10 flips. Where does the MLE of p
+  land?
+options:
+  - id: a
+    label: "At 0.5: ten flips is too few to say otherwise"
+    writes: { successes: 5, trials: 10 }
+    response: |
+      That's a prior belief in a fair coin, smuggled in. The likelihood
+      itself holds no such courtesy: move the data to 0 of 10 and the
+      curve's peak plants itself at the left edge. The MLE is the argmax
+      of this curve, not a hedged compromise with intuition.
+  - id: b
+    label: "At 0: the peak reads the data, edge and all"
+    writes: { successes: 0, trials: 10 }
+    response: |
+      Right, and it looks severe because it is: the sample proportion
+      k/n = 0 is the bias that makes those ten tails most probable, and
+      the MLE obeys the data even to the boundary of the parameter space.
+      The fix for edge-hugging estimates isn't a different estimator, it's
+      more data, or a prior (the Bayesian topic ahead).
+  - id: c
+    label: "Undefined: an all-tails sample carries no information about p"
+    writes: { successes: 3, trials: 10 }
+    response: |
+      The opposite is true: all-tails is *extremely* informative, the
+      likelihood at p near 1 is nearly zero and the curve peaks hard at
+      the left edge. What the zero-count case does break is naive
+      formulas that divide by a count, not the estimation principle
+      itself.
+correct: b
+<!-- /block -->
+
 <!-- block: state_reset, anchor: mle-feel -->
 
 <!-- block: playground, anchor: mle-feel -->

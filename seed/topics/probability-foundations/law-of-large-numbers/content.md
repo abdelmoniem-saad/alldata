@@ -22,6 +22,41 @@ The curve on the right is the distribution of the sample mean. At $n = 1$ it's t
 
 <!-- block: gear, n: 3, label: "Collapse the curve" -->
 
+<!-- block: decision, anchor: lln-dilution -->
+question: |
+  Your first 10 flips of a fair coin gave 30% heads. Over the next
+  10,000 flips, the running heads fraction will:
+options:
+  - id: a
+    label: "Climb above 50% for a while: the deficit gets repaid"
+    writes: { n: 10 }
+    response: |
+      Watch what that claim would need: the curve pushing the average
+      back up, a memory of the debt. The coin has none. At n = 10 the
+      curve is wide, sure, a 30% start is unremarkable, but nothing in
+      the mechanics steers the future toward compensation. The law works
+      by dilution, not repayment.
+  - id: b
+    label: "Stay below 50%: early shortfalls persist in the average"
+    writes: { n: 1 }
+    response: |
+      That's the wide end of the picture, where a single flip *is* the
+      average and any imbalance dominates. But each new flip adds a full
+      weight to a numerator that no longer moves: a 3-head deficit over
+      10 flips is huge, over 10,010 flips it's a third of a percent. The
+      past doesn't persist, it dissolves.
+  - id: c
+    label: "Converge toward 50% as the early imbalance is drowned out"
+    writes: { n: 10000 }
+    response: |
+      Right, and the collapsed curve is the mechanism drawn: the running
+      fraction's distribution at n = 10,000 is a spike at 0.5, with no
+      room left for the early 30% to register. Nothing corrected the
+      deficit, it was diluted. That difference is exactly the gambler's
+      fallacy.
+correct: c
+<!-- /block -->
+
 <!-- block: state_reset, anchor: lln-feel -->
 
 <!-- block: playground, anchor: lln-feel -->

@@ -24,6 +24,38 @@ It arises whenever events are independent and the rate is roughly constant over 
 
 Drag $\lambda$ and watch the bars. At small $\lambda$ the distribution is bunched against zero and right-skewed; as $\lambda$ grows it slides right and rounds into a near-symmetric mound.
 
+<!-- block: decision, anchor: poisson-spread -->
+question: |
+  Emails arrive at your address at an average of 4 per hour, well
+  modeled as Poisson. What is the variance of the hourly count?
+options:
+  - id: a
+    label: "2: the variance is half the mean"
+    writes: { lambda: 2.0 }
+    response: |
+      You're now looking at a *different* inbox, one averaging 2 per hour,
+      and sure enough its spread around 2 is what 2 demands. The rule you
+      need: for a Poisson, variance equals the mean, whatever the mean
+      is. Halving the rate halves both together.
+  - id: b
+    label: "4: mean and variance are the same dial here"
+    writes: { lambda: 4.0 }
+    response: |
+      Right, and it's the Poisson's signature. One parameter, λ = 4, sets
+      the center of the bars *and* their spread simultaneously. There is
+      no second knob to turn; that equidispersion is exactly what to check
+      against real count data before trusting the model.
+  - id: c
+    label: "16: the variance is the mean squared"
+    writes: { lambda: 16.0 }
+    response: |
+      The bars have marched far right for λ = 16, and their spread around
+      16 is... 16, not 16 squared (and not 4 either). Squaring the mean is
+      the standard-deviation-instinct talking; for the Poisson the
+      variance is the mean, full stop, at every rate.
+correct: b
+<!-- /block -->
+
 <!-- block: state_reset, anchor: poisson-feel -->
 
 <!-- block: playground, anchor: poisson-feel -->
