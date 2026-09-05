@@ -93,14 +93,14 @@ topics:
     domain: probability-foundations
     difficulty: intermediate
     summary: Why sample averages converge to the true mean as sample size grows.
-    prerequisites: [expectation, variance]
+    prerequisites: [expectation, variance, independence]
 
   - slug: central-limit-theorem
     title: Central Limit Theorem
     domain: probability-foundations
     difficulty: intermediate
     summary: Why the normal distribution appears everywhere, the most important theorem in statistics.
-    prerequisites: [variance, normal-distribution]
+    prerequisites: [variance, normal-distribution, law-of-large-numbers]
 
   # ── Distributions ────────────────────────────────────────────
   - slug: bernoulli-distribution
@@ -122,7 +122,7 @@ topics:
     domain: distributions
     difficulty: intro
     summary: Modeling rare events, how many times something happens in a fixed interval.
-    prerequisites: [expectation]
+    prerequisites: [expectation, binomial-distribution]
 
   - slug: normal-distribution
     title: Normal (Gaussian) Distribution
@@ -137,6 +137,7 @@ topics:
     difficulty: intermediate
     summary: Modeling waiting times between events.
     prerequisites: [poisson-distribution]
+    terminal: true
 
   - slug: t-distribution
     title: Student's t-Distribution
@@ -208,6 +209,7 @@ topics:
     difficulty: intermediate
     summary: Comparing means when you have small samples or unknown population variance.
     prerequisites: [hypothesis-testing, t-distribution]
+    terminal: true
 
   - slug: likelihood
     title: Likelihood
@@ -229,6 +231,7 @@ topics:
     difficulty: advanced
     summary: Updating beliefs with data, priors, posteriors, and the Bayesian framework.
     prerequisites: [bayes-theorem, likelihood]
+    terminal: true
 
   # ── Regression & Modeling ────────────────────────────────────
   - slug: correlation
@@ -250,7 +253,7 @@ topics:
     domain: regression-modeling
     difficulty: intermediate
     summary: Predicting an outcome from multiple predictors simultaneously.
-    prerequisites: [simple-linear-regression]
+    prerequisites: [simple-linear-regression, f-distribution]
 
   - slug: model-diagnostics
     title: Model Diagnostics
@@ -258,6 +261,7 @@ topics:
     difficulty: intermediate
     summary: Checking whether your regression assumptions hold.
     prerequisites: [simple-linear-regression, normal-distribution]
+    terminal: true
 
   - slug: logistic-regression
     title: Logistic Regression
@@ -265,6 +269,7 @@ topics:
     difficulty: intermediate
     summary: Predicting binary outcomes, yes/no, pass/fail, click/no-click.
     prerequisites: [multiple-regression, maximum-likelihood-estimation]
+    terminal: true
 
   - slug: regularization
     title: Regularization (Ridge & Lasso)
@@ -272,6 +277,7 @@ topics:
     difficulty: advanced
     summary: Preventing overfitting by penalizing model complexity.
     prerequisites: [multiple-regression]
+    terminal: true
 
   # ── Data Science Practice ────────────────────────────────────
   - slug: exploratory-data-analysis
@@ -279,7 +285,7 @@ topics:
     domain: data-science-practice
     difficulty: intro
     summary: Looking at your data before modeling, summaries, plots, and patterns.
-    prerequisites: [expectation, variance]
+    prerequisites: [expectation, variance, data-wrangling]
 
   - slug: data-wrangling
     title: Data Wrangling
@@ -293,7 +299,8 @@ topics:
     domain: data-science-practice
     difficulty: intermediate
     summary: Designing and analyzing randomized experiments in practice.
-    prerequisites: [hypothesis-testing, p-values, confidence-intervals]
+    prerequisites: [hypothesis-testing, p-values, confidence-intervals, statistical-power]
+    terminal: true
     cross_domain_links:
       - domain: medicine
         description: Diagnostic testing and clinical trials
@@ -313,6 +320,7 @@ topics:
     difficulty: intermediate
     summary: The fundamental tension in modeling, simplicity vs. flexibility.
     prerequisites: [variance, cross-validation]
+    terminal: true
 
   - slug: missing-data
     title: Missing Data
@@ -320,6 +328,7 @@ topics:
     difficulty: intermediate
     summary: Handling incomplete datasets, when values are absent and why it matters.
     prerequisites: [exploratory-data-analysis, point-estimation]
+    terminal: true
 
   # A11 content batch 1 - decision-driven topics around the unused datasets.
   - slug: monty-hall
@@ -328,6 +337,7 @@ topics:
     difficulty: intro
     summary: The famous door puzzle - conditional probability you can play, and why switching doubles your chances.
     prerequisites: [conditional-probability]
+    terminal: true
 
   - slug: base-rates
     title: Base Rates and False Positives
@@ -335,6 +345,7 @@ topics:
     difficulty: intro
     summary: Why a 99% accurate test is wrong most of the time for rare conditions - prevalence does the heavy lifting.
     prerequisites: [bayes-theorem]
+    terminal: true
 
   # ── Navigation (hidden from the public graph) ────────────────
   - slug: shape-of-statistics

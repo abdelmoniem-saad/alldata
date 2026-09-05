@@ -66,6 +66,13 @@ class Topic(Base):
     # rejects `ADD COLUMN ... NOT NULL` otherwise.
     tour: Mapped[bool] = mapped_column(default=False, server_default="0")
 
+    # C1: deliberate learning-chain endpoint. A topic nothing builds on is
+    # an "orphan" (a content gap) unless the schema declares it terminal:
+    # an intentional end-of-chain capstone. Sourced from
+    # `schema.yaml: terminal: true`; the coverage lens reports terminals
+    # separately so the orphan list only ever means real gaps.
+    terminal: Mapped[bool] = mapped_column(default=False, server_default="0")
+
     # Authorship
     created_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())

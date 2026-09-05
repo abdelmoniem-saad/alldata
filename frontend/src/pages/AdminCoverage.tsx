@@ -30,6 +30,7 @@ const GAP_LABELS: Record<string, string> = {
   no_recall_prompt: 'No spaced-repetition recall prompt',
   no_summary: 'No summary',
   orphans: 'Orphan — nothing builds on this topic yet',
+  terminals: 'Terminal — deliberate end-of-chain capstone (not a gap)',
 }
 
 export default function AdminCoverage() {
@@ -206,7 +207,11 @@ export default function AdminCoverage() {
                       <Mark ok={t.has_recall_prompt} />
                       <td style={{
                         padding: '6px 10px', fontSize: 12,
-                        color: t.required_by_count === 0 ? 'var(--color-advanced, #ef4444)' : 'var(--color-text)',
+                        color: t.required_by_count === 0
+                          ? (t.terminal
+                            ? 'var(--color-text-muted)'
+                            : 'var(--color-advanced, #ef4444)')
+                          : 'var(--color-text)',
                         borderBottom: '1px solid var(--color-border-subtle)',
                       }}>{t.required_by_count}</td>
                     </tr>

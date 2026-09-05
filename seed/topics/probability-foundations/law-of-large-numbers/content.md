@@ -96,36 +96,40 @@ Chebyshev's inequality bounds how often a variable strays from its mean by its v
 
 ---
 
-<!-- block: gear, n: 5, label: "Watch a running average converge" -->
+<!-- block: gear, n: 5, label: "Watch a running fraction converge" -->
+
+<!-- block: dataset, name: coin-flips-1000, source: synthetic -->
 
 <!-- block: simulation, editable: true, auto_run: true, anchor: lln-sim, layer: both, pair_id: lln-sim -->
 ```python
 import numpy as np
 
-# Roll a fair die many times; track the running average. It wanders early,
-# then locks onto the true mean of 3.5, the law of large numbers in motion.
-rng = np.random.default_rng(0)
-rolls = rng.integers(1, 7, 50_000)
-running = np.cumsum(rolls) / np.arange(1, rolls.size + 1)
+# 1,000 coin flips from the curated dataset. The running fraction of heads
+# starts wild and settles toward 0.5: the law of large numbers, watched on
+# data instead of formulas.
+flips = load("coin-flips-1000")
+heads = np.array([1.0 if row["outcome"] == "H" else 0.0 for row in flips])
+running = np.cumsum(heads) / np.arange(1, heads.size + 1)
 
-for n in [10, 100, 1_000, 10_000, 50_000]:
-    print(f"after {n:>6} rolls: running average = {running[n-1]:.4f}   (true mean 3.5)")
+for n in [10, 100, 1_000]:
+    print(f"after {n:>5} flips: heads fraction = {running[n-1]:.4f}   (true mean 0.5)")
 ```
 
 <!-- block: code_r, pair_id: lln-sim, editable: true, layer: both -->
 ```r
-# Roll a fair die many times; track the running average. It wanders early,
-# then locks onto the true mean of 3.5, the law of large numbers in motion.
+# Same demonstration, simulated in R (the curated CSV loads only in the
+# Python runner): the running fraction of heads over 1,000 flips.
 set.seed(0)
-rolls <- sample(1:6, 50000, replace = TRUE)
-running <- cumsum(rolls) / seq_along(rolls)
+flips <- rbinom(1000, 1, 0.5)
+running <- cumsum(flips) / seq_along(flips)
 
-for (n in c(10, 100, 1000, 10000, 50000)) {
-  cat(sprintf("after %6d rolls: running average = %.4f   (true mean 3.5)\n", n, running[n]))
+for (n in c(10, 100, 1000)) {
+  cat(sprintf("after %5d flips: heads fraction = %.4f   (true mean 0.5)\n", n, running[n]))
 }
 ```
 
-Early on the average swings; by 10,000 rolls it's glued near 3.5. Note it does *not* jump to exactly 3.5, it just gets reliably closer.
+Early on the fraction swings; by 1,000 flips it's locked near 0.5. Note it
+does *not* land on exactly 0.5, it just gets reliably closer.
 
 ---
 

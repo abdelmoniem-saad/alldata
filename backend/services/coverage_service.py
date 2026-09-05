@@ -43,6 +43,7 @@ def _blank_topic_row(topic: Topic) -> dict:
         "has_plot": False,
         "prereq_count": 0,      # topics this one requires
         "required_by_count": 0, # topics that require this one
+        "terminal": bool(topic.terminal),
     }
 
 
@@ -97,8 +98,16 @@ async def build_coverage_report(db: AsyncSession) -> dict:
         # "Orphans": published, real topics that nothing builds on. Not wrong
         # for deliberate leaf/advanced topics — but a cluster of them usually
         # means the follow-on content hasn't been written yet.
+        # C1: topics the schema declares `terminal: true` are intentional
+        # end-of-chain capstones, reported separately so "orphans" only
+        # ever means a real content gap.
         "orphans": sorted(
-            r["slug"] for r in leaf_published if r["required_by_count"] == 0
+            r["slug"] for r in leaf_published
+            if r["required_by_count"] == 0 and not r["terminal"]
+        ),
+        "terminals": sorted(
+            r["slug"] for r in leaf_published
+            if r["required_by_count"] == 0 and r["terminal"]
         ),
     }
 

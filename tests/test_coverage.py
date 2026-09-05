@@ -93,6 +93,21 @@ class TestCoverageReport:
         assert "Content coverage report" in text
         assert "cov-orphan" in text
 
+    async def test_terminal_topic_is_not_an_orphan(self, db: AsyncSession):
+        """C1: a schema-declared terminal is an intentional chain endpoint.
+        It still has required_by_count == 0, but the lens reports it under
+        `terminals` so the orphan list only ever means a real content gap."""
+        cap = await _topic(db, "term-cap", "Terminal Capstone")
+        cap.terminal = True
+        await _block(db, cap, "markdown", "capstone prose")
+
+        report = await build_coverage_report(db)
+
+        assert "term-cap" in report["gaps"]["terminals"]
+        assert "term-cap" not in report["gaps"]["orphans"]
+        # Untreated topics keep the old semantics.
+        assert "cov-orphan" not in report["gaps"].get("terminals", [])
+
     async def test_empty_database(self, db: AsyncSession):
         report = await build_coverage_report(db)
         assert report["summary"]["content_topics"] == 0

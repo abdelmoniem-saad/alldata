@@ -1096,6 +1096,7 @@ async def import_schema(db: AsyncSession, user: User):
                 domain=domain_slug,
                 difficulty=topic_data.get("difficulty"),
                 status=TopicStatus.PUBLISHED.value,
+                terminal=bool(topic_data.get("terminal")),
                 created_by=user.id,
             )
             db.add(topic)
@@ -1170,6 +1171,46 @@ async def import_schema(db: AsyncSession, user: User):
                 db.add(edge)
 
         await db.flush()
+
+    # C1: additive edge-merge + terminal sync for ALL schema topics,
+    # not just new ones. The original merge path only created edges for
+    # new topics, so a new prerequisite declaration on an existing topic
+    # silently no-op'd forever (same failure class as the meta-field
+    # skip the A11 fix addressed). Idempotent: the (source, target,
+    # edge_type) unique constraint is checked explicitly, and the
+    # terminal flag is synced in both directions. Runs at function level
+    # so both the fresh-seed and additive-merge paths get it.
+    for topic_data in schema.get("topics", []):
+        slug = topic_data["slug"]
+        target = topic_map.get(slug)
+        if not target:
+            continue
+
+        want_terminal = bool(topic_data.get("terminal"))
+        if target.terminal != want_terminal:
+            target.terminal = want_terminal
+
+        for prereq_slug in topic_data.get("prerequisites", []):
+            source = topic_map.get(prereq_slug)
+            if not source:
+                _warn(f"prerequisite '{prereq_slug}' for '{slug}' not found")
+                continue
+            existing = await db.execute(
+                select(TopicEdge.id).where(
+                    TopicEdge.source_id == source.id,
+                    TopicEdge.target_id == target.id,
+                    TopicEdge.edge_type == EdgeType.PREREQUISITE.value,
+                )
+            )
+            if existing.scalar_one_or_none() is not None:
+                continue
+            db.add(TopicEdge(
+                source_id=source.id,
+                target_id=target.id,
+                edge_type=EdgeType.PREREQUISITE.value,
+            ))
+            print(f"  Added edge: {prereq_slug} -> {slug}")
+    await db.flush()
 
     # Import content for topics that have content files
     topics_dir = SEED_DIR / "topics"

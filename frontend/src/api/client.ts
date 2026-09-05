@@ -431,6 +431,7 @@ export const api = {
         has_code: boolean
         has_recall_prompt: boolean
         required_by_count: number
+        terminal: boolean
       }>
     }>('/admin/coverage'),
 
