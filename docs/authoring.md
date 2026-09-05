@@ -329,6 +329,18 @@ A manifest entry without a matching CSV will return 404 from `/api/datasets/{nam
 
 Numbered steps revealed with a 300ms stagger when the list scrolls into view. Under `prefers-reduced-motion` all steps appear at once.
 
+### `fill_in` (C2)
+
+Progressive-reveal derivation steps, built for the formal layer. Same numbered-list body as `step_through`, but nothing shows until the reader asks: each step hides behind a placeholder ("think it through, then reveal"), revealed one at a time or all at once. Use it where the argument is short enough to *attempt* but subtle enough that seeing it too early spoils the commit. One to four steps works best; a five-step reveal is a chore, use `step_through` for those.
+
+```markdown
+<!-- block: fill_in, anchor: clt-fill -->
+1. Center the statistic: subtract $\mu$.
+2. Scale it: divide by $\sigma/\sqrt{n}$.
+3. What remains is the shape: $N(0, 1)$.
+<!-- /block -->
+```
+
 ### `callout`
 
 ```markdown

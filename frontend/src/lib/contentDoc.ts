@@ -28,7 +28,7 @@ const SINGLE_LINE = new Set(['plot', 'state', 'state_reset', 'gear', 'graph_view
 /** Fenced-code directives, close on the code fence's ``` , not `<!-- /block -->`. */
 const CODE = new Set(['code_python', 'simulation', 'code_r'])
 /** Body directives closed by `<!-- /block -->`. */
-const MULTILINE = new Set(['step_through', 'callout', 'derivation', 'decision', 'playground', 'misconception'])
+const MULTILINE = new Set(['step_through', 'callout', 'derivation', 'decision', 'playground', 'misconception', 'fill_in'])
 
 const OPEN_SRC = '<!--\\s*block:\\s*([a-z_]+)([^>]*?)-->'
 const CLOSE_SRC = '<!--\\s*/block\\s*-->'

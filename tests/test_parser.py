@@ -84,6 +84,22 @@ class TestYamlBodies:
         assert "right" in decision["meta"]
         assert warnings == []
 
+    def test_fill_in_parses_steps(self):
+        """C2: fill_in is step_through's committed cousin, same numbered
+        body, `meta.steps` out, block_type differs."""
+        text = (
+            "<!-- block: fill_in, anchor: clue -->\n"
+            "1. Center the statistic.\n"
+            "2. Scale it.\n"
+            "<!-- /block -->"
+        )
+        blocks, warnings = parse(text)
+        b = next(b for b in blocks if b["block_type"] == "fill_in")
+        assert b["anchor"] == "clue"
+        import json as _json
+        assert _json.loads(b["meta"])["steps"] == ["Center the statistic.", "Scale it."]
+        assert warnings == []
+
     def test_bad_yaml_degrades_to_parse_error(self):
         text = (
             "<!-- block: decision, anchor: broken -->\n"

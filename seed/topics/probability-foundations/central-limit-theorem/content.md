@@ -123,6 +123,14 @@ Three conditions matter:
 - **finite variance**, $\sigma^2 < \infty$. Cauchy distributions, with infinite variance, *never* converge.
 - **the limit is in distribution**, pointwise CDF convergence, not pointwise sample convergence.
 
+<!-- block: fill_in, anchor: clt-fill -->
+1. Center the statistic: subtract $\mu$, so $\bar{X}_n - \mu$ has mean $0$.
+2. Scale it: divide by $\sigma/\sqrt{n}$, so any $n$ gives spread exactly $1$.
+3. What remains is the *shape*: $N(0, 1)$, whatever shape the population had.
+<!-- /block -->
+
+Commit to each step before you reveal it; the whole theorem is those three moves.
+
 <!-- block: derivation, title: "The characteristic-function sketch", collapsed: true -->
 Let $Y_i = (X_i - \mu) / \sigma$, standardized iid with mean 0, variance 1. The characteristic function is $\phi_Y(t) = \mathbb{E}[e^{itY}]$. Expanding,
 

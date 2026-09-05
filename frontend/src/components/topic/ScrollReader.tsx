@@ -159,7 +159,7 @@ const PINNED_BLOCK_TYPES = new Set(['plot', 'graph_view'])
 const CONFUSION_FLAGGABLE_TYPES = new Set([
   'markdown', 'code_python', 'code_r', 'simulation', 'callout',
   'derivation', 'step_through', 'misconception_inline',
-  'decision', 'playground', 'quiz',
+  'decision', 'playground', 'quiz', 'fill_in',
 ])
 
 /** Stable reference for "no decisions for this topic", see selector below. */

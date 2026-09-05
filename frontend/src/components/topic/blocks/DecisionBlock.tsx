@@ -70,6 +70,7 @@ export default function DecisionBlock({ slug, anchor, meta }: Props) {
   const selectDecision = useTopicStateStore(s => s.selectDecision)
   const patchState = useTopicStateStore(s => s.patchState)
   const recordDecision = useProgressStore(s => s.recordDecision)
+  const recordReview = useProgressStore(s => s.recordReview)
   const persisted = useProgressStore(
     s => (anchor ? s.decisionEvents?.[slug]?.[anchor]?.optionId ?? null : null),
   )
@@ -79,11 +80,18 @@ export default function DecisionBlock({ slug, anchor, meta }: Props) {
   const [chosen, setChosen] = useState<string | null>(persisted)
   useEffect(() => { setChosen(persisted) }, [persisted])
 
-  const handleChoose = (opt: DecisionOption) => {
+  const handleChoose = (opt: DecisionOption, viaShowAnswer = false) => {
     if (!anchor) return
     recordDecision(slug, anchor, opt.id)
     selectDecision(slug, anchor, opt.id)
     if (opt.writes) patchState(slug, opt.writes)
+    // C2: the decision doubles as the topic's built-in self-check and feeds
+    // the SM-2 schedule directly (quality map: 1 = show me again, 3 = coming
+    // back, 5 = I remember). A correct first pick demonstrates recall; a
+    // miss or "show me the answer" pulls the next review closer. Blocks
+    // without a `correct:` option stay neutral.
+    if (correctId) recordReview(slug, !viaShowAnswer && opt.id === correctId ? 5 : 1)
+    else recordReview(slug, 3)
     // A10: count decisions made (the core ask → act → explain mechanic).
     api.trackCurrent('decision_pick')
     setChosen(opt.id)
@@ -91,7 +99,7 @@ export default function DecisionBlock({ slug, anchor, meta }: Props) {
 
   const showAnswer = () => {
     const correct = options.find(o => o.id === correctId)
-    if (correct) handleChoose(correct)
+    if (correct) handleChoose(correct, true)
   }
 
   const chosenOption = chosen ? options.find(o => o.id === chosen) : null

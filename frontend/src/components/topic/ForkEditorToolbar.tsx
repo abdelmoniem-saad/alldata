@@ -65,6 +65,11 @@ const MISCONCEPTION = `<!-- block: misconception, inline: true -->
 
 const STATE = `<!-- block: state, values: {param: 0} -->`
 
+const FILL_IN = `<!-- block: fill_in, anchor: my-fill-in -->
+1. First step of the argument. The reader commits mentally, then reveals.
+2. Second step.
+3. Conclusion.`
+
 // W3: the directive vocabulary, surfaced as a hover reference so an author
 // doesn't have to leave the editor. Mirrors docs/authoring.md.
 const DIRECTIVE_REFERENCE = [
@@ -78,6 +83,7 @@ const DIRECTIVE_REFERENCE = [
   'simulation, runnable python code block',
   'callout, insight / aside / warning',
   'misconception, inline wrong-belief → correction',
+  'fill_in, progressive-reveal derivation steps',
   '',
   'Plain markdown (## headings, **bold**, lists) works too.',
 ].join('\n')
@@ -112,6 +118,7 @@ export default function ForkEditorToolbar({ onInsertBlock, onWrap, onInsertPlot 
         onClick={() => onInsertBlock('<!-- block: gear, n: 1, label: "Section label" -->')} />
       <Btn label="Callout" title="Insight / aside / warning callout" onClick={() => onInsertBlock(CALLOUT)} />
       <Btn label="Misconception" title="Inline wrong-belief → correction" onClick={() => onInsertBlock(MISCONCEPTION)} />
+      <Btn label="Fill in" title="Progressive-reveal derivation steps (formal layer)" onClick={() => onInsertBlock(FILL_IN)} />
       <Sep />
       <Btn label="Decision" title="Ask → commit → consequence (writes state the plot reacts to)" onClick={() => onInsertBlock(DECISION)} />
       <Btn label="Playground" title="Slider controls bound to state, with a goal" onClick={() => onInsertBlock(PLAYGROUND)} />

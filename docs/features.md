@@ -432,6 +432,15 @@ Watchdog-based file-watcher. Edit a `.md` or `meta.yaml` under `seed/topics/`; t
 ### `meta.yaml` header schema
 Per-topic header. Documents: `slug`, `title`, `domain`, `difficulty`, `summary`, `prerequisites`, `has_intuition_layer`, `has_formal_layer`, `estimated_minutes`, `cycle_ported`, `recall_prompt`, `dataset`, `tour`. *(cycles: J3, schema doc; K3, recall_prompt; K5, dataset; M0, tour)* See [`meta-yaml.md`](meta-yaml.md).
 
+### `fill_in` block (C2)
+Progressive-reveal derivation steps for the formal layer (the I7 backlog item). Numbered-list body like `step_through`; the reader commits to each step mentally, then reveals it via the step's own placeholder (or "Reveal all"). Parsed into `meta.steps`, rendered by `FillIn` through `BlockRenderer` in both reading surfaces, confusion-flaggable, insert-scaffold in the fork editor toolbar. First usage: central-limit-theorem gear 4. *(cycle: C2)* `code: seed/import_seed.py` (`fill_in` branch), `frontend/src/components/topic/blocks/FillIn.tsx`, `BlockRenderer.tsx`.
+
+### Misconceptions catalog (C2)
+`GET /api/misconceptions` (public, one query: every misconception joined to its published topic, ordered domain → topic) and the `/misconceptions` page: all wrong-belief → correction cards grouped by topic, linked to the navbar, each topic card deep-linking into the lesson. The H4/H10 backlog item finally surfaced. *(cycle: C2)* `code: backend/api/misconceptions.py`, `frontend/src/pages/Misconceptions.tsx`.
+
+### Decisions feed spaced repetition (C2)
+Every decision pick now dispatches an SM-2 `recordReview` on its topic: correct first pick = quality 5 (interval grows), a miss or "show me the answer" = 1 (review comes sooner), blocks without a `correct:` option = 3. The 42 decision blocks are now the topic's built-in self-check, and the review schedule reacts to demonstrated recall rather than self-rating alone. Server sync rides the existing M1 per-topic pipeline. *(cycle: C2)* `code: frontend/src/components/topic/blocks/DecisionBlock.tsx`, `frontend/src/stores/progressStore.ts` (`recordReview`).
+
 ### Self-healing column adds
 `create_tables()` walks every mapped table on every run and ALTERs missing columns. The "no migrations" ergonomic survives every new column the team ships. *(cycle: J3)* `code: seed/import_seed.py` (`_self_heal_columns`).
 

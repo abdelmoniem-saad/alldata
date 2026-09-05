@@ -58,6 +58,19 @@ export interface GraphNode {
   snippet?: string | null
 }
 
+/**
+ * C2: one row of the consolidated misconceptions catalog. The page groups
+ * these by topic; the backend orders by domain, then topic.
+ */
+export interface MisconceptionEntry {
+  topic_slug: string
+  topic_title: string
+  domain: string | null
+  title: string
+  wrong_belief: string
+  correction: string
+}
+
 export interface GraphEdge {
   source_id: string
   target_id: string
@@ -326,6 +339,11 @@ export const api = {
    */
   searchTopics: (q: string) =>
     request<GraphNode[]>(`/graph/search?q=${encodeURIComponent(q)}`),
+
+  // C2: consolidated misconceptions catalog (the H10 backlog item).
+  // One public read; the page groups by topic client-side.
+  listMisconceptions: () =>
+    request<MisconceptionEntry[]>('/misconceptions'),
 
   // Code execution
   executeCode: (code: string, language = 'python', theme = 'dark') =>

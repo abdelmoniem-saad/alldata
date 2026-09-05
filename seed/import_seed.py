@@ -90,6 +90,7 @@ _KNOWN_PLOT_SPECS = {
 
 _MULTILINE_BLOCK_TYPES = {
     "step_through", "callout", "derivation", "decision", "playground",
+    "fill_in",
     # `misconception` is multi-line when authored with the new closing tag
     # form. The legacy single-line `<!-- block: misconception -->` is still
     # matched by the section-loop regex below.
@@ -274,6 +275,23 @@ def _build_multiline_block(spec: dict, sort_order: int, layer: str) -> dict | No
             meta["auto_play"] = bool(attrs["auto_play"])
         return {
             "block_type": "step_through",
+            "content": body,
+            "sort_order": sort_order,
+            "layer": layer,
+            "anchor": anchor,
+            "meta": json.dumps(meta),
+        }
+
+    if btype == "fill_in":
+        # C2: progressive-reveal derivation. Same numbered-list body as
+        # step_through, but the reader reveals each line on demand instead
+        # of the lines fading in on scroll. Built for the formal layer:
+        # the reader commits to each step mentally before seeing it.
+        steps = re.split(r"\n(?=\d+\.\s)", body.strip())
+        steps = [re.sub(r"^\d+\.\s*", "", s).strip() for s in steps if s.strip()]
+        meta = {"steps": steps, **branch_extras}
+        return {
+            "block_type": "fill_in",
             "content": body,
             "sort_order": sort_order,
             "layer": layer,

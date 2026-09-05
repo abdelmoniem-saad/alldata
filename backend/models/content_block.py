@@ -26,6 +26,7 @@ class BlockType(str, enum.Enum):
     PLAYGROUND = "playground"  # Goal-driven controls bound to TopicState
     STATE = "state"  # TopicState defaults declaration (no rendered output)
     STATE_RESET = "state_reset"  # Snap state back to defaults at an anchor
+    FILL_IN = "fill_in"  # C2: progressive-reveal derivation steps
 
 
 class ExplanationLayer(str, enum.Enum):

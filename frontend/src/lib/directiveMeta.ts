@@ -20,6 +20,7 @@ const TAGS: Record<string, string> = {
   misconception: 'Misconception',
   derivation: 'Derivation',
   step_through: 'Steps',
+  fill_in: 'Fill in',
   graph_view: 'Graph view',
   dataset: 'Dataset',
   simulation: 'Code',
@@ -68,6 +69,8 @@ export function directiveSummary(seg: DirectiveSegment): string {
       return `${str(a.value) || 'both'}, which explanation layer follows`
     case 'step_through':
       return 'walkthrough steps'
+    case 'fill_in':
+      return 'progressive-reveal steps'
     default:
       return ''
   }

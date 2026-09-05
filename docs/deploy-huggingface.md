@@ -145,6 +145,38 @@ at a different address, set a repository secret `ALLODATA_URL` to the base
 URL. Nothing to configure — it runs as long as the workflow file is on the
 GitHub repo's default branch.
 
+## Backups (required once an external database is attached, ~10 minutes)
+
+Part D's external Postgres is the platform's only durable state: accounts,
+progress, forks, analytics. The Space's disk is ephemeral, and Neon/Supabase
+free tiers do not guarantee point-in-time recovery. One scheduled export
+makes a bad day recoverable.
+
+**Take a backup** (from your machine, or any box with `psql` installed):
+
+```
+pg_dump "postgresql://USER:PASSWORD@HOST/DBNAME" --no-owner --format=custom --file=alldata-backup.dump
+```
+
+Get the exact connection string from your Neon/Supabase dashboard (it needs
+`?sslmode=require` appended for most hosts; `pg_dump` accepts it in the URL).
+
+**Automate it**: a GitHub Actions workflow like the keep-alive one, running
+`pg_dump` nightly and uploading the `.dump` file as a workflow artifact
+(set the connection string as a repository secret `DATABASE_URL`, and keep
+the artifact retention at 30 days). The restore is the part worth testing:
+a backup you have never restored is a hope, not a backup.
+
+**Restore** (into a fresh database):
+
+```
+createdb "postgresql://USER:PASSWORD@NEWHOST/NEWDBNAME"
+pg_restore "postgresql://USER:PASSWORD@NEWHOST/NEWDBNAME" --no-owner --format=custom alldata-backup.dump
+```
+
+Point the Space's `DATABASE_URL` at the restored database and restart it.
+Everything comes back: accounts, progress, forks, the review queue.
+
 ## If something goes wrong
 
 - **Build failed (red status):** open the **Logs** tab and copy the last 20-30

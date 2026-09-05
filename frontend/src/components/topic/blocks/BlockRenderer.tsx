@@ -36,6 +36,7 @@ import DecisionBlock from './DecisionBlock'
 import PlaygroundBlock from './PlaygroundBlock'
 import GraphFlythrough from './GraphFlythrough'
 import { StepThrough } from './StepThrough'
+import { FillIn } from './FillIn'
 
 export type RenderMode = 'scroll' | 'slides'
 
@@ -173,6 +174,16 @@ export default function BlockRenderer({
     case 'step_through': {
       const steps = Array.isArray(meta.steps) ? (meta.steps as string[]) : []
       return <StepThrough steps={steps} />
+    }
+
+    case 'fill_in': {
+      const steps = Array.isArray(meta.steps) ? (meta.steps as string[]) : []
+      return <FillIn steps={steps} />
+    }
+
+    case 'fill_in': {
+      const steps = Array.isArray(meta.steps) ? (meta.steps as string[]) : []
+      return <FillIn steps={steps} />
     }
 
     case 'misconception_inline':

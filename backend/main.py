@@ -18,6 +18,7 @@ from backend.api import (
     forks,
     graph,
     merge_back,
+    misconceptions,
     progress,
     topics,
     track,
@@ -78,6 +79,8 @@ app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 # A10: first-party usage beacons (no auth, no PII).
 app.include_router(track.router, prefix="/api/track", tags=["track"])
 app.include_router(topics.router, prefix="/api/topics", tags=["topics"])
+# C2: consolidated misconceptions catalog (the H10 backlog item).
+app.include_router(misconceptions.router, prefix="/api/misconceptions", tags=["misconceptions"])
 app.include_router(graph.router, prefix="/api/graph", tags=["graph"])
 app.include_router(content.router, prefix="/api/content", tags=["content"])
 app.include_router(courses.router, prefix="/api/courses", tags=["courses"])
