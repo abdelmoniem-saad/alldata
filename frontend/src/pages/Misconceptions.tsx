@@ -13,6 +13,9 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import ReactMarkdown from 'react-markdown'
+import remarkMath from 'remark-math'
+import rehypeKatex from 'rehype-katex'
 
 import { api, MisconceptionEntry } from '../api/client'
 import { domainLabel, domainVar } from '../lib/domain'
@@ -116,10 +119,12 @@ export default function Misconceptions() {
                     fontSize: 14, color: 'var(--color-advanced, #ef4444)',
                     marginBottom: 6,
                   }}>
-                    {m.wrong_belief}
+                    <ReactMarkdown>{m.wrong_belief}</ReactMarkdown>
                   </div>
-                  <div style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--color-text)' }}>
-                    {m.correction}
+                  <div className="prose" style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--color-text)' }}>
+                    <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                      {m.correction}
+                    </ReactMarkdown>
                   </div>
                 </div>
               ))}
