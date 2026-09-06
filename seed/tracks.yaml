@@ -1,0 +1,50 @@
+# Curated guided tracks, C3.
+#
+# Each track is a curated reading order over EXISTING topics; no new
+# content lives here (the no-new-topics rule stays). This file is the
+# source of truth (principle 7): the importer doesn't persist tracks,
+# `GET /api/tracks` resolves the slugs against the live DB at read time
+# and drops any that don't resolve, so a track can never dead-end.
+#
+# Fields:
+#   slug, stable id for the frontend
+#   title, human-readable name
+#   description, one sentence on who the track is for
+#   topics, ordered slugs; the reading order
+
+tracks:
+  - slug: ab-testing-from-scratch
+    title: A/B testing from scratch
+    description: The probability you need, the testing machinery, and the design discipline, ending at the experiment you're probably here to run.
+    topics:
+      - sample-spaces
+      - basic-probability
+      - conditional-probability
+      - random-variables
+      - expectation
+      - hypothesis-testing
+      - p-values
+      - statistical-power
+      - ab-testing
+
+  - slug: read-any-regression-output
+    title: Read any regression output
+    description: From a scatter plot to the printout, what every number in a regression table means and where it comes from.
+    topics:
+      - correlation
+      - simple-linear-regression
+      - multiple-regression
+      - f-distribution
+      - model-diagnostics
+      - cross-validation
+
+  - slug: bayes-without-tears
+    title: Bayes without tears
+    description: Conditional probability to the posterior, with two playable detours that make the reversal feel inevitable.
+    topics:
+      - conditional-probability
+      - bayes-theorem
+      - base-rates
+      - monty-hall
+      - likelihood
+      - bayesian-inference

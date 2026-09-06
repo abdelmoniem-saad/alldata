@@ -65,3 +65,50 @@ class TestTrackEndpoint:
         stored = set(rows[0].__dict__.keys())
         # Privacy posture: nothing identifying is stored, ever.
         assert stored & {"ip", "user_id", "session", "user_agent"} == set()
+
+
+class TestTrending:
+    async def test_trending_orders_and_hides_unpublished(self, db: AsyncSession):
+        """C3: the Home strip ranks by views and drops topics that are no
+        longer published, so a hidden topic can't ride the strip."""
+        from datetime import date, timedelta
+
+        from backend.services import analytics_service
+
+        hot = await _topic(db, "trend-hot", "Trend Hot")
+        cold = await _topic(db, "trend-cold", "Trend Cold")
+        gone = await _topic(db, "trend-gone", "Trend Gone")
+        gone.status = "draft"
+        await db.flush()
+
+        today = date.today()
+        for day_offset, n in ((0, 1), (1, 2)):
+            day = today - timedelta(days=day_offset)
+            db.add(UsageEvent(day=day, kind="topic_view", slug=hot.slug, count=n))
+        db.add(UsageEvent(day=today, kind="topic_view", slug=cold.slug, count=1))
+        # 5 views, but draft: must not appear.
+        db.add(UsageEvent(day=today, kind="topic_view", slug=gone.slug, count=5))
+        await db.flush()
+
+        rows = await analytics_service.trending_topics(db, days=7, limit=5)
+        slugs = [r["slug"] for r in rows]
+        assert slugs[0] == hot.slug
+        assert slugs[1] == cold.slug
+        assert "trend-gone" not in slugs
+        assert rows[0]["views"] == 3
+        assert rows[0]["title"] == "Trend Hot"
+
+    async def test_trending_window_respected(self, db: AsyncSession):
+        """C3: views older than the window don't count."""
+        from datetime import date, timedelta
+
+        from backend.services import analytics_service
+
+        topic = await _topic(db, "trend-old", "Trend Old")
+        await db.flush()
+        old_day = date.today() - timedelta(days=30)
+        db.add(UsageEvent(day=old_day, kind="topic_view", slug=topic.slug, count=99))
+        await db.flush()
+
+        rows = await analytics_service.trending_topics(db, days=7, limit=5)
+        assert rows == []

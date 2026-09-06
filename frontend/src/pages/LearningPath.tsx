@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { api, LearningPathResponse, GraphNode } from '../api/client'
+import { api, LearningPathResponse, GraphNode, Track } from '../api/client'
 import { domainVar, domainLabel, domainTick } from '../lib/domain'
 
 // Popular destinations
@@ -241,6 +241,12 @@ export default function LearningPath() {
   const [error, setError] = useState<string | null>(null)
   const [topics, setTopics] = useState<GraphNode[]>([])
 
+  // C3: curated guided tracks (seed/tracks.yaml, resolved server-side).
+  const [tracks, setTracks] = useState<Track[]>([])
+  useEffect(() => {
+    api.listTracks().then(setTracks).catch(() => { /* optional surface */ })
+  }, [])
+
   // Load all topics for search
   useEffect(() => {
     api.getGraph().then(g => setTopics(g.nodes)).catch(() => {})
@@ -359,6 +365,63 @@ export default function LearningPath() {
                 }} />
                 {p.label}
               </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* C3: Guided tracks, curated reading orders over existing topics. */}
+      {!path && !loading && tracks.length > 0 && (
+        <div style={{ marginBottom: 32 }}>
+          <h2 style={{
+            fontSize: 12, fontWeight: 700, letterSpacing: '1.5px',
+            textTransform: 'uppercase', color: 'var(--color-text-muted)',
+            marginBottom: 14,
+          }}>
+            Guided tracks
+          </h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {tracks.map(t => (
+              <div
+                key={t.slug}
+                style={{
+                  padding: 16,
+                  borderRadius: 'var(--radius)',
+                  border: '1px solid var(--color-border-subtle)',
+                  background: 'var(--color-bg-secondary)',
+                }}
+              >
+                <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-text)', marginBottom: 4 }}>
+                  {t.title}
+                </div>
+                {t.description && (
+                  <div style={{ fontSize: 13, color: 'var(--color-text-muted)', marginBottom: 12, lineHeight: 1.5 }}>
+                    {t.description}
+                  </div>
+                )}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {t.topics.map((tt, i) => (
+                    <Link
+                      key={tt.slug}
+                      to={`/topic/${tt.slug}`}
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 6,
+                        padding: '4px 10px',
+                        borderRadius: 100,
+                        background: 'var(--color-surface)',
+                        border: '1px solid var(--color-border)',
+                        fontSize: 12,
+                        color: 'var(--color-text-secondary)',
+                        textDecoration: 'none',
+                        transition: 'all var(--transition-smooth)',
+                      }}
+                    >
+                      <span style={{ color: 'var(--color-accent)', fontSize: 10 }}>{i + 1}</span>
+                      {tt.title}
+                    </Link>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         </div>

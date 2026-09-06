@@ -22,6 +22,7 @@ from backend.api import (
     progress,
     topics,
     track,
+    tracks,
     users,
 )
 from backend.config import settings
@@ -81,6 +82,8 @@ app.include_router(track.router, prefix="/api/track", tags=["track"])
 app.include_router(topics.router, prefix="/api/topics", tags=["topics"])
 # C2: consolidated misconceptions catalog (the H10 backlog item).
 app.include_router(misconceptions.router, prefix="/api/misconceptions", tags=["misconceptions"])
+# C3: curated guided tracks (seed/tracks.yaml is the source of truth).
+app.include_router(tracks.router, prefix="/api/tracks", tags=["tracks"])
 app.include_router(graph.router, prefix="/api/graph", tags=["graph"])
 app.include_router(content.router, prefix="/api/content", tags=["content"])
 app.include_router(courses.router, prefix="/api/courses", tags=["courses"])

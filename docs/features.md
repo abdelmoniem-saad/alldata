@@ -441,6 +441,12 @@ Progressive-reveal derivation steps for the formal layer (the I7 backlog item). 
 ### Decisions feed spaced repetition (C2)
 Every decision pick now dispatches an SM-2 `recordReview` on its topic: correct first pick = quality 5 (interval grows), a miss or "show me the answer" = 1 (review comes sooner), blocks without a `correct:` option = 3. The 42 decision blocks are now the topic's built-in self-check, and the review schedule reacts to demonstrated recall rather than self-rating alone. Server sync rides the existing M1 per-topic pipeline. *(cycle: C2)* `code: frontend/src/components/topic/blocks/DecisionBlock.tsx`, `frontend/src/stores/progressStore.ts` (`recordReview`).
 
+### Trending on Home (C3)
+`GET /api/graph/trending` (public): aggregate `topic_view` counts over the last 7 days, joined to published topics, counts only (the analytics table carries no PII). Home renders a "Trending this week" strip of the top 5, and **hides itself entirely until beacons accumulate**, so a fresh deploy never shows an empty box. *(cycle: C3)* `code: backend/services/analytics_service.py` (`trending_topics`), `backend/api/graph.py`, `frontend/src/pages/Home.tsx`.
+
+### Guided tracks (C3)
+Curated reading orders over existing topics, defined in `seed/tracks.yaml` (principle 7: seed is the source of truth). `GET /api/tracks` resolves every slug against the live DB and drops unknown/unpublished ones, so a track can never dead-end mid-list; a track resolving to nothing never ships. Rendered as a "Guided tracks" section on `/path`. Three tracks ship: A/B testing from scratch, Read any regression output, Bayes without tears. *(cycle: C3)* `code: seed/tracks.yaml`, `backend/api/tracks.py`, `frontend/src/pages/LearningPath.tsx`.
+
 ### Self-healing column adds
 `create_tables()` walks every mapped table on every run and ALTERs missing columns. The "no migrations" ergonomic survives every new column the team ships. *(cycle: J3)* `code: seed/import_seed.py` (`_self_heal_columns`).
 

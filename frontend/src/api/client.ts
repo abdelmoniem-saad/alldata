@@ -71,6 +71,33 @@ export interface MisconceptionEntry {
   correction: string
 }
 
+/**
+ * C3: one topic slot in a guided track (slug resolved to a live title).
+ */
+export interface TrackTopic {
+  slug: string
+  title: string
+}
+
+/**
+ * C3: a curated guided track from seed/tracks.yaml. Topics are ordered;
+ * the backend drops slugs that don't resolve to published topics.
+ */
+export interface Track {
+  slug: string
+  title: string
+  description: string | null
+  topics: TrackTopic[]
+}
+
+/** C3: one row of the Home trending strip (aggregate views, no PII). */
+export interface TrendingTopic {
+  slug: string
+  title: string
+  domain: string | null
+  views: number
+}
+
 export interface GraphEdge {
   source_id: string
   target_id: string
@@ -339,6 +366,15 @@ export const api = {
    */
   searchTopics: (q: string) =>
     request<GraphNode[]>(`/graph/search?q=${encodeURIComponent(q)}`),
+
+  // C3: public trending strip (aggregate view counts, no PII). Empty until
+  // beacons accumulate; Home hides the section on an empty response.
+  getTrending: (days = 7, limit = 5) =>
+    request<TrendingTopic[]>(`/graph/trending?days=${days}&limit=${limit}`),
+
+  // C3: curated guided tracks (seed/tracks.yaml, slugs resolved server-side).
+  listTracks: () =>
+    request<Track[]>('/tracks'),
 
   // C2: consolidated misconceptions catalog (the H10 backlog item).
   // One public read; the page groups by topic client-side.

@@ -5,6 +5,7 @@ import { useProgressStore } from '../stores/progressStore'
 import { useThemeStore } from '../stores/themeStore'
 import { DOMAIN_SLUGS, DOMAIN_LABEL, DOMAIN_DESC, domainColorHex, cssVarHex } from '../lib/domain'
 import SearchDropdown from '../components/SearchDropdown'
+import type { TrendingTopic } from '../api/client'
 
 // P: per-domain "topics with content" counts. These are a *fallback*, the
 // component derives the live numbers from `api.getGraph()` on mount and only
@@ -59,6 +60,18 @@ export default function Home() {
     () => Object.values(topicCounts).reduce((a, b) => a + b, 0),
     [topicCounts],
   )
+
+  // C3: trending strip, the first payback from A10's analytics. Empty on a
+  // fresh deploy (no beacons yet), and the section hides itself entirely
+  // until data exists, so Home never shows an empty "Trending" box.
+  const [trending, setTrending] = useState<TrendingTopic[]>([])
+  useEffect(() => {
+    let cancelled = false
+    api.getTrending()
+      .then(rows => { if (!cancelled && rows.length > 0) setTrending(rows) })
+      .catch(() => { /* no data, no section */ })
+    return () => { cancelled = true }
+  }, [])
 
   // Resolve CSS var tokens → hex once per render so we can use alpha composition
   // (e.g. `${color}20`). Dependency on `theme` means this rebuilds on toggle.
@@ -174,6 +187,53 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      {/* C3: Trending this week, hidden until analytics accumulate. */}
+      {trending.length > 0 && (
+        <section style={{
+          position: 'relative',
+          zIndex: 1,
+          maxWidth: 960,
+          margin: '0 auto 80px',
+          padding: '0 24px',
+        }}>
+          <h2 style={{
+            fontSize: 12, fontWeight: 700, letterSpacing: '1.5px',
+            textTransform: 'uppercase', color: 'var(--color-text-muted)',
+            marginBottom: 14,
+          }}>
+            Trending this week
+          </h2>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+            {trending.map(t => {
+              const tColor = t.domain ? domainColorHex(t.domain) : 'var(--color-accent)'
+              return (
+                <Link
+                  key={t.slug}
+                  to={`/topic/${t.slug}`}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 8,
+                    padding: '6px 14px',
+                    borderRadius: 100,
+                    background: 'var(--color-surface)',
+                    border: '1px solid var(--color-border)',
+                    fontSize: 13,
+                    color: 'var(--color-text-secondary)',
+                    textDecoration: 'none',
+                    transition: 'all var(--transition-smooth)',
+                  }}
+                >
+                  <span style={{ color: tColor, fontSize: 10 }} aria-hidden="true">●</span>
+                  {t.title}
+                  <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
+                    {t.views} {t.views === 1 ? 'read' : 'reads'}
+                  </span>
+                </Link>
+              )
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Domain Cards */}
       <section className="stagger domain-grid" style={{

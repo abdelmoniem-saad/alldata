@@ -43,6 +43,21 @@ async def search_graph(
     return await graph_engine.search_graph_nodes(db, q, limit=limit)
 
 
+@router.get("/trending")
+async def get_trending(
+    db: DB,
+    days: int = Query(7, ge=1, le=30),
+    limit: int = Query(5, ge=1, le=10),
+):
+    """C3: public trending strip for Home. Aggregate view counts over the
+    window, counts only (the analytics table carries no PII). Returns an
+    empty list until beacons accumulate, so the UI can hide the section
+    entirely on a fresh deploy."""
+    from backend.services import analytics_service
+
+    return await analytics_service.trending_topics(db, days=days, limit=limit)
+
+
 @router.get("/subgraph", response_model=GraphResponse)
 async def get_subgraph(
     db: DB,

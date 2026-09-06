@@ -15,6 +15,7 @@ from datetime import date, timedelta
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.models.topic import Topic
 from backend.models.usage import UsageEvent
 
 EVENT_KINDS = {"topic_view", "run_click", "decision_pick"}
@@ -67,3 +68,32 @@ async def top_events(db: AsyncSession, days: int = 30) -> dict:
         key=lambda e: (-e["views"], -e["runs"], e["slug"]),
     )
     return {"days": days, "totals": totals, "topics": ranked}
+
+
+async def trending_topics(db: AsyncSession, days: int = 7, limit: int = 5) -> list[dict]:
+    """C3: public trending strip for Home. Top topics by view count over
+    the window, joined to the topic for title/domain. Aggregate counts
+    only; this table holds nothing identifying to leak. Topics must still
+    be published (an unpublished slug drops off the strip, silently)."""
+    since = date.today() - timedelta(days=days - 1)
+    rows = (await db.execute(
+        select(
+            UsageEvent.slug,
+            func.sum(UsageEvent.count).label("total"),
+            Topic.title,
+            Topic.domain,
+        )
+        .join(Topic, Topic.slug == UsageEvent.slug)
+        .where(
+            UsageEvent.day >= since,
+            UsageEvent.kind == "topic_view",
+            Topic.status == "published",
+        )
+        .group_by(UsageEvent.slug, Topic.title, Topic.domain)
+        .order_by(func.sum(UsageEvent.count).desc())
+        .limit(limit)
+    )).all()
+    return [
+        {"slug": slug, "title": title, "domain": domain, "views": int(total)}
+        for slug, total, title, domain in rows
+    ]
