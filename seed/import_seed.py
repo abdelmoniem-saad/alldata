@@ -653,6 +653,7 @@ def _self_heal_columns(conn) -> None:
     from sqlalchemy import inspect, text
 
     inspector = inspect(conn)
+    is_postgres = conn.dialect.name == "postgresql"
     for table in Base.metadata.sorted_tables:
         if not inspector.has_table(table.name):
             continue
@@ -702,10 +703,25 @@ def _self_heal_columns(conn) -> None:
                 else:
                     default_clause = " DEFAULT ''"
 
+            # C1 hotfix: Postgres rejects an integer default for a BOOLEAN
+            # column (`DEFAULT 0` raises DatatypeMismatchError; SQLite needs
+            # the 0/1 form). Normalize any boolean default per dialect,
+            # whether it came from the model's server_default or the
+            # fallback above. This bit the `terminal` column on the live
+            # Neon database: `tour` never triggered it because create_all
+            # made that column, only self-heal ALTERs hit the raw path.
+            if "BOOL" in col_type.upper() and default_clause:
+                default_clause = _bool_default_for(is_postgres)
+
             print(f"  Self-heal: adding column {table.name}.{col.name} ({col_type}{default_clause})")
             conn.execute(
                 text(f'ALTER TABLE {table.name} ADD COLUMN {col.name} {col_type}{nullable}{default_clause}')
             )
+
+
+def _bool_default_for(is_postgres: bool) -> str:
+    """Dialect-appropriate DEFAULT literal for a BOOLEAN column."""
+    return " DEFAULT FALSE" if is_postgres else " DEFAULT 0"
 
 
 async def get_or_create_system_user(db: AsyncSession) -> User:
