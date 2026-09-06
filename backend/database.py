@@ -54,6 +54,16 @@ def _engine_setup(database_url: str) -> tuple[object, dict]:
     """
     kwargs: dict = {"echo": False}
     url = make_url(database_url)
+
+    # Async-only codebase: accept libpq-style `postgresql://` / `postgres://`
+    # URLs (the default form Neon and Supabase hand you) and upgrade them to
+    # the asyncpg driver, so the same connection string works whether it was
+    # copied for psql, the Space secret, or a local `python -m seed.import_seed`
+    # run. Without this, create_async_engine loads the sync psycopg2 driver
+    # and refuses with "The loaded 'psycopg2' is not async."
+    if url.drivername in ("postgres", "postgresql"):
+        url = url.set(drivername="postgresql+asyncpg")
+
     if url.drivername.startswith("sqlite"):
         return url, kwargs
 
