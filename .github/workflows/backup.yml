@@ -1,0 +1,48 @@
+# C5 rider: nightly database backup.
+#
+# The external Postgres (Part D of docs/deploy-huggingface.md) is the
+# platform's only durable state: accounts, progress, forks, analytics.
+# This workflow dumps it nightly and uploads the dump as a workflow
+# artifact (30-day retention). The restore procedure is documented in
+# the deploy doc — rehearse it once so a backup is a backup.
+#
+# Setup: repository secret DATABASE_URL with the full connection string
+# (sslmode=require included). Without the secret, runs no-op with a
+# notice instead of failing red.
+
+name: Nightly backup
+
+on:
+  schedule:
+    - cron: '17 3 * * *'  # 03:17 UTC daily, off the busy top-of-hour
+  workflow_dispatch: {}
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for DATABASE_URL secret
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::notice::DATABASE_URL secret is not set; skipping backup (no external database attached)."
+            exit 0
+          fi
+
+      - name: Dump database
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+          STAMP=$(date -u +%Y%m%d-%H%M%S)
+          pg_dump "$DATABASE_URL" --no-owner --format=custom --file="alldata-$STAMP.dump"
+          echo "dump_file=alldata-$STAMP.dump" >> "$GITHUB_ENV"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.dump_file }}
+          path: ${{ env.dump_file }}
+          retention-days: 30
+          if-no-files-found: error

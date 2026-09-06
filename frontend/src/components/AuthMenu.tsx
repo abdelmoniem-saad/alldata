@@ -128,6 +128,20 @@ export default function AuthMenu() {
             >
               My forks
             </Link>
+            {/* C4: the contribution loop's front door. */}
+            <Link
+              to="/contribute"
+              onClick={() => setPopoverOpen(false)}
+              style={{
+                display: 'block',
+                padding: '8px 10px',
+                fontSize: 12,
+                color: 'var(--color-text-secondary)',
+                borderRadius: 6,
+              }}
+            >
+              Contribute
+            </Link>
             {/* A2: profile, password, recovery code. */}
             <Link
               to="/settings"

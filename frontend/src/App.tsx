@@ -15,6 +15,7 @@ const TopicView = lazy(() => import('./pages/TopicView'))
 const LearningPath = lazy(() => import('./pages/LearningPath'))
 const Datasets = lazy(() => import('./pages/Datasets'))
 const Misconceptions = lazy(() => import('./pages/Misconceptions'))
+const Contribute = lazy(() => import('./pages/Contribute'))
 const UserGraph = lazy(() => import('./pages/UserGraph'))
 const ForkView = lazy(() => import('./pages/ForkView'))
 const ForkEditor = lazy(() => import('./pages/ForkEditor'))
@@ -51,8 +52,8 @@ export default function App() {
         <Route path="/datasets" element={<Datasets />} />
         {/* C2: consolidated misconceptions catalog. Public read, self-gating. */}
         <Route path="/misconceptions" element={<Misconceptions />} />
-        {/* C2: consolidated misconceptions catalog. Public read, self-gating. */}
-        <Route path="/misconceptions" element={<Misconceptions />} />
+        {/* C4: contribution loop front door. Public, static content. */}
+        <Route path="/contribute" element={<Contribute />} />
         {/* N: fork routes. More specific paths first so `/u/:username`
             doesn't shadow the fork sub-routes. */}
         <Route path="/u/:username/topic/:slug/edit" element={<ForkEditor />} />

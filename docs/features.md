@@ -447,6 +447,18 @@ Every decision pick now dispatches an SM-2 `recordReview` on its topic: correct 
 ### Guided tracks (C3)
 Curated reading orders over existing topics, defined in `seed/tracks.yaml` (principle 7: seed is the source of truth). `GET /api/tracks` resolves every slug against the live DB and drops unknown/unpublished ones, so a track can never dead-end mid-list; a track resolving to nothing never ships. Rendered as a "Guided tracks" section on `/path`. Three tracks ship: A/B testing from scratch, Read any regression output, Bayes without tears. *(cycle: C3)* `code: seed/tracks.yaml`, `backend/api/tracks.py`, `frontend/src/pages/LearningPath.tsx`.
 
+### Contribution page (C4)
+`/contribute`: the fork → edit → suggest → review loop explained for a first-time contributor, the quality bar (parse clean, six-gear shape, anti-template rules), and pointers to where to start. Linked from the account menu. *(cycle: C4)* `code: frontend/src/pages/Contribute.tsx`.
+
+### Suggest gate on parse warnings (C4)
+The fork editor's parser warnings render as an amber banner above the source pane (not just the preview strip), and "Suggest to master" is disabled with an explanatory tooltip until they're fixed: a contributor cannot propose content that would fail the strict import. *(cycle: C4)* `code: frontend/src/pages/ForkEditor.tsx`.
+
+### Review-queue filters (C4)
+The review queue list gains a pending/resolved/all cut and a title/author/slug search, both client-side over the already-loaded queue. *(cycle: C4)* `code: frontend/src/pages/ReviewQueue.tsx`.
+
+### Nightly database backup (C5)
+`.github/workflows/backup.yml`: nightly `pg_dump --format=custom` of the external Postgres to a 30-day artifact, `workflow_dispatch` for on-demand runs, clean no-op without the `DATABASE_URL` secret. Restore procedure in `docs/deploy-huggingface.md`. *(cycle: C5)* `code: .github/workflows/backup.yml`.
+
 ### Self-healing column adds
 `create_tables()` walks every mapped table on every run and ALTERs missing columns. The "no migrations" ergonomic survives every new column the team ships. *(cycle: J3)* `code: seed/import_seed.py` (`_self_heal_columns`).
 

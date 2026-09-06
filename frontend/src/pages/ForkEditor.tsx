@@ -295,9 +295,10 @@ export default function ForkEditor() {
           </div>
           <button
             onClick={handleSuggest}
-            disabled={suggesting || dirty}
+            disabled={suggesting || dirty || warnings.length > 0}
             title={
               dirty ? 'Save your changes first, the suggestion snapshots the saved fork.'
+                : warnings.length > 0 ? 'Fix the parser warnings first: a suggestion with warnings would fail the strict import.'
                 : suggestionStatus === 'pending' ? 'Update the pending suggestion with the current saved fork.'
                 : suggestionStatus === 'accepted' ? 'Your fork was merged. Suggesting again creates a fresh proposal from your current fork.'
                 : 'Propose your fork as the new master content.'
@@ -307,12 +308,13 @@ export default function ForkEditor() {
               border: '1px solid var(--color-accent)',
               background: 'transparent',
               color: 'var(--color-accent)',
-              cursor: (suggesting || dirty) ? 'default' : 'pointer',
-              opacity: (suggesting || dirty) ? 0.5 : 1,
+              cursor: (suggesting || dirty || warnings.length > 0) ? 'default' : 'pointer',
+              opacity: (suggesting || dirty || warnings.length > 0) ? 0.5 : 1,
             }}
           >
             {suggesting
               ? 'Working…'
+              : warnings.length > 0 ? 'Fix warnings to suggest'
               : suggestionStatus === 'pending' ? 'Update suggestion'
               : 'Suggest to master'}
           </button>
@@ -353,6 +355,33 @@ export default function ForkEditor() {
             reviewedAt={reviewNoteMeta.at}
             status={suggestionStatus}
           />
+        </div>
+      )}
+
+      {/* C4: warn banner lives where the author types, not just on the
+          preview: parse warnings gate the Suggest action (below), so a
+          contributor can't propose content that would fail --strict. */}
+      {warnings.length > 0 && (
+        <div style={{
+          margin: '0 16px 12px',
+          padding: '10px 14px',
+          borderRadius: 'var(--radius-md)',
+          background: 'rgba(245, 158, 11, 0.08)',
+          border: '1px solid rgba(245, 158, 11, 0.35)',
+          fontSize: 13,
+        }}>
+          <strong style={{ color: 'var(--color-text)' }}>
+            {warnings.length} parser warning{warnings.length === 1 ? '' : 's'}
+          </strong>
+          <span style={{ color: 'var(--color-text-secondary)' }}>
+            {' '}— fix these before suggesting; a suggestion with warnings
+            would fail the strict import.
+          </span>
+          <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {warnings.map((w, i) => (
+              <div key={i} style={{ color: 'var(--color-text-secondary)', fontSize: 12 }}>⚠ {w}</div>
+            ))}
+          </div>
         </div>
       )}
 

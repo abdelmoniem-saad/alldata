@@ -27,6 +27,11 @@ export default function ReviewQueue() {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState('')
+  // C4: queue filters. The whole list is already in memory; filtering is
+  // client-side. Domain isn't on the wire shape, so the filters are status
+  // (the reviewer's main cut) plus a title/author/slug search.
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'resolved'>('all')
+  const [query, setQuery] = useState('')
 
   // Role gate. The route is registered without a guard so an anonymous
   // visitor still gets a clear "sign in" message instead of a redirect
@@ -101,6 +106,22 @@ export default function ReviewQueue() {
     }
   }, [detail, busy, note, refresh])
 
+  // C4: client-side queue filters (status cut + title/author/slug search).
+  const filtered = useMemo(() => {
+    if (!list) return []
+    const q = query.trim().toLowerCase()
+    return list.filter(row => {
+      if (statusFilter === 'pending' && row.status !== 'pending') return false
+      if (statusFilter === 'resolved' && row.status === 'pending') return false
+      if (q && !(
+        row.topic_title.toLowerCase().includes(q) ||
+        row.topic_slug.toLowerCase().includes(q) ||
+        row.suggester_display_name.toLowerCase().includes(q)
+      )) return false
+      return true
+    })
+  }, [list, statusFilter, query])
+
   const onReject = useCallback(async () => {
     if (!detail || busy) return
     setBusy(true)
@@ -173,6 +194,49 @@ export default function ReviewQueue() {
         }}>
           Review queue
         </h2>
+        {/* C4: status cut + search, client-side over the loaded list. */}
+        {list != null && list.length > 0 && (
+          <div style={{ marginBottom: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 4 }}>
+              {(['pending', 'resolved', 'all'] as const).map(f => (
+                <button
+                  key={f}
+                  onClick={() => setStatusFilter(f)}
+                  style={{
+                    flex: 1,
+                    padding: '5px 8px',
+                    fontSize: 11,
+                    fontFamily: 'var(--font-mono)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    borderRadius: 6,
+                    border: '1px solid ' + (statusFilter === f ? 'var(--color-accent)' : 'var(--color-border-subtle)'),
+                    background: statusFilter === f ? 'var(--color-accent-subtle)' : 'transparent',
+                    color: statusFilter === f ? 'var(--color-accent)' : 'var(--color-text-muted)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+            <input
+              type="text"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              placeholder="Filter by topic or author"
+              style={{
+                padding: '6px 10px',
+                fontSize: 12,
+                borderRadius: 6,
+                border: '1px solid var(--color-border-subtle)',
+                background: 'var(--color-bg-secondary)',
+                color: 'var(--color-text)',
+                fontFamily: 'inherit',
+              }}
+            />
+          </div>
+        )}
         {list == null ? (
           <p style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>Loading…</p>
         ) : list.length === 0 ? (
@@ -181,7 +245,7 @@ export default function ReviewQueue() {
           </p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {list.map(row => (
+            {filtered.map(row => (
               <button
                 key={row.id}
                 onClick={() => setSearchParams({ id: row.id })}
@@ -211,6 +275,11 @@ export default function ReviewQueue() {
               </button>
             ))}
           </div>
+        )}
+        {list != null && list.length > 0 && filtered.length === 0 && (
+          <p style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>
+            No suggestions match the filters.
+          </p>
         )}
         {error && (
           <p style={{ color: 'var(--color-advanced, #ef4444)', fontSize: 12, marginTop: 12 }}>
