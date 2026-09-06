@@ -43,7 +43,7 @@ async def list_misconceptions(db: DB):
         .select_from(Misconception)
         .join(Topic, Topic.id == Misconception.topic_id)
         .where(Topic.status == "published")
-        .order_by(Topic.domain, Topic.title, Misconception.sort_order)
+        .order_by(Topic.domain, Topic.title, Misconception.created_at)
     )
     return [
         MisconceptionEntry(
