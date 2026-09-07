@@ -12,7 +12,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.models.content_block import ContentBlock
 from backend.models.edge import EdgeType, TopicEdge
-from backend.models.misconception import Misconception
 from backend.models.progress import UserProgress
 from backend.models.topic import Topic
 from backend.schemas.graph import (
@@ -38,15 +37,24 @@ async def _get_content_counts(db: AsyncSession, topic_ids: list) -> dict:
 
 
 async def _get_misconception_counts(db: AsyncSession, topic_ids: list) -> dict:
-    """Get misconception counts per topic. G7: the ForceGraph uses this to
-    render a small "!" marker so the misconception-aware claim is visible
-    before a user enters the topic."""
+    """Count inline misconception blocks per topic.
+
+    C6 fix: this used to count rows in the `misconceptions` table, which is
+    empty on every real database — the whole catalog authors misconceptions
+    as `misconception_inline` content blocks (the legacy non-inline form
+    that populates the table is used by zero topics), so every node reported
+    0 forever. Now it counts the same blocks the topic pages and the C2
+    misconceptions catalog render.
+    """
     if not topic_ids:
         return {}
     result = await db.execute(
-        select(Misconception.topic_id, func.count(Misconception.id))
-        .where(Misconception.topic_id.in_(topic_ids))
-        .group_by(Misconception.topic_id)
+        select(ContentBlock.topic_id, func.count(ContentBlock.id))
+        .where(
+            ContentBlock.block_type == "misconception_inline",
+            ContentBlock.topic_id.in_(topic_ids),
+        )
+        .group_by(ContentBlock.topic_id)
     )
     return {row[0]: row[1] for row in result}
 

@@ -135,6 +135,19 @@ or [Supabase]):
 Nothing else changes: lessons still live in `seed/` (re-imported on boot),
 and content updates still deploy with `git push hf main`.
 
+**Editing seed content on a live deployment.** Boot imports with the
+skip-if-exists default, so a pushed `content.md` edit updates the *repo*
+but not an already-populated database. Two ways to land it:
+
+- One-off: run `python -m seed.import_seed --refresh-content` (locally with
+  `DATABASE_URL` pointing at the production DB, or via a Space restart after
+  a temporary change). It replaces every seeded topic's content with a fresh
+  parse of the on-disk markdown — idempotent, safe to re-run.
+- Standing: set a Space secret `CONTENT_REFRESH_ON_BOOT=true`. Every boot
+  then runs the same refresh automatically, so `git push hf main` alone
+  ships content edits. It costs one full reparse per restart, which is why
+  it's off by default.
+
 ## Keep-alive (optional, already wired)
 
 `.github/workflows/keepalive.yml` pings `/api/health` every 30 minutes from

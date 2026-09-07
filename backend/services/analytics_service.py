@@ -6,13 +6,18 @@ no fingerprints. The only thing this can answer is "which topics do
 readers open and run, and when", which is what steers the content push.
 
 Writes use select-then-increment rather than a dialect-specific upsert:
-analytics traffic is far below the traffic that would make the race
-matter, and the portable version works identically on SQLite and Postgres.
+the portable version works identically on SQLite and Postgres. The create
+race it implies is real (C6: two beacons for the same counter in quick
+succession — a learner re-picking a decision — 500'd the loser with a
+UNIQUE-constraint violation), so it is absorbed explicitly: the insert
+runs in a savepoint, and on conflict the count folds into the row the
+other request created.
 """
 
 from datetime import date, timedelta
 
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.models.topic import Topic
@@ -22,18 +27,39 @@ EVENT_KINDS = {"topic_view", "run_click", "decision_pick"}
 
 
 async def record_event(db: AsyncSession, kind: str, slug: str) -> None:
-    """Increment the (today, kind, slug) counter, creating the row if new."""
+    """Increment the (today, kind, slug) counter, creating the row if new.
+
+    The create race: two simultaneous first-of-day beacons both select
+    "no row" and both INSERT. The loser now rolls back to the savepoint
+    and folds its count into the winner's row instead of dying on the
+    unique constraint (C6, surfaced by the decision e2e spec).
+    """
     day = date.today()
-    row = (await db.execute(
-        select(UsageEvent).where(
-            UsageEvent.day == day,
-            UsageEvent.kind == kind,
-            UsageEvent.slug == slug,
-        )
-    )).scalar_one_or_none()
-    if row is None:
-        db.add(UsageEvent(day=day, kind=kind, slug=slug, count=1))
-    else:
+    try:
+        async with db.begin_nested():
+            row = (await db.execute(
+                select(UsageEvent).where(
+                    UsageEvent.day == day,
+                    UsageEvent.kind == kind,
+                    UsageEvent.slug == slug,
+                )
+            )).scalar_one_or_none()
+            if row is None:
+                db.add(UsageEvent(day=day, kind=kind, slug=slug, count=1))
+                await db.flush()
+            else:
+                row.count += 1
+    except IntegrityError:
+        # Lost the create race: the winner's row is committed by now, so a
+        # plain re-select finds it. (The savepoint rollback also reverted
+        # the loser's colliding INSERT, keeping the session usable.)
+        row = (await db.execute(
+            select(UsageEvent).where(
+                UsageEvent.day == day,
+                UsageEvent.kind == kind,
+                UsageEvent.slug == slug,
+            )
+        )).scalar_one()
         row.count += 1
 
 

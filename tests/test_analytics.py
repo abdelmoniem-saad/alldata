@@ -112,3 +112,77 @@ class TestTrending:
 
         rows = await analytics_service.trending_topics(db, days=7, limit=5)
         assert rows == []
+
+
+class TestCreateRace:
+    """C6: two beacons for the same counter in quick succession (a learner
+    re-picking a decision fires two `decision_pick` beacons) used to 500
+    the loser with a UNIQUE-constraint IntegrityError — surfaced by the
+    C6e decision e2e spec. The loser must fold its count into the row the
+    winner created instead."""
+
+    async def test_lost_create_race_folds_into_winner(
+        self, db: AsyncSession, monkeypatch
+    ):
+        from datetime import date
+
+        from backend.services import analytics_service
+
+        day = date.today()
+        kind, slug = "decision_pick", "race-topic"
+
+        # The winner: a concurrent request already committed today's row.
+        db.add(UsageEvent(day=day, kind=kind, slug=slug, count=1))
+        await db.commit()
+
+        # The loser's stale read: it selected before the winner committed,
+        # so its first SELECT saw no row. Rig exactly one empty read; the
+        # real INSERT then collides with the winner and the recovery path
+        # must fold the count in.
+        real_execute = db.execute
+        state = {"rigged": True}
+
+        class _StaleEmptyResult:
+            def scalar_one_or_none(self):
+                return None
+
+        async def rigged_execute(*args, **kwargs):
+            if state["rigged"]:
+                state["rigged"] = False
+                return _StaleEmptyResult()
+            return await real_execute(*args, **kwargs)
+
+        monkeypatch.setattr(db, "execute", rigged_execute)
+
+        await analytics_service.record_event(db, kind, slug)
+        await db.commit()
+
+        row = (await real_execute(
+            select(UsageEvent).where(
+                UsageEvent.day == day,
+                UsageEvent.kind == kind,
+                UsageEvent.slug == slug,
+            )
+        )).scalar_one()
+        assert row.count == 2
+
+    async def test_sequential_beacons_still_accumulate(self, db: AsyncSession):
+        """The plain path is unchanged: repeat beacons increment the row."""
+        from datetime import date
+
+        from backend.services import analytics_service
+
+        day = date.today()
+        await analytics_service.record_event(db, "topic_view", "seq-topic")
+        await analytics_service.record_event(db, "topic_view", "seq-topic")
+        await db.commit()
+
+        row = (await db.execute(
+            select(UsageEvent).where(
+                UsageEvent.day == day,
+                UsageEvent.kind == "topic_view",
+                UsageEvent.slug == "seq-topic",
+            )
+        )).scalar_one()
+        assert row.count == 2
+

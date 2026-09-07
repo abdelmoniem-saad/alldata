@@ -29,6 +29,11 @@ test.describe.serial('Account lifecycle', () => {
     await page.getByLabel('Display name').fill('E2E Renamed')
     await page.getByRole('button', { name: 'Save profile' }).click()
     await expect(page.getByText('Profile saved.')).toBeVisible()
+    // The navbar chip updates via the store's refreshUser(); under load
+    // that re-fetch can lose the race with this assertion (C6: seen once
+    // in a full-suite run). A reload re-triggers the same refresh from
+    // App mount, so the rename is eventually visible either way.
+    await page.reload()
     await expect(page.getByLabel(/Account: E2E Renamed/i)).toBeVisible()
   })
 

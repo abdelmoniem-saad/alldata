@@ -1,7 +1,15 @@
+from pathlib import Path
+
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
+    # Seed content. C6: SEED_DIR is env-overridable so the e2e harness can
+    # point the importer and the merge-back sync at a throwaway copy — an
+    # accepted suggestion writes the merged content.md back to the seed
+    # tree, and that must never land in the repo's working tree.
+    seed_dir: Path = Path(__file__).resolve().parent.parent / "seed"
+
     # Database
     database_url: str = "sqlite+aiosqlite:///./alldata.db"
 
@@ -66,6 +74,15 @@ class Settings(BaseSettings):
     # registered; the seed importer promotes it to ADMIN on every boot
     # (idempotent). Leave empty for deployments that don't need one.
     admin_email: str | None = None
+    # C6a: content refresh on boot. Boot imports with the skip-if-exists
+    # default, so an edit to a seed content.md never reached a live
+    # deployment — the operator had to run `python -m seed.import_seed
+    # --refresh-content` by hand. Setting CONTENT_REFRESH_ON_BOOT=true
+    # makes every boot run the same delete-and-reparse refresh for every
+    # seeded topic (idempotent). Off by default: a refresh is a full
+    # reparse plus a rewrite of every content row, which a mere restart
+    # bounce should never pay for.
+    content_refresh_on_boot: bool = False
 
     model_config = {"env_prefix": "", "case_sensitive": False}
 

@@ -32,26 +32,11 @@ export interface DecisionEvent {
   pickedAt: number
 }
 
-/**
- * SM-2 review record for a topic. K3.
- *
- * `ease` is the ease factor (clamped to ≥ 1.3). `interval` is the gap in days
- * since the last review; the next review is due at `lastReviewedAt + interval`.
- * `quality` (passed to `recordReview`) is the SM-2 0–5 self-rating; we only
- * surface three values via the UI: 1 ("show me again"), 3 ("coming back"), 5
- * ("I remember").
- */
-export interface ReviewRecord {
-  ease: number
-  /** Days. */
-  interval: number
-  /** Epoch ms, last reviewed; on first completion, this is set so the first
-   *  review fires after `interval` days. */
-  lastReviewedAt: number
-  /** Epoch ms, when the next review becomes due. Materialized for cheap
-   *  selector reads. */
-  dueAt: number
-}
+// C6c: the SM-2 record + step function live in `lib/sm2.ts` (pure module,
+// unit-tested without the store's localStorage binding). Re-exported here
+// so existing imports keep working.
+export type { ReviewRecord } from '../lib/sm2'
+import { sm2Step, type ReviewRecord } from '../lib/sm2'
 
 interface ProgressState {
   completedSlugs: string[]
@@ -141,44 +126,6 @@ interface ProgressState {
 
   /** M5: flip the global code-pair preferred language. */
   setPreferredCodeLang: (lang: 'python' | 'r') => void
-}
-
-/**
- * SM-2 step. Returns the next review record given the current one and a
- * 0–5 quality rating. Standard SM-2:
- *   - quality < 3 → reset interval, keep ease
- *   - quality ≥ 3 → grow interval (1, 6, prev * ease, ...) and adjust ease
- *
- * `lastReviewedAt` is set to `now` so `dueAt` materializes off the new step.
- */
-function sm2Step(prev: ReviewRecord, quality: number, now: number): ReviewRecord {
-  const q = Math.max(0, Math.min(5, Math.round(quality)))
-  let { ease, interval } = prev
-
-  // Ease update, applied for any non-failure quality. The 0.1/0.08/0.02
-  // constants are the original SM-2 paper values.
-  if (q >= 3) {
-    ease = ease + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02))
-    if (ease < 1.3) ease = 1.3
-  }
-
-  if (q < 3) {
-    interval = 1
-  } else if (interval === 0) {
-    interval = 1
-  } else if (interval === 1) {
-    interval = 6
-  } else {
-    interval = Math.round(interval * ease)
-  }
-
-  const dayMs = 24 * 60 * 60 * 1000
-  return {
-    ease,
-    interval,
-    lastReviewedAt: now,
-    dueAt: now + interval * dayMs,
-  }
 }
 
 /**

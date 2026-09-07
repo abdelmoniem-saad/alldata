@@ -618,7 +618,10 @@ def _validate_topic_blocks(blocks: list[dict], topic_name: str) -> None:
             )
 
 
-SEED_DIR = Path(__file__).parent
+# C6: the seed root honors the SEED_DIR env override (via settings) so the
+# e2e harness can redirect every read AND the merge-back's write-back to a
+# throwaway copy of this tree. Default: this package's directory.
+SEED_DIR = settings.seed_dir
 
 
 async def create_tables():
@@ -1447,9 +1450,14 @@ async def main(strict: bool = False, report: bool = False, refresh_content: bool
     `--report` prints the B3 content-coverage report after the import.
     `--refresh-content` replaces DB content from the on-disk markdown for
     every seeded topic (the migration story for content.md edits; boot
-    itself never touches existing content).
+    itself never touches existing content). C6a: deployments that want the
+    refresh on every boot set CONTENT_REFRESH_ON_BOOT=true, which turns
+    the refresh on implicitly — no flag needed.
     """
     _WARNINGS.clear()
+
+    if settings.content_refresh_on_boot:
+        refresh_content = True
 
     print("Creating database tables...")
     await create_tables()

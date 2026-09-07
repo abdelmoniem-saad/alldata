@@ -24,6 +24,9 @@ export default function globalSetup() {
       ...process.env,
       DATABASE_URL: 'sqlite+aiosqlite:///./e2e.db',
       SECRET_KEY: 'e2e-secret-key-not-for-production',
+      // C6: the config module pointed SEED_DIR at a throwaway copy of the
+      // seed tree; the importer must read (and merge-back must write) there.
+      SEED_DIR: process.env.SEED_DIR,
     },
   })
 }

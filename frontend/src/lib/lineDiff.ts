@@ -23,9 +23,12 @@ export interface DiffLine {
 export function lineDiff(left: string, right: string): DiffLine[] {
   // Split on \n and keep blank trailing lines if present (so the diff
   // mirrors the source exactly). Lines never carry trailing '\n's in
-  // the returned list, the renderer adds spacing as needed.
-  const a = left.split('\n')
-  const b = right.split('\n')
+  // the returned list, the renderer adds spacing as needed. A completely
+  // empty string is treated as an empty document — no phantom blank line
+  // (C6c: `'' .split('\n')` would otherwise yield [''] and every diff
+  // against an empty side would grow a stray blank row).
+  const a = left === '' ? [] : left.split('\n')
+  const b = right === '' ? [] : right.split('\n')
   const m = a.length
   const n = b.length
 

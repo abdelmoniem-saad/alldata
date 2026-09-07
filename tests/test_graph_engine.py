@@ -4,6 +4,7 @@ import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.models.content_block import BlockType, ContentBlock
 from backend.models.edge import EdgeType, TopicEdge
 from backend.models.topic import Topic, TopicStatus
 from backend.services import graph_engine
@@ -88,7 +89,6 @@ class TestSubgraph:
 
         await _create_edge(db, a, b)
         await _create_edge(db, b, c)
-
         graph = await graph_engine.get_subgraph(db, "center", depth=2)
         slugs = {n.slug for n in graph.nodes}
         assert "distant" in slugs
@@ -147,3 +147,52 @@ class TestLeadsTo:
         a = await _create_topic(db, "leaf", test_user.id)
         leads = await graph_engine.get_leads_to(db, "leaf")
         assert leads == []
+
+class TestMisconceptionCounts:
+    """C6b: node.misconception_count counts inline misconception blocks.
+
+    The old implementation counted the `misconceptions` table, which no
+    real database populates, so every node reported 0 forever. The count
+    must now come from `misconception_inline` content blocks — the same
+    rows the topic page and the misconceptions catalog render.
+    """
+
+    async def _add_inline_misconception(self, db: AsyncSession, topic: Topic):
+        db.add(
+            ContentBlock(
+                topic_id=topic.id,
+                block_type=BlockType.MISCONCEPTION_INLINE.value,
+                content="Misconception body.",
+                sort_order=99,
+            )
+        )
+        await db.flush()
+
+    async def test_counts_inline_misconception_blocks(self, db: AsyncSession, test_user):
+        a = await _create_topic(db, "mc-topic-a", test_user.id)
+        b = await _create_topic(db, "mc-topic-b", test_user.id)
+        await self._add_inline_misconception(db, a)
+        # Two in topic b: counts must aggregate per topic, not just flag presence.
+        await self._add_inline_misconception(db, b)
+        await self._add_inline_misconception(db, b)
+
+        graph = await graph_engine.get_full_graph(db, status_filter="published")
+        counts = {n.slug: n.misconception_count for n in graph.nodes}
+        assert counts["mc-topic-a"] == 1
+        assert counts["mc-topic-b"] == 2
+
+    async def test_other_block_types_do_not_count(self, db: AsyncSession, test_user):
+        a = await _create_topic(db, "mc-topic-c", test_user.id)
+        db.add(
+            ContentBlock(
+                topic_id=a.id,
+                block_type=BlockType.MARKDOWN.value,
+                content="Just a paragraph.",
+            )
+        )
+        await db.flush()
+
+        graph = await graph_engine.get_full_graph(db, status_filter="published")
+        node = next(n for n in graph.nodes if n.slug == "mc-topic-c")
+        assert node.misconception_count == 0
+

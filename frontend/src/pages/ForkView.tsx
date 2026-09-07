@@ -168,16 +168,6 @@ export default function ForkView() {
                   status={fork.suggestion_status}
                 />
               )}
-              {/* B2: the author sees the reviewer's note on accept and
-                  reject alike, so a thank-you note can land too. */}
-              {fork.suggestion_review_note && (
-                <ReviewerNotePanel
-                  note={fork.suggestion_review_note}
-                  reviewerName={fork.suggestion_reviewer_name}
-                  reviewedAt={fork.suggestion_reviewed_at}
-                  status={fork.suggestion_status}
-                />
-              )}
               <h1 style={{
                 fontSize: 'clamp(32px, 5vw, 56px)',
                 fontWeight: 700,

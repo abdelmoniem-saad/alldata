@@ -16,12 +16,14 @@ from pathlib import Path
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.config import settings
 from backend.models.fork import TopicFork
 from backend.models.topic import Topic
 from backend.models.user import User
 
-# `backend/services/fork_service.py` → project root → `seed/topics`.
-_TOPICS_DIR = Path(__file__).resolve().parents[2] / "seed" / "topics"
+# C6: reads through settings.seed_dir so an env-overridden SEED_DIR (the
+# e2e harness's throwaway copy) is honored here too.
+_TOPICS_DIR = settings.seed_dir / "topics"
 
 
 def _read_topic_source(topic: Topic) -> str:
