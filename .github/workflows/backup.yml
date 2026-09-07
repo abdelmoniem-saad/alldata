@@ -22,15 +22,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check for DATABASE_URL secret
+        id: check
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           if [ -z "$DATABASE_URL" ]; then
             echo "::notice::DATABASE_URL secret is not set; skipping backup (no external database attached)."
-            exit 0
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Dump database
+        # C6 rider fix: `exit 0` in the check step only ended that step —
+        # the dump ran anyway and pg_dump died against a local socket that
+        # doesn't exist on the runner. The condition belongs here.
+        if: steps.check.outputs.skip != 'true'
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
@@ -40,6 +47,7 @@ jobs:
           echo "dump_file=alldata-$STAMP.dump" >> "$GITHUB_ENV"
 
       - name: Upload artifact
+        if: steps.check.outputs.skip != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.dump_file }}
