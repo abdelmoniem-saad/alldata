@@ -9,6 +9,10 @@ set -e
 # mint a random one per boot (sessions reset on restart — fine for a trial).
 export SECRET_KEY="${SECRET_KEY:-$(python -c 'import secrets; print(secrets.token_hex(32))')}"
 export SANDBOX_ALLOW_LOCAL_FALLBACK=true
+# C7: R is installed in the Space image (Dockerfile), so the executor's R
+# path is real here. The capabilities probe reports R via this flag or a
+# Rscript on PATH; setting both keeps the UI's R toggle honest.
+export SANDBOX_R_ENABLED="${SANDBOX_R_ENABLED:-true}"
 
 # Build the content database if this container doesn't have one yet. HF storage
 # is ephemeral, so a fresh container re-seeds from seed/ on first boot. With an

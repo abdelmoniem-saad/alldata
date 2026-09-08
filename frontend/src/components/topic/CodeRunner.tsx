@@ -321,6 +321,8 @@ export default function CodeRunner({
             onChange={e => setCode(e.target.value)}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
+            // C7: axe flagged this as the page's one unlabeled form control.
+            aria-label={`Editable ${lang} code, Ctrl+Enter to run`}
             onKeyDown={e => {
               // Ctrl/Cmd + Enter to run
               if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {

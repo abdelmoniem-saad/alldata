@@ -1,0 +1,18 @@
+{
+  "name": "AllData — Statistics is a graph, not a textbook.",
+  "short_name": "AllData",
+  "description": "A statistics learning surface where every concept is a guided simulation. Commit to an answer, watch the consequence play out on a live visualization, then read why.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#14b8a6",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

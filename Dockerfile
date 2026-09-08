@@ -14,7 +14,17 @@ COPY frontend/ ./
 RUN npm run build      # -> /app/frontend/dist
 
 # ---------- Stage 2: backend + runtime ----------
+
+# C7: R joins the runtime. Lessons ship R twins (pair_id blocks) and the
+# executor's local fallback runs `Rscript` directly on this interpreter's
+# host — so R must be installed here for the R toggle to be honest.
+# --no-install-recommends keeps base R lean; lesson R code is base R.
 FROM python:3.12-slim
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends r-base \
+ && rm -rf /var/lib/apt/lists/*
+ENV SANDBOX_R_ENABLED=true
 
 # Backend dependencies + the scientific stack the lessons execute against
 # (numpy/pandas/scipy/... — code runs in THIS interpreter via the local
