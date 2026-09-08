@@ -31,6 +31,15 @@
   min-height: 0;
 }
 
+/* C8: Visual mode with the preview collapsed — the editor takes the full
+   width, the page reads as one document instead of two half-panes. */
+.fork-editor__panes--single {
+  grid-template-columns: 1fr;
+}
+.fork-editor__panes--single .fork-editor__source {
+  border-right: none;
+}
+
 .fork-editor__source {
   border-right: 1px solid var(--color-border-subtle);
   display: flex;
@@ -126,6 +135,83 @@
 
 /* W3: push the reference + live-preview hint to the trailing edge. */
 .fork-tb__spacer { flex: 1 1 auto; }
+
+.fork-tb__btn--accent {
+  border-color: color-mix(in srgb, var(--color-accent) 45%, transparent);
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+/* ── C8: the Insert menu (replaces the flat button strip) ─────────────────── */
+.fork-ins__wrap { position: relative; }
+
+.fork-ins__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: transparent;
+}
+
+.fork-ins__menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 41;
+  min-width: 280px;
+  max-height: min(70vh, 480px);
+  overflow-y: auto;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 10px;
+  padding: 6px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+}
+
+.fork-ins__group + .fork-ins__group {
+  border-top: 1px solid var(--color-border-subtle);
+  margin-top: 4px;
+  padding-top: 4px;
+}
+
+.fork-ins__group-name {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  padding: 6px 8px 2px;
+}
+
+.fork-ins__item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 100%;
+  text-align: left;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.fork-ins__item:hover { background: var(--color-bg); }
+.fork-ins__item:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -2px; }
+
+.fork-ins__item-label { font-size: 13px; font-weight: 500; }
+.fork-ins__item:hover .fork-ins__item-label { color: var(--color-accent); }
+
+.fork-ins__item-hint { font-size: 11.5px; color: var(--color-text-muted); }
+
+.fork-ins__ref {
+  margin-top: 4px;
+  padding: 7px 8px 4px;
+  border-top: 1px solid var(--color-border-subtle);
+  font-size: 11px;
+  color: var(--color-text-muted);
+  cursor: help;
+}
 
 .fork-tb__help { cursor: help; }
 
@@ -224,6 +310,43 @@
   tab-size: 2;
 }
 .block-list__prose:hover { border-color: var(--color-border-subtle); }
+
+/* C8: the one-time interaction hint, dismissed per browser. */
+.block-list__hint {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 30%, transparent);
+  border-radius: var(--radius, 6px);
+  background: color-mix(in srgb, var(--color-accent) 7%, transparent);
+  font-size: 12.5px;
+  color: var(--color-text-secondary);
+}
+.block-list__hint span { flex: 1; }
+.block-list__hint button {
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 6px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 11.5px;
+  cursor: pointer;
+}
+.block-list__hint button:hover { border-color: var(--color-accent); color: var(--color-accent); }
+
+/* C8: the layer selector, now a labelled field inside the block editor. */
+.block-card__layer-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+.block-card__layer-row .block-card__layer { margin: 0; width: auto; }
+
 .block-list__prose:focus {
   outline: none;
   border-color: var(--color-accent);
@@ -268,7 +391,49 @@
   white-space: nowrap;
 }
 .block-card__spacer { flex: 1 1 auto; }
-.block-card__actions { display: flex; gap: 4px; align-items: center; }
+.block-card__actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+/* ── C8: calm editor, chrome-on-demand ──────────────────────────────────────
+   Row controls stay invisible until the row is hovered or keyboard-focused,
+   so the at-rest page reads as the document, not as a cockpit. Touch and
+   keyboard users are covered: tapping/focusing a field triggers :focus-within
+   and reveals the controls. */
+.block-row__handle {
+  opacity: 0;
+  transition: opacity var(--transition-fast, 0.15s);
+}
+.block-card__actions {
+  opacity: 0;
+  transition: opacity var(--transition-fast, 0.15s);
+}
+.block-row:hover .block-row__handle,
+.block-row:focus-within .block-row__handle,
+.block-row:hover .block-card__actions,
+.block-row:focus-within .block-card__actions {
+  opacity: 1;
+}
+@media (hover: none) {
+  /* No hover on touch: keep the controls faintly present instead of hidden. */
+  .block-row__handle,
+  .block-card__actions { opacity: 0.55; }
+}
+
+/* Prose reads as document text at rest; the field affordance appears on
+   hover/focus. (The textarea itself is unchanged logic-wise.) */
+.block-list__prose {
+  border-color: transparent;
+  background: transparent;
+  font-family: var(--font-sans, inherit);
+  font-size: 14.5px;
+}
+.block-list__prose:hover {
+  border-color: var(--color-border-subtle);
+  background: var(--color-bg);
+}
 .block-card__layer {
   font-family: var(--font-mono);
   font-size: 10.5px;

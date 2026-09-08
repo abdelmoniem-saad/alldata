@@ -31,7 +31,7 @@ const PREVIEW_DEBOUNCE_MS = 400
 
 export default function ForkEditor() {
   const { username, slug } = useParams<{ username: string; slug: string }>()
-  const { user, token } = useAuthStore()
+  const { user, token, requestSignIn } = useAuthStore()
   const navigate = useNavigate()
 
   // `/u/me/topic/...` resolves `me` to the signed-in user's display_name.
@@ -63,6 +63,15 @@ export default function ForkEditor() {
   // X3: Visual (block editor) vs Source (raw markdown). Visual hides the
   // directive plumbing; Source is the escape hatch. Both edit `source`.
   const [mode, setMode] = useState<'visual' | 'source'>('visual')
+  // C8: deep-linked to the editor while signed out. A themed gate card with a
+  // resume-on-sign-in button instead of the old bare error string; the load
+  // effect re-runs when the token lands, so no re-click is needed.
+  const [needsAuth, setNeedsAuth] = useState(false)
+  // C8: in Visual mode the preview pane collapses by default — the block
+  // forms already read like the final page, so the second pane was mostly
+  // duplicated density. Source mode always previews (raw markdown needs it).
+  const [showPreview, setShowPreview] = useState(false)
+  const showPreviewPane = mode === 'source' || showPreview
 
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
@@ -108,10 +117,11 @@ export default function ForkEditor() {
   useEffect(() => {
     if (!effectiveUsername || !slug) return
     if (!token) {
-      setError('Sign in to edit a fork.')
+      setNeedsAuth(true)
       setLoading(false)
       return
     }
+    setNeedsAuth(false)
     setLoading(true)
     setError(null)
     api.getFork(effectiveUsername, slug)
@@ -232,6 +242,26 @@ export default function ForkEditor() {
     )
   }
 
+  if (needsAuth) {
+    return (
+      <div className="animate-fade-in" style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        justifyContent: 'center', height: '60vh', gap: 16, padding: 24,
+      }}>
+        <p style={{
+          color: 'var(--color-text)', fontWeight: 500, textAlign: 'center',
+          maxWidth: 420, lineHeight: 1.6, margin: 0,
+        }}>
+          Sign in to edit this fork. It's free, and your copy saves with your
+          account.
+        </p>
+        <button type="button" className="btn" onClick={requestSignIn}>
+          Sign in
+        </button>
+      </div>
+    )
+  }
+
   if (error) {
     return (
       <div className="animate-fade-in" style={{
@@ -293,6 +323,18 @@ export default function ForkEditor() {
               Source
             </button>
           </div>
+          {/* C8: preview toggle, Visual mode only (Source always previews). */}
+          {mode === 'visual' && (
+            <button
+              type="button"
+              className={`fork-mode__btn${showPreview ? ' fork-mode__btn--on' : ''}`}
+              onClick={() => setShowPreview(v => !v)}
+              aria-pressed={showPreview}
+              title="Show the rendered preview pane beside the editor"
+            >
+              Preview
+            </button>
+          )}
           <button
             onClick={handleSuggest}
             disabled={suggesting || dirty || warnings.length > 0}
@@ -385,8 +427,8 @@ export default function ForkEditor() {
         </div>
       )}
 
-      {/* Two panes */}
-      <div className="fork-editor__panes">
+      {/* Two panes; Visual mode collapses the preview unless toggled on. */}
+      <div className={`fork-editor__panes${showPreviewPane ? '' : ' fork-editor__panes--single'}`}>
         <div className="fork-editor__source">
           {mode === 'visual' ? (
             <BlockListEditor value={source} onChange={setSource} />
@@ -410,6 +452,7 @@ export default function ForkEditor() {
             </>
           )}
         </div>
+        {showPreviewPane && (
         <div className="fork-editor__preview" ref={scrollRef}>
           {warnings.length > 0 && (
             <div className="fork-editor__warnings">
@@ -425,6 +468,7 @@ export default function ForkEditor() {
             forceLinear
           />
         </div>
+        )}
       </div>
       {pickerOpen && (
         <PlotPicker onPick={insertBlock} onClose={() => setPickerOpen(false)} />

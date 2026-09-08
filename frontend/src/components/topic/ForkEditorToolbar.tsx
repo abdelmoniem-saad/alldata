@@ -9,6 +9,8 @@
  * not a WYSIWYG editor. The "Plot" button defers to the W2 picker.
  */
 
+import { useState } from 'react'
+
 const DECISION = `<!-- block: decision, anchor: my-decision -->
 question: |
   Ask the reader to commit to an answer before they read on.
@@ -95,42 +97,99 @@ interface Props {
   onInsertPlot?: () => void
 }
 
-function Btn({ label, title, onClick }: { label: string; title: string; onClick: () => void }) {
-  return (
-    <button type="button" onClick={onClick} title={title} className="fork-tb__btn">
-      {label}
-    </button>
-  )
+interface MenuItem {
+  label: string
+  hint: string
+  run: () => void
 }
 
-function Sep() {
-  return <span className="fork-tb__sep" aria-hidden />
-}
-
+/**
+ * C8: the flat 13-button strip became a single "Insert +" menu with
+ * categorized, described entries. Same snippets, same callbacks — the
+ * at-rest toolbar is one button instead of a wall of jargon
+ * ("State?", "gear?"). The ? reference lives inside the menu.
+ */
 export default function ForkEditorToolbar({ onInsertBlock, onWrap, onInsertPlot }: Props) {
+  const [open, setOpen] = useState(false)
+
+  const groups: { name: string; items: MenuItem[] }[] = [
+    {
+      name: 'Text',
+      items: [
+        { label: 'Heading', hint: 'A section title', run: () => onInsertBlock('## Section heading') },
+        { label: 'Bold', hint: '**wrap the selection**', run: () => onWrap('**', '**') },
+        { label: 'Italic', hint: '*wrap the selection*', run: () => onWrap('*', '*') },
+      ],
+    },
+    {
+      name: 'Teaching',
+      items: [
+        { label: 'Section divider', hint: 'Scroll divider / slide title', run: () => onInsertBlock('<!-- block: gear, n: 1, label: "Section label" -->') },
+        { label: 'Callout', hint: 'Insight, aside, or warning', run: () => onInsertBlock(CALLOUT) },
+        { label: 'Misconception', hint: 'Wrong belief, then the correction', run: () => onInsertBlock(MISCONCEPTION) },
+        { label: 'Fill in', hint: 'Reveal-one-line derivation steps', run: () => onInsertBlock(FILL_IN) },
+      ],
+    },
+    {
+      name: 'Interactive',
+      items: [
+        { label: 'Decision', hint: 'Ask, commit, then show the consequence', run: () => onInsertBlock(DECISION) },
+        { label: 'Playground', hint: 'Sliders bound to state, with a goal', run: () => onInsertBlock(PLAYGROUND) },
+        { label: 'Simulation', hint: 'Runnable Python code', run: () => onInsertBlock(SIMULATION) },
+      ],
+    },
+    {
+      name: 'Data',
+      items: [
+        { label: 'State', hint: 'Declare values plots react to', run: () => onInsertBlock(STATE) },
+        { label: 'Plot…', hint: 'Pick from the plot library', run: () => { setOpen(false); onInsertPlot?.() } },
+      ],
+    },
+  ]
+
   return (
     <div className="fork-tb" role="toolbar" aria-label="Insert content">
-      <Btn label="H2" title="Heading" onClick={() => onInsertBlock('## Section heading')} />
-      <Btn label="B" title="Bold (wraps selection)" onClick={() => onWrap('**', '**')} />
-      <Btn label="i" title="Italic (wraps selection)" onClick={() => onWrap('*', '*')} />
-      <Sep />
-      <Btn label="Section" title="Section divider (gear marker, a scroll divider / slide title)"
-        onClick={() => onInsertBlock('<!-- block: gear, n: 1, label: "Section label" -->')} />
-      <Btn label="Callout" title="Insight / aside / warning callout" onClick={() => onInsertBlock(CALLOUT)} />
-      <Btn label="Misconception" title="Inline wrong-belief → correction" onClick={() => onInsertBlock(MISCONCEPTION)} />
-      <Btn label="Fill in" title="Progressive-reveal derivation steps (formal layer)" onClick={() => onInsertBlock(FILL_IN)} />
-      <Sep />
-      <Btn label="Decision" title="Ask → commit → consequence (writes state the plot reacts to)" onClick={() => onInsertBlock(DECISION)} />
-      <Btn label="Playground" title="Slider controls bound to state, with a goal" onClick={() => onInsertBlock(PLAYGROUND)} />
-      <Btn label="Simulation" title="Runnable Python code block" onClick={() => onInsertBlock(SIMULATION)} />
-      <Sep />
-      <Btn label="State" title="Declare state values (bound by plots / playgrounds)" onClick={() => onInsertBlock(STATE)} />
-      {onInsertPlot && <Btn label="Plot…" title="Insert a visualization, pick from the plot library" onClick={onInsertPlot} />}
-      <span className="fork-tb__spacer" aria-hidden />
-      <button type="button" className="fork-tb__btn fork-tb__help" title={DIRECTIVE_REFERENCE} aria-label="Directive reference">
-        ? reference
-      </button>
-      <span className="fork-tb__hint" aria-hidden>edits render live →</span>
+      <div className="fork-ins__wrap">
+        <button
+          type="button"
+          className="fork-tb__btn fork-tb__btn--accent"
+          onClick={() => setOpen(v => !v)}
+          aria-expanded={open}
+          aria-haspopup="menu"
+          title="Insert a section, block, or plot"
+        >
+          + Insert
+        </button>
+        {open && (
+          <>
+            {/* Click-away catcher: transparent, sits under the menu. */}
+            <div className="fork-ins__backdrop" onClick={() => setOpen(false)} aria-hidden />
+            <div className="fork-ins__menu" role="menu">
+              {groups.map(g => (
+                <div key={g.name} className="fork-ins__group">
+                  <div className="fork-ins__group-name">{g.name}</div>
+                  {g.items.map(it => (
+                    <button
+                      key={it.label}
+                      type="button"
+                      role="menuitem"
+                      className="fork-ins__item"
+                      onClick={() => { setOpen(false); it.run() }}
+                    >
+                      <span className="fork-ins__item-label">{it.label}</span>
+                      <span className="fork-ins__item-hint">{it.hint}</span>
+                    </button>
+                  ))}
+                </div>
+              ))}
+              <div className="fork-ins__ref" title={DIRECTIVE_REFERENCE}>
+                ? full directive reference
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+      <span className="fork-tb__hint" aria-hidden>click text to edit it</span>
     </div>
   )
 }

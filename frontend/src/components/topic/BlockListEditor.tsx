@@ -34,6 +34,15 @@ export default function BlockListEditor({ value, onChange }: Props) {
   const [segments, setSegments] = useState<Segment[]>(() => parseDoc(value))
   const [pickerOpen, setPickerOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
+  // C8: one-time interaction hint ("click text to edit, blocks open their own
+  // editor"), dismissed for good in localStorage.
+  const [hintOpen, setHintOpen] = useState(
+    () => localStorage.getItem('alldata-editor-hint') !== 'seen',
+  )
+  const dismissHint = () => {
+    localStorage.setItem('alldata-editor-hint', 'seen')
+    setHintOpen(false)
+  }
   const lastEmitted = useRef(value)
   // The prose <textarea> the cursor is in, bold/italic wraps act on it.
   const focused = useRef<{ i: number; el: HTMLTextAreaElement } | null>(null)
@@ -126,6 +135,17 @@ export default function BlockListEditor({ value, onChange }: Props) {
         onInsertPlot={() => setPickerOpen(true)}
       />
       <div className="block-list__items">
+        {hintOpen && (
+          <div className="block-list__hint">
+            <span>
+              Click any text to edit it. Blocks open their own editor; their
+              controls appear when you hover.
+            </span>
+            <button type="button" onClick={dismissHint} aria-label="Dismiss hint">
+              Got it
+            </button>
+          </div>
+        )}
         {segments.map((seg, i) => {
           // Whitespace/`---` spacers aren't draggable rows — render as before.
           if (seg.kind === 'prose' && isSpacer(seg.raw)) {

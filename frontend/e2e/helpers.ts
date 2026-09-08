@@ -21,11 +21,15 @@ export async function registerUser(
   await page.getByLabel('Password').fill(password)
   await page.getByRole('button', { name: 'Create account' }).click()
   try {
-    await expect(page.getByLabel(/Account:/i)).toBeVisible({ timeout: 5_000 })
+    await expect(page.getByLabel(/Account:/i)).toBeVisible({ timeout: 10_000 })
   } catch {
+    // Slow-success race (C8, seen under full-suite load): the account was
+    // created but took longer than the window above. Signed-in already →
+    // nothing to fall back to.
+    if (await page.getByLabel(/Account:/i).count()) return
     // Serial suite: the account may already exist from an earlier test.
     // Fall back to logging in with the same credentials.
-    await page.getByRole('button', { name: /Already have an account\? Sign in\./ }).click()
+    await page.getByRole('button', { name: /Already have an account\? Sign in\./ }).click({ timeout: 10_000 })
     await page.getByLabel('Password').fill(password)
     // Scope to the form: the navbar's anonymous "Sign in" chip shares the name.
     await page.locator('form').getByRole('button', { name: 'Sign in', exact: true }).click()

@@ -52,15 +52,18 @@ interface Props {
   isTour?: boolean
 
   /**
-   * N: fork chip. `canFork` is false for anonymous viewers and tour topics
-   *, the chip is hidden entirely. When true, the chip reads "Fork this
+   * C8: the chip is visible to anonymous readers too. `canFork` is false only
+   * for tour topics. When true, the chip reads "Fork this
    * topic" (no existing fork) or "Open my fork" (`hasFork`). `onForkClick`
    * owns the create-or-navigate logic; `forkBusy` disables the chip during
-   * the create round trip.
+   * the create round trip. `forkNeedsAuth` (anonymous viewer) retitles the
+   * chip, clicking it opens the sign-in modal and the fork resumes after.
    */
   canFork?: boolean
   hasFork?: boolean
   forkBusy?: boolean
+  /** C8: anonymous viewer, the chip's click opens sign-in (run-gate style). */
+  forkNeedsAuth?: boolean
   onForkClick?: () => void
 }
 
@@ -110,7 +113,7 @@ function BottomBar(props: Props) {
     viewMode, setViewMode, hasFormalLayer, activeLayer, setActiveLayer,
     showSlideNav, slideIdx, slideTotal, onSlidePrev, onSlideNext, onSlideGoto,
     slug, isCompleted, justCompleted, onMarkCompleted, onUnmark,
-    isTour, canFork, hasFork, forkBusy, onForkClick,
+    isTour, canFork, hasFork, forkBusy, forkNeedsAuth, onForkClick,
   } = props
 
   const canPrev = slideIdx > 0
@@ -293,8 +296,9 @@ function BottomBar(props: Props) {
         </div>
       )}
 
-      {/* N: fork chip, sits just left of the LEARNED chip. Hidden for
-          anonymous viewers and tour topics (`canFork` is false). Reads
+      {/* N / C8: fork chip, sits just left of the LEARNED chip. Visible to
+          anonymous readers too; `forkNeedsAuth` retitles it, and clicking
+          opens the sign-in modal (TopicView resumes the fork after). Reads
           "Open my fork" when the viewer already has one. */}
       {canFork && (
         <div style={{
@@ -319,7 +323,11 @@ function BottomBar(props: Props) {
               display: 'inline-flex', alignItems: 'center', gap: 6,
               transition: 'all var(--transition-fast)',
             }}
-            title={hasFork ? 'Open your fork of this topic' : 'Make an editable copy of this topic'}
+            title={
+              hasFork ? 'Open your fork of this topic'
+              : forkNeedsAuth ? "Sign in to fork this topic, it's free and saves your work"
+              : 'Make an editable copy of this topic'
+            }
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="6" r="3"/>

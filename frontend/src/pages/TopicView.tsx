@@ -36,12 +36,17 @@ export default function TopicView() {
   const [justCompleted, setJustCompleted] = useState(false)
   const { markCompleted, unmarkCompleted, isCompleted, markInProgress, completedSlugs } = useProgressStore()
 
-  // N: fork affordance. `token` gates the chip (anonymous can't fork);
-  // `hasFork` flips the chip from "Fork this topic" to "Open my fork".
+  // N / C8: fork affordance. `hasFork` flips the chip from "Fork this topic"
+  // to "Open my fork". Anonymous viewers see the chip too now, run-gate style
+  // (U): clicking it opens the sign-in modal and the fork fires on its own
+  // once the token lands.
   const navigate = useNavigate()
-  const { token, user } = useAuthStore()
+  const { token, user, requestSignIn } = useAuthStore()
   const [hasFork, setHasFork] = useState(false)
   const [forkBusy, setForkBusy] = useState(false)
+  // C8: armed when an anonymous viewer clicks the fork chip; consumed by the
+  // token effect below (same pattern as CodeRunner's pendingRunRef).
+  const pendingForkRef = useRef(false)
 
   // K3: surface a recall prompt when this topic is due-for-review and we
   // haven't reviewed it yet in this page's lifetime. The prompt itself comes
@@ -126,15 +131,11 @@ export default function TopicView() {
   // sidesteps a redirect flash and puts the shareable URL in the address
   // bar on first hit. The create branch keeps `/u/me/...` because
   // ForkEditor already resolves the `me` alias internally.
-  const handleForkClick = useCallback(async () => {
+  // Create the fork and open the editor (409 from a second-tab race falls
+  // through to the editor too). Shared by the direct click and the
+  // resume-after-sign-in path.
+  const createAndOpenFork = useCallback(async () => {
     if (!slug || forkBusy) return
-    if (hasFork) {
-      const target = user?.display_name
-        ? `/u/${encodeURIComponent(user.display_name)}/topic/${slug}`
-        : `/u/me/topic/${slug}`
-      navigate(target)
-      return
-    }
     setForkBusy(true)
     try {
       await api.createFork(slug)
@@ -146,7 +147,35 @@ export default function TopicView() {
         setForkBusy(false)
       }
     }
-  }, [slug, hasFork, forkBusy, navigate, user])
+  }, [slug, forkBusy, navigate])
+
+  const handleForkClick = useCallback(async () => {
+    if (!slug || forkBusy) return
+    if (!token) {
+      // C8: anonymous, run-gate style. Open the sign-in modal and remember
+      // why; the effect below creates the fork once auth lands.
+      pendingForkRef.current = true
+      requestSignIn()
+      return
+    }
+    if (hasFork) {
+      const target = user?.display_name
+        ? `/u/${encodeURIComponent(user.display_name)}/topic/${slug}`
+        : `/u/me/topic/${slug}`
+      navigate(target)
+      return
+    }
+    await createAndOpenFork()
+  }, [slug, hasFork, forkBusy, navigate, user, token, requestSignIn, createAndOpenFork])
+
+  // C8: the pending fork fires on its own once the reader signs in.
+  useEffect(() => {
+    if (token && pendingForkRef.current) {
+      pendingForkRef.current = false
+      void createAndOpenFork()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token])
 
   // Smart "next topic", prefer has-content, not-completed, lowest difficulty.
   // G8: leadsTo entries are now {node, why}; we sort by node fields and then
@@ -365,10 +394,11 @@ export default function TopicView() {
         // is true. Tell ZenChrome so it can hide the scroll/slides toggle
         // and the slide-nav UI (both would be inert in tour mode).
         isTour={!!topic.tour}
-        // N: fork chip. `canFork` gates visibility (signed in, not a tour
-        // topic); `hasFork` flips the label between "Fork this topic" and
-        // "Open my fork".
-        canFork={!!token && !topic.tour}
+        // C8: the chip is visible to anonymous readers too (run-gate style);
+        // `forkNeedsAuth` switches its affordance from create to sign-in.
+        // Tour topics stay forkless, they are UI tours, not lessons.
+        canFork={!topic.tour}
+        forkNeedsAuth={!token}
         hasFork={hasFork}
         forkBusy={forkBusy}
         onForkClick={handleForkClick}

@@ -48,19 +48,6 @@ export default function BlockCard({
         {summary && <span className="block-card__summary">{summary}</span>}
         <span className="block-card__spacer" />
         <div className="block-card__actions">
-          {showLayer && (
-            <select
-              className="block-card__layer"
-              value={layer}
-              onChange={e => onReplaceRaw(setLayerAttr(segment.raw, e.target.value))}
-              title="Which reading layer this block belongs to"
-              aria-label="Block layer"
-            >
-              <option value="both">Both</option>
-              <option value="intuition">Intuition</option>
-              <option value="formal">Formal</option>
-            </select>
-          )}
           <button
             type="button" className="block-card__btn"
             onClick={() => setExpanded(v => !v)}
@@ -85,6 +72,23 @@ export default function BlockCard({
       </div>
       {expanded && (
         <div className="block-card__body">
+          {/* C8: the layer selector moved here from the row head — it's
+              authoring vocabulary (which reading layer), not row chrome. */}
+          {showLayer && (
+            <label className="block-card__layer-row">
+              <span>Reading layer</span>
+              <select
+                className="block-card__layer"
+                value={layer}
+                onChange={e => onReplaceRaw(setLayerAttr(segment.raw, e.target.value))}
+                title="Which reading layer this block belongs to"
+              >
+                <option value="both">Both</option>
+                <option value="intuition">Intuition</option>
+                <option value="formal">Formal</option>
+              </select>
+            </label>
+          )}
           {renderBlockEditor({
             segment,
             // Re-inject the current layer so a form's emit doesn't drop it.
