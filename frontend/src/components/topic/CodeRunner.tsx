@@ -1,11 +1,12 @@
-import { useState, useRef, useEffect } from 'react'
+﻿import { useState, useRef, useEffect } from 'react'
 import { api, ExecutionResult } from '../../api/client'
 import { useAuthStore } from '../../stores/authStore'
 
-// V0: probe execution capabilities once per session. The R language toggle is
-// hidden unless R can actually run here (Docker R image or local Rscript), so
-// readers never select R and hit the "R is not installed" dead end. On a probe
-// failure, default to hiding R (conservative, don't offer an unconfirmed lang).
+// V0: probe execution capabilities once per session. CodePairRenderer hides
+// the R tab unless R can actually run here (Docker R image or local Rscript),
+// so readers never select R and hit the "R is not installed" dead end. On a
+// probe failure, default to hiding R (conservative, don't offer an
+// unconfirmed lang).
 let _capsPromise: Promise<{ python: boolean; r: boolean }> | null = null
 // Exported so the paired Python/R surface (CodePairRenderer) can hide the R tab
 // with the same one-probe-per-session cache, no duplicate request.
@@ -30,7 +31,8 @@ export default function CodeRunner({
   code: initialCode, language, isEditable, expectedOutput, isSimulation, autoRun,
 }: Props) {
   const [code, setCode] = useState(initialCode)
-  const [lang, setLang] = useState<'python' | 'r'>(language)
+  // C7 fix: the language is the block's own (paired blocks re-mount with the
+  // right one via the pair tabs) â€” no per-instance toggle anymore.
   const [result, setResult] = useState<ExecutionResult | null>(null)
   const [running, setRunning] = useState(false)
   const [showOutput, setShowOutput] = useState(!!expectedOutput)
@@ -41,9 +43,6 @@ export default function CodeRunner({
   const [needsSignIn, setNeedsSignIn] = useState(false)
   const token = useAuthStore(s => s.token)
   const requestSignIn = useAuthStore(s => s.requestSignIn)
-  // V0: gate the R language toggle on real availability.
-  const [rAvailable, setRAvailable] = useState(false)
-  useEffect(() => { execCapabilities().then(c => setRAvailable(c.r)) }, [])
   // U2: set when the reader clicks the card's sign-in button, so the run they
   // wanted fires once auth lands.
   const pendingRunRef = useRef(false)
@@ -59,7 +58,7 @@ export default function CodeRunner({
   }, [code])
 
   const run = async () => {
-    // U1: anonymous → show the gentle sign-in card instead of firing a doomed
+    // U1: anonymous â†’ show the gentle sign-in card instead of firing a doomed
     // request. (Server execution requires auth since S1.)
     if (!token) {
       setNeedsSignIn(true)
@@ -73,7 +72,7 @@ export default function CodeRunner({
     setResult(null)
     const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark'
     try {
-      const res = await api.executeCode(code, lang, currentTheme)
+      const res = await api.executeCode(code, language, currentTheme)
       setResult(res)
       setShowOutput(true)
     } catch (err: any) {
@@ -191,41 +190,16 @@ export default function CodeRunner({
             color: isSimulation ? 'var(--color-accent)' : 'var(--color-text-muted)',
             fontFamily: 'var(--font-mono)',
           }}>
-            {isSimulation ? 'SIMULATION' : lang.toUpperCase()}
+            {isSimulation ? 'SIMULATION' : language.toUpperCase()}
           </span>
 
-          {/* Language switcher, editable blocks only, so users can try R against a Python playground.
-              V0: the R option appears only when R can actually run here. */}
-          {isEditable && (
-            <div style={{ display: 'flex', gap: 2, marginLeft: 2 }}>
-              {(['python', 'r'] as const).filter(l => l !== 'r' || rAvailable).map(l => {
-                const active = lang === l
-                return (
-                  <button
-                    key={l}
-                    onClick={() => setLang(l)}
-                    style={{
-                      fontSize: 9,
-                      padding: '2px 7px',
-                      borderRadius: 5,
-                      border: `1px solid ${active ? 'var(--color-accent-glow)' : 'var(--color-border-subtle)'}`,
-                      background: active ? 'var(--color-accent-subtle)' : 'transparent',
-                      color: active ? 'var(--color-accent)' : 'var(--color-text-muted)',
-                      cursor: 'pointer',
-                      fontFamily: 'var(--font-mono)',
-                      fontWeight: 700,
-                      letterSpacing: '0.5px',
-                      textTransform: 'uppercase',
-                      transition: 'all var(--transition-fast)',
-                    }}
-                    title={`Run as ${l === 'python' ? 'Python' : 'R'}`}
-                  >
-                    {l === 'python' ? 'Py' : 'R'}
-                  </button>
-                )
-              })}
-            </div>
-          )}
+          {/* C7 fix: the in-frame language switcher is gone. It only changed
+              which interpreter the code *ran as* â€” never the code itself â€”
+              so on paired blocks it duplicated the pair tab above while
+              doing less (running the displayed Python source through the R
+              parser), and on solo blocks there is no R twin to swap to.
+              Language belongs to the pair tabs, which swap code + interpreter
+              together and follow the global preferredCodeLang. */}
 
           {isEditable && (
             <span style={{
@@ -322,7 +296,7 @@ export default function CodeRunner({
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             // C7: axe flagged this as the page's one unlabeled form control.
-            aria-label={`Editable ${lang} code, Ctrl+Enter to run`}
+            aria-label={`Editable ${language} code, Ctrl+Enter to run`}
             onKeyDown={e => {
               // Ctrl/Cmd + Enter to run
               if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {

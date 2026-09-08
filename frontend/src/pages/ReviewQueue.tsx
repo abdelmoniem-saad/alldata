@@ -163,6 +163,8 @@ export default function ReviewQueue() {
           style={{
             padding: '6px 14px',
             borderRadius: 8,
+            // Buttons don't inherit text color (see the queue rows below).
+            color: 'var(--color-text)',
             background: 'var(--color-surface)',
             border: '1px solid var(--color-border)',
             cursor: 'pointer',
@@ -251,6 +253,10 @@ export default function ReviewQueue() {
                 onClick={() => setSearchParams({ id: row.id })}
                 style={{
                   textAlign: 'left',
+                  // Buttons default to the UA's `ButtonText` (black) instead
+                  // of inheriting, so the topic name stayed black in dark
+                  // theme — give the row the themed text color explicitly.
+                  color: 'var(--color-text)',
                   padding: '10px 12px',
                   borderRadius: 'var(--radius-md)',
                   border: '1px solid ' + (selectedId === row.id
