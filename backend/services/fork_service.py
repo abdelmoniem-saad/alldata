@@ -11,7 +11,6 @@ partial unique index that SQLite doesn't support cleanly.
 """
 
 import uuid
-from pathlib import Path
 
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession

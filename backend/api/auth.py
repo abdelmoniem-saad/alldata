@@ -16,6 +16,7 @@ from backend.config import settings
 from backend.deps import DB, CurrentUser, client_ip
 from backend.models.user import User
 from backend.schemas.user import (
+    AUDIENCE_VALUES,
     RecoverRequest,
     TokenResponse,
     UserCreate,
@@ -74,6 +75,9 @@ async def register(data: UserCreate, request: Request, db: DB):
         display_name=data.display_name,
         hashed_password=pwd_context.hash(data.password),
         institution=data.institution,
+        # C8: self-reported audience type; unknown values degrade to None
+        # rather than erroring, an old client can't break signup.
+        audience=data.audience if data.audience in AUDIENCE_VALUES else None,
     )
     db.add(user)
     await db.flush()

@@ -67,10 +67,11 @@ export default function ForkEditor() {
   // resume-on-sign-in button instead of the old bare error string; the load
   // effect re-runs when the token lands, so no re-click is needed.
   const [needsAuth, setNeedsAuth] = useState(false)
-  // C8: in Visual mode the preview pane collapses by default — the block
-  // forms already read like the final page, so the second pane was mostly
-  // duplicated density. Source mode always previews (raw markdown needs it).
-  const [showPreview, setShowPreview] = useState(false)
+  // C8 (revised by owner): the preview pane stays OPEN by default — editors
+  // want to see their words rendered as they go. The Preview toggle collapses
+  // it when the forms alone are enough. Source mode always previews (raw
+  // markdown needs it).
+  const [showPreview, setShowPreview] = useState(true)
   const showPreviewPane = mode === 'source' || showPreview
 
   const scrollRef = useRef<HTMLDivElement | null>(null)

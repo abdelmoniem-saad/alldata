@@ -20,6 +20,7 @@ from backend.models.progress import UserProgress
 from backend.models.topic import Topic
 from backend.models.user import User
 from backend.schemas.user import (
+    AUDIENCE_VALUES,
     PasswordChange,
     RecoveryCodeResponse,
     UserResponse,
@@ -53,6 +54,13 @@ async def update_me(data: UserUpdate, user: CurrentUser, db: DB):
         if len(data.institution) > 256:
             raise HTTPException(status_code=422, detail="Institution too long")
         user.institution = data.institution
+    if data.audience is not None:
+        if data.audience not in AUDIENCE_VALUES:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Audience must be one of: {sorted(AUDIENCE_VALUES)}",
+            )
+        user.audience = data.audience
     return UserResponse.model_validate(user)
 
 

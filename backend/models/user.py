@@ -26,6 +26,10 @@ class User(Base):
     role: Mapped[str] = mapped_column(String(20), default=UserRole.LEARNER.value)
     institution: Mapped[str | None] = mapped_column(String(256), nullable=True)
     bio: Mapped[str | None] = mapped_column(nullable=True)
+    # C8: self-reported audience type chosen at signup (student / professor /
+    # professional / curious). Purely descriptive, never permission-bearing
+    # (that is `role`); the self-heal adds the column on existing DBs.
+    audience: Mapped[str | None] = mapped_column(String(20), nullable=True)
     is_active: Mapped[bool] = mapped_column(default=True)
     # A2: no email infrastructure exists, so password recovery is a single-use
     # code the user generates in settings and stores themselves. Only the

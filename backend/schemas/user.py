@@ -1,7 +1,11 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
+
+# C8: self-reported audience type. Descriptive only — the permission role
+# (`users.role`) is admin-assigned and never settable at signup.
+AUDIENCE_VALUES = {"student", "professor", "professional", "curious"}
 
 
 class UserCreate(BaseModel):
@@ -9,6 +13,7 @@ class UserCreate(BaseModel):
     display_name: str
     password: str
     institution: str | None = None
+    audience: str | None = None
 
 
 class UserLogin(BaseModel):
@@ -23,6 +28,8 @@ class UserResponse(BaseModel):
     role: str
     institution: str | None
     bio: str | None
+    # C8: the self-reported audience type (admin list renders it).
+    audience: str | None
     # A3: the admin user-management surface renders active/deactivated state.
     # Harmless to expose on login/register responses (no secrets here).
     is_active: bool
@@ -37,6 +44,7 @@ class UserUpdate(BaseModel):
     display_name: str | None = None
     bio: str | None = None
     institution: str | None = None
+    audience: str | None = None
 
 
 class PasswordChange(BaseModel):

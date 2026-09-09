@@ -26,6 +26,8 @@ export interface AuthUser {
   /** A2: surfaced in /settings as placeholders for the profile form. */
   bio?: string | null
   institution?: string | null
+  /** C8: self-reported audience type (student/professor/professional/curious). */
+  audience?: string | null
 }
 
 interface AuthState {
@@ -39,7 +41,7 @@ interface AuthState {
   dismissSignIn: () => void
 
   login: (email: string, password: string) => Promise<void>
-  register: (email: string, display_name: string, password: string) => Promise<void>
+  register: (email: string, display_name: string, password: string, audience?: string) => Promise<void>
   /** A2: recovery-code sign-in (email + single-use code). */
   recover: (email: string, code: string) => Promise<void>
   logout: () => void
@@ -65,8 +67,8 @@ export const useAuthStore = create<AuthState>()(
         set({ token: r.access_token, user: r.user, authModalOpen: false })
       },
 
-      register: async (email, display_name, password) => {
-        const r = await api.register(email, display_name, password)
+      register: async (email, display_name, password, audience) => {
+        const r = await api.register(email, display_name, password, audience)
         localStorage.setItem('token', r.access_token)
         set({ token: r.access_token, user: r.user, authModalOpen: false })
       },

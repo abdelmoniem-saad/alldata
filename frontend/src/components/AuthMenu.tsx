@@ -269,6 +269,8 @@ function AuthModal({ onClose }: { onClose: () => void }) {
   const [password, setPassword] = useState('')
   const [recoveryCode, setRecoveryCode] = useState('')
   const [displayName, setDisplayName] = useState('')
+  // C8: self-reported audience type, chosen at signup, editable in settings.
+  const [audience, setAudience] = useState('curious')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
 
@@ -282,7 +284,7 @@ function AuthModal({ onClose }: { onClose: () => void }) {
       } else if (mode === 'recover') {
         await recover(email, recoveryCode)
       } else {
-        await register(email, displayName || email.split('@')[0], password)
+        await register(email, displayName || email.split('@')[0], password, audience)
       }
       onClose()
     } catch (e: unknown) {
@@ -368,6 +370,30 @@ function AuthModal({ onClose }: { onClose: () => void }) {
               autoComplete="username"
               required
             />
+          )}
+          {mode === 'register' && (
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
+                I am a…
+              </span>
+              <select
+                value={audience}
+                onChange={e => setAudience(e.target.value)}
+                style={{
+                  padding: '8px 10px',
+                  borderRadius: 8,
+                  border: '1px solid var(--color-border)',
+                  background: 'var(--color-bg)',
+                  color: 'var(--color-text)',
+                  fontSize: 13,
+                }}
+              >
+                <option value="student">Student</option>
+                <option value="professor">Professor / teacher</option>
+                <option value="professional">Working professional</option>
+                <option value="curious">Just curious</option>
+              </select>
+            </label>
           )}
           <Field
             label="Email"

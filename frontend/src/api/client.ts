@@ -424,10 +424,10 @@ export const api = {
       body: JSON.stringify({ email, password }),
     }),
 
-  register: (email: string, display_name: string, password: string) =>
+  register: (email: string, display_name: string, password: string, audience?: string) =>
     request<{ access_token: string; user: any }>('/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ email, display_name, password }),
+      body: JSON.stringify({ email, display_name, password, audience }),
     }),
 
   // Y: current user from the token. Called on boot so server-side changes
@@ -435,7 +435,7 @@ export const api = {
   getMe: () => request<{ id: string; email: string; display_name: string; role?: string }>('/auth/me'),
 
   // A2: account settings + recovery.
-  updateMe: (data: { display_name?: string; bio?: string; institution?: string }) =>
+  updateMe: (data: { display_name?: string; bio?: string; institution?: string; audience?: string }) =>
     request<any>('/users/me', { method: 'PATCH', body: JSON.stringify(data) }),
 
   changePassword: (current_password: string, new_password: string) =>

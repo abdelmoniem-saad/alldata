@@ -67,6 +67,8 @@ export default function AccountSettings() {
   const [displayName, setDisplayName] = useState(user?.display_name ?? '')
   const [bio, setBio] = useState('')
   const [institution, setInstitution] = useState('')
+  // C8: audience type; initialized from the account, editable here.
+  const [audience, setAudience] = useState(user?.audience ?? 'curious')
   const [profileMsg, setProfileMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null)
 
   const [currentPw, setCurrentPw] = useState('')
@@ -98,6 +100,7 @@ export default function AccountSettings() {
         display_name: displayName,
         bio: bio || undefined,
         institution: institution || undefined,
+        audience,
       })
       await refreshUser()
       setProfileMsg({ kind: 'ok', text: 'Profile saved.' })
@@ -153,6 +156,19 @@ export default function AccountSettings() {
           <label style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
             Institution
             <input style={{ ...input, marginTop: 4 }} value={institution} onChange={e => setInstitution(e.target.value)} placeholder={user.institution ? undefined : 'Optional'} />
+          </label>
+          <label style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
+            I am a…
+            <select
+              style={{ ...input, marginTop: 4 }}
+              value={audience}
+              onChange={e => setAudience(e.target.value)}
+            >
+              <option value="student">Student</option>
+              <option value="professor">Professor / teacher</option>
+              <option value="professional">Working professional</option>
+              <option value="curious">Just curious</option>
+            </select>
           </label>
           {profileMsg && <Notice kind={profileMsg.kind}>{profileMsg.text}</Notice>}
           <button style={button} onClick={saveProfile}>Save profile</button>

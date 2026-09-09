@@ -199,6 +199,16 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
     const t = transformRef.current
     ctx.clearRect(0, 0, width, height)
 
+    // C9: visible world rect, for viewport culling in the draw passes. At
+    // scale, most nodes sit outside the screen whenever the reader is zoomed
+    // in; skipping them (and their labels, and fully-off-screen edges) is the
+    // single biggest draw-cost win.
+    const viewMinX = -t.x / t.k
+    const viewMinY = -t.y / t.k
+    const viewMaxX = (width - t.x) / t.k
+    const viewMaxY = (height - t.y) / t.k
+    const CULL_PAD = 60 // glow radius + label clearance
+
     // Background, Scholarly Gradient
     const bgGrad = ctx.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, width * 0.7)
     if (isLight) {
@@ -259,6 +269,15 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
       const source = link.source as SimNode
       const target = link.target as SimNode
       if (source.x == null || source.y == null || target.x == null || target.y == null) continue
+
+      // C9: skip edges lying wholly outside the viewport (both endpoints
+      // beyond the same edge of the screen with cull margin).
+      if (
+        (source.x < viewMinX - CULL_PAD && target.x < viewMinX - CULL_PAD) ||
+        (source.x > viewMaxX + CULL_PAD && target.x > viewMaxX + CULL_PAD) ||
+        (source.y < viewMinY - CULL_PAD && target.y < viewMinY - CULL_PAD) ||
+        (source.y > viewMaxY + CULL_PAD && target.y > viewMaxY + CULL_PAD)
+      ) continue
 
       // M (immersive tour): skip edges whose source or target isn't in
       // the visible domain. Matches the `/explore` legend behavior, only
@@ -367,6 +386,12 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
     // Draw nodes with multi-layer glow
     for (const node of nodesRef.current) {
       if (node.x == null || node.y == null) continue
+      // C9: viewport culling — off-screen nodes cost nothing to skip and a
+      // lot to draw (gradient fills + text).
+      if (
+        node.x < viewMinX - CULL_PAD || node.x > viewMaxX + CULL_PAD ||
+        node.y < viewMinY - CULL_PAD || node.y > viewMaxY + CULL_PAD
+      ) continue
       const r = getNodeRadius(node.data)
       const isHighlighted = highlightedNode === node.data.slug
       const isInProgress = inProgressSlugs.includes(node.data.slug)
@@ -465,7 +490,17 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
         ctx.fill()
       }
 
-      // Label with shadow for readability
+      // Label with shadow for readability. C9: label LOD — canvas text is
+      // the most expensive draw op, so on large graphs labels render only
+      // for hot (hovered/highlighted/dragged) nodes unless the reader has
+      // zoomed in past the threshold. Small graphs keep today's always-on
+      // behavior.
+      const showLabel =
+        nodesRef.current.length <= 150 ||
+        t.k >= 1.2 ||
+        interactiveGlow > 0.1 ||
+        isDragging
+      if (showLabel) {
       const fontSize = node.data.depth === 0 ? 13 : 11
       const fontWeight = glowIntensity > 0.1 ? '600' : '500'
       ctx.font = `${fontWeight} ${fontSize}px var(--font-sans)`
@@ -484,6 +519,7 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
         ? `rgba(9, 9, 11, ${textAlpha})` 
         : `rgba(226, 228, 240, ${textAlpha})`
       ctx.fillText(node.data.title, node.x, node.y + r + 6, 130)
+      } // C9: end label LOD
 
       // Difficulty indicator dot, reads from semantic CSS vars so dark/light
       // themes stay in sync with the difficulty badges in the rest of the UI.
@@ -663,9 +699,11 @@ const ForceGraph = forwardRef<ForceGraphHandle, Props>(function ForceGraph({
     nodesRef.current = simNodes
     linksRef.current = simLinks
 
-    // Spring-like physics that feel organic
+    // Spring-like physics that feel organic. C9: settle speed scales with
+    // graph size — the default decay takes ~340 ticks, fine at 50 nodes but
+    // a lava lamp at 500. Bigger graphs settle faster and still land clean.
     const sim = d3.forceSimulation(simNodes)
-      .alphaDecay(0.02)        // Slower cooldown = smoother settle
+      .alphaDecay(simNodes.length > 150 ? 0.045 : 0.02)        // Slower cooldown = smoother settle
       .alphaMin(0.001)
       .velocityDecay(0.35)     // Smooth damping, nodes glide, don't snap
       .force('link', d3.forceLink(simLinks)
