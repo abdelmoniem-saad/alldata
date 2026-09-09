@@ -20,6 +20,23 @@ import rehypeKatex from 'rehype-katex'
 import { api, MisconceptionEntry } from '../api/client'
 import { domainLabel, domainVar } from '../lib/domain'
 
+// C8 fix: every field renders through the same math-aware markdown pipeline.
+// The title previously rendered as a plain uppercase label (raw $...$ showed),
+// and the wrong belief had markdown but no KaTeX. The uppercase transform is
+// also gone: text-transform distorts KaTeX's letters, so math titles rendered
+// wrong even with the plugins.
+function Md({ children }: { children: string }) {
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkMath]}
+      rehypePlugins={[rehypeKatex]}
+      components={{ p: p => <p className="misc-md__p" {...p} /> }}
+    >
+      {children}
+    </ReactMarkdown>
+  )
+}
+
 export default function Misconceptions() {
   const [entries, setEntries] = useState<MisconceptionEntry[] | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -109,17 +126,16 @@ export default function Misconceptions() {
                   }}
                 >
                   <div style={{
-                    fontSize: 10, fontWeight: 700, letterSpacing: '1.5px',
-                    textTransform: 'uppercase', color: 'var(--color-text-muted)',
-                    marginBottom: 6,
+                    fontSize: 15, fontWeight: 600, color: 'var(--color-text)',
+                    lineHeight: 1.5, marginBottom: 8,
                   }}>
-                    {m.title}
+                    <Md>{m.title}</Md>
                   </div>
                   <div style={{
                     fontSize: 14, color: 'var(--color-advanced, #ef4444)',
                     marginBottom: 6,
                   }}>
-                    <ReactMarkdown>{m.wrong_belief}</ReactMarkdown>
+                    <Md>{m.wrong_belief}</Md>
                   </div>
                   <div className="prose" style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--color-text)' }}>
                     <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>

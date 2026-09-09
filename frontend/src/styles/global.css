@@ -697,3 +697,10 @@ pre {
   border: 1px solid var(--color-border-subtle); border-radius: 100px; padding: 1px 7px;
 }
 .formal-section__body { margin-top: 8px; }
+
+/* Misconceptions page (C2/C8): the title and wrong-belief fields are single
+   paragraphs; ReactMarkdown wraps them in <p> and the UA margin would add
+   unwanted space inside the tight card. */
+.misc-md__p {
+  margin: 0;
+}
