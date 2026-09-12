@@ -447,6 +447,9 @@ Every decision pick now dispatches an SM-2 `recordReview` on its topic: correct 
 ### Guided tracks (C3)
 Curated reading orders over existing topics, defined in `seed/tracks.yaml` (principle 7: seed is the source of truth). `GET /api/tracks` resolves every slug against the live DB and drops unknown/unpublished ones, so a track can never dead-end mid-list; a track resolving to nothing never ships. Rendered as a "Guided tracks" section on `/path`. Three tracks ship: A/B testing from scratch, Read any regression output, Bayes without tears. *(cycle: C3)* `code: seed/tracks.yaml`, `backend/api/tracks.py`, `frontend/src/pages/LearningPath.tsx`.
 
+### Public syllabus (D1)
+The public curriculum map at `/syllabus`: the whole statistics & data-science course in a learner's order, grouped into 8 areas (Foundations, Distributions, Estimation, Testing, Modeling, Evaluation, Practice). Written units (green ✓, difficulty tag) link into their lessons; planned units (open ○, "planned" chip + a note on what the unit will cover) are declared on purpose, never hidden. The header shows the honest count ("44 of 60 units written · 73% of the map"). Source of truth `seed/syllabus.yaml`; `GET /api/syllabus` resolves topic slugs against the live DB at read time, so a planned unit flips to written the moment its lesson ships, and an unpublished topic drops its unit to planned rather than serving a dead link. In the navbar, in the sitemap. *(cycle: D1)* `code: seed/syllabus.yaml`, `backend/api/syllabus.py`, `frontend/src/pages/Syllabus.tsx`.
+
 ### Contribution page (C4)
 `/contribute`: the fork → edit → suggest → review loop explained for a first-time contributor, the quality bar (parse clean, six-gear shape, anti-template rules), and pointers to where to start. Linked from the account menu. *(cycle: C4)* `code: frontend/src/pages/Contribute.tsx`.
 

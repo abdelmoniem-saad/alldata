@@ -130,7 +130,7 @@ async def build_sitemap(db: AsyncSession, base: str) -> str:
     )
     slugs = [s for (s,) in result.all()]
 
-    static = ["/", "/explore", "/about", "/datasets", "/path"]
+    static = ["/", "/explore", "/about", "/datasets", "/path", "/syllabus"]
     urls = [base + p for p in static] + [f"{base}/topic/{s}" for s in slugs]
     body = "\n".join(f"  <url><loc>{u}</loc></url>" for u in urls)
     xml = (

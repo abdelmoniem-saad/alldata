@@ -90,6 +90,32 @@ export interface Track {
   topics: TrackTopic[]
 }
 
+/**
+ * D1: the public curriculum map from seed/syllabus.yaml. A unit resolves
+ * to a published topic ("written") or is a declared-but-unwritten piece
+ * of the curriculum ("planned"), so the page can state the map's edges
+ * honestly.
+ */
+export interface SyllabusTopic {
+  slug: string
+  title: string
+  difficulty: string | null
+}
+
+export interface SyllabusUnit {
+  title: string
+  status: 'written' | 'planned'
+  note: string | null
+  topic: SyllabusTopic | null
+}
+
+export interface SyllabusArea {
+  slug: string
+  title: string
+  description: string | null
+  units: SyllabusUnit[]
+}
+
 /** C3: one row of the Home trending strip (aggregate views, no PII). */
 export interface TrendingTopic {
   slug: string
@@ -375,6 +401,10 @@ export const api = {
   // C3: curated guided tracks (seed/tracks.yaml, slugs resolved server-side).
   listTracks: () =>
     request<Track[]>('/tracks'),
+
+  // D1: the public curriculum map (seed/syllabus.yaml, resolved server-side).
+  getSyllabus: () =>
+    request<SyllabusArea[]>('/syllabus'),
 
   // C2: consolidated misconceptions catalog (the H10 backlog item).
   // One public read; the page groups by topic client-side.

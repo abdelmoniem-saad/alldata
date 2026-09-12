@@ -20,6 +20,7 @@ from backend.api import (
     merge_back,
     misconceptions,
     progress,
+    syllabus,
     topics,
     track,
     tracks,
@@ -84,6 +85,8 @@ app.include_router(topics.router, prefix="/api/topics", tags=["topics"])
 app.include_router(misconceptions.router, prefix="/api/misconceptions", tags=["misconceptions"])
 # C3: curated guided tracks (seed/tracks.yaml is the source of truth).
 app.include_router(tracks.router, prefix="/api/tracks", tags=["tracks"])
+# D1: the public curriculum map (seed/syllabus.yaml, resolved server-side).
+app.include_router(syllabus.router, prefix="/api/syllabus", tags=["syllabus"])
 app.include_router(graph.router, prefix="/api/graph", tags=["graph"])
 app.include_router(content.router, prefix="/api/content", tags=["content"])
 app.include_router(courses.router, prefix="/api/courses", tags=["courses"])
