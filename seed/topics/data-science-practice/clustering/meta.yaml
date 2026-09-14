@@ -1,0 +1,10 @@
+title: "Clustering"
+slug: clustering
+domain: data-science-practice
+difficulty: intermediate
+summary: Finding groups without labels, and the honest question of whether the groups are really there.
+prerequisites: [exploratory-data-analysis]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 9
+recall_prompt: "k-means with k=3 on blob-shaped data found 3 neat clusters. Why is that not evidence that 3 clusters exist?"

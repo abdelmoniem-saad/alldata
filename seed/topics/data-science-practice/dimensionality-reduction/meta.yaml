@@ -1,0 +1,10 @@
+title: "Dimensionality Reduction"
+slug: dimensionality-reduction
+domain: data-science-practice
+difficulty: advanced
+summary: "PCA and friends: compressing many correlated variables into a few honest directions."
+prerequisites: [multiple-regression, joint-distributions]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 9
+recall_prompt: "PCA finds 20 components for 20 features. What does 'the first component explains 60% of the variance' actually mean, and what doesn't it mean?"

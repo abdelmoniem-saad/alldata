@@ -1,0 +1,10 @@
+title: "Imbalanced Data"
+slug: imbalanced-data
+domain: data-science-practice
+difficulty: intermediate
+summary: When one class is 99% of the rows, the default playbook fails and the fixes have sharp edges.
+prerequisites: [classification-metrics]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 8
+recall_prompt: "Your churn model is 94% accurate on data that is 94% non-churners. What did it learn, and which two fixes would you reach for?"

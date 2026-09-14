@@ -233,6 +233,63 @@ topics:
     prerequisites: [bayes-theorem, likelihood]
     terminal: true
 
+  # ── D2 coverage sprint: the testing-family gaps ─────────────
+  - slug: effect-size
+    title: Effect Sizes
+    domain: statistical-inference
+    difficulty: intermediate
+    summary: How large is the effect, in units anyone can compare, and why significance is not importance.
+    prerequisites: [t-tests, statistical-power]
+    terminal: true
+
+  - slug: multiple-comparisons
+    title: Multiple Comparisons
+    domain: statistical-inference
+    difficulty: intermediate
+    summary: Why many tests guarantee false stars, and the corrections (Bonferroni, FDR) that price the family.
+    prerequisites: [p-values, hypothesis-testing]
+    terminal: true
+
+  - slug: anova
+    title: ANOVA
+    domain: statistical-inference
+    difficulty: intermediate
+    summary: Comparing several group means with one F test, and the post-hoc discipline that follows.
+    prerequisites: [t-tests, f-distribution]
+    terminal: true
+
+  - slug: chi-squared-test
+    title: The Chi-squared Test
+    domain: statistical-inference
+    difficulty: intermediate
+    summary: Testing independence between categorical variables from counts, expectations, and degrees of freedom.
+    prerequisites: [chi-squared-distribution, conditional-probability]
+    terminal: true
+
+  - slug: nonparametric-tests
+    title: Nonparametric Tests
+    domain: statistical-inference
+    difficulty: intermediate
+    summary: Rank-based tests that survive outliers and skew when the t-test's assumptions won't.
+    prerequisites: [t-tests]
+    terminal: true
+
+  - slug: permutation-tests
+    title: Permutation Tests
+    domain: statistical-inference
+    difficulty: intermediate
+    summary: Building the null distribution by shuffling labels; inference from your own data.
+    prerequisites: [hypothesis-testing]
+    terminal: true
+
+  - slug: bootstrap
+    title: The Bootstrap
+    domain: statistical-inference
+    difficulty: intermediate
+    summary: Standard errors and confidence intervals by resampling the sample itself.
+    prerequisites: [sampling-distributions, confidence-intervals]
+    terminal: true
+
   # ── Regression & Modeling ────────────────────────────────────
   - slug: correlation
     title: Correlation
@@ -277,6 +334,31 @@ topics:
     difficulty: advanced
     summary: Preventing overfitting by penalizing model complexity.
     prerequisites: [multiple-regression]
+    terminal: true
+
+  # ── D2 coverage sprint: modeling + foundations gaps ─────────
+  - slug: joint-distributions
+    title: Joint Distributions and Covariance
+    domain: probability-foundations
+    difficulty: intro
+    summary: "How two variables move together: the joint distribution, and the covariance that summarizes its tilt."
+    prerequisites: [variance, expectation]
+    terminal: true
+
+  - slug: beta-gamma-distributions
+    title: Beta and Gamma Distributions
+    domain: distributions
+    difficulty: intermediate
+    summary: "The shapes behind proportions and waiting times, and the conjugate workhorses of Bayesian updating."
+    prerequisites: [binomial-distribution, exponential-distribution]
+    terminal: true
+
+  - slug: time-series
+    title: Time Series
+    domain: regression-modeling
+    difficulty: advanced
+    summary: "Data ordered in time breaks independence; autocorrelation, spurious regression, and what differencing buys."
+    prerequisites: [simple-linear-regression, model-diagnostics]
     terminal: true
 
   # ── Data Science Practice ────────────────────────────────────
@@ -345,6 +427,78 @@ topics:
     difficulty: intro
     summary: Why a 99% accurate test is wrong most of the time for rare conditions - prevalence does the heavy lifting.
     prerequisites: [bayes-theorem]
+    terminal: true
+
+  # ── D2 coverage sprint: evaluation + practice families ──────
+  - slug: classification-metrics
+    title: Classification Metrics
+    domain: data-science-practice
+    difficulty: intermediate
+    summary: "Why accuracy lies on imbalanced problems, and what precision, recall, and ROC actually measure."
+    prerequisites: [cross-validation, logistic-regression]
+
+  - slug: decision-trees
+    title: Decision Trees and Ensembles
+    domain: data-science-practice
+    difficulty: intermediate
+    summary: Trees as learned flowcharts, depth as the bias-variance dial, and what forests and boosting buy.
+    prerequisites: [bias-variance-tradeoff]
+    terminal: true
+
+  - slug: clustering
+    title: Clustering
+    domain: data-science-practice
+    difficulty: intermediate
+    summary: Finding groups without labels, and the honest question of whether the groups are really there.
+    prerequisites: [exploratory-data-analysis]
+    terminal: true
+
+  - slug: dimensionality-reduction
+    title: Dimensionality Reduction
+    domain: data-science-practice
+    difficulty: advanced
+    summary: "PCA and friends: compressing many correlated variables into a few honest directions."
+    prerequisites: [multiple-regression, joint-distributions]
+    terminal: true
+
+  - slug: imbalanced-data
+    title: Imbalanced Data
+    domain: data-science-practice
+    difficulty: intermediate
+    summary: When one class is 99% of the rows, the default playbook fails and the fixes have sharp edges.
+    prerequisites: [classification-metrics]
+    terminal: true
+
+  - slug: feature-leakage
+    title: Feature Engineering and Leakage
+    domain: data-science-practice
+    difficulty: intermediate
+    summary: The pipeline mistake that makes a model look brilliant in development and fail in production.
+    prerequisites: [cross-validation]
+    terminal: true
+
+  - slug: causal-inference
+    title: Causal Inference
+    domain: data-science-practice
+    difficulty: advanced
+    summary: "The step beyond 'correlation is not causation': what it takes to estimate what would have happened otherwise."
+    prerequisites: [multiple-regression, correlation]
+    terminal: true
+
+  - slug: experimental-design
+    title: Experimental Design
+    domain: data-science-practice
+    difficulty: intermediate
+    summary: "Randomization, blocking, and pairing: the design choices that decide what your analysis can say."
+    prerequisites: [statistical-power, ab-testing]
+    terminal: true
+
+  - slug: capstone-analysis
+    title: "Capstone: A Messy Analysis End to End"
+    domain: data-science-practice
+    difficulty: advanced
+    summary: "One dataset, one question, and every shortcut the temptation offers: the whole catalog in a single honest analysis."
+    prerequisites: [exploratory-data-analysis, data-wrangling, missing-data, multiple-regression, model-diagnostics, feature-leakage]
     terminal: true
 
   # ── Navigation (hidden from the public graph) ────────────────

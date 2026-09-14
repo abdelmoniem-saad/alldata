@@ -1,0 +1,10 @@
+title: "Causal Inference"
+slug: causal-inference
+domain: data-science-practice
+difficulty: advanced
+summary: "The step beyond correlation-is-not-causation: what it takes to estimate what would have happened otherwise."
+prerequisites: [multiple-regression, correlation]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 10
+recall_prompt: "Customers who use the discount coupon spend 30% more. Why is that not the coupon's effect, and what would you need to claim it?"

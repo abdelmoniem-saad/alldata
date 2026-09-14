@@ -1,0 +1,10 @@
+title: "Permutation Tests"
+slug: permutation-tests
+domain: statistical-inference
+difficulty: intermediate
+summary: "Inference by reshuffling: no formulas, no distribution assumptions, just your statistic and every honest version of it."
+prerequisites: [hypothesis-testing]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 9
+recall_prompt: "Why does a permutation test need the two groups to be exchangeable under the null, and what breaks if they aren't?"

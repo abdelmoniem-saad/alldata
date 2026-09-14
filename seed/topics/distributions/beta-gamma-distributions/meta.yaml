@@ -1,0 +1,10 @@
+title: "Beta and Gamma Distributions"
+slug: beta-gamma-distributions
+domain: distributions
+difficulty: intermediate
+summary: The shapes behind proportions and waiting times, and the conjugate-prior workhorses of Bayesian statistics.
+prerequisites: [binomial-distribution, exponential-distribution]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 9
+recall_prompt: "A Beta(3, 3) prior on a proportion: what are the mean and what does the symmetry encode?"

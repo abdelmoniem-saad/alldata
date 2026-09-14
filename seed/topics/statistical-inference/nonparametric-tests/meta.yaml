@@ -1,0 +1,10 @@
+title: "Nonparametric Tests"
+slug: nonparametric-tests
+domain: statistical-inference
+difficulty: intermediate
+summary: When the data refuses to look normal, tests that rank instead of measure keep the conclusions honest.
+prerequisites: [t-tests]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 9
+recall_prompt: "Your two groups look fine except one wild outlier. Why is the Wilcoxon rank-sum test safer than the t-test here, and what is it actually testing?"

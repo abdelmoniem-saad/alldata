@@ -1,0 +1,10 @@
+title: "Feature Engineering and Leakage"
+slug: feature-leakage
+domain: data-science-practice
+difficulty: intermediate
+summary: The pipeline mistake that makes a model look brilliant in development and fail in production.
+prerequisites: [cross-validation]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 9
+recall_prompt: "Imputing missing values with the column mean before splitting: why is that leakage, even though the mean is 'just a summary'?"

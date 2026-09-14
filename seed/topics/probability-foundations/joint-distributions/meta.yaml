@@ -1,0 +1,10 @@
+title: "Joint Distributions and Covariance"
+slug: joint-distributions
+domain: probability-foundations
+difficulty: intro
+summary: "How two variables move together: the joint distribution, and the one number that summarizes its tilt."
+prerequisites: [variance, expectation]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 9
+recall_prompt: "Two variables each have variance 1 and covariance 0.5. What's the variance of their sum?"

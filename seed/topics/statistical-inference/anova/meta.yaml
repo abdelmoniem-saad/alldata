@@ -1,0 +1,10 @@
+title: "ANOVA"
+slug: anova
+domain: statistical-inference
+difficulty: intermediate
+summary: Comparing several group means at once with one F test, and why you can't stop at "significant".
+prerequisites: [t-tests, f-distribution]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 10
+recall_prompt: "Why does comparing 5 groups with pairwise t-tests at 0.05 wreck the error rate, and what does ANOVA buy instead?"

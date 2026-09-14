@@ -44,7 +44,7 @@ areas:
       - title: The central limit theorem
         topic: central-limit-theorem
       - title: Joint distributions and covariance
-        note: How two variables move together, before correlation formalizes it.
+        topic: joint-distributions
       - title: The Monty Hall problem
         topic: monty-hall
 
@@ -69,7 +69,7 @@ areas:
       - title: F
         topic: f-distribution
       - title: Beta and gamma
-        note: The shapes behind proportions and waiting times, and the conjugate-prior workhorses.
+        topic: beta-gamma-distributions
 
   - slug: estimation
     title: Estimation
@@ -88,7 +88,7 @@ areas:
       - title: Bayesian inference
         topic: bayesian-inference
       - title: The bootstrap
-        note: Uncertainty from the sample itself, by resampling; the Swiss army knife of estimation.
+        topic: bootstrap
 
   - slug: testing
     title: Hypothesis Testing
@@ -103,17 +103,17 @@ areas:
       - title: t-tests
         topic: t-tests
       - title: Effect sizes
-        note: Difference versus importance; what significance never tells you.
+        topic: effect-size
       - title: Multiple comparisons
-        note: Why running twenty tests guarantees a "discovery", and the corrections that fix it.
+        topic: multiple-comparisons
       - title: ANOVA
-        note: Comparing several groups at once, with the F you already met.
+        topic: anova
       - title: The chi-squared test
-        note: Testing independence in categorical tables, not just the distribution.
+        topic: chi-squared-test
       - title: Nonparametric tests
-        note: Tests that don't bet on a distribution.
+        topic: nonparametric-tests
       - title: Permutation tests
-        note: Reshuffle, recompute, repeat; inference without formulas.
+        topic: permutation-tests
 
   - slug: modeling
     title: Regression and Modeling
@@ -132,7 +132,7 @@ areas:
       - title: Regularization
         topic: regularization
       - title: Time series
-        note: Data ordered in time breaks the assumptions; what changes and what survives.
+        topic: time-series
 
   - slug: evaluation
     title: Model Evaluation and Learning
@@ -143,15 +143,15 @@ areas:
       - title: The bias-variance tradeoff
         topic: bias-variance-tradeoff
       - title: Classification metrics
-        note: Accuracy lies; ROC, precision, recall, and the threshold you didn't notice choosing.
+        topic: classification-metrics
       - title: Decision trees and ensembles
-        note: The models that aren't equations, and why they dominate applied work.
+        topic: decision-trees
       - title: Clustering
-        note: Finding structure without labels, and how to know if you found anything.
+        topic: clustering
       - title: Dimensionality reduction
-        note: PCA and friends; fewer variables, mostly the same story.
+        topic: dimensionality-reduction
       - title: Imbalanced data
-        note: When one class is 99% of the rows, the default playbook fails.
+        topic: imbalanced-data
 
   - slug: practice
     title: Data Science Practice
@@ -166,10 +166,10 @@ areas:
       - title: A/B testing
         topic: ab-testing
       - title: Feature engineering and leakage
-        note: The pipeline mistake that makes a model look brilliant and deploy terribly.
+        topic: feature-leakage
       - title: Causal inference
-        note: The step beyond "correlation is not causation", and how close you can get.
+        topic: causal-inference
       - title: Experimental design
-        note: Randomization, blocking, and pairing; the design choices that decide what your test can say.
+        topic: experimental-design
       - title: Capstone, a messy analysis end to end
-        note: A real dataset, a real question, and every shortcut the temptation offers.
+        topic: capstone-analysis

@@ -1,0 +1,10 @@
+title: "Experimental Design"
+slug: experimental-design
+domain: data-science-practice
+difficulty: intermediate
+summary: "Randomization, blocking, and pairing: the design choices that decide what your analysis can say."
+prerequisites: [statistical-power, ab-testing]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 9
+recall_prompt: "You A/B test on weekdays only and see a big lift. What threat does running only Monday-Thursday pose to the conclusion?"

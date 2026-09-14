@@ -1,0 +1,11 @@
+title: "Capstone: A Messy Analysis End to End"
+slug: capstone-analysis
+domain: data-science-practice
+difficulty: advanced
+summary: "One dataset, one question, and every shortcut the temptation offers: the whole catalog in a single honest analysis."
+prerequisites: [exploratory-data-analysis, data-wrangling, missing-data, multiple-regression, model-diagnostics, feature-leakage]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 15
+dataset: heights
+recall_prompt: "In the capstone, which decision protected the analysis from the 'obvious' 3.7-cm conclusion that the unadjusted comparison suggested?"

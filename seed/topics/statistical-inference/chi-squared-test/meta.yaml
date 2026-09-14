@@ -1,0 +1,10 @@
+title: "The Chi-squared Test"
+slug: chi-squared-test
+domain: statistical-inference
+difficulty: intermediate
+summary: Testing independence in a categorical table, where the counts, not the measurements, do the talking.
+prerequisites: [chi-squared-distribution, conditional-probability]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 9
+recall_prompt: "In a 3x4 contingency table, what are the chi-squared test's degrees of freedom?"

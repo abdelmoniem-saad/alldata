@@ -1,0 +1,10 @@
+title: "Classification Metrics"
+slug: classification-metrics
+domain: data-science-practice
+difficulty: intermediate
+summary: Why accuracy lies on imbalanced problems, and what precision, recall, and ROC actually measure.
+prerequisites: [cross-validation, logistic-regression]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 10
+recall_prompt: "A fraud model flags 2% of transactions and catches 60% of all fraud. What kind of metric is 60% here, and what does flagging 2% cost?"

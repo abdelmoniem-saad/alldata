@@ -1,0 +1,10 @@
+title: "Multiple Comparisons"
+slug: multiple-comparisons
+domain: statistical-inference
+difficulty: intermediate
+summary: Run enough tests and stars appear by arithmetic; the false discovery is a design choice, not bad luck.
+prerequisites: [p-values, hypothesis-testing]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 9
+recall_prompt: "You run 20 independent tests at alpha = 0.05 and all are null. What's the chance at least one fires?"

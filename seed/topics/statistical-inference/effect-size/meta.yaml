@@ -1,0 +1,10 @@
+title: "Effect Sizes"
+slug: effect-size
+domain: statistical-inference
+difficulty: intermediate
+summary: Statistical significance says whether an effect exists; the effect size says whether anyone should care.
+prerequisites: [t-tests, statistical-power]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 9
+recall_prompt: "A study with 10,000 people finds a p-value of 0.001 but a difference of 0.1 IQ points. Significant, but what's missing?"

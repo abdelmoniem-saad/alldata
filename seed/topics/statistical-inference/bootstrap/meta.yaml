@@ -1,0 +1,11 @@
+title: "The Bootstrap"
+slug: bootstrap
+domain: statistical-inference
+difficulty: intermediate
+summary: "Uncertainty from the sample itself: resample, recompute, look at the spread. No formulas about the population required."
+prerequisites: [sampling-distributions, confidence-intervals]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 10
+dataset: heights
+recall_prompt: "Why does the bootstrap distribution concentrate around the SAMPLE mean, not the population mean, and what does that make it good for?"

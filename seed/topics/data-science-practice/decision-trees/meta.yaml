@@ -1,0 +1,10 @@
+title: "Decision Trees and Ensembles"
+slug: decision-trees
+domain: data-science-practice
+difficulty: intermediate
+summary: "The models that are not equations: how trees split, why single trees overfit, and what forests and boosting buy."
+prerequisites: [bias-variance-tradeoff]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 9
+recall_prompt: "A single deep tree fits the training data perfectly and predicts new data poorly. Which ensemble fixes which problem: bagging or boosting?"

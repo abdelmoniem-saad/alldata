@@ -1,0 +1,10 @@
+title: "Time Series"
+slug: time-series
+domain: regression-modeling
+difficulty: advanced
+summary: "Data ordered in time breaks the assumptions: what autocorrelation does, and what survives."
+prerequisites: [simple-linear-regression, model-diagnostics]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 10
+recall_prompt: "Why can't you fit OLS to daily stock prices and trust the standard errors, and what does differencing fix?"
