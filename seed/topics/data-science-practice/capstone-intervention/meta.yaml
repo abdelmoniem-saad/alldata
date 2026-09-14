@@ -1,0 +1,11 @@
+title: "Capstone: Did the Launch Work?"
+slug: capstone-intervention
+domain: data-science-practice
+difficulty: advanced
+summary: "A feature ships mid-series and the chart goes up: before/after, the control region, and the estimate that survives both."
+prerequisites: [time-series, causal-inference, experimental-design, missing-data, data-wrangling]
+has_intuition_layer: true
+has_formal_layer: true
+estimated_minutes: 15
+dataset: daily-metrics
+recall_prompt: "In the intervention capstone, why did the raw DiD (9.9) still overstate the effect, and what fixed it?"

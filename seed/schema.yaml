@@ -501,6 +501,14 @@ topics:
     prerequisites: [exploratory-data-analysis, data-wrangling, missing-data, multiple-regression, model-diagnostics, feature-leakage]
     terminal: true
 
+  - slug: capstone-intervention
+    title: "Capstone: Did the Launch Work?"
+    domain: data-science-practice
+    difficulty: advanced
+    summary: "A feature ships mid-series and the chart goes up: before/after, the control region, and the estimate that survives both."
+    prerequisites: [time-series, causal-inference, experimental-design, missing-data, data-wrangling]
+    terminal: true
+
   # ── Navigation (hidden from the public graph) ────────────────
   - slug: shape-of-statistics
     title: The Shape of Statistics
