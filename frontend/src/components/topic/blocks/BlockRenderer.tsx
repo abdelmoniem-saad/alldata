@@ -33,6 +33,8 @@ import ErrorBoundary from '../../ErrorBoundary'
 import CodeRunner from '../CodeRunner'
 import PlotBlock from './PlotBlock'
 import DecisionBlock from './DecisionBlock'
+import QuizBlock from './QuizBlock'
+import ExerciseBlock from './ExerciseBlock'
 import PlaygroundBlock from './PlaygroundBlock'
 import GraphFlythrough from './GraphFlythrough'
 import { StepThrough } from './StepThrough'
@@ -181,11 +183,6 @@ export default function BlockRenderer({
       return <FillIn steps={steps} />
     }
 
-    case 'fill_in': {
-      const steps = Array.isArray(meta.steps) ? (meta.steps as string[]) : []
-      return <FillIn steps={steps} />
-    }
-
     case 'misconception_inline':
       return (
         <div style={{
@@ -208,6 +205,12 @@ export default function BlockRenderer({
 
     case 'decision':
       return <DecisionBlock slug={slug} anchor={block.anchor} meta={meta as any} />
+
+    case 'quiz':
+      return <QuizBlock slug={slug} anchor={block.anchor} meta={meta as any} />
+
+    case 'exercise':
+      return <ExerciseBlock slug={slug} anchor={block.anchor} meta={meta as any} />
 
     case 'playground':
       return <PlaygroundBlock slug={slug} anchor={block.anchor} meta={meta as any} />

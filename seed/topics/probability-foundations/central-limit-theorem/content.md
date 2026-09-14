@@ -28,7 +28,7 @@ That's why $\bar{X}$ is approximately normal even when $X$ isn't.
 
 <!-- block: gear, n: 3, label: "Whose means go bell?" -->
 
-## The width shrinks as 1/√n
+## The width shrinks as 1/âˆšn
 
 The plot above shows the *sampling distribution* of the mean, what you'd get if you collected $n$ samples, took the average, and repeated forever. Two parameters control it: $\mu$ (same as the population mean) and $\sigma / \sqrt{n}$ (the standard error).
 
@@ -72,12 +72,12 @@ correct: b
 binds: [mu, sigma, n]
 controls:
   - param: mu
-    label: "Population mean (μ)"
+    label: "Population mean (Î¼)"
     min: -2
     max: 2
     step: 0.1
   - param: sigma
-    label: "Population SD (σ)"
+    label: "Population SD (Ïƒ)"
     min: 0.5
     max: 3
     step: 0.1
@@ -99,14 +99,14 @@ goal:
     uncertainty you need *four* times the data.
   hints:
     - after_seconds: 25
-      text: "Solve √n = 4."
+      text: "Solve âˆšn = 4."
 <!-- /block -->
 
 ---
 
 <!-- layer: formal -->
 
-<!-- block: gear, n: 4, label: "The 1/√n statement" -->
+<!-- block: gear, n: 4, label: "The 1/âˆšn statement" -->
 
 ## Formal statement
 
@@ -140,7 +140,7 @@ The standardized sample mean is $Z_n = \frac{1}{\sqrt{n}} \sum_i Y_i$, with char
 
 $$\phi_{Z_n}(t) = \phi_Y(t/\sqrt{n})^n = \left(1 - \frac{t^2}{2n} + o(1/n)\right)^n \xrightarrow{n \to \infty} e^{-t^2/2}$$
 
-That's the characteristic function of $N(0, 1)$. Lévy's continuity theorem turns the limit of characteristic functions into a limit in distribution. Done.
+That's the characteristic function of $N(0, 1)$. LÃ©vy's continuity theorem turns the limit of characteristic functions into a limit in distribution. Done.
 <!-- /block -->
 
 ---
@@ -157,7 +157,7 @@ from scipy import stats
 # means of size n approach normality as n grows.
 np.random.seed(42)
 n_samples = 5000
-pop_mean = 2.0  # exponential(λ=0.5) has mean 2
+pop_mean = 2.0  # exponential(Î»=0.5) has mean 2
 
 fig, axes = plt.subplots(1, 4, figsize=(12, 3))
 axes[0].hist(np.random.exponential(pop_mean, 10_000), bins=50,
@@ -170,7 +170,7 @@ for idx, n in enumerate([2, 10, 50]):
     axes[idx + 1].hist(means, bins=50, color='#d4d4d8', alpha=0.7, density=True)
     x = np.linspace(min(means), max(means), 200)
     axes[idx + 1].plot(x, stats.norm.pdf(x, pop_mean, pop_mean / np.sqrt(n)),
-                       color='#14b8a6', linewidth=2, label='N(μ, σ²/n)')
+                       color='#14b8a6', linewidth=2, label='N(Î¼, ÏƒÂ²/n)')
     axes[idx + 1].set_title(f'Sample means, n={n}')
     axes[idx + 1].legend(fontsize=8)
     axes[idx + 1].axvline(pop_mean, color='#14b8a6', linestyle='--')
@@ -221,4 +221,33 @@ for (n in c(2, 10, 50)) {
 *Wrong:* if I collect enough data, my data follows a normal distribution.
 
 *Correct:* the CLT says the **sample mean** (or sum) becomes normal, not the data itself. If your population is skewed, your data stays skewed no matter how much you collect. It's the *average* of the data that turns normal. The shorthand "everything becomes normal for large $n$" loses exactly that distinction.
+<!-- /block -->
+
+<!-- block: quiz, anchor: clt-check, depends_on: clt-researchers -->
+title: "Check yourself"
+questions:
+  - prompt: |
+      The population is wildly skewed. What shape does the distribution
+      of SAMPLE MEANS take for n = 100?
+    options:
+      - "Skewed, like the population"
+      - "Approximately normal, whatever the population looks like"
+      - "It depends on the sample you happened to draw"
+    correct: 1
+    response: |
+      That is the theorem: means of n = 100 are near-normal even from a
+      lopsided population. The population keeps its shape; the means of
+      big samples do not inherit it.
+  - prompt: |
+      You cut the sample size from 100 to 25. What happens to the
+      spread of the sample means?
+    options:
+      - "It doubles"
+      - "It quadruples"
+      - "It widens by a factor of 2"
+    correct: 2
+    response: |
+      sigma/sqrt(n) with n cut to a quarter widens the spread by a
+      factor of 2. The curve on screen widened by exactly that when you made the pick
+      earlier; same arithmetic here.
 <!-- /block -->

@@ -21,6 +21,8 @@ const TAGS: Record<string, string> = {
   derivation: 'Derivation',
   step_through: 'Steps',
   fill_in: 'Fill in',
+  quiz: 'Quiz',
+  exercise: 'Exercise',
   graph_view: 'Graph view',
   dataset: 'Dataset',
   simulation: 'Code',
@@ -71,6 +73,10 @@ export function directiveSummary(seg: DirectiveSegment): string {
       return 'walkthrough steps'
     case 'fill_in':
       return 'progressive-reveal steps'
+    case 'quiz':
+      return firstField(seg.body, 'title') || 'check-yourself questions'
+    case 'exercise':
+      return firstField(seg.body, 'prompt') || 'numeric answer check'
     default:
       return ''
   }

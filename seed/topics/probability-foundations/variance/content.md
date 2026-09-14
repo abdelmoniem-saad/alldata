@@ -128,3 +128,20 @@ Both means land near 6; the variances and standard deviations are worlds apart, 
 <!-- block: callout, kind: insight -->
 **Where this leads.** Variance powers the **standard error** $\sigma/\sqrt{n}$ behind the **central limit theorem** and **sampling distributions**. Standardized covariance is **correlation**. And the **bias–variance tradeoff** in modeling is this exact quantity, applied to a model's predictions.
 <!-- /block -->
+
+<!-- block: exercise, anchor: var-exercise -->
+prompt: |
+  Three heights: 170, 174, 182 cm. Compute the SAMPLE standard
+  deviation, rounded to one decimal.
+answer: 6.1
+tolerance: 0.15
+unit: cm
+hint: |
+  The mean is 175.33. Average the squared deviations with n - 1 in the
+  denominator, then take the square root.
+solution: |
+  Squared deviations: 28.4, 1.8, 44.5. Sum 74.7; divided by (n-1) = 2
+  gives 37.3; sqrt = 6.1 cm. Dividing by n = 3 instead gives 5.0, the
+  population formula; the n-1 version is why the sample SD is the
+  unbiased companion of the sample mean.
+<!-- /block -->

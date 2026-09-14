@@ -145,3 +145,30 @@ The test rejects a true null right around 5% of the time, that's $\alpha$ doing 
 <!-- block: callout, kind: insight -->
 **Where this leads.** The number in step 4 is the subject of [**p-values**](/topic/p-values), and the miss-rate $\beta$ is the subject of **statistical power**. **Confidence intervals** are the dual view, the values you *wouldn't* reject. And **t-tests** are this procedure with the t-distribution standing in for the normal when $\sigma$ is unknown.
 <!-- /block -->
+
+<!-- block: quiz, anchor: ht-check, depends_on: ht-shift -->
+title: "Check yourself"
+questions:
+  - prompt: |
+      Your study reports p = 0.03 against a null of no effect. What has
+      been proven?
+    options:
+      - "That the null hypothesis is false"
+      - "That the data would be unusual if the null were true"
+      - "That the effect is large and important"
+    correct: 1
+    response: |
+      The machinery cannot prove the null false; it quantifies how
+      surprising the data is inside the null's world. Size and
+      importance need an effect size on top.
+  - prompt: |
+      A test with 20% power fails to reject. The honest reading?
+    options:
+      - "No effect exists"
+      - "The effect, if any, is smaller than this design could detect"
+      - "The p-value was above 0.5"
+    correct: 1
+    response: |
+      Absence of evidence at 20% power is weak evidence of absence at
+      best. The design could miss a real effect four times out of five.
+<!-- /block -->

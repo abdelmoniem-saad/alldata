@@ -187,3 +187,19 @@ abline(v = mu_true, col = "#a1a1aa", lty = 2)
 
 *Correct:* under frequentism, the parameter is fixed and the interval is random. *Before* you collect data, the interval-construction *procedure* covers the parameter 95% of the time. *After* the data is collected, the specific interval either covers the parameter or doesn't, there's no remaining probability statement to make. For a probabilistic reading of the parameter given the data, you need Bayesian inference.
 <!-- /block -->
+
+<!-- block: exercise, anchor: ci-exercise -->
+prompt: |
+  A sample of 64 has a mean of 52 and a standard deviation of 16.
+  The 95% interval is roughly mean plus/minus 2 * sigma/sqrt(n).
+  How wide is the FULL interval, in units?
+answer: 8.0
+tolerance: 0.2
+unit: units
+hint: |
+  Half-width is 2 * 16/8; the full interval is twice the half-width.
+solution: |
+  sigma/sqrt(n) = 16/8 = 2. Half-width = 2 * 2 = 4, so the interval is
+  (48, 56) and its full width is 8. Four times the sample would halve
+  that width: the sqrt(n) toll the topic keeps charging.
+<!-- /block -->

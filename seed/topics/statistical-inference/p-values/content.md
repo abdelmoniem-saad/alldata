@@ -152,3 +152,32 @@ Every decile holds ~10%, the p-value is uniform under a true null, and exactly 5
 <!-- block: callout, kind: insight -->
 **Where this leads.** The p-value is step 4 of [**hypothesis testing**](/topic/hypothesis-testing); its miss-rate companion is [**statistical power**](/topic/statistical-power), and the dual view, the parameter values you *wouldn't* reject, is the [**confidence interval**](/topic/confidence-intervals). Its uniformity under the null is what **A/B testing**'s peeking problem violates: re-checking until p dips below 0.05 turns a calibrated 5% into ~20%.
 <!-- /block -->
+
+<!-- block: quiz, anchor: pv-check, depends_on: pv-acquittal -->
+title: "Check yourself"
+questions:
+  - prompt: |
+      You run the same experiment twice. The first gives p = 0.01, the
+      second p = 0.04. Which is the more likely reason the p-values
+      differ?
+    options:
+      - "The effect was stronger the second time"
+      - "Sampling noise; the p-value is a statistic, it moves run to run"
+      - "The second experiment was done wrong"
+    correct: 1
+    response: |
+      The p-value is itself random. Same underlying effect, different
+      samples, different p-values, which is exactly why treating 0.05
+      as a magic cliff misreads what the number is.
+  - prompt: |
+      p = 0.06 with n = 50. You rerun with n = 800 and the effect
+      estimate barely moves, but p drops to 0.002. What happened?
+    options:
+      - "The effect shrank with more data"
+      - "Nothing about the estimate changed; precision did"
+      - "The null hypothesis changed"
+    correct: 1
+    response: |
+      The standard error shrank with n, so the same gap clears the bar.
+      Read the estimate and its interval first, the p-value second.
+<!-- /block -->

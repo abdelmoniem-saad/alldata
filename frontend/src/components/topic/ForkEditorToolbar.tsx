@@ -72,6 +72,38 @@ const FILL_IN = `<!-- block: fill_in, anchor: my-fill-in -->
 2. Second step.
 3. Conclusion.`
 
+const QUIZ = `<!-- block: quiz, anchor: my-quiz -->
+title: "Check yourself"
+questions:
+  - prompt: |
+      The first check-yourself question, asked before the reveal.
+    options:
+      - "The tempting wrong answer"
+      - "The right answer"
+      - "Another distractor"
+    correct: 1
+    response: |
+      Why the right answer is right, and what the tempting one misses.
+  - prompt: |
+      A second question; each answer fires a review event.
+    options:
+      - "Only option"
+    correct: 0
+    response: |
+      Keep quizzes to 2-4 questions; they feed the review scheduler.`
+
+const EXERCISE = `<!-- block: exercise, anchor: my-exercise -->
+prompt: |
+  Compute the sample SD of heights 170, 174, 182 (cm), rounded to 1 dp.
+answer: 6.0
+tolerance: 0.11
+unit: cm
+hint: |
+  The mean is 175.33; average the squared deviations, then take the root.
+solution: |
+  Deviations -5.33, -1.33, 6.67; squares 28.4 + 1.8 + 44.5 = 74.7;
+  /2 = 37.3; sqrt = 6.1 cm.`
+
 // W3: the directive vocabulary, surfaced as a hover reference so an author
 // doesn't have to leave the editor. Mirrors docs/authoring.md.
 const DIRECTIVE_REFERENCE = [
@@ -128,6 +160,8 @@ export default function ForkEditorToolbar({ onInsertBlock, onWrap, onInsertPlot 
         { label: 'Callout', hint: 'Insight, aside, or warning', run: () => onInsertBlock(CALLOUT) },
         { label: 'Misconception', hint: 'Wrong belief, then the correction', run: () => onInsertBlock(MISCONCEPTION) },
         { label: 'Fill in', hint: 'Reveal-one-line derivation steps', run: () => onInsertBlock(FILL_IN) },
+        { label: 'Quiz', hint: '2-4 check-yourself questions', run: () => onInsertBlock(QUIZ) },
+        { label: 'Exercise', hint: 'Numeric answer with tolerance check', run: () => onInsertBlock(EXERCISE) },
       ],
     },
     {

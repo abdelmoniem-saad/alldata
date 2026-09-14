@@ -341,6 +341,69 @@ Progressive-reveal derivation steps, built for the formal layer. Same numbered-l
 <!-- /block -->
 ```
 
+### `quiz` (D3)
+
+Two to four check-yourself questions, asked one at a time with immediate
+verdicts. Every answered question fires a review event (correct first
+pick = quality 5, a miss = 1), so quizzes are the density engine of the
+spaced-repetition scheduler; decisions are the one big commitment, quizzes
+are the reps. Rules of craft: questions must *vary* (one definition, one
+calculation, one "what would change your answer"), distractors must map
+to real misconceptions (the misconception blocks are a distractor mine),
+and responses teach instead of grading.
+
+```markdown
+<!-- block: quiz, anchor: pv-check -->
+title: "Check yourself"
+questions:
+  - prompt: |
+      A p-value of 0.03 means the null hypothesis has a 3% chance of
+      being true. Right?
+    options:
+      - "Yes, that's the definition"
+      - "No; it's the chance of data this extreme IF the null were true"
+    correct: 1
+    response: |
+      The classic reversal. The p-value is computed ASSUMING the null;
+      it cannot speak to the null's own probability.
+  - prompt: |
+      Same study, four times the sample: the p-value drops from 0.06 to
+      0.004. What changed?
+    options:
+      - "The effect got bigger"
+      - "Only the precision around the same-size effect"
+    correct: 1
+    response: |
+      Halving the standard error multiplies the signal-to-noise ratio;
+      significance moved without the estimate moving.
+<!-- /block -->
+```
+
+### `exercise` (D3)
+
+Numeric-entry practice with tolerance checking. The reader commits a
+number before seeing anything; the check compares numerically with a
+tolerance, so 6.09 passes 6.0 ± 0.11. One review event per block (5 on a
+correct check, 1 on reveal). The `hint` releases progressively, and the
+`solution` is the walked answer, shown only after a commit or reveal.
+
+```markdown
+<!-- block: exercise, anchor: var-exercise -->
+prompt: |
+  Three heights: 170, 174, 182 cm. Compute the SAMPLE standard
+  deviation, rounded to one decimal.
+answer: 6.1
+tolerance: 0.15
+unit: cm
+hint: |
+  The mean is 175.33; average the squared deviations with n - 1.
+solution: |
+  Squared deviations 28.4, 1.8, 44.5; sum 74.7; / (n-1) = 37.3;
+  sqrt = 6.1 cm.
+<!-- /block -->
+```
+
+
 ### `callout`
 
 ```markdown

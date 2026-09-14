@@ -90,7 +90,7 @@ _KNOWN_PLOT_SPECS = {
 
 _MULTILINE_BLOCK_TYPES = {
     "step_through", "callout", "derivation", "decision", "playground",
-    "fill_in",
+    "fill_in", "quiz", "exercise",
     # `misconception` is multi-line when authored with the new closing tag
     # form. The legacy single-line `<!-- block: misconception -->` is still
     # matched by the section-loop regex below.
@@ -335,6 +335,61 @@ def _build_multiline_block(spec: dict, sort_order: int, layer: str) -> dict | No
         spec_doc = {**spec_doc, **branch_extras}
         return {
             "block_type": "decision",
+            "content": body,
+            "sort_order": sort_order,
+            "layer": layer,
+            "anchor": anchor,
+            "meta": json.dumps(spec_doc),
+        }
+
+    if btype == "quiz":
+        # D3: 2-5 check-yourself questions. Same YAML-body machinery as the
+        # decision, plus structural validation so a typo'd `correct:` index
+        # fails loudly at import instead of silently grading everyone wrong.
+        try:
+            spec_doc = yaml.safe_load(body) or {}
+        except yaml.YAMLError as exc:
+            _warn(f"quiz block (anchor={anchor!r}) has invalid YAML body: {exc}")
+            return _parse_error_block(btype, body, sort_order, layer, anchor, str(exc))
+        questions = spec_doc.get("questions")
+        if not isinstance(questions, list) or not (2 <= len(questions) <= 5):
+            _warn(f"quiz block (anchor={anchor!r}) needs 2-5 questions")
+        elif not spec_doc.get("title"):
+            _warn(f"quiz block (anchor={anchor!r}) needs a title")
+        else:
+            for qi, q in enumerate(questions):
+                if not isinstance(q, dict) or not all(
+                    k in q for k in ("prompt", "options", "correct")
+                ):
+                    _warn(f"quiz block (anchor={anchor!r}) question {qi + 1} "
+                          "missing prompt/options/correct")
+                elif not 0 <= int(q["correct"]) < len(q["options"]):
+                    _warn(f"quiz block (anchor={anchor!r}) question {qi + 1} "
+                          "correct index out of range")
+        return {
+            "block_type": "quiz",
+            "content": body,
+            "sort_order": sort_order,
+            "layer": layer,
+            "anchor": anchor,
+            "meta": json.dumps(spec_doc),
+        }
+
+    if btype == "exercise":
+        # D3: numeric-entry practice with tolerance checking. The answer is
+        # checked numerically in the renderer; the import only demands the
+        # fields that make checking possible.
+        try:
+            spec_doc = yaml.safe_load(body) or {}
+        except yaml.YAMLError as exc:
+            _warn(f"exercise block (anchor={anchor!r}) has invalid YAML body: {exc}")
+            return _parse_error_block(btype, body, sort_order, layer, anchor, str(exc))
+        if "prompt" not in spec_doc or "answer" not in spec_doc:
+            _warn(f"exercise block (anchor={anchor!r}) needs prompt and answer")
+        elif not isinstance(spec_doc["answer"], (int, float)):
+            _warn(f"exercise block (anchor={anchor!r}) answer must be a number")
+        return {
+            "block_type": "exercise",
             "content": body,
             "sort_order": sort_order,
             "layer": layer,

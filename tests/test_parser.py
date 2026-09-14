@@ -98,7 +98,80 @@ class TestYamlBodies:
         assert b["anchor"] == "clue"
         import json as _json
         assert _json.loads(b["meta"])["steps"] == ["Center the statistic.", "Scale it."]
+
+    QUIZ = (
+        "<!-- block: quiz, anchor: check -->\n"
+        'title: "Check yourself"\n'
+        "questions:\n"
+        "  - prompt: |\n      The mean of 2 and 4?\n"
+        "    options:\n"
+        "      - \"2\"\n"
+        "      - \"3\"\n"
+        "    correct: 1\n"
+        "    response: |\n      Midpoint. The average of two numbers sits between them.\n"
+        "  - prompt: |\n      And of 2, 4 and 12?\n"
+        "    options:\n"
+        "      - \"6\"\n"
+        "      - \"9\"\n"
+        "    correct: 0\n"
+        "    response: |\n      Sum divided by three.\n"
+        "<!-- /block -->"
+    )
+
+    def test_quiz_parses_questions(self):
+        """D3: quiz blocks carry questions in meta for the renderer, and a
+        well-formed quiz imports with zero warnings."""
+        blocks, warnings = parse(self.QUIZ)
+        b = next(b for b in blocks if b["block_type"] == "quiz")
+        import json as _json
+        meta = _json.loads(b["meta"])
+        assert meta["title"] == "Check yourself"
+        assert len(meta["questions"]) == 2
+        assert meta["questions"][0]["correct"] == 1
         assert warnings == []
+
+    def test_quiz_rejects_out_of_range_correct(self):
+        """A typo'd `correct:` index must fail loudly at import, not grade
+        every reader wrong."""
+        text = self.QUIZ.replace("correct: 1", "correct: 9")
+        blocks, warnings = parse(text)
+        b = next(b for b in blocks if b["block_type"] == "quiz")
+        assert b["block_type"] == "quiz"
+        assert any("correct index out of range" in w for w in warnings)
+
+    def test_exercise_parses_answer_and_tolerance(self):
+        """D3: numeric-entry practice; prompt/answer/tolerance flow into
+        meta for the renderer's numeric check."""
+        text = (
+            "<!-- block: exercise, anchor: ex -->\n"
+            "prompt: |\n  Sample SD of 170, 174, 182 (cm)?\n"
+            "answer: 6.0\n"
+            "tolerance: 0.11\n"
+            "unit: cm\n"
+            "hint: |\n  Mean 175.33.\n"
+            "solution: |\n  sqrt(37.3) = 6.1.\n"
+            "<!-- /block -->"
+        )
+        blocks, warnings = parse(text)
+        b = next(b for b in blocks if b["block_type"] == "exercise")
+        import json as _json
+        meta = _json.loads(b["meta"])
+        assert meta["answer"] == 6.0
+        assert meta["tolerance"] == 0.11
+        assert meta["unit"] == "cm"
+        assert warnings == []
+
+    def test_exercise_rejects_non_numeric_answer(self):
+        text = (
+            "<!-- block: exercise, anchor: ex -->\n"
+            "prompt: |\n  What is the SD?\n"
+            "answer: \"six\"\n"
+            "<!-- /block -->"
+        )
+        blocks, warnings = parse(text)
+        b = next(b for b in blocks if b["block_type"] == "exercise")
+        assert b["block_type"] == "exercise"
+        assert any("answer must be a number" in w for w in warnings)
 
     def test_bad_yaml_degrades_to_parse_error(self):
         text = (
