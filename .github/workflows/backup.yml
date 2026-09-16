@@ -37,11 +37,24 @@ jobs:
         # C6 rider fix: `exit 0` in the check step only ended that step —
         # the dump ran anyway and pg_dump died against a local socket that
         # doesn't exist on the runner. The condition belongs here.
+        #
+        # D5 fix: pg_dump must be >= the server's version, and Neon runs
+        # PostgreSQL 18 while the runner's apt "postgresql-client" is v16
+        # (died with "server version mismatch"). Install client 18 from
+        # the official PostgreSQL apt repo instead of the distro package.
         if: steps.check.outputs.skip != 'true'
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+          CODENAME=$(. /etc/os-release && echo "$VERSION_CODENAME")
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+            https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt ${CODENAME}-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-18
+          pg_dump --version
           STAMP=$(date -u +%Y%m%d-%H%M%S)
           pg_dump "$DATABASE_URL" --no-owner --format=custom --file="alldata-$STAMP.dump"
           echo "dump_file=alldata-$STAMP.dump" >> "$GITHUB_ENV"
