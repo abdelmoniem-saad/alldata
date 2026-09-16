@@ -16,6 +16,8 @@ const LearningPath = lazy(() => import('./pages/LearningPath'))
 const Datasets = lazy(() => import('./pages/Datasets'))
 const Misconceptions = lazy(() => import('./pages/Misconceptions'))
 const Syllabus = lazy(() => import('./pages/Syllabus'))
+const Methodology = lazy(() => import('./pages/Methodology'))
+const AdminReports = lazy(() => import('./pages/AdminReports'))
 const Contribute = lazy(() => import('./pages/Contribute'))
 const UserGraph = lazy(() => import('./pages/UserGraph'))
 const ForkView = lazy(() => import('./pages/ForkView'))
@@ -55,6 +57,10 @@ export default function App() {
         <Route path="/misconceptions" element={<Misconceptions />} />
         {/* D1: the public curriculum map. Public read, self-gating. */}
         <Route path="/syllabus" element={<Syllabus />} />
+        {/* D5: how the content is made, checked, and corrected. */}
+        <Route path="/methodology" element={<Methodology />} />
+        {/* D5: admin triage for reader-flagged content problems. */}
+        <Route path="/admin/reports" element={<AdminReports />} />
         {/* C4: contribution loop front door. Public, static content. */}
         <Route path="/contribute" element={<Contribute />} />
         {/* N: fork routes. More specific paths first so `/u/:username`

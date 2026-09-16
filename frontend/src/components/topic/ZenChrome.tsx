@@ -64,6 +64,8 @@ interface Props {
   forkBusy?: boolean
   /** C8: anonymous viewer, the chip's click opens sign-in (run-gate style). */
   forkNeedsAuth?: boolean
+  /** D5: the lightweight correction door, rendered when a handler is given. */
+  onFlagClick?: () => void
   onForkClick?: () => void
 }
 
@@ -113,7 +115,7 @@ function BottomBar(props: Props) {
     viewMode, setViewMode, hasFormalLayer, activeLayer, setActiveLayer,
     showSlideNav, slideIdx, slideTotal, onSlidePrev, onSlideNext, onSlideGoto,
     slug, isCompleted, justCompleted, onMarkCompleted, onUnmark,
-    isTour, canFork, hasFork, forkBusy, forkNeedsAuth, onForkClick,
+    isTour, canFork, hasFork, forkBusy, forkNeedsAuth, onForkClick, onFlagClick,
   } = props
 
   const canPrev = slideIdx > 0
@@ -305,6 +307,29 @@ function BottomBar(props: Props) {
           marginLeft: !isTour && showSlideNav ? 0 : 'auto',
           flexShrink: 0,
         }}>
+          {/* D5: the lightweight correction door, quiet and findable. */}
+          {onFlagClick && (
+            <button
+              onClick={onFlagClick}
+              style={{
+                padding: '6px 10px',
+                marginRight: 6,
+                borderRadius: 8,
+                fontSize: 11,
+                fontFamily: 'var(--font-mono)',
+                letterSpacing: '0.5px',
+                textTransform: 'uppercase',
+                color: 'var(--color-text-muted)',
+                border: '1px solid transparent',
+                background: 'transparent',
+                cursor: 'pointer',
+                transition: 'all var(--transition-fast)',
+              }}
+              title="Spot an error in this lesson? Tell us."
+            >
+              Flag problem
+            </button>
+          )}
           <button
             onClick={onForkClick}
             disabled={forkBusy}

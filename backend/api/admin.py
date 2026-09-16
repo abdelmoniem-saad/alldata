@@ -8,11 +8,14 @@ guard refuses rather than letting that state happen.
 
 import logging
 import uuid
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 from sqlalchemy import func, select
 
 from backend.deps import DB, CurrentUser, require_role
+from backend.models.report import ContentReport, ReportStatus
 from backend.models.user import User, UserRole
 from backend.schemas.user import UserResponse
 from backend.services.analytics_service import top_events as top_analytics
@@ -124,3 +127,84 @@ async def set_active(user_id: uuid.UUID, active: bool, admin: CurrentUser, db: D
         admin.email, user.display_name, user.id, was, active,
     )
     return UserResponse.model_validate(user)
+
+
+# ── D5: content problem reports (triage) ───────────────────────────────────
+
+_VALID_REPORT_STATUSES = {s.value for s in ReportStatus}
+
+
+@router.get("/reports")
+async def list_reports(db: DB, status_filter: str = "open", offset: int = 0, limit: int = 50):
+    """Content problem reports, newest first. status_filter: open,
+    resolved, dismissed, or all."""
+    query = (
+        select(
+            ContentReport,
+            User.display_name,
+        )
+        .outerjoin(User, User.id == ContentReport.reporter_id)
+        .order_by(ContentReport.created_at.desc())
+        .offset(max(0, offset))
+        .limit(max(1, min(limit, 200)))
+    )
+    if status_filter != "all":
+        query = query.where(ContentReport.status == status_filter)
+
+    rows = (await db.execute(query)).all()
+    return [
+        {
+            "id": str(r.id),
+            "topic_slug": r.topic_slug,
+            "block_anchor": r.block_anchor,
+            "note": r.note,
+            "status": r.status,
+            "created_at": r.created_at,
+            "resolution_note": r.resolution_note,
+            "reporter_name": name,
+        }
+        for r, name in rows
+    ]
+
+
+class ReportUpdate(BaseModel):
+    status: str
+    resolution_note: str | None = None
+
+
+@router.patch("/reports/{report_id}")
+async def update_report(
+    report_id: uuid.UUID,
+    data: ReportUpdate,
+    admin: CurrentUser,
+    db: DB,
+):
+    """Resolve or dismiss a report, with an optional closure note (the
+    reviewer-notes pattern: the reason is recorded, not just the state)."""
+    if data.status not in _VALID_REPORT_STATUSES or data.status == ReportStatus.OPEN.value:
+        raise HTTPException(
+            status_code=422,
+            detail=f"status must be one of: {sorted(_VALID_REPORT_STATUSES - {'open'})}",
+        )
+
+    report = (
+        await db.execute(select(ContentReport).where(ContentReport.id == report_id))
+    ).scalar_one_or_none()
+    if report is None:
+        raise HTTPException(status_code=404, detail="Report not found")
+
+    report.status = data.status
+    report.resolution_note = data.resolution_note
+    report.resolved_at = datetime.now(UTC).replace(tzinfo=None)
+    report.resolved_by = admin.id
+    logger.info(
+        "Report triage: admin %s set report %s (%s) -> %s",
+        admin.email, report.id, report.topic_slug, data.status,
+    )
+    return {
+        "id": str(report.id),
+        "status": report.status,
+        "resolution_note": report.resolution_note,
+        "resolved_at": report.resolved_at,
+    }
+

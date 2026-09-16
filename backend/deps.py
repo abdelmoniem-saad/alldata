@@ -43,6 +43,37 @@ async def get_current_user(
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
+async def get_optional_user(
+    request: Request,
+    db: DB,
+) -> User | None:
+    """D5: the signed-in user, or None for anonymous callers. Unlike
+    CurrentUser, a missing or invalid token is not an error; endpoints
+    that attach identity when present (e.g. content reports) use this."""
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        return None
+    token = auth[len("Bearer "):]
+    try:
+        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+        user_id: str | None = payload.get("sub")
+        if user_id is None:
+            return None
+    except JWTError:
+        return None
+    try:
+        result = await db.execute(select(User).where(User.id == uuid.UUID(user_id)))
+        user = result.scalar_one_or_none()
+    except Exception:
+        return None
+    if user is None or not user.is_active:
+        return None
+    return user
+
+
+OptionalUser = Annotated[User | None, Depends(get_optional_user)]
+
+
 def require_role(*roles: UserRole):
     """Dependency that checks the current user has one of the specified roles."""
 

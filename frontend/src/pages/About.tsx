@@ -220,6 +220,12 @@ export default function About() {
           <Link to="/path" style={{ color: 'var(--color-text-muted)', fontSize: 14 }}>
             Find a learning path
           </Link>
+      <Link to="/path" style={{ color: 'var(--color-text-muted)', fontSize: 14 }}>
+            Find a learning path
+          </Link>
+<Link to="/methodology" style={{ color: 'var(--color-text-muted)', fontSize: 14 }}>
+How this content is made
+</Link>
         </div>
       </div>
     </div>

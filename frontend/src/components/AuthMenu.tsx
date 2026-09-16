@@ -188,6 +188,22 @@ export default function AuthMenu() {
                 Content coverage
               </Link>
             )}
+            {/* D5: reader-flagged content problems, ADMIN/EDITOR triage. */}
+            {(user.role === 'admin' || user.role === 'editor') && (
+              <Link
+                to="/admin/reports"
+                onClick={() => setPopoverOpen(false)}
+                style={{
+                  display: 'block',
+                  padding: '8px 10px',
+                  fontSize: 12,
+                  color: 'var(--color-text-secondary)',
+                  borderRadius: 6,
+                }}
+              >
+                Reports
+              </Link>
+            )}
             {/* O1: review queue, ADMIN/EDITOR only. The route also
                 self-gates so a direct visit shows a clear "not authorized"
                 state for non-reviewers; the popover link hides for cleaner

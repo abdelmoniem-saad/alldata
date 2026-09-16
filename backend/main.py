@@ -20,6 +20,7 @@ from backend.api import (
     merge_back,
     misconceptions,
     progress,
+    reports,
     syllabus,
     topics,
     track,
@@ -87,6 +88,8 @@ app.include_router(misconceptions.router, prefix="/api/misconceptions", tags=["m
 app.include_router(tracks.router, prefix="/api/tracks", tags=["tracks"])
 # D1: the public curriculum map (seed/syllabus.yaml, resolved server-side).
 app.include_router(syllabus.router, prefix="/api/syllabus", tags=["syllabus"])
+# D5: content problem reports (public POST; triage is on the admin router).
+app.include_router(reports.router, prefix="/api/reports", tags=["reports"])
 app.include_router(graph.router, prefix="/api/graph", tags=["graph"])
 app.include_router(content.router, prefix="/api/content", tags=["content"])
 app.include_router(courses.router, prefix="/api/courses", tags=["courses"])

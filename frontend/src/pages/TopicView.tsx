@@ -5,6 +5,7 @@ import ScrollReader from '../components/topic/ScrollReader'
 import SlideView from '../components/topic/SlideView'
 import TourView from '../components/topic/TourView'
 import ZenChrome from '../components/topic/ZenChrome'
+import FlagModal from '../components/FlagModal'
 import RecallPrompt from '../components/topic/RecallPrompt'
 import { useProgressStore } from '../stores/progressStore'
 import { useAuthStore } from '../stores/authStore'
@@ -47,6 +48,8 @@ export default function TopicView() {
   // C8: armed when an anonymous viewer clicks the fork chip; consumed by the
   // token effect below (same pattern as CodeRunner's pendingRunRef).
   const pendingForkRef = useRef(false)
+  // D5: the flag-a-problem modal.
+  const [flagOpen, setFlagOpen] = useState(false)
 
   // K3: surface a recall prompt when this topic is due-for-review and we
   // haven't reviewed it yet in this page's lifetime. The prompt itself comes
@@ -399,6 +402,7 @@ export default function TopicView() {
         // Tour topics stay forkless, they are UI tours, not lessons.
         canFork={!topic.tour}
         forkNeedsAuth={!token}
+        onFlagClick={!topic.tour ? () => setFlagOpen(true) : undefined}
         hasFork={hasFork}
         forkBusy={forkBusy}
         onForkClick={handleForkClick}
@@ -421,6 +425,13 @@ export default function TopicView() {
         leadsTo={leadsTo}
         nextTopic={nextTopic}
       />
+      {flagOpen && topic && (
+        <FlagModal
+          topicSlug={topic.slug}
+          topicTitle={topic.title}
+          onClose={() => setFlagOpen(false)}
+        />
+      )}
     </>
   )
 }

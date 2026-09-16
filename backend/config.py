@@ -53,6 +53,8 @@ class Settings(BaseSettings):
     # gate plus per-child POSIX rlimits.
     auth_rate_limit_login: int = 10  # per minute per IP
     auth_rate_limit_register: int = 5  # per minute per IP
+    # D5: content problem reports; anonymous allowed, so the dam is the cap.
+    report_rate_limit: int = 5  # per minute per IP
     # A10: usage-tracking beacons are tiny but frequent (every topic view);
     # the budget is generous per IP and the payload carries no PII.
     track_rate_limit: int = 120  # per minute per IP

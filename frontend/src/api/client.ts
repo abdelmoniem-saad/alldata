@@ -116,6 +116,26 @@ export interface SyllabusArea {
   units: SyllabusUnit[]
 }
 
+/**
+ * D5: a reader-flagged content problem. POST is public and rate-limited;
+ * the triage list/resolve endpoints are admin-only.
+ */
+export interface Report {
+  id: string
+  topic_slug: string
+  block_anchor: string | null
+  note: string
+  status: string
+  created_at: string
+  reporter_name: string | null
+  resolution_note: string | null
+}
+
+export interface AdminReport extends Report {
+  id: string
+}
+
+
 /** C3: one row of the Home trending strip (aggregate views, no PII). */
 export interface TrendingTopic {
   slug: string
@@ -405,6 +425,20 @@ export const api = {
   // D1: the public curriculum map (seed/syllabus.yaml, resolved server-side).
   getSyllabus: () =>
     request<SyllabusArea[]>('/syllabus'),
+
+  // D5: content problem reports. POST is public (per-IP rate-limited);
+  // the triage endpoints are admin-only.
+  flagProblem: (data: { topic_slug: string; note: string; block_anchor?: string }) =>
+    request<Report>('/reports', { method: 'POST', body: JSON.stringify(data) }),
+
+  adminListReports: (status: 'open' | 'resolved' | 'dismissed' | 'all' = 'open') =>
+    request<AdminReport[]>(`/admin/reports?status_filter=${status}`),
+
+  adminResolveReport: (id: string, status: 'resolved' | 'dismissed', resolution_note?: string) =>
+    request<{ id: string; status: string }>(`/admin/reports/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status, resolution_note: resolution_note || undefined }),
+    }),
 
   // C2: consolidated misconceptions catalog (the H10 backlog item).
   // One public read; the page groups by topic client-side.
